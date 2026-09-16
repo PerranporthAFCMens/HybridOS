@@ -1,0 +1,45 @@
+name: Add member workouts preview
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/add-workouts-preview.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch member preview
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('member-preview.html')
+          s=p.read_text()
+          s=s.replace('.bottom{display:none}', '.workout-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:5px}.field input,.field select{width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;background:#fff}.exercise-card{border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px}.set-row{display:grid;grid-template-columns:44px 1fr 1fr auto;gap:8px;align-items:end;margin-top:9px}.set-num{font-weight:850;padding-bottom:11px}.workout-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.history-item{border-bottom:1px solid var(--line);padding:12px 0}.history-item:last-child{border-bottom:0}.bottom{display:none}')
+          s=s.replace('.bottom{display:grid;position:fixed;left:0;right:0;bottom:0;grid-template-columns:repeat(5,1fr);', '.workout-grid,.metric-grid{grid-template-columns:1fr}.set-row{grid-template-columns:34px 1fr 1fr auto}.bottom{display:grid;position:fixed;left:0;right:0;bottom:0;grid-template-columns:repeat(6,1fr);')
+          s=s.replace('<button data-page="classes">▦ Classes</button><button data-page="membership">£ My membership</button>', '<button data-page="classes">▦ Classes</button><button data-page="workouts">◇ Workouts</button><button data-page="membership">£ My membership</button>')
+          marker='<section id="membership" class="page">'
+          workout='''<section id="workouts" class="page"><div class="section-title"><div><div class="eyebrow">Track your training</div><h2 style="margin:4px 0">My workouts</h2></div><button class="btn secondary" id="newWorkoutBtn">+ Add workout</button></div><div class="grid"><div class="card wide"><div class="section-title"><h3>Log workout</h3><span class="muted">Preview</span></div><div class="workout-grid"><div class="field"><label>Workout name</label><input id="workoutName" value="Upper body"></div><div class="field"><label>Date</label><input id="workoutDate" type="date"></div></div><div id="exerciseBuilder"><div class="exercise-card"><div class="workout-grid"><div class="field"><label>Exercise</label><input class="exerciseName" value="Bicep curls"></div><div class="field"><label>Track by</label><select class="trackingType"><option value="strength">Reps + weight</option><option value="time">Time</option><option value="distance">Distance</option><option value="calories">Calories</option><option value="custom">Custom</option></select></div></div><div class="sets"><div class="set-row"><div class="set-num">1</div><div class="field metricA"><label>Reps</label><input type="number" value="10"></div><div class="field metricB"><label>Weight (kg)</label><input type="number" value="12.5" step="0.5"></div><button class="btn secondary removeSet">×</button></div><div class="set-row"><div class="set-num">2</div><div class="field metricA"><label>Reps</label><input type="number" value="10"></div><div class="field metricB"><label>Weight (kg)</label><input type="number" value="12.5" step="0.5"></div><button class="btn secondary removeSet">×</button></div><div class="set-row"><div class="set-num">3</div><div class="field metricA"><label>Reps</label><input type="number" value="8"></div><div class="field metricB"><label>Weight (kg)</label><input type="number" value="12.5" step="0.5"></div><button class="btn secondary removeSet">×</button></div></div><div class="workout-actions"><button class="btn secondary addSet">+ Set</button></div></div></div><div class="workout-actions"><button class="btn secondary" id="addExercise">+ Exercise</button><button class="btn primary" id="saveWorkout">Save workout</button></div></div><div class="card narrow"><div class="section-title"><h3>Recent workouts</h3><span class="muted">History</span></div><div id="workoutHistory"><div class="history-item"><b>Upper body</b><div class="muted">15 Sep · 5 exercises · 16 sets</div></div><div class="history-item"><b>Engine + core</b><div class="muted">12 Sep · 42 min · 5.2 km</div></div><div class="history-item"><b>Lower body</b><div class="muted">9 Sep · 6 exercises · 18 sets</div></div></div></div></div></section>\n'''
+          s=s.replace(marker, workout+marker)
+          s=s.replace('<button data-page="classes">▦<br>Classes</button><button data-page="membership">£<br>Plan</button>', '<button data-page="classes">▦<br>Classes</button><button data-page="workouts">◇<br>Workouts</button><button data-page="membership">£<br>Plan</button>')
+          old='''<script>function openPage(id){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===id))}document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.page)));</script>'''
+          new='''<script>
+          function openPage(id){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===id))}document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.page)));
+          const d=document.getElementById('workoutDate');if(d)d.value=new Date().toISOString().slice(0,10);
+          function metricLabels(card){const t=card.querySelector('.trackingType').value;const rows=card.querySelectorAll('.set-row');rows.forEach(r=>{const a=r.querySelector('.metricA'),b=r.querySelector('.metricB');if(t==='strength'){a.innerHTML='<label>Reps</label><input type="number" value="10">';b.innerHTML='<label>Weight (kg)</label><input type="number" step="0.5" value="10">'}else if(t==='time'){a.innerHTML='<label>Time</label><input type="number" placeholder="Seconds">';b.innerHTML='<label>Note</label><input placeholder="Optional">'}else if(t==='distance'){a.innerHTML='<label>Distance</label><input type="number" step="0.01" placeholder="Metres">';b.innerHTML='<label>Time (sec)</label><input type="number" placeholder="Optional">'}else if(t==='calories'){a.innerHTML='<label>Calories</label><input type="number" placeholder="kcal">';b.innerHTML='<label>Time (min)</label><input type="number" placeholder="Optional">'}else{a.innerHTML='<label>Value</label><input type="number" step="0.01">';b.innerHTML='<label>Unit</label><input placeholder="e.g. lengths">'}})}
+          function wireCard(card){card.querySelector('.trackingType').addEventListener('change',()=>metricLabels(card));card.querySelector('.addSet').addEventListener('click',()=>{const sets=card.querySelector('.sets');const n=sets.children.length+1;const row=sets.firstElementChild.cloneNode(true);row.querySelector('.set-num').textContent=n;sets.appendChild(row);metricLabels(card);});card.addEventListener('click',e=>{if(e.target.classList.contains('removeSet')&&card.querySelectorAll('.set-row').length>1){e.target.closest('.set-row').remove();card.querySelectorAll('.set-num').forEach((x,i)=>x.textContent=i+1)}})}
+          document.querySelectorAll('.exercise-card').forEach(wireCard);
+          document.getElementById('addExercise')?.addEventListener('click',()=>{const root=document.getElementById('exerciseBuilder');const c=root.firstElementChild.cloneNode(true);c.querySelector('.exerciseName').value='';c.querySelector('.sets').innerHTML=c.querySelector('.sets').firstElementChild.outerHTML;c.querySelector('.trackingType').value='strength';root.appendChild(c);wireCard(c);metricLabels(c);c.querySelector('.exerciseName').focus()});
+          document.getElementById('saveWorkout')?.addEventListener('click',()=>{const name=document.getElementById('workoutName').value||'Workout';const exercises=[...document.querySelectorAll('.exercise-card')].filter(c=>c.querySelector('.exerciseName').value.trim());const sets=exercises.reduce((n,c)=>n+c.querySelectorAll('.set-row').length,0);document.getElementById('workoutHistory').insertAdjacentHTML('afterbegin',`<div class="history-item"><b>${name}</b><div class="muted">Just now · ${exercises.length} exercises · ${sets} sets</div></div>`);document.getElementById('saveWorkout').textContent='Saved ✓';setTimeout(()=>document.getElementById('saveWorkout').textContent='Save workout',1200)});
+          </script>'''
+          s=s.replace(old,new)
+          p.write_text(s)
+      - name: Commit workout preview
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add member-preview.html
+          git commit -m "Add flexible workout tracking to member preview" || exit 0
+          git push
