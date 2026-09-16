@@ -1,0 +1,48 @@
+name: Apply Hybrid OS logo
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-brand-logo.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-logo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace placeholder branding with SVG logo
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          old = '<div class="logo"><div class="mark">H</div>Hybrid OS</div>'
+          new = '<div class="logo"><img src="./Hybrid_OS_Sled_Logo.svg" alt="Hybrid OS" style="width:190px;max-width:100%;height:auto;display:block"></div>'
+
+          files = ['index.html', 'onboarding.html', 'member-memberships.html']
+          changed = []
+          for filename in files:
+              path = Path(filename)
+              if not path.exists():
+                  continue
+              text = path.read_text()
+              updated = text.replace(old, new)
+              if updated != text:
+                  path.write_text(updated)
+                  changed.append(filename)
+
+          print('Updated:', ', '.join(changed) if changed else 'nothing to change')
+          PY
+      - name: Commit branding update
+        run: |
+          if git diff --quiet; then
+            echo "No changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html onboarding.html member-memberships.html
+          git commit -m "Use Hybrid OS logo across website"
+          git push
