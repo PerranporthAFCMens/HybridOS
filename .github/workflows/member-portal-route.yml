@@ -1,0 +1,36 @@
+name: Route members to member portal
+on:
+  push:
+    paths:
+      - '.github/workflows/member-portal-route.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Add member role redirect
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old="currentRole=gms[0].role;currentGym=gms[0].gyms;"
+          new="currentRole=gms[0].role;if(currentRole==='member'){window.location.href='./member.html';return}currentGym=gms[0].gyms;"
+          if new in s:
+              print('Member redirect already present')
+          elif old not in s:
+              raise SystemExit('Could not find role assignment anchor')
+          else:
+              p.write_text(s.replace(old,new,1))
+          PY
+      - name: Commit route change
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Route member logins to member portal'
+          git push
