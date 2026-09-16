@@ -1,0 +1,72 @@
+name: Add class staff assignment and staff routing
+
+on:
+  push:
+    paths:
+      - '.github/workflows/add-class-staff-and-staff-route.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch classes and login routing
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('classes.html')
+          s = p.read_text()
+
+          if 'id="staffChecks"' not in s:
+              s = s.replace(
+                '<div class="field"><label>Description</label><textarea id="desc" placeholder="Optional class details"></textarea></div><div class="field"><label>Memberships allowed to use reserved spaces</label><div id="planChecks" class="checks"></div></div>',
+                '<div class="field"><label>Description</label><textarea id="desc" placeholder="Optional class details"></textarea></div><div class="field"><label>Assign gym staff</label><div id="staffChecks" class="checks"></div></div><div class="field"><label>Memberships allowed to use reserved spaces</label><div id="planChecks" class="checks"></div></div>'
+              )
+
+              s = s.replace(
+                "const $=id=>document.getElementById(id);let gym=null,role=null,plans=[],weekStart=startOfWeek(new Date());",
+                "const $=id=>document.getElementById(id);let gym=null,role=null,plans=[],staffOptions=[],weekStart=startOfWeek(new Date());"
+              )
+
+              old_init = "plans=pr.data||[];if(['owner','admin','staff'].includes(role))$('addBtn').classList.remove('hidden');renderPlanChecks();$('loading').classList.add('hidden');$('app').classList.remove('hidden');await loadWeek()}"
+              new_init = "plans=pr.data||[];const sr=await supabase.from('gym_members').select('user_id,role').eq('gym_id',gym.id).eq('is_active',true).in('role',['owner','admin','staff','coach']);const staffIds=(sr.data||[]).map(x=>x.user_id);let staffProfiles=[];if(staffIds.length){const sp=await supabase.from('profiles').select('id,display_name,first_name,last_name').in('id',staffIds);staffProfiles=sp.data||[]}const pm=new Map(staffProfiles.map(x=>[x.id,x]));staffOptions=(sr.data||[]).map(x=>{const p=pm.get(x.user_id)||{};return{user_id:x.user_id,role:x.role,name:p.display_name||[p.first_name,p.last_name].filter(Boolean).join(' ')||x.role}}).sort((a,b)=>a.name.localeCompare(b.name));if(['owner','admin','staff'].includes(role))$('addBtn').classList.remove('hidden');renderPlanChecks();renderStaffChecks();$('loading').classList.add('hidden');$('app').classList.remove('hidden');await loadWeek()}"
+              s = s.replace(old_init, new_init)
+
+              anchor = "function renderPlanChecks(){$('planChecks').innerHTML=plans.length?plans.map(p=>`<label class=\"check\"><input type=\"checkbox\" value=\"${p.id}\"> ${esc(p.name)} · £${(p.price_pence/100).toFixed(2)}</label>`).join(''):'<div class=\"meta\">No active membership plans yet.</div>'}"
+              add = anchor + "\nfunction renderStaffChecks(){$('staffChecks').innerHTML=staffOptions.length?staffOptions.map((p,i)=>`<label class=\"check\"><input type=\"checkbox\" value=\"${p.user_id}\" data-role=\"${p.role}\"> ${esc(p.name)} · ${esc(p.role)}${i===0?'':''}</label>`).join(''):'<div class=\"meta\">No staff or coaches have been added yet.</div>'}"
+              s = s.replace(anchor, add)
+
+              old_rows = "const rows=data||[];$('calendar').innerHTML='';"
+              new_rows = "const rows=data||[];const sessionIds=rows.map(x=>x.session_id);if(sessionIds.length){const ar=await supabase.from('class_session_staff').select('session_id,user_id,assignment_role,is_lead').in('session_id',sessionIds);const uids=[...new Set((ar.data||[]).map(x=>x.user_id))];let aps=[];if(uids.length){const pr=await supabase.from('profiles').select('id,display_name,first_name,last_name').in('id',uids);aps=pr.data||[]}const apm=new Map(aps.map(x=>[x.id,x]));rows.forEach(r=>{r.staff_names=(ar.data||[]).filter(a=>a.session_id===r.session_id).map(a=>{const p=apm.get(a.user_id)||{};return p.display_name||[p.first_name,p.last_name].filter(Boolean).join(' ')||'Staff'})})}$('calendar').innerHTML='';"
+              s = s.replace(old_rows, new_rows)
+
+              old_card = "${s.description?`<div class=\"meta\">${esc(s.description)}</div>`:''}<div class=\"meta\">${s.booked_count}/${s.capacity} booked</div>"
+              new_card = "${s.description?`<div class=\"meta\">${esc(s.description)}</div>`:''}${s.staff_names?.length?`<div class=\"meta\" style=\"margin-top:5px\">Coach: ${esc(s.staff_names.join(', '))}</div>`:''}<div class=\"meta\">${s.booked_count}/${s.capacity} booked</div>"
+              s = s.replace(old_card, new_card)
+
+              old_save = "if(reserved>0&&selected.length){const rr=await supabase.from('class_session_reserved_plans').insert(selected.map(plan_id=>({session_id:data.id,plan_id})));if(rr.error){$('modalMsg').textContent='Class saved, but reserved-plan rules failed: '+rr.error.message;$('modalMsg').className='msg error';$('saveBtn').disabled=false;$('saveBtn').textContent='Save class';return}}$('modal').classList.add('hidden');"
+              new_save = "if(reserved>0&&selected.length){const rr=await supabase.from('class_session_reserved_plans').insert(selected.map(plan_id=>({session_id:data.id,plan_id})));if(rr.error){$('modalMsg').textContent='Class saved, but reserved-plan rules failed: '+rr.error.message;$('modalMsg').className='msg error';$('saveBtn').disabled=false;$('saveBtn').textContent='Save class';return}}const assigned=[...document.querySelectorAll('#staffChecks input:checked')].map((x,i)=>({session_id:data.id,gym_id:gym.id,user_id:x.value,assignment_role:x.dataset.role==='coach'?'coach':'staff',is_lead:i===0}));if(assigned.length){const sa=await supabase.from('class_session_staff').insert(assigned);if(sa.error){$('modalMsg').textContent='Class saved, but staff assignment failed: '+sa.error.message;$('modalMsg').className='msg error';$('saveBtn').disabled=false;$('saveBtn').textContent='Save class';return}}$('modal').classList.add('hidden');"
+              s = s.replace(old_save, new_save)
+              s = s.replace("document.querySelectorAll('#planChecks input').forEach(x=>x.checked=false);weekStart=startOfWeek(starts);", "document.querySelectorAll('#planChecks input,#staffChecks input').forEach(x=>x.checked=false);weekStart=startOfWeek(starts);")
+
+              p.write_text(s)
+
+          idx = Path('index.html')
+          t = idx.read_text()
+          if "./staff.html" not in t:
+              needle = "currentRole=gms[0].role;currentGym=gms[0].gyms;"
+              route = "currentRole=gms[0].role;currentGym=gms[0].gyms;if(currentRole==='member'){location.href='./member.html';return}if(['staff','coach'].includes(currentRole)){location.href='./staff.html';return}"
+              t = t.replace(needle, route)
+              idx.write_text(t)
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add classes.html index.html
+          git diff --cached --quiet || git commit -m "Add staff assignment and staff portal routing"
+          git push
