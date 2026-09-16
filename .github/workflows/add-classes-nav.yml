@@ -1,0 +1,30 @@
+name: Add classes navigation
+on:
+  push:
+    paths:
+      - '.github/workflows/add-classes-nav.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch navigation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace('<button class="active" data-page="dashboard">⌂ Dashboard</button><button data-page="memberships">£ Memberships</button>', '<button class="active" data-page="dashboard">⌂ Dashboard</button><button type="button" onclick="location.href=\'./classes.html\'">▦ Classes</button><button data-page="memberships">£ Memberships</button>')
+          s=s.replace('grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid var(--line);', 'grid-template-columns:repeat(5,1fr);background:#fff;border-top:1px solid var(--line);')
+          s=s.replace('<nav class="mobile-nav"><button class="active" data-page="dashboard">⌂<br>Home</button><button data-page="memberships">£<br>Plans</button>', '<nav class="mobile-nav"><button class="active" data-page="dashboard">⌂<br>Home</button><button type="button" onclick="location.href=\'./classes.html\'">▦<br>Classes</button><button data-page="memberships">£<br>Plans</button>')
+          p.write_text(s)
+          PY
+      - name: Commit navigation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Add Classes to main navigation"
+          git push
