@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1200" viewBox="0 0 1800 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Hybrid OS sled logo</title>
+  <desc id="desc">Transparent logo for Hybrid OS featuring a stylised push sled icon, outlined wordmark, and tagline.</desc>
+  <defs>
+    <linearGradient id="tealGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#19f2da"/>
+      <stop offset="100%" stop-color="#00d9a6"/>
+    </linearGradient>
+    <linearGradient id="whiteGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#eeeeee"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#00c9a6" flood-opacity="0.25"/>
+    </filter>
+    <style>
+      .outline-white { fill: url(#whiteGrad); stroke: #000000; stroke-width: 10; stroke-linejoin: round; paint-order: stroke fill; }
+      .outline-teal { fill: url(#tealGrad); stroke: #000000; stroke-width: 10; stroke-linejoin: round; paint-order: stroke fill; }
+      .tagline { fill: url(#whiteGrad); stroke: #000000; stroke-width: 7; stroke-linejoin: round; paint-order: stroke fill; }
+    </style>
+  </defs>
+
+  <!-- icon -->
+  <g transform="translate(230,80)" filter="url(#shadow)">
+    <!-- teal rails -->
+    <path d="M90 320 L470 380 L470 435 L35 360 Z" fill="url(#tealGrad)" stroke="#000" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M180 300 L560 355 L560 410 L125 340 Z" fill="url(#tealGrad)" stroke="#000" stroke-width="8" stroke-linejoin="round"/>
+
+    <!-- sled frame -->
+    <path d="M540 365 L915 365 L950 440 L560 440 Z" fill="url(#whiteGrad)" stroke="#000" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M530 430 L600 470 L690 530 L640 545 L525 470 Z" fill="url(#whiteGrad)" stroke="#000" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M930 430 L860 470 L770 530 L820 545 L935 470 Z" fill="url(#whiteGrad)" stroke="#000" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M600 535 L535 535 L500 565" fill="none" stroke="#000" stroke-width="12" stroke-linecap="round"/>
+    <path d="M760 535 L845 535 L890 565" fill="none" stroke="#000" stroke-width="12" stroke-linecap="round"/>
+
+    <!-- uprights -->
+    <rect x="685" y="95" width="50" height="340" rx="8" fill="url(#whiteGrad)" stroke="#000" stroke-width="10"/>
+    <rect x="1110" y="95" width="50" height="340" rx="8" fill="url(#whiteGrad)" stroke="#000" stroke-width="10"/>
+
+    <!-- centre post -->
+    <rect x="865" y="235" width="42" height="128" rx="8" fill="url(#whiteGrad)" stroke="#000" stroke-width="10"/>
+
+    <!-- plates -->
+    <ellipse cx="885" cy="255" rx="120" ry="18" fill="#1f2328" stroke="#000" stroke-width="8"/>
+    <path d="M765 255 L1005 255 L1005 290 Q1005 315 985 320 L785 320 Q765 315 765 290 Z" fill="#1f2328" stroke="#000" stroke-width="8"/>
+    <path d="M765 322 L1005 322 L1005 357 Q1005 382 985 387 L785 387 Q765 382 765 357 Z" fill="#1b1f24" stroke="#000" stroke-width="8"/>
+    <path d="M765 389 L1005 389 L1005 424 Q1005 449 985 454 L785 454 Q765 449 765 424 Z" fill="#161a1e" stroke="#000" stroke-width="8"/>
+    <ellipse cx="885" cy="454" rx="120" ry="18" fill="#111417" stroke="#000" stroke-width="8"/>
+  </g>
+
+  <!-- wordmark -->
+  <g transform="translate(55,0)">
+    <text x="20" y="930" class="outline-white" font-family="Montserrat, Arial, Helvetica, sans-serif" font-size="200" font-weight="800" letter-spacing="18">HYBRID</text>
+    <text x="1225" y="930" class="outline-teal" font-family="Montserrat, Arial, Helvetica, sans-serif" font-size="200" font-weight="800" letter-spacing="10">OS</text>
+    <text x="90" y="1080" class="tagline" font-family="Montserrat, Arial, Helvetica, sans-serif" font-size="58" font-weight="700" letter-spacing="8">GYM MANAGEMENT. BUILT FOR MORE.</text>
+  </g>
+</svg>
