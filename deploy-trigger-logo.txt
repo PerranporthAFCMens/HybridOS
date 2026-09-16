@@ -1,1 +1,1 @@
-Trigger GitHub Pages deployment after Hybrid OS logo workflow update.
+Trigger GitHub Pages deployment after Hybrid OS simple brand update.
