@@ -1,0 +1,72 @@
+name: Build classes week view
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/week-view.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Convert class calendar to week timetable
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('classes.html')
+          s = p.read_text()
+          if 'week-timetable' in s:
+              print('Week timetable already applied')
+              raise SystemExit(0)
+
+          # Replace the old card-grid calendar CSS with a real timetable grid.
+          s = re.sub(
+              r'\.calendar\{display:grid;grid-template-columns:repeat\(7,minmax\(0,1fr\)\);gap:10px\}.*?\.empty\{font-size:12px;color:var\(--muted\);padding:12px 2px\}',
+              '''.week-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow)}.week-timetable{--row-h:52px;display:grid;grid-template-columns:68px repeat(7,minmax(128px,1fr));grid-template-rows:58px repeat(34,var(--row-h));min-width:1000px;position:relative}.week-head{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);border-right:1px solid var(--line);display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;font-weight:800}.week-head.today{background:#effcf8;color:#066c59}.week-head .date{display:block;font-size:18px;margin-top:2px}.time-label{grid-column:1;display:flex;justify-content:center;align-items:flex-start;padding-top:5px;color:var(--muted);font-size:11px;border-right:1px solid var(--line);border-bottom:1px solid #f1f3f6;background:#fafbfc}.slot{border-right:1px solid #eef1f5;border-bottom:1px solid #f1f3f6;min-width:0}.slot.hour{border-bottom-color:#dfe4eb}.week-event{z-index:2;margin:2px 4px;border-radius:10px;padding:7px 8px;background:#eefaf7;border:1px solid #b9efe1;overflow:hidden;min-height:46px;box-shadow:0 3px 9px rgba(16,24,40,.07);font-size:11px}.week-event.booked{background:#ecfdf3;border-color:#a6f4c5}.week-event.full{background:#f9fafb;border-color:#d0d5dd}.week-event.cancelled{opacity:.55}.week-event .event-time{font-weight:850;font-size:10px}.week-event h3{font-size:12px;line-height:1.15;margin:3px 0}.week-event .meta{font-size:10px;line-height:1.25;color:var(--muted)}.week-event .status{display:inline-flex;margin-top:4px;padding:2px 5px;border-radius:999px;background:rgba(255,255,255,.75);font-size:9px;font-weight:800}.week-event .btn{width:100%;margin-top:5px;padding:5px 6px;border-radius:8px;font-size:10px}.empty{font-size:12px;color:var(--muted);padding:12px 2px}''',
+              s,
+              count=1,
+              flags=re.S
+          )
+
+          s = s.replace('<div id="calendar" class="calendar"></div>', '<div id="calendar" class="week-scroll"></div>')
+
+          # Remove old responsive calendar column rules and keep the timetable horizontally scrollable on small screens.
+          s = s.replace('@media(max-width:1100px){.calendar{grid-template-columns:repeat(2,minmax(0,1fr))}}', '')
+          s = s.replace('.calendar{grid-template-columns:1fr}.day{padding:14px}', '.week-scroll{margin-left:0}.week-timetable{min-width:900px}')
+
+          new_load = r'''async function loadWeek(){
+const end=addDays(weekStart,7);$('weekLabel').textContent=fmtWeek(weekStart,addDays(weekStart,6));$('calendar').innerHTML='<div class="empty">Loading…</div>';
+const{data,error}=await supabase.rpc('get_class_calendar',{p_gym_id:gym.id,p_from:weekStart.toISOString(),p_to:end.toISOString()});
+if(error){$('calendar').innerHTML='<div class="empty">'+esc(error.message)+'</div>';return}
+const rows=data||[], startHour=5, halfHours=34;
+let html='<div class="week-timetable">';
+html+='<div class="week-head" style="grid-column:1;grid-row:1">Time</div>';
+for(let i=0;i<7;i++){const d=addDays(weekStart,i),today=isoLocalDate(new Date())===isoLocalDate(d);html+=`<div class="week-head ${today?'today':''}" style="grid-column:${i+2};grid-row:1"><div>${new Intl.DateTimeFormat('en-GB',{weekday:'short'}).format(d)}<span class="date">${d.getDate()}</span></div></div>`}
+for(let r=0;r<halfHours;r++){const mins=r*30,hh=startHour+Math.floor(mins/60),mm=mins%60,label=mm===0?String(hh).padStart(2,'0')+':00':'';html+=`<div class="time-label" style="grid-row:${r+2}">${label}</div>`;for(let d=0;d<7;d++)html+=`<div class="slot ${mm===30?'':'hour'}" style="grid-column:${d+2};grid-row:${r+2}"></div>`}
+rows.forEach(s=>{const st=new Date(s.starts_at),en=new Date(s.ends_at),day=(st.getDay()+6)%7,startM=(st.getHours()-startHour)*60+st.getMinutes();if(day<0||day>6||startM<0||startM>=halfHours*30)return;const span=Math.max(1,Math.ceil((en-st)/1800000));const row=Math.floor(startM/30)+2;html+=weekEvent(s,day+2,row,span)});
+html+='</div>';$('calendar').innerHTML=html;
+document.querySelectorAll('[data-book]').forEach(b=>b.onclick=()=>book(b.dataset.book,b));document.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>cancelBooking(b.dataset.cancel,b));
+}
+function weekEvent(s,col,row,span){const booked=s.my_booking_status==='booked',full=Number(s.spaces_left)<=0,reserved=s.reserved_capacity>0;let cls=s.is_cancelled?'Cancelled':booked?'Booked':s.availability_note||`${s.spaces_left} left`;let button='';if(booked)button=`<button class="btn danger" data-cancel="${s.session_id}">Cancel</button>`;else if(!s.is_cancelled)button=`<button class="btn ${s.bookable_for_me?'good':'secondary'}" data-book="${s.session_id}" ${s.bookable_for_me?'':'disabled'}>${full?'Full':s.bookable_for_me?'Book':'Unavailable'}</button>`;return `<article class="week-event ${booked?'booked':''} ${full?'full':''} ${s.is_cancelled?'cancelled':''}" style="grid-column:${col};grid-row:${row}/span ${span}"><div class="event-time">${fmtTime(s.starts_at)}–${fmtTime(s.ends_at)}</div><h3>${esc(s.name)}</h3><div class="meta">${s.booked_count}/${s.capacity} booked${reserved?' · '+s.reserved_capacity+' reserved':''}</div><span class="status">${esc(cls)}</span>${button}</article>`}
+'''
+          s = re.sub(r'async function loadWeek\(\)\{.*?\nfunction card\(s\)\{.*?\nasync function book', new_load + '\nasync function book', s, count=1, flags=re.S)
+
+          p.write_text(s)
+          print('Applied week timetable')
+          PY
+      - name: Commit week view
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add classes.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Convert classes calendar to week timetable"
+          git push
