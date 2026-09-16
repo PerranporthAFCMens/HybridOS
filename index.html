@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0d1321" />
+  <title>Hybrid OS</title>
+  <style>
+    :root{
+      --bg:#f4f7fb;--panel:#fff;--ink:#101828;--muted:#667085;--line:#e5e7eb;
+      --brand:#111827;--accent:#6d5dfc;--accent2:#14b8a6;--success:#16a34a;--warn:#f59e0b;
+      --shadow:0 16px 40px rgba(16,24,40,.08);--radius:22px;
+    }
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+    button,input{font:inherit}.app{min-height:100vh;display:grid;grid-template-columns:260px 1fr}.sidebar{background:#0d1321;color:#fff;padding:26px 20px;display:flex;flex-direction:column;gap:26px;position:sticky;top:0;height:100vh}.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:22px}.mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#9f7aea);display:grid;place-items:center;font-size:21px;box-shadow:0 8px 24px rgba(109,93,252,.35)}.gym-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px}.gym-card small{color:#aeb7c6}.gym-name{font-weight:700;margin-top:5px}.nav{display:grid;gap:8px}.nav button{border:0;background:transparent;color:#aeb7c6;text-align:left;padding:12px 14px;border-radius:14px;cursor:pointer;display:flex;gap:12px;align-items:center}.nav button.active,.nav button:hover{background:rgba(255,255,255,.09);color:#fff}.sidebar-foot{margin-top:auto;color:#98a2b3;font-size:12px}.main{padding:28px 32px 100px;min-width:0}.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:26px}.eyebrow{color:var(--muted);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.09em}.topbar h1{margin:4px 0 0;font-size:30px}.profile{display:flex;align-items:center;gap:12px;background:var(--panel);padding:8px 12px;border-radius:16px;box-shadow:var(--shadow)}.avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#c7d2fe,#a7f3d0);display:grid;place-items:center;font-weight:800}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}.card{background:var(--panel);border:1px solid #edf0f4;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}.hero{grid-column:span 8;min-height:250px;background:linear-gradient(135deg,#121827 0%,#20283a 62%,#302a68 100%);color:#fff;position:relative;overflow:hidden}.hero:after{content:"";position:absolute;width:270px;height:270px;border-radius:50%;background:rgba(109,93,252,.22);right:-70px;top:-60px}.hero h2{font-size:34px;line-height:1.06;margin:12px 0;max-width:520px}.hero p{color:#c6cfdd;max-width:520px}.pills{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}.pill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1);padding:8px 11px;border-radius:999px;font-size:13px}.membership{grid-column:span 4}.status{display:inline-flex;align-items:center;gap:7px;background:#ecfdf3;color:#067647;border-radius:999px;padding:6px 10px;font-weight:700;font-size:13px}.dot{width:8px;height:8px;border-radius:50%;background:#12b76a}.membership h3{font-size:24px;margin:18px 0 4px}.price{font-size:34px;font-weight:800;margin:14px 0}.muted{color:var(--muted)}.stat{grid-column:span 3}.stat .num{font-size:30px;font-weight:800;margin-top:8px}.wide{grid-column:span 7}.side{grid-column:span 5}.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.section-title h3{margin:0;font-size:18px}.link{border:0;background:transparent;color:var(--accent);font-weight:700;cursor:pointer}.class-list,.feed{display:grid;gap:12px}.class{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:16px}.class-time{min-width:58px;text-align:center;background:#f2f4f7;padding:9px;border-radius:12px;font-weight:800}.class-meta{flex:1}.class-meta b{display:block}.book{border:0;background:var(--ink);color:#fff;padding:9px 12px;border-radius:11px;cursor:pointer}.feed-item{display:flex;gap:11px}.feed-item .avatar{width:34px;height:34px;font-size:12px;flex:0 0 auto}.feed-item p{margin:2px 0 0;color:#475467;font-size:14px;line-height:1.45}.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.quick button{border:1px solid var(--line);background:#fff;border-radius:14px;padding:14px;text-align:left;cursor:pointer}.quick button:hover{border-color:#c7d2fe;background:#f8f8ff}.page{display:none}.page.active{display:block}.members{display:grid;gap:10px}.member-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding:14px 0}.member-name{display:flex;align-items:center;gap:10px}.badge{padding:5px 8px;border-radius:999px;background:#f2f4f7;font-size:12px;font-weight:700}.badge.active{background:#ecfdf3;color:#067647}.search{width:100%;border:1px solid var(--line);padding:12px 14px;border-radius:14px;outline:none}.search:focus{border-color:#a5b4fc;box-shadow:0 0 0 4px #eef2ff}.message-shell{display:grid;grid-template-columns:230px 1fr;min-height:520px;padding:0;overflow:hidden}.channels{border-right:1px solid var(--line);padding:18px}.channel{padding:10px 12px;border-radius:12px;cursor:pointer}.channel.active{background:#f2f4f7;font-weight:700}.chat{padding:18px;display:flex;flex-direction:column}.bubble{max-width:72%;background:#f2f4f7;padding:11px 13px;border-radius:16px;margin-bottom:10px}.bubble.me{align-self:flex-end;background:#e7e4ff}.composer{display:flex;gap:10px;margin-top:auto;padding-top:18px}.composer input{flex:1;border:1px solid var(--line);padding:12px;border-radius:14px}.composer button{border:0;background:var(--accent);color:#fff;border-radius:13px;padding:0 16px;font-weight:700}.mobile-nav{display:none}
+    @media(max-width:900px){.app{display:block}.sidebar{display:none}.main{padding:20px 16px 96px}.topbar h1{font-size:25px}.profile .who{display:none}.grid{grid-template-columns:1fr}.hero,.membership,.stat,.wide,.side{grid-column:1}.hero{min-height:auto}.hero h2{font-size:28px}.stat{display:flex;align-items:center;justify-content:space-between}.stat .num{margin:0}.message-shell{grid-template-columns:1fr}.channels{border-right:0;border-bottom:1px solid var(--line);display:flex;overflow:auto;gap:6px}.channel{white-space:nowrap}.mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(4,1fr);bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:20}.mobile-nav button{border:0;background:transparent;padding:8px 4px;color:#667085;font-size:11px}.mobile-nav button span{display:block;font-size:20px;margin-bottom:2px}.mobile-nav button.active{color:var(--accent);font-weight:800}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="mark">H</div> Hybrid OS</div>
+    <div class="gym-card"><small>Current gym</small><div class="gym-name">Harbour Fitness</div></div>
+    <nav class="nav">
+      <button class="active" data-page="home">⌂ Dashboard</button>
+      <button data-page="members">◉ Members</button>
+      <button data-page="community">✦ Community</button>
+      <button data-page="settings">⚙ Gym settings</button>
+    </nav>
+    <div class="sidebar-foot">Hybrid OS prototype<br>Multi-gym platform</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div><div class="eyebrow">Wednesday 16 September</div><h1 id="pageTitle">Good evening, Adam</h1></div>
+      <div class="profile"><div class="avatar">AT</div><div class="who"><b>Adam Turner</b><div class="muted" style="font-size:12px">Gym owner</div></div></div>
+    </header>
+
+    <section class="page active" id="home">
+      <div class="grid">
+        <div class="card hero"><div class="eyebrow" style="color:#b7c0d0">Your gym, one operating system</div><h2>Everything your members need in one place.</h2><p>Memberships, classes, community, payments and communication — built around your gym.</p><div class="pills"><div class="pill">250 members</div><div class="pill">94% active</div><div class="pill">£8,742 monthly recurring</div></div></div>
+        <div class="card membership"><div class="status"><span class="dot"></span> Membership active</div><h3>Unlimited</h3><div class="muted">Harbour Fitness</div><div class="price">£42<span style="font-size:15px;font-weight:600;color:#667085"> / month</span></div><div class="muted">Next payment 1 October</div></div>
+        <div class="card stat"><div class="muted">Members</div><div class="num">250</div></div>
+        <div class="card stat"><div class="muted">Checked in today</div><div class="num">67</div></div>
+        <div class="card stat"><div class="muted">Classes today</div><div class="num">12</div></div>
+        <div class="card stat"><div class="muted">Payment issues</div><div class="num">4</div></div>
+        <div class="card wide"><div class="section-title"><h3>Upcoming classes</h3><button class="link">View schedule</button></div><div class="class-list"><div class="class"><div class="class-time">18:00</div><div class="class-meta"><b>Strength 45</b><span class="muted">Coach Mia · 9/12 booked</span></div><button class="book">Book</button></div><div class="class"><div class="class-time">19:00</div><div class="class-meta"><b>HYROX Engine</b><span class="muted">Coach Sam · 11/16 booked</span></div><button class="book">Book</button></div><div class="class"><div class="class-time">20:00</div><div class="class-meta"><b>Mobility</b><span class="muted">Coach Liv · 6/12 booked</span></div><button class="book">Book</button></div></div></div>
+        <div class="card side"><div class="section-title"><h3>Community</h3><button class="link" data-jump="community">Open</button></div><div class="feed"><div class="feed-item"><div class="avatar">M</div><div><b>Mia</b><p>Friday evening social run is on. Meet at reception at 18:30 🏃</p></div></div><div class="feed-item"><div class="avatar">S</div><div><b>Sam</b><p>New PB board is up — add yours after your next session.</p></div></div><div class="feed-item"><div class="avatar">J</div><div><b>James</b><p>Anyone joining the 07:00 strength class tomorrow?</p></div></div></div></div>
+      </div>
+    </section>
+
+    <section class="page" id="members">
+      <div class="grid"><div class="card" style="grid-column:1/-1"><div class="section-title"><h3>Members</h3><button class="book">+ Add member</button></div><input class="search" placeholder="Search members…" /><div class="members"><div class="member-row"><div class="member-name"><div class="avatar">LM</div><div><b>Lucy Martin</b><div class="muted">Unlimited</div></div></div><span class="badge active">Active</span><span class="muted">Joined Feb 2026</span></div><div class="member-row"><div class="member-name"><div class="avatar">DK</div><div><b>Dan King</b><div class="muted">Off-Peak</div></div></div><span class="badge active">Active</span><span class="muted">Joined Apr 2026</span></div><div class="member-row"><div class="member-name"><div class="avatar">EP</div><div><b>Ella Price</b><div class="muted">Unlimited</div></div></div><span class="badge">Payment due</span><span class="muted">Joined Jun 2026</span></div></div></div></div>
+    </section>
+
+    <section class="page" id="community">
+      <div class="card message-shell"><div class="channels"><div class="channel active"># general</div><div class="channel"># training</div><div class="channel"># socials</div><div class="channel"># coaches</div></div><div class="chat"><div class="section-title"><h3># general</h3><span class="muted">184 members</span></div><div class="bubble"><b>Mia</b><br>Morning team — tonight's Strength 45 has three spaces left.</div><div class="bubble me"><b>You</b><br>Nice one. I’ll put it on the home feed as well.</div><div class="bubble"><b>James</b><br>Can you save me one please? 💪</div><div class="composer"><input id="messageInput" placeholder="Message #general"/><button id="sendBtn">Send</button></div></div></div>
+    </section>
+
+    <section class="page" id="settings">
+      <div class="grid"><div class="card wide"><div class="section-title"><h3>Gym profile</h3></div><div class="quick"><button><b>Branding</b><div class="muted">Logo, colours and member app</div></button><button><b>Membership plans</b><div class="muted">Prices, billing and access</div></button><button><b>Staff & coaches</b><div class="muted">Roles and permissions</div></button><button><b>Payments</b><div class="muted">Connect GoCardless</div></button></div></div><div class="card side"><h3 style="margin-top:0">Platform status</h3><p class="muted">Supabase connected</p><div class="status"><span class="dot"></span> Database healthy</div></div></div>
+    </section>
+  </main>
+</div>
+
+<nav class="mobile-nav">
+  <button class="active" data-page="home"><span>⌂</span>Home</button>
+  <button data-page="members"><span>◉</span>Members</button>
+  <button data-page="community"><span>✦</span>Community</button>
+  <button data-page="settings"><span>⚙</span>Settings</button>
+</nav>
+<script>
+  const titles={home:'Good evening, Adam',members:'Members',community:'Community',settings:'Gym settings'};
+  function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.getElementById('pageTitle').textContent=titles[id]||'Hybrid OS';}
+  document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+  document.querySelectorAll('[data-jump]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.jump)));
+  document.querySelectorAll('.book').forEach(b=>b.addEventListener('click',()=>{if(b.textContent==='Book'){b.textContent='Booked ✓';b.style.background='#16a34a'}}));
+  document.getElementById('sendBtn').addEventListener('click',()=>{const i=document.getElementById('messageInput');if(!i.value.trim())return;const d=document.createElement('div');d.className='bubble me';d.innerHTML='<b>You</b><br>'+i.value.replace(/[<>]/g,'');document.querySelector('.composer').before(d);i.value='';});
+</script>
+</body>
+</html>
