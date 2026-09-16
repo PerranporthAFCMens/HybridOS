@@ -1,0 +1,41 @@
+name: Add member preview mode
+on:
+  push:
+    paths:
+      - '.github/workflows/member-preview.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch member preview and admin link
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path('member.html')
+          s=p.read_text()
+          s=s.replace("const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');const $=id=>document.getElementById(id);let session,gym,profile,membership;",
+          "const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');const $=id=>document.getElementById(id);const previewAsMember=new URLSearchParams(location.search).get('preview')==='member';let session,gym,profile,membership;")
+          s=s.replace("if(gm.data[0].role!=='member'){location.href='./index.html';return}gym=gm.data[0].gyms;",
+          "const viewerRole=gm.data[0].role;if(viewerRole!=='member'&&!(['owner','admin'].includes(viewerRole)&&previewAsMember)){location.href='./index.html';return}gym=gm.data[0].gyms;if(previewAsMember&&['owner','admin'].includes(viewerRole)){document.body.insertAdjacentHTML('afterbegin',`<div id=\"previewBanner\" style=\"position:sticky;top:0;z-index:50;background:#0b1020;color:#fff;padding:10px 14px;text-align:center;font-weight:800\">Member preview mode · <a href=\"./index.html\" style=\"color:#64f0cf\">Back to admin</a></div>`);}")
+          p.write_text(s)
+
+          p=Path('index.html')
+          s=p.read_text()
+          needle='<button data-page="community">✦ Community</button></nav><button id="logoutBtn" class="logout">Sign out</button>'
+          repl='<button data-page="community">✦ Community</button><button type="button" onclick="location.href=\'./member.html?preview=member\'">◎ Member preview</button></nav><button id="logoutBtn" class="logout">Sign out</button>'
+          if needle in s:
+              s=s.replace(needle,repl,1)
+          p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add member.html index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Add owner member portal preview"
+          git push
