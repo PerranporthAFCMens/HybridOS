@@ -55,9 +55,28 @@
     if(byId('communityList')){byId('communityList').className='';byId('communityList').innerHTML=channels}
 
     const members=[
-      ['Alex Taylor','Hybrid Gold'],['Mia Bennett','Unlimited'],['Jack Morgan','Hybrid Lite'],['Sophie Carter','Hybrid Gold'],['Liam Harris','Gym Only'],['Chloe Evans','Unlimited'],['Noah Clarke','Hybrid Lite'],['Ruby Collins','Hybrid Gold']
+      ['Badger Faulks','Hybrid Gold'],
+      ['Harvey Price','Unlimited'],
+      ['Tylorz Alex','Hybrid Lite'],
+      ['Watson Read','Gym Only'],
+      ['Mia Bennett','Unlimited'],
+      ['Jack Morgan','Hybrid Lite'],
+      ['Sophie Carter','Hybrid Gold'],
+      ['Liam Harris','Gym Only'],
+      ['Chloe Evans','Unlimited'],
+      ['Noah Clarke','Hybrid Lite'],
+      ['Ruby Collins','Hybrid Gold'],
+      ['Theo Mitchell','Unlimited'],
+      ['Ella Parker','Hybrid Lite'],
+      ['Finley Cooper','Gym Only'],
+      ['Isla Roberts','Hybrid Gold'],
+      ['Oscar Turner','Unlimited'],
+      ['Grace Phillips','Hybrid Lite'],
+      ['Leo Williams','Gym Only'],
+      ['Freya Davies','Hybrid Gold'],
+      ['Charlie Edwards','Unlimited']
     ];
-    if(byId('membersSummary')) byId('membersSummary').textContent='250 members · demo sample shown';
+    if(byId('membersSummary')) byId('membersSummary').textContent='250 members · 20 demo members shown';
     if(byId('membersList')){byId('membersList').className='';byId('membersList').innerHTML=members.map(m=>memberRow(m[0],m[1])).join('')}
 
     const newPlan=byId('newPlanBtn');
