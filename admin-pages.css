@@ -179,6 +179,92 @@ body:not(:has(#appView)) .main{
   line-height:1.5;
 }
 
+/* Memberships admin page */
+#memberships .toolbar,
+#members .toolbar{
+  padding:2px 2px 0;
+}
+#memberships > .card,
+#members > .card{
+  border-radius:22px!important;
+  padding:20px!important;
+}
+#memberships .section-title,
+#members .section-title{
+  padding-bottom:12px;
+  border-bottom:1px solid var(--hybrid-line);
+  margin-bottom:16px;
+}
+#memberships .plan-grid{
+  grid-template-columns:repeat(3,minmax(220px,1fr));
+  gap:14px;
+}
+#memberships .plan{
+  min-height:190px;
+  display:flex;
+  flex-direction:column;
+  padding:18px;
+}
+#memberships .plan > .tag{margin-bottom:4px}
+#memberships .plan h4,
+#memberships .plan h3{
+  margin:0 0 5px;
+  font-size:18px;
+  letter-spacing:-.015em;
+}
+#memberships .plan .muted{
+  line-height:1.45;
+}
+#memberships .plan .price{
+  margin-top:16px;
+  font-size:30px;
+}
+#memberships .plan-actions{
+  margin-top:auto;
+  padding-top:16px;
+}
+#memberships .notice{
+  margin:0;
+}
+
+/* Members admin page */
+#members .member-row{
+  min-height:72px;
+  padding:14px 2px;
+}
+#members .member-name{
+  gap:12px;
+}
+#members .member-name .avatar{
+  width:42px;
+  height:42px;
+  flex-basis:42px;
+  font-size:13px;
+}
+#members .member-name b{
+  display:block;
+  margin-bottom:2px;
+  font-size:14px;
+}
+#members .member-actions{
+  margin-top:0;
+  justify-content:flex-end;
+}
+#members .membership-card{
+  margin-top:10px;
+  padding:15px;
+  box-shadow:0 8px 20px rgba(16,24,40,.04);
+}
+#members .membership-card h4{
+  margin:0 0 5px;
+  font-size:14px;
+}
+#members .empty{
+  min-height:72px;
+  display:grid;
+  align-items:center;
+}
+
 /* Give the admin home a clearer visual rhythm */
 #dashboard .card:not(.hero){
   background:#fff!important;
@@ -202,6 +288,7 @@ body:not(:has(#appView)) .main{
   #dashboard .stat{grid-column:span 4}
   #dashboard .wide,#dashboard .narrow{grid-column:span 6}
   .plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #memberships .plan-grid{grid-template-columns:repeat(2,minmax(220px,1fr))}
 }
 
 @media(max-width:900px){
@@ -227,13 +314,20 @@ body:not(:has(#appView)) .main{
   }
   #dashboard .num{font-size:30px}
   #dashboard .wide,#dashboard .narrow{min-height:0}
-  .plan-grid{grid-template-columns:1fr}
+  .plan-grid,
+  #memberships .plan-grid{grid-template-columns:1fr}
   .form-grid{grid-template-columns:1fr}
+  #memberships > .card,
+  #members > .card{padding:16px!important;border-radius:18px!important}
+  #memberships .plan{min-height:0}
 }
 
 @media(max-width:560px){
   .toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto}
   .toolbar .btn{align-self:start}
-  .member-row{grid-template-columns:1fr}
-  .member-actions,.membership-actions{justify-content:flex-start}
+  .member-row,
+  #members .member-row{grid-template-columns:1fr}
+  .member-actions,.membership-actions,
+  #members .member-actions{justify-content:flex-start}
+  #members .member-actions{margin-top:6px}
 }
