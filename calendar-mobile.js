@@ -33,7 +33,15 @@
     if(!main||!calendar)return;
     if(!$('.classes-mobile-head')){
       const h=document.createElement('div');h.className='classes-mobile-head';
-      h.innerHTML='<h1>Timetable</h1><div class="classes-mobile-tools"><button class="classes-mobile-tool mobile-jump-today" aria-label="Go to today">▣</button><button class="classes-mobile-tool mobile-filter-btn" aria-label="Filter timetable">▽</button></div>';
+      h.innerHTML=`<h1>Timetable</h1><div class="classes-mobile-tools" aria-label="Timetable actions">
+        <button class="classes-mobile-tool mobile-jump-today" aria-label="Go to today" title="Today">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4.5 9h15M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v12A1.5 1.5 0 0 1 19 20.5H5A1.5 1.5 0 0 1 3.5 19V7A1.5 1.5 0 0 1 5 5.5Z"/><path d="M8 12h3v3H8z" class="tool-fill"/></svg>
+        </button>
+        <span class="classes-mobile-tool-divider" aria-hidden="true"></span>
+        <button class="classes-mobile-tool mobile-filter-btn" aria-label="Filter timetable" title="Filter">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M14 4v4M4 12h3M11 12h9M7 10v4M4 18h8M16 18h4M12 16v4"/></svg>
+        </button>
+      </div>`;
       main.insertBefore(h,main.firstChild);
       const strip=document.createElement('div');strip.className='mobile-date-strip';
       calendar.before(strip);
