@@ -1,0 +1,13 @@
+/* Shared tenant gym branding */
+.tenant-gym-logo{display:block;max-width:190px;width:100%;height:auto;object-fit:contain}
+.tenant-gym-logo-wrap{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tenant-gym-logo-wrap.compact{margin:0 0 8px}
+.tenant-gym-brand-card{display:flex;align-items:center;gap:10px}
+.tenant-top-brand{display:flex;align-items:center;justify-content:center;margin:0 auto 18px;padding:8px 0}
+.tenant-top-brand img{max-width:210px;width:min(58vw,210px);height:auto;display:block}
+.side .tenant-gym-logo{filter:brightness(0) invert(1);max-width:175px}
+.gym .tenant-gym-logo{margin-bottom:8px}
+@media(max-width:900px){
+  .tenant-top-brand{margin:0 auto 14px;padding:2px 0}
+  .tenant-top-brand img{width:min(52vw,180px)}
+}
