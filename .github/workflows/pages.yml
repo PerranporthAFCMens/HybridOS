@@ -49,6 +49,29 @@ jobs:
                   s = s.replace('</body>', js + '</body>', 1)
               p.write_text(s)
           PY
+      - name: Inject shared admin navigation and prevent login flash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          admin_pages = (
+              'index.html',
+              'classes.html',
+              'class-setup.html',
+              'admin-operations.html',
+              'access-settings.html',
+          )
+          js = '<script src="./shared-admin-nav.js" defer></script>'
+          for name in admin_pages:
+              p = Path(name)
+              if not p.exists():
+                  continue
+              s = p.read_text()
+              if js not in s:
+                  s = s.replace('</body>', js + '</body>', 1)
+              if name == 'index.html':
+                  s = s.replace('<section id="authView" class="auth">', '<section id="authView" class="auth hidden">', 1)
+              p.write_text(s)
+          PY
       - name: Inject shared member mobile rail stylesheet
         run: |
           python3 - <<'PY'
