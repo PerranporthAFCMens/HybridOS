@@ -37,6 +37,65 @@ jobs:
                   s = s.replace('</head>', href + '</head>', 1)
                   p.write_text(s)
           PY
+      - name: Harden member preview interactions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('member-preview.html')
+          if p.exists():
+              s = p.read_text()
+              marker = '<!-- member-preview-interaction-hotfix -->'
+              if marker not in s:
+                  hotfix = r'''
+<!-- member-preview-interaction-hotfix -->
+<script>
+(function(){
+  function showPage(id){
+    document.querySelectorAll('.page').forEach(function(el){el.classList.toggle('active',el.id===id)});
+    document.querySelectorAll('[data-page]').forEach(function(el){el.classList.toggle('active',el.dataset.page===id)});
+    document.body.classList.remove('mobile-nav-open');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function init(){
+    document.querySelectorAll('[data-page]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        const target=btn.dataset.page;
+        if(target && document.getElementById(target)){
+          e.preventDefault();
+          showPage(target);
+        }
+      });
+    });
+
+    const close=document.getElementById('homeClassClose');
+    if(close) close.onclick=function(){document.getElementById('homeClassModal')?.classList.add('hidden')};
+
+    const book=document.getElementById('homeClassBook');
+    if(book){
+      book.onclick=function(){
+        const currentlyBooked=book.dataset.booked==='1'||/cancel/i.test(book.textContent);
+        book.disabled=true;
+        book.textContent=currentlyBooked?'Cancelling…':'Booking…';
+        setTimeout(function(){
+          const nextBooked=!currentlyBooked;
+          book.disabled=false;
+          book.dataset.booked=nextBooked?'1':'0';
+          book.textContent=nextBooked?'Cancel booking':'Book class';
+          const msg=document.getElementById('homeClassMsg');
+          if(msg) msg.textContent=nextBooked?'Class booked. Reminder and calendar options are ready.':'Booking cancelled.';
+        },300);
+      };
+    }
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+'''
+                  s = s.replace('</body>', hotfix + '</body>', 1)
+                  p.write_text(s)
+          PY
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
