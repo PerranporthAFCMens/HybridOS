@@ -144,7 +144,9 @@ def add_admin_shell() -> None:
 def add_staff_shell() -> None:
     name = "staff.html"
     s = read(name)
+    s = inject_head(s, "staff-operations.css", f'<link rel="stylesheet" href="./staff-operations.css?v={VERSION}">')
     s = inject_body(s, "staff-shell.js", f'<script src="./staff-shell.js?v={VERSION}" defer></script>')
+    s = inject_body(s, "staff-operations.js", f'<script src="./staff-operations.js?v={VERSION}" defer></script>')
     write(name, s)
 
 
