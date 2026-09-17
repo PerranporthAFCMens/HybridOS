@@ -35,11 +35,15 @@ jobs:
               'member-preview.html','member-memberships.html','integrations.html','social.html','onboarding.html',
           )
           css = f'<link rel="stylesheet" href="./app-consistency.css?v={v}">'
+          guard = f'<script src="./app-stability.js?v={v}"></script>'
           for name in pages:
               p=Path(name)
               if not p.exists(): continue
               s=p.read_text()
-              if 'app-consistency.css' not in s: s=s.replace('</head>',css+'</head>',1)
+              additions=''
+              if 'app-consistency.css' not in s: additions += css
+              if 'app-stability.js' not in s: additions += guard
+              if additions: s=s.replace('</head>',additions+'</head>',1)
               p.write_text(s)
           PY
       - name: Inject shared tenant branding
