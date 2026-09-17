@@ -92,6 +92,9 @@ button{touch-action:manipulation}
 
   .side{
     display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:0;
     position:fixed!important;
     left:0!important;
     top:0!important;
@@ -106,6 +109,10 @@ button{touch-action:manipulation}
     padding-top:max(24px,calc(env(safe-area-inset-top) + 18px))!important;
     padding-bottom:max(24px,calc(env(safe-area-inset-bottom) + 18px))!important;
   }
+  .side .brand,.side .logo,.side .brand-logo{flex:0 0 auto}
+  .side .gym{flex:0 0 auto;width:100%;min-height:0;height:auto!important}
+  .side .nav{flex:0 0 auto;width:100%;min-width:0}
+  .side .nav a,.side .nav button{white-space:normal;overflow-wrap:anywhere}
   body.mobile-nav-open .side,
   body.admin-mobile-open .side,
   body.staff-mobile-open .side{transform:translateX(0)}
