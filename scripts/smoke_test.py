@@ -12,7 +12,7 @@ CRITICAL = {
     "member.html": ["app-consistency.css", "app-stability.js", "social-nav.js"],
     "member-preview.html": ["app-consistency.css", "app-stability.js", "social-nav.js", "member-preview-classes.js"],
     "classes.html": ["app-consistency.css", "app-stability.js", "calendar-mobile.js", "calendar-views.js", "session-manager.js", "class-admin-loader.js"],
-    "staff.html": ["app-consistency.css", "app-stability.js"],
+    "staff.html": ["app-consistency.css", "app-stability.js", "staff-shell.css", "staff-shell.js"],
     "social.html": ["app-consistency.css", "app-stability.js"],
 }
 JS_CHECKS = (
@@ -20,6 +20,7 @@ JS_CHECKS = (
     "calendar-mobile.js", "calendar-views.js", "scheduling-engine.js", "session-manager.js",
     "tenant-branding.js", "pb-workout-enhancements.js", "member-preview-classes.js",
     "class-admin-loader.js", "class-admin-enhancements.js", "class-admin-live-refresh.js",
+    "staff-shell.js",
 )
 
 problems: list[str] = []
@@ -67,6 +68,15 @@ if "$('membershipShort').textContent=" in member:
 if "$('membershipShort')?.textContent=" not in member:
     problems.append("member.html: safe membershipShort assignment missing")
 
+# Old bottom/mobile-back navigation must not survive into the deployed build.
+for name in ("member.html", "member-preview.html", "staff.html"):
+    text = (ROOT / name).read_text(encoding="utf-8") if (ROOT / name).exists() else ""
+    if '<nav class="bottom">' in text:
+        problems.append(f"{name}: legacy bottom navigation still present")
+classes = (ROOT / "classes.html").read_text(encoding="utf-8") if (ROOT / "classes.html").exists() else ""
+if '<a class="mobile-back"' in classes:
+    problems.append("classes.html: legacy mobile back link still present")
+
 # Page-specific code must not leak back into tenant-branding.js.
 tenant = (ROOT / "tenant-branding.js").read_text(encoding="utf-8") if (ROOT / "tenant-branding.js").exists() else ""
 for forbidden in ("fixMemberPreviewClasses", "class-admin-enhancements.js", "class-admin-live-refresh.js"):
@@ -80,6 +90,8 @@ for page in ROOT.glob("*.html"):
         problems.append(f"{page.name}: class-admin-loader.js leaked outside classes.html")
     if page.name != "member-preview.html" and "member-preview-classes.js" in text:
         problems.append(f"{page.name}: member-preview-classes.js leaked outside member-preview.html")
+    if page.name != "staff.html" and "staff-shell.js" in text:
+        problems.append(f"{page.name}: staff-shell.js leaked outside staff.html")
 
 # Guard against accidental reintroduction of multiple deployed app shells.
 if (ROOT / "admin-demo.html").exists():
