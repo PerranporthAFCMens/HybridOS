@@ -154,8 +154,8 @@ def add_scheduler_assets() -> None:
     for asset in ("calendar-mobile.css", "calendar-views.css", "session-manager.css"):
         s = inject_head(s, asset, f'<link rel="stylesheet" href="./{asset}?v={VERSION}">')
     for asset in (
-        "scheduling-engine.js", "calendar-mobile.js", "calendar-views.js",
-        "session-manager.js", "class-admin-loader.js",
+        "scheduling-engine.js", "calendar-mobile.js", "calendar-views.js", "session-manager.js",
+        "class-admin-enhancements.js", "class-admin-live-refresh.js",
     ):
         s = inject_body(s, asset, f'<script src="./{asset}?v={VERSION}" defer></script>')
     write(name, s)
