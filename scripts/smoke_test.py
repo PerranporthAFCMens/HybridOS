@@ -104,8 +104,8 @@ if (ROOT / "class-admin-loader.js").exists():
 if (ROOT / "admin-demo.html").exists():
     problems.append("admin-demo.html should not be deployed; Core + Hybrid Hub are the supported entry points")
 
-# Keep handover/docs aligned with the deployed architecture so stale filenames and
-# old priorities do not re-enter the codebase through a future pickup session.
+# Keep documentation aligned with current architecture without forbidding historical
+# notes that explicitly say an old asset was removed.
 for doc_name in ("README.md", "HANDOVER.md"):
     doc = ROOT / doc_name
     if not doc.exists():
@@ -113,8 +113,8 @@ for doc_name in ("README.md", "HANDOVER.md"):
         continue
     text = doc.read_text(encoding="utf-8")
     for stale in ("member-mobile-rail.css", "staff-shell.css", "class-admin-loader.js"):
-        if stale in text:
-            problems.append(f"{doc_name}: stale removed asset still documented: {stale}")
+        if re.search(rf"(?m)^\s*-\s+`{re.escape(stale)}`\s*(?:—.*)?$", text):
+            problems.append(f"{doc_name}: removed asset is still listed as an active project file: {stale}")
     if "GoCardless is parked" not in text and "GoCardless is deliberately parked" not in text:
         problems.append(f"{doc_name}: current parked GoCardless priority is not documented")
     if "Calendar/session management" not in text and "calendar/session management" not in text:
