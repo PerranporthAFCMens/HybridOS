@@ -2,23 +2,67 @@
 
 Last updated: 2026-09-17
 
-This file is the authoritative continuation brief for Hybrid OS. If a chat, coding session or handoff is interrupted, start here before making changes.
+This is the authoritative continuation brief for Hybrid OS. A fresh coding/chat session should be able to continue from this document without reconstructing the project from old conversations.
 
-## 1. Product goal
+## 1. Product definition
 
-Hybrid OS is a reusable multi-gym SaaS / operating system aimed at independent gyms, especially hybrid-style facilities. It should adapt to each gym rather than forcing one rigid template.
+Hybrid OS is a reusable multi-gym SaaS / operating system for independent gyms and hybrid-style training facilities. It should adapt to each gym rather than force every customer into one rigid operating model.
 
-Current product order:
+The product is now best understood as **one underlying gym operating system with three role-based views**:
 
-1. Memberships + recurring revenue
-2. Timetable/classes
-3. Bookings
-4. Member profiles/workouts/PBs/progress
-5. Staff operations
-6. Community/chat
-7. Later: challenges, referrals, check-in/access, richer analytics and automations
+### Central Admin Hub
 
-The reference gym for the current build is **Puffin Performance**, but the product must remain multi-tenant and reusable by other gyms.
+Admin/owner control over:
+
+- gym setup and branding
+- memberships and revenue configuration
+- members
+- staff and staff logins
+- working hours / rota inputs
+- gross hourly pay
+- staff qualifications/capabilities
+- class/service setup
+- timetable
+- class and PT bookings
+- rooms/areas/equipment
+- reserved membership capacity
+- announcements
+- reports
+- payment/integration setup
+
+### Staff View
+
+Each staff member should have their own login and see their operational working life, including:
+
+- their own class timetable
+- PT bookings
+- working schedule
+- classes assigned to them
+- how full a class is
+- member roster for the class
+- appropriate attendance/operational actions
+
+Staff/coach users should **not** receive full owner/admin commercial controls.
+
+### Member View
+
+Members should see:
+
+- their own account/profile
+- membership
+- payment/financial setup
+- classes and bookings
+- PT bookings
+- workouts
+- PBs/progress
+- Strava/integrations
+- gym access concept
+- announcements
+- community/social chats
+
+The same data should drive all three views. Avoid building separate duplicate applications for Admin, Staff and Member.
+
+---
 
 ## 2. Repositories, hosting and backend
 
@@ -28,9 +72,13 @@ Repository: `PerranporthAFCMens/HybridOS`
 
 Branch: `main`
 
-Live GitHub Pages site:
+Live GitHub Pages Core:
 
 `https://perranporthafcmens.github.io/HybridOS/`
+
+GitHub Actions:
+
+`https://github.com/PerranporthAFCMens/HybridOS/actions`
 
 ### Supabase
 
@@ -44,487 +92,804 @@ Project URL:
 
 Region: London / `eu-west-2`
 
-Do **not** confuse this with older Football PA/Core Supabase projects.
+Do not confuse this with older Football PA/Core Supabase projects.
 
-## 3. Current prototype gym
+---
 
-Gym: **Puffin Performance**
+## 3. Supported environments / demo architecture
 
-Gym ID:
+This is important and should not drift again.
 
-`aec16956-3793-4543-873b-4412646ca1eb`
+There should be **two supported product entry points only**:
 
-Slug:
+1. **Hybrid OS Core development app** — the actual product UI/codebase.
+2. **Hybrid Hub demo** — signs into a dedicated demo tenant and then uses the **same Core UI**.
 
-`puffin-performance`
+Do **not** create or maintain a second standalone Admin sandbox UI.
 
-The current owner account is the real admin login. There are also synthetic test users/members for development.
+The old standalone `admin-demo.html` approach was retired specifically because it became inconsistent with Core.
 
-## 4. Current membership plans
+### Hybrid Hub demo
 
-Puffin Performance currently has these plans:
+Login page:
 
-- Gym Only — £30/month
-- Hybrid Lite — £40/month
-- Unlimited — £65/month
-- Hybrid Gold — £80/month
+`https://perranporthafcmens.github.io/HybridOS/demo-login.html`
 
-Premium/reserved class-space testing currently uses Unlimited and Hybrid Gold as the higher-access examples.
+Intentionally public demo credentials:
 
-## 5. Frontend pages
+- Email: `demo@hybridhub.test`
+- Password: `HybridHubDemo!26`
+
+These credentials are demo-only and must never be reused for a real account.
+
+The login signs into Supabase and opens the normal Hybrid OS Core Admin UI.
+
+### Current tenants
+
+Original development tenant:
+
+- Name: **Puffin Performance**
+- ID: `aec16956-3793-4543-873b-4412646ca1eb`
+- Slug: `puffin-performance`
+- Active gym users last checked: 21
+
+Hybrid Hub demo tenant:
+
+- Name: **Hybrid Hub**
+- ID: `242f57c2-6e37-4977-b3c5-1c87de7d0b98`
+- Slug: `hybrid-hub-demo`
+- Active gym users last checked: 21
+
+The demo tenant exists in the same Supabase project but is separate gym data.
+
+### Member preview caveat
+
+`member-preview.html` still exists. Treat it as a **member-experience development helper**, not as another admin demo product.
+
+Long-term, `member.html` should be the canonical member UI and a safe preview mechanism should reuse it properly.
+
+---
+
+## 4. Current stack
+
+- static HTML/CSS/JavaScript prototype
+- Supabase database/auth/storage/realtime foundation
+- GitHub source
+- GitHub Pages hosting
+- GoCardless scaffolded but not connected live
+- Strava scaffolded but not connected with production credentials
+- mobile-first direction
+
+Longer term, a framework such as Next.js + TypeScript + Supabase remains sensible once feature shape stabilises, but the static build is being retained for speed at this stage.
+
+---
+
+## 5. Main frontend files/pages
 
 ### `index.html`
 
-Main auth + owner/admin dashboard.
+Main authentication + Central Admin Hub/dashboard.
 
-Current areas include:
+Current/related areas include:
 
-- authentication
+- auth
 - dashboard
 - memberships
 - members
-- community
-- link to classes
-- link to member preview
+- navigation to classes
+- navigation to class setup
+- navigation to staff/resources
+- community/admin areas
 
-Owners/admins remain on this page after login.
+Owners/admins use this as the main entry point after login.
 
 ### `onboarding.html`
 
-Gym setup/onboarding prototype.
+Gym onboarding prototype.
 
-Intended onboarding flow:
+Target onboarding sequence:
 
-- gym details
+- gym name/address/contact/social
 - services
-- logo / colours
-- membership plans
+- logo / icon / colours
+- starter membership plans
 - class settings
 - GoCardless
 - reveal: “Your gym is ready.”
 
+Branding upload should eventually be first-class and tenant-driven rather than hardcoded.
+
 ### `classes.html`
 
-Class calendar and booking area.
+Timetable / class scheduling / bookings page.
+
+Current concepts:
+
+- week-based timetable
+- add class/session
+- class capacity
+- reserved premium spaces
+- release reserved spaces before class
+- assign staff
+- member booking/cancel backend
+- class template selection from `class_types`
+
+There have recently been bugs around newly-created class types not refreshing into the Add Class selector. `class-admin-live-refresh.js` was added to force a fresh Supabase class-library load when Add Class opens.
+
+### `class-setup.html`
+
+Dedicated Class Setup workspace. This replaced the idea of keeping class setup as only a popup.
+
+Reason: classes may have several dependencies and need a real configuration area.
+
+Current setup supports:
+
+- class name
+- member-facing description
+- level: Beginner / Intermediate / Advanced / All levels
+- default duration
+- default capacity
+- multiple staff capability requirements
+- multiple room/equipment resource requirements
+- no dependencies if appropriate
+- summary of selected dependencies
+- class library on the left
+- edit existing class types
+
+**Current known UX item:** user requested a visible **Back to Classes** button on this page. The page already has a Classes link in the desktop sidebar, but there is no explicit back button at the top/mobile. A prior attempted write was rejected safely by GitHub due to a stale SHA; the page was not overwritten. Add this button next.
+
+### `admin-operations.html`
+
+Current Staff & Resources control area.
+
+This is the beginning of the Central Admin operating layer.
+
+Current intent/functionality includes:
+
+- staff records
+- staff login creation/access
+- role: staff/coach etc.
+- job title
+- gross hourly pay
+- standard days/hours worked
+- capabilities/qualifications
+- rooms/areas/equipment
+- resource capacity or no fixed occupancy
+- resource double-booking behaviour
+- notes
+- service/dependency relationships
+
+### `staff.html`
+
+Staff operational portal.
 
 Current direction:
 
-- week view rather than seven stacked day cards
-- Monday–Sunday layout
-- time-based positioning
-- mobile horizontal scrolling
-- class capacity
-- reserved premium spaces
-- release reserved spaces before class if configured
-- add class
-- staff assignment
-- member book/cancel
-
-The backend booking logic exists and should be preserved.
+- assigned classes today/upcoming
+- operational schedule
+- roster access
+- eventually PT bookings/work schedule
+- no owner-level commercial clutter
 
 ### `member.html`
 
-Real member portal.
+Real member portal, role-gated to member users.
 
-It is role-gated to actual `member` gym users.
-
-Current sections:
+Current/target areas:
 
 - Home
 - Classes
 - Workouts
 - PBs
 - My membership
+- Community
+- Integrations
 - Profile
-
-Workouts are now wired to Supabase for save/load/history/delete. PBs have their own icon-led page and persistent records.
-
-The previous attempt to let owners preview this page using `?preview=member` was unreliable in practice. Do not depend on this route for owner preview until it is properly fixed.
 
 ### `member-preview.html`
 
-Standalone owner-safe member preview.
+Member-facing development preview with Hybrid Hub presentation/hotfixes. It is useful for quick iteration but is transitional and should not become a separate product architecture.
 
-Use this for design/product iteration without changing roles:
+### `integrations.html`
 
-`https://perranporthafcmens.github.io/HybridOS/member-preview.html`
+Member integrations area including Strava scaffold.
 
-This page currently contains sample member data and now includes:
+### `demo-login.html`
 
-- Home
-- Classes
-- Workouts
-- Membership
-- Community
-- Profile
-
-It has a clear Back to admin route.
-
-This is currently the best place to prototype the member experience quickly.
-
-### `staff.html`
-
-Staff operational portal.
-
-Direction/current behaviour:
-
-- staff/coach-focused view
-- today/upcoming assigned classes
-- roster access
-- less admin/revenue clutter than owner view
+Hybrid Hub demo entry point. This should only perform demo login/entry and then use Core.
 
 ### `member-memberships.html`
 
-Older standalone membership page. Treat as transitional / legacy. The aim is to consolidate member functionality into the main member portal.
+Legacy/transitional membership page. Long-term functionality should live in the canonical member portal.
 
-## 6. Branding state
+---
 
-The previous sled logo is not the desired long-term direction.
+## 6. Branding model
 
-Current Hybrid OS UI branding has been simplified to:
+Two distinct concepts:
 
-- an abstract triangular mark
-- six line strokes
-- simple `HYBRID OS` wordmark
+- **Hybrid OS** = SaaS/platform product brand
+- **Hybrid Hub** = current demo/prospect gym tenant brand
 
-This should remain the product identity for now.
+Current official Hybrid Hub assets:
 
-Gym-specific branding should be separate.
+- `assets/hybrid-hub-mark.svg`
+- `assets/hybrid-hub-logo-horizontal.svg`
 
-The current Puffin Performance source image included “Hybrid Hub”. The desired future gym logo is a reconstructed clean version that removes “Hybrid Hub” and retains the Puffin Performance identity. That reconstruction has **not yet been finalised or uploaded**.
+The intended self-onboarding branding model is:
+
+- main logo
+- optional icon/mark
+- optional light/dark variants
+- primary/secondary colours
+- live preview
+- automatic use across Admin, Staff, Member, emails, booking pages and eventually mobile app
+
+Current implementation still has Hybrid Hub-specific hardcoding in `tenant-branding.js` and deployment-time transforms. This is temporary technical debt.
+
+Do not rename Hybrid OS platform/repo/backend to Hybrid Hub.
+
+---
 
 ## 7. Core database model
 
-Important public tables currently include:
+Important existing public tables include:
+
+### Tenant / identity
 
 - `gyms`
 - `profiles`
 - `gym_members`
 - `members`
+
+### Membership/revenue
+
 - `membership_plans`
 - `memberships`
+- `payment_records`
+- GoCardless/provider groundwork
+
+### Community
+
 - `channels`
 - `channel_members`
 - `messages`
+
+### Classes/bookings
+
+- `class_types`
 - `class_sessions`
 - `class_bookings`
 - `class_session_reserved_plans`
 - `class_session_staff`
-- `payment_records`
+
+### Staff/operations
+
+- `staff_profiles`
+- `staff_working_hours`
+- `capabilities`
+- `staff_capabilities`
+- `resources`
+- `service_requirements`
+
+### Workouts/PBs
+
 - `workout_sessions`
 - `workout_entries`
 - `workout_sets`
 - `personal_bests`
 
-GoCardless/private webhook groundwork also exists outside the normal public UI flow.
+### Notifications/calendar
 
-## 8. Domain members vs auth users
+- `notification_preferences`
+- `member_notifications`
+- `calendar_feed_tokens`
 
-This is an important architectural transition.
+### Strava
 
-`public.members` exists as the gym-domain member record.
+- `strava_connections`
+- `strava_activities`
+- private token/OAuth/webhook tables
 
-Key fields include:
+---
 
-- `id`
-- `gym_id`
-- nullable `user_id`
-- name/display fields
-- email
-- phone
-- status
-- joined/timestamps
+## 8. Staff data model
 
-`memberships.member_id` was added so memberships can increasingly link to domain members rather than depending solely on auth users.
+The current staff concept is deliberately more than “a coach name on a class”.
 
-There are currently synthetic auth users corresponding to seeded test members. This was done to make existing auth-user-based UI easier to test.
+Each staff member should eventually have:
 
-Long-term direction:
+- their own login
+- role
+- staff profile
+- job title
+- gross hourly pay
+- normal working schedule by weekday
+- capabilities / qualifications
+- class/PT assignments
+- eventually exceptions/leave/rota overrides
 
-- `members` should be the gym/member source of truth
-- auth should be linked only when login is required
-- dashboards should distinguish **Members** from **Gym users/logins/staff**
-- remove temporary duplication once frontend migration is complete
+Capabilities are reusable gym-defined records.
 
-## 9. Class booking architecture
+Examples:
 
-### Tables
+- Spin Instructor
+- Level 3 PT
+- Yoga
+- Olympic Lifting
+- First Aid
 
-`class_sessions`
+`staff_capabilities` links staff to what they are qualified/allowed to deliver.
 
-Important fields:
+When assigning a class, Hybrid OS should eventually only offer staff who:
+
+1. are working/available at that time
+2. are not already booked elsewhere
+3. hold all required capabilities for that class/service
+
+---
+
+## 9. Rooms / areas / equipment model
+
+Resources are first-class objects in `resources`.
+
+They may represent:
+
+- Spin Room
+- Main Studio
+- PT Bay
+- Sled Track
+- treatment room
+- individual or grouped equipment
+
+A resource can have:
+
+- type
+- name
+- capacity, or no fixed occupancy
+- active status
+- double-booking rule
+- notes
+
+The long-term scheduler should treat non-shareable resources as bookable calendar entities and reject overlapping allocations.
+
+Example:
+
+**Spin Room** — capacity 10, no double booking.
+
+---
+
+## 10. Services / class dependency model
+
+A class/service should be configured once, then scheduled repeatedly.
+
+Example target definition:
+
+**Spin**
+
+- 45 minutes
+- All levels
+- member-facing description
+- capacity 10
+- requires Spin Instructor capability
+- requires Spin Room
+- potentially requires 10 bikes
+- 2 places may be reserved for Gold members at session level
+
+Current `service_requirements` supports linking a class type to:
+
+- capability
+- resource
+- quantity
+
+The dedicated Class Setup UI currently supports **multiple** capability and resource selections.
+
+### Important current limitation
+
+Although `service_requirements.quantity` exists, the Class Setup UI currently inserts each selected requirement with `quantity: 1`.
+
+For scenarios such as “10 bikes”, add a quantity control per resource requirement rather than creating 10 resource rows manually.
+
+---
+
+## 11. Timetable / scheduling target architecture
+
+The calendar should become the operational centre of Hybrid OS.
+
+### Admin week view
+
+Admin should be able to view a full gym week and quickly see:
+
+- class/service
+- time
+- instructor
+- room/resource
+- capacity/booked count
+- premium reserved spaces
+
+Staff indicator should be visually clear in the top-left of each class block.
+
+### Filtered views
+
+Required future views:
+
+- **Gym** — everything
+- **Staff member** — that person’s week
+- **Resource** — e.g. Spin Room week
+
+### Dependency enforcement
+
+When Admin schedules Spin at Tuesday 18:00, Hybrid OS should check:
+
+- class requirements
+- is required room/equipment available?
+- is an appropriately qualified staff member working?
+- is that staff member free?
+- is the resource already booked?
+- does resource capacity affect class capacity?
+
+Only valid combinations should be confirmable.
+
+This dependency enforcement is **not fully implemented yet**. Current setup stores the requirements; timetable scheduling is the next major integration point.
+
+---
+
+## 12. Class booking architecture
+
+Important tables:
+
+### `class_sessions`
+
+Includes concepts such as:
 
 - gym/session identity
 - name/description
 - starts_at / ends_at
 - capacity
-- reserved_capacity
-- reserved_release_minutes_before
-- coach_user_id
-- is_cancelled
-- created_by
+- reserved capacity
+- reserved release timing
+- coach/created-by/cancelled state
 
-`class_bookings`
+### `class_bookings`
 
-Important fields:
+Member booking/cancellation state.
 
-- gym_id
-- session_id
-- user_id
-- status
-- booked_at
-- cancelled_at
+### `class_session_reserved_plans`
 
-`class_session_reserved_plans`
+Controls which plans can use protected/premium spaces.
 
-Used to identify which membership plans can use protected/premium class capacity.
+### `class_session_staff`
 
-`class_session_staff`
-
-Supports multiple staff assignments per session and lead assignment.
+Supports staff assignments per session, including lead assignment.
 
 ### RPCs
-
-Current class RPCs include:
 
 - `get_class_calendar`
 - `book_class_session`
 - `cancel_class_booking`
 
-Booking logic was designed to lock/check capacity to reduce overbooking risk.
+Note: `get_class_calendar` returns `session_id`, not `id`.
 
-### Reserved-space model
+### Reserved-space example
+
+Spin capacity = 10
+
+Gold reserved = 2
+
+General members can fill general capacity while eligible Gold members can access protected spaces until any configured release time.
+
+---
+
+## 13. Member booking UX direction
+
+The member home should not nag members to inspect their membership.
+
+Preferred experience:
+
+- announcement first
+- training/gym activity front and centre
+- member can browse class details
+- class popup/detail shows description + level
+- if plan includes class → Book
+- if not → contextual upgrade prompt
 
 Example:
 
-- total class capacity = 20
-- reserved capacity = 5
-- standard members can fill normal/general spaces
-- premium-eligible members can access protected places
-- reserved capacity can release X minutes before class
+“Classes aren’t included in your current plan. Upgrade to Hybrid Lite — £40/month to book this class.”
 
-### Seeded timetable test pattern
+Ideally also show price delta, e.g. “Upgrade for £10 more per month.”
 
-The prototype has used several daily class times for visual testing:
+Class difficulty/comfort indicators should be visible:
 
-- 06:00–07:00 — Early Engine
-- 07:15–08:15 — Hybrid Strength
-- 16:00–16:45 — Express Conditioning
-- 17:30–18:30 — Hybrid Conditioning
-- 19:00–20:00 — Evening Engine
+- Beginner
+- Intermediate
+- Advanced
+- All levels
 
-## 10. Workouts — newest area
+Descriptions should come from saved `class_types`, not hardcoded frontend dictionaries.
 
-This area is now live in the real member portal and remains an active development focus.
+---
 
-Requirement: workout tracking must **not** assume every exercise is sets/reps/weight.
+## 14. Gym access concept
 
-Examples:
+Member experience includes a key/door-access concept.
 
-- Bicep curls — sets + reps + kg
-- Plank — sets + time
-- Row — distance and/or time
-- Run — distance/time
-- Calories — machine output
-- Swimming — lengths/custom unit
+Current member preview has a demo-only weekly code presentation.
 
-### Backend
+Production direction:
 
-The workout backend has now been added using:
+- key icon/access area in member UI
+- code stored privately/server-side
+- validate signed-in user
+- validate active membership/access entitlement
+- optional re-auth/passkey/WebAuthn/biometric-backed OS auth
+- temporary reveal only
+- log reveal event without logging the code
+- Admin rotates/manages code
+
+Do not implement production access codes as static client-side generated values.
+
+---
+
+## 15. Workouts and PBs
+
+Workout tracking must remain flexible.
+
+Supported metric concepts:
+
+- reps + weight
+- time
+- distance
+- calories
+- custom value/unit
+
+Tables:
 
 - `workout_sessions`
 - `workout_entries`
 - `workout_sets`
 - `personal_bests`
 
-`workout_sets` supports flexible metrics including:
+Examples:
 
-- `reps`
-- `weight_kg`
-- `duration_seconds`
-- `distance_m`
-- `calories`
-- `custom_value`
-- `custom_unit`
-- `notes`
+- curls — sets/reps/kg
+- plank — time
+- 5K — distance/time
+- rowing — distance/time
+- machine calories
+- swimming lengths/custom unit
 
-### Preview UI
+PB direction supports both higher-is-better and lower-is-better records.
 
-`member-preview.html` now includes a Workouts section with:
+Caution: race/time PBs usually need lower-is-better while endurance holds may use higher-is-better. Do not blindly use MAX for all timed PBs.
 
-- Add workout
-- Workout name/date
-- Exercise name
-- tracking type selector
-- add/remove sets
-- dynamic metric labels/fields
-- recent workout history preview
+---
 
-Tracking options currently include:
+## 16. Strava scaffold
 
-- Reps + weight
-- Time
-- Distance
-- Calories
-- Custom
+Current tables:
 
-The real `member.html` now saves workout sessions, exercises and sets to Supabase, loads workout history, supports delete, and automatically updates straightforward higher-is-better PBs for weight/distance/calories/custom metrics. Time PBs are not auto-inferred because some timed PBs are lower-is-better (for example a 5K) while others are higher-is-better (for example a plank).
+- `strava_connections`
+- `strava_activities`
+- private Strava token/OAuth/webhook storage
 
-A dedicated `personal_bests` table and PB page now support manual PB records for weight, reps, time, distance, calories and custom units, with `higher` or `lower` comparison direction.
+Edge Function direction includes:
 
-## 11. Staff assignments
+- connect
+- callback
+- webhook
+- manual sync
+- manual push
 
-Classes can be assigned to eligible gym staff.
+Decision that must be preserved:
 
-Supported operational role intent:
+- **Strava → Hybrid OS:** automatic/webhook-driven is acceptable once connected.
+- **Hybrid OS → Strava:** never automatic. Member must explicitly choose **Add to Strava** per workout.
 
-- owner
-- admin
-- staff
-- coach
+Production credentials are not yet connected.
 
-Staff should only see data appropriate to their role and assigned sessions.
+Known area to recheck: outbound `strava-push` historically referenced `strava_athlete_id` while schema uses `athlete_id`.
 
-A later step should improve staff management/invites because class assignment currently depends on eligible users already existing in the gym.
+---
 
-## 12. GoCardless state
+## 17. GoCardless / payments
 
-GoCardless is **not connected live yet**.
+GoCardless is not connected live yet.
 
-Groundwork exists for:
+Architecture exists for:
 
-- provider connection records
+- provider connections
 - payment records
 - provider IDs/statuses
 - sandbox/live separation
-- private webhook event storage
+- private webhook events
 
-Do not put GoCardless secrets in frontend code.
+Before connecting:
 
-Before wiring it live:
-
-- check current GoCardless docs
-- confirm current OAuth/connection model
-- use server-side/Edge Function logic
+- use current GoCardless docs
+- use server-side / Edge Function logic
 - verify webhook signatures
-- make webhook processing idempotent
-- keep bank/payment credentials server-side/provider-side
+- make processing idempotent
+- keep secrets/bank information out of browser code
 
-## 13. Security notes that must not be lost
+Do not represent “manual confirmed” payment semantics as necessarily equal to genuinely settled payment without deliberate business rules.
 
-- RLS must be enabled/maintained on exposed tables.
-- Grants matter as well as RLS.
+---
+
+## 18. Domain members vs auth users
+
+`public.members` is intended to become the gym-domain source of truth.
+
+There are currently synthetic auth users because older UI paths were built around auth-user records.
+
+Long-term direction:
+
+- member domain record exists whether or not member logs in
+- nullable auth linkage
+- logins only where required
+- eliminate duplicate “domain member + auth member” representations
+- dashboards distinguish members from gym users/staff accounts
+
+This remains technical debt.
+
+---
+
+## 19. Notifications/calendar
+
+Confirmed tables:
+
+### `notification_preferences`
+
+Includes concepts such as:
+
+- booking confirmation
+- class reminders
+- reminder minutes
+- push enabled
+- calendar sync enabled
+
+### `member_notifications`
+
+Notification records.
+
+### `calendar_feed_tokens`
+
+Calendar feed support.
+
+A `class-calendar` Edge Function exists and should be security-reviewed before future changes.
+
+---
+
+## 20. Security notes
+
+Do not lose these:
+
+- RLS on exposed tables.
+- SQL grants and RLS are separate; both must be correct.
 - Never use user-editable metadata for authorization.
-- Service/secret keys must never be used in browser code.
+- Secret/service-role keys never belong in frontend code.
 - Views should generally use `security_invoker=true` where appropriate.
-- Security-definer functions should be reviewed carefully before production.
-- Existing class RPC/security-definer warnings need a later deliberate review rather than being ignored.
-- Current profile access is too broad for production: shared-gym profile access can expose fields such as phone/DOB. This must be redesigned before real sensitive data is introduced.
-- Supabase leaked-password protection was unavailable on the current free plan at the time of setup.
+- Review security-definer RPCs deliberately before production.
+- Current profile RLS is broader than acceptable for real sensitive data; same-gym users can potentially select fields such as phone/DOB. Redesign privacy before rollout.
+- Production payments/access codes/integration secrets remain server/private.
+- Demo credentials are public and must be isolated from real data/privileges.
 
-## 14. Current user/product preferences for implementation
+Recent permissions issue encountered during operations build:
 
-When continuing this project:
+RLS policies existed on new capabilities/resources tables but base authenticated grants were initially missing. This produced `permission denied for table ...` errors. Grants were then added. Remember to check **both grants and RLS** whenever new tables are added.
 
-- prioritise visible working progress
-- avoid lengthy theoretical planning unless needed
-- make practical defaults rather than asking obvious questions
-- preserve working behaviour while improving it
+---
+
+## 21. GitHub Pages deployment technical debt
+
+`.github/workflows/pages.yml` currently still performs deployment-time file mutations, including:
+
+- tenant-branding CSS/JS injection
+- member mobile stylesheet injection
+- Hybrid Hub member-preview transformations
+- member-preview interaction hotfixes
+
+This should be cleaned up.
+
+Target direction:
+
+- source files contain their real CSS/JS/branding hooks
+- Pages workflow becomes plain checkout → configure → upload → deploy
+- do not keep adding transformation snippets to Actions
+
+Current direct-source work should be preferred.
+
+---
+
+## 22. GitHub write discipline
+
+There was a recent harmless 409 while trying to add a Class Setup back button. Cause: the file changed after it had been fetched, so the SHA supplied to GitHub was stale.
+
+GitHub correctly rejected the write; the live source was **not overwritten**.
+
+Rule for future edits:
+
+1. fetch current file
+2. use the returned current blob SHA
+3. make the edit immediately
+4. if a 409 occurs, fetch again and reconcile rather than force-overwriting
+
+---
+
+## 23. Current known UI/functional issues
+
+At handover time:
+
+1. **Class Setup needs an explicit Back to Classes button**, especially for mobile. Sidebar link exists on desktop.
+2. **Class Setup resource quantity UI is missing** even though the DB has `quantity`; selected dependencies currently save quantity 1.
+3. **Timetable dependency enforcement is not yet wired**. Requirements are stored, but Add Class still needs to actively constrain staff/resources and check conflicts.
+4. **Class template refresh has been fragile**. Live refresh helper exists; verify class library and Add Class always show the same active class types.
+5. **Class descriptions/levels should flow all the way into Member class details** from `class_types`, replacing hardcoded preview descriptions.
+6. **Staff week/resource week calendar views are not built yet**.
+7. **PT bookings/scheduling are conceptually required but not yet built into the same dependency engine**.
+8. **Dynamic tenant branding is not complete**; Hybrid Hub is still hardcoded in transitional frontend code.
+9. **Profile privacy/RLS needs redesign before real customer data**.
+10. **Pages workflow still contains deployment-time mutation hacks**.
+
+---
+
+## 24. Current build priority
+
+Recommended pickup order now:
+
+1. Add explicit **Back to Classes** button to `class-setup.html` without overwriting newer changes.
+2. Finish Class Setup properly:
+   - per-resource quantity
+   - cleaner dependency editor
+   - ensure save/load consistency
+3. Integrate dependencies into **Add Class / timetable scheduling**:
+   - qualified staff only
+   - working-hours/availability check
+   - resource availability check
+   - conflict prevention
+   - required resource assignment saved to the scheduled session model
+4. Redesign timetable into the intended operational calendar:
+   - full week
+   - staff indicator top-left on cards
+   - Gym / Staff / Resource views
+5. Expand Staff View to consume that exact schedule.
+6. Add PT booking/service scheduling on the same engine.
+7. Feed real class descriptions/levels/dependencies into Member class details.
+8. Continue member plan eligibility/upgrade flow.
+9. Dynamic tenant branding/self-onboarding.
+10. Remove GitHub Actions mutation hacks and use source-side implementation only.
+11. Profile privacy/domain-member cleanup.
+12. GoCardless connection after core operations are stable.
+
+---
+
+## 25. Current implementation philosophy
+
+When continuing:
+
+- action over long planning
+- visible progress quickly
+- practical defaults
+- avoid unnecessary questions
 - mobile-first
-- direct changes to GitHub/Supabase are preferred when available
-- never claim deployment is live until verified
+- preserve working behaviour
+- patch GitHub/Supabase directly where appropriate
+- Core and demo must remain consistent because demo uses Core
+- no new parallel sandbox app
+- verify deploy state before saying something is live
+- use source files, not one-off deployment mutations
 
-## 15. Immediate next priorities
+---
 
-Recommended pickup order from this handover:
+## 26. Clean restart instructions
 
-1. **Workouts:** polish the now-live save/load/history flow; add workout edit/detail view and stronger transactional save behaviour.
-2. **PBs/progress:** build PB history/automatic record detection further, then add progress charts, volume, streaks and attendance.
-4. **Member portal:** continue consolidating preview features into the real role-gated member portal.
-4. **Classes:** verify/polish the week view on mobile and desktop; add recurring class creation rather than manually creating every session.
-5. **Bookings:** improve direct booking UX inside the member portal so members do not need to jump between pages.
-6. **Staff:** polish roster/attendance/no-show/check-in flows and staff assignment UX.
-7. **Members architecture:** migrate UI fully toward `public.members` and remove temporary auth-user duplication.
-8. **Branding:** add a clean Puffin Performance gym logo separately from the Hybrid OS product mark.
-9. **Security:** tighten profile privacy and review security-definer RPC exposure before production.
-10. **Payments:** connect GoCardless only after the core membership/member flows are stable.
-
-## 16. Known issues / cautions
-
-- Owner preview through `member.html?preview=member` was not dependable. Use `member-preview.html` for now.
-- `member-preview.html` uses demo/sample content and should not be mistaken for the real logged-in member data layer yet.
-- `member-memberships.html` is transitional.
-- Test-member/auth duplication is temporary technical debt.
-- Static HTML/JS has enabled rapid iteration but will become awkward as the product grows.
-- A future migration to Next.js + TypeScript + Supabase remains sensible once the feature shape stabilises.
-
-## 17. Last known recent commits / milestones
-
-Recent work immediately before this handover included:
-
-- simplified Hybrid OS branding
-- standalone member preview creation
-- owner/admin Member Preview link pointing to standalone preview
-- workout backend migration
-- flexible workout tracking UI added to member preview
-- real member workout persistence and history
-- `personal_bests` table + dedicated PB page with metric icons
-
-The workout preview milestone commit was:
-
-`7c8dde602ae7b02eebe300e13da314abef08d3c5`
-
-Do not assume this is the current HEAD after this documentation update; always fetch `main` before modifying files.
-
-## 18. Definition of a clean restart
-
-A fresh session should be able to continue by doing only this:
+A fresh session should:
 
 1. Read `README.md`.
 2. Read this `HANDOVER.md`.
-3. Fetch the current `main` branch versions of the file being changed.
-4. Confirm relevant Supabase schema before DDL/data changes.
-5. Continue from the Immediate next priorities above.
+3. Fetch current `main` versions of files before editing.
+4. Confirm relevant Supabase schema before DDL.
+5. Confirm whether the requested change is for Core, remembering the Hybrid Hub demo should inherit Core behaviour automatically.
+6. Continue from the Current build priority section.
 
-No reconstruction from old chats should be necessary for normal development after reading these docs.
-
-
-## 19. Strava integration scaffold
-
-Strava has now been scaffolded in the same spirit as GoCardless: the product/database/server flow exists even though production API credentials have not yet been added.
-
-Backend tables:
-
-- `strava_connections` — non-secret connection metadata only
-- `strava_activities` — imported activity summaries, private to the owning member by RLS
-- `private.strava_tokens` — access/refresh tokens; never browser-readable
-- `private.strava_oauth_states` — short-lived OAuth state records
-- `private.strava_webhook_events` — raw webhook event store
-
-Supabase Edge Functions:
-
-- `strava-connect` — authenticated member OAuth start; gracefully reports not configured until secrets exist
-- `strava-callback` — public OAuth callback; exchanges code and stores tokens server-side
-- `strava-webhook` — public Strava webhook verification/event receiver; acknowledges quickly and records events
-- `strava-sync` — authenticated member manual sync; refreshes tokens, imports recent activities and creates corresponding Hybrid OS workout sessions/entries/sets
-
-Required future Supabase secrets:
-
-- `STRAVA_CLIENT_ID`
-- `STRAVA_CLIENT_SECRET`
-- `STRAVA_VERIFY_TOKEN`
-
-Current UI:
-
-- `integrations.html` is the member integrations page
-- `integrations.html?preview=1` provides a no-credentials demo of the Strava experience
-- member Profile links to integrations
-- member preview links to the Strava demo
-
-Imported activity data is intentionally private to the member by default. Do not expose Strava-derived activity detail to coaches, staff or other members unless Strava's current API terms explicitly permit the intended use.
-
-Current Strava architecture uses `activity:read` as the intended default scope, not `activity:read_all`. Webhooks should be used for ongoing activity events rather than aggressive polling. Before activation, re-check current Strava API endpoints/terms because their API base URL changed in June 2026.
-
-### Strava outbound-sync decision
-
-Strava import can be automatic/webhook-driven once connected. **Hybrid OS must never automatically push workouts to Strava.** Outbound sync is explicitly member-triggered on an individual workout using an **Add to Strava** button. The authenticated `strava-push` Edge Function is scaffolded for this manual-only path.
+No reconstruction from previous chat history should be necessary for normal development.
