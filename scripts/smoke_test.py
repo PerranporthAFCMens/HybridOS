@@ -88,6 +88,34 @@ for required_rule in ("flex-direction:column!important", ".side .gym{flex:0 0 au
     if required_rule not in shared_css:
         problems.append(f"app-consistency.css: mobile drawer structure guard missing: {required_rule}")
 
+# The shared stylesheet must remain the authoritative component layer. These markers
+# deliberately cover the primitives most likely to drift when a new page is added.
+for component_marker in (
+    ".card{",
+    ".btn{",
+    ".btn.primary,.btn.dark{",
+    ".field input,.field select,.field textarea,",
+    ".top{",
+    ".eyebrow{",
+    ".userchip{",
+    ".tag{",
+    ".modal{",
+    ".side .nav a,.side .nav button{",
+):
+    if component_marker not in shared_css:
+        problems.append(f"app-consistency.css: canonical component rule missing: {component_marker}")
+
+for design_token in (
+    "--hybrid-bg:#f5f7fb",
+    "--hybrid-panel:#fff",
+    "--hybrid-ink:#101828",
+    "--hybrid-line:#e7ebf2",
+    "--hybrid-dark:#0b1020",
+    "--hybrid-radius:20px",
+):
+    if design_token not in shared_css:
+        problems.append(f"app-consistency.css: canonical design token missing: {design_token}")
+
 tenant = (ROOT / "tenant-branding.js").read_text(encoding="utf-8") if (ROOT / "tenant-branding.js").exists() else ""
 for forbidden in ("fixMemberPreviewClasses", "class-admin-enhancements.js", "class-admin-live-refresh.js"):
     if forbidden in tenant:
