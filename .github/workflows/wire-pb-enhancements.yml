@@ -1,0 +1,31 @@
+name: Wire PB workout enhancements
+on:
+  push:
+    paths:
+      - '.github/workflows/wire-pb-enhancements.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire PB enhancements into member pages
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          tag='\n<script type="module" src="./pb-workout-enhancements.js"></script>\n'
+          for fn in ['member-preview.html','member.html']:
+              p=Path(fn)
+              s=p.read_text()
+              if 'pb-workout-enhancements.js' not in s:
+                  s=s.replace('</body>',tag+'</body>')
+                  p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add member-preview.html member.html
+          git diff --cached --quiet || git commit -m 'Wire working PB controls and workout PB capture'
+          git push
