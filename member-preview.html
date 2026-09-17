@@ -43,4 +43,38 @@ wireHomeClassCards();
 <script type="module" src="./pb-workout-enhancements.js"></script>
 
 <div id="homeClassModal" class="modal hidden"><div class="modal-card"><div class="section-title"><div><div class="eyebrow">Class details</div><h3 id="homeClassTitle" style="margin:4px 0"></h3></div><button id="homeClassClose" class="btn secondary">Close</button></div><div id="homeClassTime" class="muted"></div><p id="homeClassDesc" style="line-height:1.5"></p><div id="homeClassAvailability" class="muted" style="margin-top:8px"></div><div class="actions"><button id="homeClassBook" class="btn primary">Book class</button></div><div id="homeClassMsg" class="msg"></div></div></div>
+
+<!-- hamburger-hotfix -->
+<script>
+(function(){
+  function initMemberPreviewMenu(){
+    var openBtn=document.getElementById('mobileMenuBtn');
+    var closeBtn=document.getElementById('mobileMenuClose');
+    var backdrop=document.getElementById('mobileNavBackdrop');
+    var side=document.querySelector('.side');
+    if(!openBtn||!side) return;
+    function openMenu(e){
+      if(e){e.preventDefault();e.stopPropagation();}
+      document.body.classList.add('mobile-nav-open');
+      openBtn.setAttribute('aria-expanded','true');
+      side.setAttribute('aria-hidden','false');
+    }
+    function closeMenu(e){
+      if(e){e.preventDefault();}
+      document.body.classList.remove('mobile-nav-open');
+      openBtn.setAttribute('aria-expanded','false');
+      side.setAttribute('aria-hidden','true');
+    }
+    openBtn.onclick=openMenu;
+    if(closeBtn) closeBtn.onclick=closeMenu;
+    if(backdrop) backdrop.onclick=closeMenu;
+    document.querySelectorAll('.side .nav button,.side .nav a').forEach(function(el){
+      el.addEventListener('click',function(){ if(window.innerWidth<=900) closeMenu(); });
+    });
+    side.setAttribute('aria-hidden', window.innerWidth<=900 ? 'true' : 'false');
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initMemberPreviewMenu);
+  else initMemberPreviewMenu();
+})();
+</script>
 </body></html>
