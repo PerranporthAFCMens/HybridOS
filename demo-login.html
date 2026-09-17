@@ -6,55 +6,16 @@ import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+e
 const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 const DEMO_EMAIL='demo@hybridhub.test',DEMO_PASSWORD='HybridHubDemo!26';
 const $=id=>document.getElementById(id);
-const demoMembers=['1cf33e91-c841-4d8d-b954-1ec5ef3608f1','fe7d7b0f-2e17-4d76-a79b-368bdc53b831','ae917803-3c1c-4cb3-9ba9-71d63b2023c2','0ef84b38-10a7-4926-a17a-a272a9d22358','1b82a203-df88-40e5-8904-b61262c25245','358405eb-99b1-407f-8c23-7df87e8cbce7','da16d062-a283-48a9-bbe6-d001af6fc911','952a1c25-a0e0-45f1-8dc8-8f3642c50eea','16289e23-30d5-4bb4-9c3d-985807c09ea6','9f4d8e4d-4ff8-4fa7-acec-cf0a86ed983a','c2f9f0a6-9203-4e5e-bac3-d01f64ae6cdc','2a6d64f1-9d97-4229-a272-43951a187443','7cec886a-f431-406c-a38d-9c0279fcdb35','d7dca110-c9bb-4264-a433-371b4fb8eafb','5e094098-9cc4-46f6-9e3a-af338069a6a5','9b4481df-b2df-4368-ad34-df5e53aa8b70','fda3ac5f-e638-4a1c-900e-5929ace67fcc','001ed2eb-4f64-422b-80b9-3a34e96c972c','f44a9391-3255-4e80-8d4a-b15b8f4824b0','f06dd76f-fe1c-475a-8506-13c0df1d33e8'];
-async function ensureDemoWorkspace(userId){
-  $('status').textContent='Checking Hybrid Hub workspace…';
-  let{data:gm,error:gmErr}=await supabase.from('gym_members').select('gym_id,gyms(id,name,slug)').eq('user_id',userId).eq('is_active',true).limit(1);
-  if(gmErr)throw gmErr;
-  let gymId=gm?.[0]?.gym_id;
-  if(!gymId){
-    $('status').textContent='Creating Hybrid Hub workspace…';
-    const r=await supabase.rpc('create_gym_for_current_user',{gym_name:'Hybrid Hub',gym_slug:'hybrid-hub-demo'});
-    if(r.error)throw r.error;
-    gymId=r.data;
-  }
-  const{data:plans}=await supabase.from('membership_plans').select('id,name').eq('gym_id',gymId);
-  if(!plans?.length){
-    await supabase.from('membership_plans').insert([
-      {gym_id:gymId,name:'Gym Only',description:'Open gym access',price_pence:3000,billing_interval:'monthly',is_active:true,access_type:'gym',includes_open_gym:true,includes_classes:false,includes_pt:false,is_public:true},
-      {gym_id:gymId,name:'Hybrid Lite',description:'Gym access plus classes',price_pence:4000,billing_interval:'monthly',is_active:true,access_type:'hybrid',includes_open_gym:true,includes_classes:true,includes_pt:false,is_public:true},
-      {gym_id:gymId,name:'Unlimited',description:'Unlimited gym and class access',price_pence:6500,billing_interval:'monthly',is_active:true,access_type:'hybrid',includes_open_gym:true,includes_classes:true,includes_pt:false,is_public:true},
-      {gym_id:gymId,name:'Hybrid Gold',description:'Premium gym, classes and PT access',price_pence:8000,billing_interval:'monthly',is_active:true,access_type:'hybrid',includes_open_gym:true,includes_classes:true,includes_pt:true,is_public:true}
-    ]);
-  }
-  await supabase.from('channels').upsert({gym_id:gymId,name:'general',description:'Gym-wide community chat',is_private:false,created_by:userId},{onConflict:'gym_id,name',ignoreDuplicates:true});
-  for(const memberId of demoMembers){await supabase.from('gym_members').upsert({gym_id:gymId,user_id:memberId,role:'member',is_active:true},{onConflict:'gym_id,user_id',ignoreDuplicates:true});}
-  const{data:currentPlans}=await supabase.from('membership_plans').select('id,name').eq('gym_id',gymId).eq('is_active',true);
-  if(currentPlans?.length){
-    const existing=await supabase.from('memberships').select('user_id').eq('gym_id',gymId).in('user_id',demoMembers);
-    const have=new Set((existing.data||[]).map(x=>x.user_id));
-    const rows=demoMembers.filter(id=>!have.has(id)).map((id,i)=>({gym_id:gymId,user_id:id,plan_id:currentPlans[i%currentPlans.length].id,status:'active',starts_on:new Date(Date.now()-30*86400000).toISOString().slice(0,10),payment_provider:'manual',payment_status:'confirmed'}));
-    if(rows.length)await supabase.from('memberships').insert(rows);
-  }
-  const{count}=await supabase.from('class_sessions').select('*',{count:'exact',head:true}).eq('gym_id',gymId);
-  if(!count){
-    const base=new Date();base.setMinutes(0,0,0);
-    const classes=[['Early Engine',6,20],['Hybrid Strength',7,16],['Express Conditioning',16,16],['Hybrid Conditioning',17,20],['Evening Engine',19,20]];
-    const rows=[];
-    for(let d=0;d<7;d++)for(const [name,hour,capacity] of classes){const s=new Date(base);s.setDate(s.getDate()+d+1);s.setHours(hour,0,0,0);const e=new Date(s);e.setHours(e.getHours()+1);rows.push({gym_id:gymId,name,description:'Hybrid Hub demo class',starts_at:s.toISOString(),ends_at:e.toISOString(),capacity,reserved_capacity:0,reserved_release_minutes_before:60,is_cancelled:false,created_by:userId});}
-    await supabase.from('class_sessions').insert(rows);
-  }
-  return gymId;
-}
 async function login(){
-  const e=$('email').value.trim().toLowerCase(),p=$('password').value;$('err').textContent='';
-  if(e!==DEMO_EMAIL||p!==DEMO_PASSWORD){$('err').textContent='Incorrect demo email or password.';return}
-  $('login').disabled=true;$('login').textContent='Signing in…';$('status').textContent='Opening Hybrid OS Core…';
-  try{
-    const{data,error}=await supabase.auth.signInWithPassword({email:DEMO_EMAIL,password:DEMO_PASSWORD});if(error)throw error;
-    await ensureDemoWorkspace(data.user.id);
-    sessionStorage.setItem('hybridHubDemo','1');location.href='./index.html';
-  }catch(err){$('err').textContent=err.message||'Could not sign in.';$('status').textContent='';$('login').disabled=false;$('login').textContent='Sign in to Hybrid OS'}
+ const e=$('email').value.trim().toLowerCase(),p=$('password').value;$('err').textContent='';
+ if(e!==DEMO_EMAIL||p!==DEMO_PASSWORD){$('err').textContent='Incorrect demo email or password.';return}
+ $('login').disabled=true;$('login').textContent='Signing in…';$('status').textContent='Opening Hybrid OS Core…';
+ try{
+   const{error}=await supabase.auth.signInWithPassword({email:DEMO_EMAIL,password:DEMO_PASSWORD});
+   if(error)throw error;
+   sessionStorage.setItem('hybridHubDemo','1');
+   location.href='./index.html';
+ }catch(err){$('err').textContent=err.message||'Could not sign in.';$('status').textContent='';$('login').disabled=false;$('login').textContent='Sign in to Hybrid OS'}
 }
 $('login').onclick=login;document.addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 </script></body></html>
