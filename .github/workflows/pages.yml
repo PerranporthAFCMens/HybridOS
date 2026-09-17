@@ -61,6 +61,17 @@ jobs:
               if 'tenant-branding.js' not in s: s = s.replace('</body>', js + '</body>', 1)
               p.write_text(s)
           PY
+      - name: Harden member portal startup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('member.html')
+          if p.exists():
+              s = p.read_text()
+              if 'id="membershipShort"' not in s:
+                  s = s.replace('<div id="membershipFull"></div>', '<span id="membershipShort" hidden></span><div id="membershipFull"></div>', 1)
+              p.write_text(s)
+          PY
       - name: Inject member social navigation
         run: |
           python3 - <<'PY'
