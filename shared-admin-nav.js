@@ -11,13 +11,13 @@
     {key:'community',label:'✦ Community',href:'./index.html#community'},
     {key:'member-preview',label:'◎ Member preview',href:'./member-preview.html'}
   ];
-  const adminPages=new Set(['index.html','classes.html','class-setup.html','admin-operations.html','access-settings.html','reporting.html']);
+  const adminPages=new Set(['index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','access-settings.html','reporting.html']);
 
   function currentKey(){
     const p=location.pathname;
     if(p.endsWith('/classes.html')) return 'classes';
     if(p.endsWith('/class-setup.html')) return 'class-setup';
-    if(p.endsWith('/admin-operations.html')) return 'operations';
+    if(p.endsWith('/admin-operations.html')||p.endsWith('/resource-availability.html')) return 'operations';
     if(p.endsWith('/access-settings.html')) return 'access';
     if(p.endsWith('/reporting.html')) return 'reporting';
     if(p.endsWith('/member-preview.html')) return 'member-preview';
@@ -78,12 +78,8 @@
         });
       });
     });
-    if((location.pathname.endsWith('/index.html')||location.pathname.endsWith('/HybridOS/')||location.pathname.endsWith('/')) && location.hash){
-      showDashboardPage(currentKey());
-    }
-    if('requestIdleCallback' in window) requestIdleCallback(()=>items.forEach(i=>prefetch(i.href)),{timeout:1400});
-    else setTimeout(()=>items.forEach(i=>prefetch(i.href)),700);
+    if((location.pathname.endsWith('/index.html')||location.pathname.endsWith('/HybridOS/')||location.pathname.endsWith('/')) && location.hash){showDashboardPage(currentKey())}
+    if('requestIdleCallback' in window) requestIdleCallback(()=>items.forEach(i=>prefetch(i.href)),{timeout:1400}); else setTimeout(()=>items.forEach(i=>prefetch(i.href)),700);
   }
-
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',render); else render();
 })();
