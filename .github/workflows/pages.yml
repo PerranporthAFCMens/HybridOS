@@ -49,9 +49,13 @@ jobs:
               new_brand = '<div class="brand hybrid-hub-brand"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>'
               s = s.replace(old_brand, new_brand)
               s = s.replace('Puffin Performance', 'Hybrid Hub')
+              if 'member-gym-logo' not in s:
+                  s = s.replace('<main class="main">', '<main class="main"><div class="member-gym-logo"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>', 1)
               brand_css = '''<style id="hybrid-hub-preview-branding">
               .hybrid-hub-brand{min-height:54px;align-items:center}.hybrid-hub-brand img{display:block;width:100%;max-width:205px;height:auto;filter:brightness(0) invert(1)}
               .gym{position:relative;overflow:hidden}.gym:after{content:"";position:absolute;right:-10px;bottom:-16px;width:74px;height:74px;background:url("./assets/hybrid-hub-mark.svg") center/contain no-repeat;opacity:.08;filter:brightness(0) invert(1);pointer-events:none}
+              .member-gym-logo{display:flex;justify-content:center;align-items:center;margin:-2px 0 18px}.member-gym-logo img{display:block;width:min(230px,58vw);height:auto}
+              @media(max-width:900px){.member-gym-logo{margin:0 0 14px}.member-gym-logo img{width:min(185px,52vw)}}
               </style>'''
               if 'hybrid-hub-preview-branding' not in s:
                   s = s.replace('</head>', brand_css + '</head>', 1)
