@@ -3,7 +3,7 @@
   const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
   const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
   const $=id=>document.getElementById(id);
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[c]));
   const labels={beginner:'Beginner',intermediate:'Intermediate',advanced:'Advanced',all_levels:'All levels'};
   let gymId=null,types=[],resources=[],requirements=[];
 
@@ -20,6 +20,7 @@
     .difficulty{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;background:#f2f4f7}.difficulty.beginner{background:#ecfdf3;color:#067647}.difficulty.intermediate{background:#fffaeb;color:#b54708}.difficulty.advanced{background:#fef3f2;color:#b42318}
     .class-type-form{border-top:1px solid #e7ebf2;margin-top:18px;padding-top:18px}.class-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.class-type-grid .full{grid-column:1/-1}.class-type-grid label{display:block;font-size:12px;font-weight:800;margin-bottom:5px}.class-type-grid input,.class-type-grid select,.class-type-grid textarea{width:100%;padding:11px;border:1px solid #d9dee7;border-radius:12px}.class-type-grid textarea{min-height:90px;resize:vertical}
     .dependency-box{grid-column:1/-1;border:1px solid #dfe4ec;border-radius:14px;padding:14px;background:#fafbfc}.dependency-row{display:flex;gap:10px;align-items:center;margin-bottom:10px}.dependency-row input{width:auto}.dependency-fields.hidden{display:none!important}.dependency-note{font-size:12px;color:#667085;margin-top:6px}
+    #classTypeScheduleDependency{grid-column:1/-1;margin:0 0 12px}
     @media(max-width:700px){.class-type-list,.class-type-grid{grid-template-columns:1fr}.class-type-grid .full,.dependency-box{grid-column:auto}.class-setup-card{border-radius:20px 20px 0 0;align-self:end;max-height:88vh}}
   `;
   document.head.appendChild(style);
@@ -58,7 +59,7 @@
       supabase.from('service_requirements').select('id,class_type_id,resource_id,quantity').eq('gym_id',gymId).not('resource_id','is',null)
     ]);
     types=tr.data||[]; resources=rr.data||[]; requirements=reqr.data||[];
-    renderResourceOptions(); renderTypes(); wireSessionTemplateSelect();
+    renderResourceOptions(); renderTypes(); refreshSessionTemplateSelect();
   }
   function renderResourceOptions(){
     $('classTypeResource').innerHTML='<option value="">Select resource…</option>'+resources.map(r=>`<option value="${r.id}">${esc(r.name)} · ${esc(r.resource_type)}${r.capacity?` · cap ${r.capacity}`:''}</option>`).join('');
@@ -93,14 +94,33 @@
   $('classTypeReset').onclick=resetForm; $('classSetupClose').onclick=()=>modal.classList.add('hidden');
   setupBtn.onclick=async()=>{modal.classList.remove('hidden');await loadData()}; modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.add('hidden')});
 
-  function wireSessionTemplateSelect(){
-    const nameInput=$('name'); if(!nameInput || $('classTypeTemplate')) return;
-    const wrap=document.createElement('div'); wrap.className='field';
-    wrap.innerHTML='<label>Class type</label><select id="classTypeTemplate"><option value="">Custom / one-off class</option>'+types.map(t=>`<option value="${t.id}">${esc(t.name)} · ${esc(labels[t.difficulty_level]||'All levels')}</option>`).join('')+'</select><div class="meta" style="margin-top:5px">Selecting a class type fills the saved description, duration and capacity.</div>';
-    nameInput.closest('.field').before(wrap);
-    $('classTypeTemplate').onchange=()=>{const t=types.find(x=>x.id===$('classTypeTemplate').value);if(!t)return;$('name').value=t.name;$('desc').value=t.description||'';$('duration').value=t.duration_minutes;$('capacity').value=t.default_capacity;};
+  function refreshSessionTemplateSelect(){
+    const nameInput=$('name'); if(!nameInput) return;
+    let select=$('classTypeTemplate');
+    if(!select){
+      const wrap=document.createElement('div'); wrap.className='field';
+      wrap.innerHTML='<label>Class type</label><select id="classTypeTemplate"></select><div class="meta" style="margin-top:5px">Choose a saved class. Its description, duration and capacity will fill automatically.</div>';
+      const grid=nameInput.closest('.grid2');
+      if(grid) grid.insertBefore(wrap,grid.firstChild); else nameInput.closest('.field')?.before(wrap);
+      select=$('classTypeTemplate');
+    }
+    if(!select) return;
+    const previous=select.value;
+    select.innerHTML='<option value="">Custom / one-off class</option>'+types.map(t=>`<option value="${t.id}">${esc(t.name)} · ${esc(labels[t.difficulty_level]||'All levels')}</option>`).join('');
+    if(types.some(t=>t.id===previous)) select.value=previous;
+    select.onchange=()=>{
+      const t=types.find(x=>x.id===select.value);
+      let note=$('classTypeScheduleDependency');
+      if(!t){if(note)note.remove();return}
+      $('name').value=t.name;$('desc').value=t.description||'';$('duration').value=t.duration_minutes;$('capacity').value=t.default_capacity;
+      const r=resourceForType(t.id);
+      if(!note){note=document.createElement('div');note.id='classTypeScheduleDependency';note.className='notice';select.closest('.field')?.insertAdjacentElement('afterend',note)}
+      if(note) note.textContent=r?'Requires: '+r.name+'. Hybrid OS will check this resource when the class is scheduled.':'No room/equipment dependency.';
+    };
   }
 
   await loadData();
+  const addBtn=$('addBtn');
+  if(addBtn) addBtn.addEventListener('click',async()=>{await loadData();refreshSessionTemplateSelect()});
   if(new URLSearchParams(location.search).get('setup')==='1'){modal.classList.remove('hidden')}
 })();
