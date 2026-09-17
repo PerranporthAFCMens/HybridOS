@@ -12,14 +12,14 @@ CRITICAL = {
     "member.html": ["app-consistency.css", "app-stability.js", "social-nav.js"],
     "member-preview.html": ["app-consistency.css", "app-stability.js", "social-nav.js", "member-preview-classes.js"],
     "classes.html": ["app-consistency.css", "app-stability.js", "calendar-mobile.js", "calendar-views.js", "session-manager.js", "class-admin-enhancements.js", "class-admin-live-refresh.js"],
-    "staff.html": ["app-consistency.css", "app-stability.js", "staff-shell.js"],
+    "staff.html": ["app-consistency.css", "app-stability.js", "staff-shell.js", "staff-operations.css", "staff-operations.js"],
     "social.html": ["app-consistency.css", "app-stability.js"],
 }
 JS_CHECKS = (
     "app-stability.js", "social-nav.js", "shared-admin-nav.js", "account-menu.js",
     "calendar-mobile.js", "calendar-views.js", "scheduling-engine.js", "session-manager.js",
     "tenant-branding.js", "pb-workout-enhancements.js", "member-preview-classes.js",
-    "class-admin-enhancements.js", "class-admin-live-refresh.js", "staff-shell.js",
+    "class-admin-enhancements.js", "class-admin-live-refresh.js", "staff-shell.js", "staff-operations.js",
 )
 
 problems: list[str] = []
@@ -99,8 +99,8 @@ for page in ROOT.glob("*.html"):
         problems.append(f"{page.name}: class admin runtime leaked outside classes.html")
     if page.name != "member-preview.html" and "member-preview-classes.js" in text:
         problems.append(f"{page.name}: member-preview-classes.js leaked outside member-preview.html")
-    if page.name != "staff.html" and "staff-shell.js" in text:
-        problems.append(f"{page.name}: staff-shell.js leaked outside staff.html")
+    if page.name != "staff.html" and ("staff-shell.js" in text or "staff-operations.js" in text or "staff-operations.css" in text):
+        problems.append(f"{page.name}: Staff Portal runtime leaked outside staff.html")
 
 if (ROOT / "class-admin-loader.js").exists():
     problems.append("obsolete class-admin-loader.js should not be deployed")
