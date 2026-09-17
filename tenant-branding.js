@@ -39,10 +39,16 @@
         const b=document.createElement('button'); b.type='button'; b.dataset.operationsLink='1'; b.textContent='⚙ Staff & resources'; b.onclick=()=>location.href='./admin-operations.html';
         if(reference) nav.insertBefore(b,reference); else nav.appendChild(b);
       }
+      if(!nav.querySelector('[data-access-settings-link]')){
+        const reference=[...nav.querySelectorAll('button')].find(b=>/Memberships/i.test(b.textContent||''));
+        const b=document.createElement('button'); b.type='button'; b.dataset.accessSettingsLink='1'; b.textContent='🔑 Door access'; b.onclick=()=>location.href='./access-settings.html';
+        if(reference) nav.insertBefore(b,reference); else nav.appendChild(b);
+      }
     });
     document.querySelectorAll('.mobile-nav').forEach(function(nav){
       if(!nav.querySelector('[data-class-setup-link]')){const b=document.createElement('button');b.type='button';b.dataset.classSetupLink='1';b.innerHTML='⚙<br>Classes';b.onclick=()=>location.href='./class-setup.html';nav.appendChild(b)}
       if(!nav.querySelector('[data-operations-link]')){const b=document.createElement('button');b.type='button';b.dataset.operationsLink='1';b.innerHTML='⚙<br>Ops';b.onclick=()=>location.href='./admin-operations.html';nav.appendChild(b)}
+      if(!nav.querySelector('[data-access-settings-link]')){const b=document.createElement('button');b.type='button';b.dataset.accessSettingsLink='1';b.innerHTML='🔑<br>Access';b.onclick=()=>location.href='./access-settings.html';nav.appendChild(b)}
       nav.style.gridTemplateColumns='repeat('+nav.children.length+',1fr)';
     });
   }
@@ -56,16 +62,25 @@
     });
   }
 
-  function isoWeek(date){const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const y=new Date(Date.UTC(d.getUTCFullYear(),0,1));return Math.ceil((((d-y)/86400000)+1)/7)}
-  function demoWeeklyCode(){return String(3100+((isoWeek(new Date())*137)%5900)).padStart(4,'0')}
-
-  function addDoorAccessCard(){
-    if(!location.pathname.endsWith('/member-preview.html')) return;
+  async function addDoorAccessCard(){
+    const path=location.pathname;
+    if(!(path.endsWith('/member.html')||path.endsWith('/member-preview.html'))) return;
     const gym=document.querySelector('.side .gym'); if(!gym||document.querySelector('.door-access-card')) return;
-    const card=document.createElement('div'); card.className='door-access-card';
-    card.innerHTML='<div class="door-access-head"><span class="door-key-icon" aria-hidden="true">🔑</span><div><small>Door access</small><strong>Weekly code</strong></div></div><button type="button" class="door-code-reveal" aria-expanded="false">Tap to reveal</button><div class="door-code-value" hidden>'+demoWeeklyCode()+'</div><div class="door-code-note">Changes each week</div>';
-    gym.insertAdjacentElement('afterend',card); const reveal=card.querySelector('.door-code-reveal'),value=card.querySelector('.door-code-value');
-    reveal.addEventListener('click',function(){const showing=!value.hidden;value.hidden=showing;reveal.textContent=showing?'Tap to reveal':'Hide code';reveal.setAttribute('aria-expanded',showing?'false':'true')});
+    try{
+      const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+      const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
+      const {data:{session}}=await sb.auth.getSession(); if(!session)return;
+      const {data:gm}=await sb.from('gym_members').select('gym_id').eq('user_id',session.user.id).eq('is_active',true).limit(1); if(!gm?.length)return;
+      const {data:settings}=await sb.from('gym_access_settings').select('access_enabled,access_code,member_label,member_note').eq('gym_id',gm[0].gym_id).maybeSingle();
+      if(!settings?.access_enabled||!settings.access_code)return;
+      const card=document.createElement('div'); card.className='door-access-card';
+      const label=String(settings.member_label||'Door access').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+      const code=String(settings.access_code).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+      const note=String(settings.member_note||'Set by your gym.').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+      card.innerHTML='<div class="door-access-head"><span class="door-key-icon" aria-hidden="true">🔑</span><div><small>'+label+'</small><strong>Gym PIN</strong></div></div><button type="button" class="door-code-reveal" aria-expanded="false">Tap to reveal</button><div class="door-code-value" hidden>'+code+'</div><div class="door-code-note">'+note+'</div>';
+      gym.insertAdjacentElement('afterend',card); const reveal=card.querySelector('.door-code-reveal'),value=card.querySelector('.door-code-value');
+      reveal.addEventListener('click',function(){const showing=!value.hidden;value.hidden=showing;reveal.textContent=showing?'Tap to reveal':'Hide code';reveal.setAttribute('aria-expanded',showing?'false':'true')});
+    }catch(err){console.warn('Door access unavailable',err)}
   }
 
   function fixMemberPreviewClasses(){
