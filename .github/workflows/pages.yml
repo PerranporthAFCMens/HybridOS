@@ -69,7 +69,11 @@ jobs:
           import os
           v = os.environ.get('GITHUB_SHA','dev')[:12]
           injections = {
-              'classes.html':[f'<script src="./scheduling-engine.js?v={v}" defer></script>',f'<script src="./calendar-mobile.js?v={v}" defer></script>'],
+              'classes.html':[
+                  f'<script src="./scheduling-engine.js?v={v}" defer></script>',
+                  f'<script src="./calendar-mobile.js?v={v}" defer></script>',
+                  f'<script src="./calendar-views.js?v={v}" defer></script>'
+              ],
               'admin-operations.html':[f'<script src="./operations-scheduling-link.js?v={v}" defer></script>'],
           }
           for name,scripts in injections.items():
@@ -77,11 +81,15 @@ jobs:
               if not p.exists(): continue
               s=p.read_text()
               if name == 'classes.html':
-                  css=f'<link rel="stylesheet" href="./calendar-mobile.css?v={v}">'
-                  if 'calendar-mobile.css' not in s: s=s.replace('</head>',css+'</head>',1)
+                  styles=[
+                      f'<link rel="stylesheet" href="./calendar-mobile.css?v={v}">',
+                      f'<link rel="stylesheet" href="./calendar-views.css?v={v}">'
+                  ]
+                  for css in styles:
+                      asset=css.split('href="./')[1].split('?')[0]
+                      if asset not in s: s=s.replace('</head>',css+'</head>',1)
               for js in scripts:
-                  base=js.split('?v=')[0]
-                  asset=base.split('src="./')[1]
+                  asset=js.split('src="./')[1].split('?')[0]
                   if asset not in s: s=s.replace('</body>',js+'</body>',1)
               p.write_text(s)
           PY
