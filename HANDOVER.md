@@ -524,3 +524,7 @@ Current UI:
 Imported activity data is intentionally private to the member by default. Do not expose Strava-derived activity detail to coaches, staff or other members unless Strava's current API terms explicitly permit the intended use.
 
 Current Strava architecture uses `activity:read` as the intended default scope, not `activity:read_all`. Webhooks should be used for ongoing activity events rather than aggressive polling. Before activation, re-check current Strava API endpoints/terms because their API base URL changed in June 2026.
+
+### Strava outbound-sync decision
+
+Strava import can be automatic/webhook-driven once connected. **Hybrid OS must never automatically push workouts to Strava.** Outbound sync is explicitly member-triggered on an individual workout using an **Add to Strava** button. The authenticated `strava-push` Edge Function is scaffolded for this manual-only path.
