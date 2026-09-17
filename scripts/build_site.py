@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -64,6 +65,22 @@ def inject_body(text: str, asset_name: str, markup: str) -> str:
     return text.replace("</body>", markup + "</body>", 1)
 
 
+def clean_legacy_mobile_chrome() -> None:
+    """Remove superseded mobile navigation markup from built pages only."""
+    for name in ("member.html", "member-preview.html", "staff.html"):
+        p = OUT / name
+        if not p.exists():
+            continue
+        s = read(name)
+        s = re.sub(r'<nav class="bottom">.*?</nav>', '', s, count=1, flags=re.S)
+        write(name, s)
+
+    name = "classes.html"
+    s = read(name)
+    s = re.sub(r'<a class="mobile-back"[^>]*>.*?</a>', '', s, count=1, flags=re.S)
+    write(name, s)
+
+
 def add_shared_runtime() -> None:
     css = f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}">'
     guard = f'<script src="./app-stability.js?v={VERSION}"></script>'
@@ -124,6 +141,14 @@ def add_admin_shell() -> None:
         write(name, s)
 
 
+def add_staff_shell() -> None:
+    name = "staff.html"
+    s = read(name)
+    s = inject_head(s, "staff-shell.css", f'<link rel="stylesheet" href="./staff-shell.css?v={VERSION}">')
+    s = inject_body(s, "staff-shell.js", f'<script src="./staff-shell.js?v={VERSION}" defer></script>')
+    write(name, s)
+
+
 def add_scheduler_assets() -> None:
     name = "classes.html"
     s = read(name)
@@ -173,10 +198,12 @@ def brand_member_preview() -> None:
 
 def build() -> None:
     copy_source()
+    clean_legacy_mobile_chrome()
     add_shared_runtime()
     add_tenant_runtime()
     harden_member()
     add_admin_shell()
+    add_staff_shell()
     add_scheduler_assets()
     add_member_mobile_css()
     brand_member_preview()
