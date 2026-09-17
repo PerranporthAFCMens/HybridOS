@@ -124,6 +124,7 @@ def harden_member() -> None:
     s = read(name)
     s = inject_body(s, "social-nav.js", f'<script src="./social-nav.js?v={VERSION}" defer></script>')
     s = inject_body(s, "member-preview-classes.js", f'<script src="./member-preview-classes.js?v={VERSION}" defer></script>')
+    s = inject_body(s, "member-preview-controls.js", f'<script src="./member-preview-controls.js?v={VERSION}" defer></script>')
     write(name, s)
 
 
