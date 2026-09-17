@@ -49,7 +49,7 @@ jobs:
                   s = s.replace('</body>', js + '</body>', 1)
               p.write_text(s)
           PY
-      - name: Inject shared admin navigation and prevent login flash
+      - name: Inject shared admin shell and navigation
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -59,13 +59,17 @@ jobs:
               'class-setup.html',
               'admin-operations.html',
               'access-settings.html',
+              'reporting.html',
           )
           js = '<script src="./shared-admin-nav.js" defer></script>'
+          css = '<link rel="stylesheet" href="./admin-shell.css">'
           for name in admin_pages:
               p = Path(name)
               if not p.exists():
                   continue
               s = p.read_text()
+              if css not in s:
+                  s = s.replace('</head>', css + '</head>', 1)
               if js not in s:
                   s = s.replace('</body>', js + '</body>', 1)
               if name == 'index.html':
