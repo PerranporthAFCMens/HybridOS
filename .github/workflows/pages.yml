@@ -49,18 +49,6 @@ jobs:
                   s = s.replace('</body>', js + '</body>', 1)
               p.write_text(s)
           PY
-      - name: Inject Hybrid Hub admin demo login
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('index.html')
-          if p.exists():
-              s = p.read_text()
-              tag = '<script src="./admin-demo.js"></script>'
-              if tag not in s:
-                  s = s.replace('</body>', tag + '</body>', 1)
-                  p.write_text(s)
-          PY
       - name: Inject shared member mobile rail stylesheet
         run: |
           python3 - <<'PY'
