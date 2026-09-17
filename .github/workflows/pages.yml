@@ -63,13 +63,16 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           injections = {
-              'classes.html':['<script src="./scheduling-engine.js" defer></script>'],
+              'classes.html':['<script src="./scheduling-engine.js" defer></script>','<script src="./calendar-mobile.js" defer></script>'],
               'admin-operations.html':['<script src="./operations-scheduling-link.js" defer></script>'],
           }
           for name,scripts in injections.items():
               p=Path(name)
               if not p.exists(): continue
               s=p.read_text()
+              if name == 'classes.html':
+                  css='<link rel="stylesheet" href="./calendar-mobile.css">'
+                  if css not in s: s=s.replace('</head>',css+'</head>',1)
               for js in scripts:
                   if js not in s: s=s.replace('</body>',js+'</body>',1)
               p.write_text(s)
