@@ -28,25 +28,16 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           pages = (
-              'index.html',
-              'member.html',
-              'member-preview.html',
-              'classes.html',
-              'staff.html',
-              'member-memberships.html',
-              'integrations.html',
+              'index.html','member.html','member-preview.html','classes.html','staff.html','member-memberships.html','integrations.html',
           )
           css = '<link rel="stylesheet" href="./tenant-branding.css">'
           js = '<script src="./tenant-branding.js" defer></script>'
           for name in pages:
               p = Path(name)
-              if not p.exists():
-                  continue
+              if not p.exists(): continue
               s = p.read_text()
-              if css not in s:
-                  s = s.replace('</head>', css + '</head>', 1)
-              if js not in s:
-                  s = s.replace('</body>', js + '</body>', 1)
+              if css not in s: s = s.replace('</head>', css + '</head>', 1)
+              if js not in s: s = s.replace('</body>', js + '</body>', 1)
               p.write_text(s)
           PY
       - name: Inject shared admin shell and navigation
@@ -54,26 +45,33 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           admin_pages = (
-              'index.html',
-              'classes.html',
-              'class-setup.html',
-              'admin-operations.html',
-              'access-settings.html',
-              'reporting.html',
+              'index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','access-settings.html','reporting.html',
           )
           js = '<script src="./shared-admin-nav.js" defer></script>'
           css = '<link rel="stylesheet" href="./admin-shell.css">'
           for name in admin_pages:
               p = Path(name)
-              if not p.exists():
-                  continue
+              if not p.exists(): continue
               s = p.read_text()
-              if css not in s:
-                  s = s.replace('</head>', css + '</head>', 1)
-              if js not in s:
-                  s = s.replace('</body>', js + '</body>', 1)
-              if name == 'index.html':
-                  s = s.replace('<section id="authView" class="auth">', '<section id="authView" class="auth hidden">', 1)
+              if css not in s: s = s.replace('</head>', css + '</head>', 1)
+              if js not in s: s = s.replace('</body>', js + '</body>', 1)
+              if name == 'index.html': s = s.replace('<section id="authView" class="auth">', '<section id="authView" class="auth hidden">', 1)
+              p.write_text(s)
+          PY
+      - name: Inject scheduling engine helpers
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          injections = {
+              'classes.html':['<script src="./scheduling-engine.js" defer></script>'],
+              'admin-operations.html':['<script src="./operations-scheduling-link.js" defer></script>'],
+          }
+          for name,scripts in injections.items():
+              p=Path(name)
+              if not p.exists(): continue
+              s=p.read_text()
+              for js in scripts:
+                  if js not in s: s=s.replace('</body>',js+'</body>',1)
               p.write_text(s)
           PY
       - name: Inject shared member mobile rail stylesheet
@@ -82,13 +80,9 @@ jobs:
           from pathlib import Path
           for name in ('member.html', 'member-preview.html'):
               p = Path(name)
-              if not p.exists():
-                  continue
-              s = p.read_text()
-              href = '<link rel="stylesheet" href="./member-mobile-rail.css">'
-              if href not in s:
-                  s = s.replace('</head>', href + '</head>', 1)
-                  p.write_text(s)
+              if not p.exists(): continue
+              s = p.read_text(); href = '<link rel="stylesheet" href="./member-mobile-rail.css">'
+              if href not in s: s = s.replace('</head>', href + '</head>', 1); p.write_text(s)
           PY
       - name: Brand member preview as Hybrid Hub
         run: |
@@ -100,18 +94,15 @@ jobs:
               s = s.replace('<title>Member Preview · Hybrid OS</title>', '<title>Hybrid Hub · Member Preview</title>')
               old_brand = '<div class="brand"><svg class="mark" viewBox="0 0 54 48"><path d="M6 42 L27 6 M12 42 L30 11 M18 42 L33 16 M48 42 L27 6 M42 42 L24 11 M36 42 L21 16"/></svg><span class="word">HYBRID <b>OS</b></span></div>'
               new_brand = '<div class="brand hybrid-hub-brand"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>'
-              s = s.replace(old_brand, new_brand)
-              s = s.replace('Puffin Performance', 'Hybrid Hub')
-              if 'member-gym-logo' not in s:
-                  s = s.replace('<main class="main">', '<main class="main"><div class="member-gym-logo"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>', 1)
+              s = s.replace(old_brand, new_brand).replace('Puffin Performance', 'Hybrid Hub')
+              if 'member-gym-logo' not in s: s = s.replace('<main class="main">', '<main class="main"><div class="member-gym-logo"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>', 1)
               brand_css = '''<style id="hybrid-hub-preview-branding">
               .hybrid-hub-brand{min-height:54px;align-items:center}.hybrid-hub-brand img{display:block;width:100%;max-width:205px;height:auto;filter:brightness(0) invert(1)}
               .gym{position:relative;overflow:hidden}.gym:after{content:"";position:absolute;right:-10px;bottom:-16px;width:74px;height:74px;background:url("./assets/hybrid-hub-mark.svg") center/contain no-repeat;opacity:.08;filter:brightness(0) invert(1);pointer-events:none}
               .member-gym-logo{display:flex;justify-content:center;align-items:center;margin:-2px 0 18px}.member-gym-logo img{display:block;width:min(230px,58vw);height:auto}
               @media(max-width:900px){.member-gym-logo{margin:0 0 14px}.member-gym-logo img{width:min(185px,52vw)}}
               </style>'''
-              if 'hybrid-hub-preview-branding' not in s:
-                  s = s.replace('</head>', brand_css + '</head>', 1)
+              if 'hybrid-hub-preview-branding' not in s: s = s.replace('</head>', brand_css + '</head>', 1)
               p.write_text(s)
           PY
       - name: Harden member preview interactions
@@ -120,54 +111,15 @@ jobs:
           from pathlib import Path
           p = Path('member-preview.html')
           if p.exists():
-              s = p.read_text()
-              marker = '<!-- member-preview-interaction-hotfix -->'
+              s = p.read_text(); marker = '<!-- member-preview-interaction-hotfix -->'
               if marker not in s:
                   hotfix = """
           <!-- member-preview-interaction-hotfix -->
           <script>
-          (function(){
-            function showPage(id){
-              document.querySelectorAll('.page').forEach(function(el){el.classList.toggle('active',el.id===id)});
-              document.querySelectorAll('[data-page]').forEach(function(el){el.classList.toggle('active',el.dataset.page===id)});
-              document.body.classList.remove('mobile-nav-open');
-              window.scrollTo({top:0,behavior:'smooth'});
-            }
-            function init(){
-              document.querySelectorAll('[data-page]').forEach(function(btn){
-                btn.addEventListener('click',function(e){
-                  const target=btn.dataset.page;
-                  if(target && document.getElementById(target)){
-                    e.preventDefault();
-                    showPage(target);
-                  }
-                });
-              });
-              const close=document.getElementById('homeClassClose');
-              if(close) close.onclick=function(){document.getElementById('homeClassModal')?.classList.add('hidden')};
-              const book=document.getElementById('homeClassBook');
-              if(book){
-                book.onclick=function(){
-                  const currentlyBooked=book.dataset.booked==='1'||/cancel/i.test(book.textContent);
-                  book.disabled=true;
-                  book.textContent=currentlyBooked?'Cancelling…':'Booking…';
-                  setTimeout(function(){
-                    const nextBooked=!currentlyBooked;
-                    book.disabled=false;
-                    book.dataset.booked=nextBooked?'1':'0';
-                    book.textContent=nextBooked?'Cancel booking':'Book class';
-                    const msg=document.getElementById('homeClassMsg');
-                    if(msg) msg.textContent=nextBooked?'Class booked. Reminder and calendar options are ready.':'Booking cancelled.';
-                  },300);
-                };
-              }
-            }
-            if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
-          })();
+          (function(){function showPage(id){document.querySelectorAll('.page').forEach(function(el){el.classList.toggle('active',el.id===id)});document.querySelectorAll('[data-page]').forEach(function(el){el.classList.toggle('active',el.dataset.page===id)});document.body.classList.remove('mobile-nav-open');window.scrollTo({top:0,behavior:'smooth'})}function init(){document.querySelectorAll('[data-page]').forEach(function(btn){btn.addEventListener('click',function(e){const target=btn.dataset.page;if(target&&document.getElementById(target)){e.preventDefault();showPage(target)}})});const close=document.getElementById('homeClassClose');if(close)close.onclick=function(){document.getElementById('homeClassModal')?.classList.add('hidden')};const book=document.getElementById('homeClassBook');if(book){book.onclick=function(){const currentlyBooked=book.dataset.booked==='1'||/cancel/i.test(book.textContent);book.disabled=true;book.textContent=currentlyBooked?'Cancelling…':'Booking…';setTimeout(function(){const nextBooked=!currentlyBooked;book.disabled=false;book.dataset.booked=nextBooked?'1':'0';book.textContent=nextBooked?'Cancel booking':'Book class';const msg=document.getElementById('homeClassMsg');if(msg)msg.textContent=nextBooked?'Class booked. Reminder and calendar options are ready.':'Booking cancelled.'},300)}}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init()})();
           </script>
           """
-                  s = s.replace('</body>', hotfix + '</body>', 1)
-                  p.write_text(s)
+                  s = s.replace('</body>', hotfix + '</body>', 1); p.write_text(s)
           PY
       - name: Setup Pages
         uses: actions/configure-pages@v5
