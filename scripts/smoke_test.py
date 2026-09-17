@@ -11,7 +11,7 @@ CRITICAL = {
     "index.html": ["app-consistency.css", "app-stability.js", "shared-admin-nav.js"],
     "member.html": ["app-consistency.css", "app-stability.js", "social-nav.js"],
     "member-preview.html": ["app-consistency.css", "app-stability.js", "social-nav.js", "member-preview-classes.js"],
-    "classes.html": ["app-consistency.css", "app-stability.js", "calendar-mobile.js", "calendar-views.js", "session-manager.js", "class-admin-loader.js"],
+    "classes.html": ["app-consistency.css", "app-stability.js", "calendar-mobile.js", "calendar-views.js", "session-manager.js", "class-admin-enhancements.js", "class-admin-live-refresh.js"],
     "staff.html": ["app-consistency.css", "app-stability.js", "staff-shell.js"],
     "social.html": ["app-consistency.css", "app-stability.js"],
 }
@@ -19,8 +19,7 @@ JS_CHECKS = (
     "app-stability.js", "social-nav.js", "shared-admin-nav.js", "account-menu.js",
     "calendar-mobile.js", "calendar-views.js", "scheduling-engine.js", "session-manager.js",
     "tenant-branding.js", "pb-workout-enhancements.js", "member-preview-classes.js",
-    "class-admin-loader.js", "class-admin-enhancements.js", "class-admin-live-refresh.js",
-    "staff-shell.js",
+    "class-admin-enhancements.js", "class-admin-live-refresh.js", "staff-shell.js",
 )
 
 problems: list[str] = []
@@ -73,6 +72,8 @@ for name in ("member.html", "member-preview.html", "staff.html"):
 classes = (ROOT / "classes.html").read_text(encoding="utf-8") if (ROOT / "classes.html").exists() else ""
 if '<a class="mobile-back"' in classes:
     problems.append("classes.html: legacy mobile back link still present")
+if "class-admin-loader.js" in classes:
+    problems.append("classes.html: obsolete runtime script loader still present")
 
 # The shared design system now owns all common mobile shell styling.
 for legacy_asset in ("member-mobile-rail.css", "staff-shell.css"):
@@ -92,13 +93,15 @@ for forbidden in ("fixMemberPreviewClasses", "class-admin-enhancements.js", "cla
 
 for page in ROOT.glob("*.html"):
     text = page.read_text(encoding="utf-8")
-    if page.name != "classes.html" and "class-admin-loader.js" in text:
-        problems.append(f"{page.name}: class-admin-loader.js leaked outside classes.html")
+    if page.name != "classes.html" and ("class-admin-enhancements.js" in text or "class-admin-live-refresh.js" in text):
+        problems.append(f"{page.name}: class admin runtime leaked outside classes.html")
     if page.name != "member-preview.html" and "member-preview-classes.js" in text:
         problems.append(f"{page.name}: member-preview-classes.js leaked outside member-preview.html")
     if page.name != "staff.html" and "staff-shell.js" in text:
         problems.append(f"{page.name}: staff-shell.js leaked outside staff.html")
 
+if (ROOT / "class-admin-loader.js").exists():
+    problems.append("obsolete class-admin-loader.js should not be deployed")
 if (ROOT / "admin-demo.html").exists():
     problems.append("admin-demo.html should not be deployed; Core + Hybrid Hub are the supported entry points")
 
