@@ -53,13 +53,16 @@ jobs:
           )
           js = f'<script src="./shared-admin-nav.js?v={v}" defer></script>'
           css = f'<link rel="stylesheet" href="./admin-shell.css?v={v}">'
+          account_js = f'<script src="./account-menu.js?v={v}" defer></script>'
           for name in admin_pages:
               p = Path(name)
               if not p.exists(): continue
               s = p.read_text()
               if 'admin-shell.css' not in s: s = s.replace('</head>', css + '</head>', 1)
               if 'shared-admin-nav.js' not in s: s = s.replace('</body>', js + '</body>', 1)
-              if name == 'index.html': s = s.replace('<section id="authView" class="auth">', '<section id="authView" class="auth hidden">', 1)
+              if name == 'index.html':
+                  s = s.replace('<section id="authView" class="auth">', '<section id="authView" class="auth hidden">', 1)
+                  if 'account-menu.js' not in s: s = s.replace('</body>', account_js + '</body>', 1)
               p.write_text(s)
           PY
       - name: Inject scheduling engine helpers
