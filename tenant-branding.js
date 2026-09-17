@@ -185,6 +185,16 @@
     };
   }
 
-  function init(){addLogoToGymCards();addTopBrand();ensureGymName();addDoorAccessCard();fixMemberPreviewClasses();}
+  function loadClassAdminEnhancements(){
+    if(!location.pathname.endsWith('/classes.html')) return;
+    if(document.querySelector('script[data-class-admin-enhancements]')) return;
+    const s=document.createElement('script');
+    s.src='./class-admin-enhancements.js';
+    s.defer=true;
+    s.dataset.classAdminEnhancements='1';
+    document.head.appendChild(s);
+  }
+
+  function init(){addLogoToGymCards();addTopBrand();ensureGymName();addDoorAccessCard();fixMemberPreviewClasses();loadClassAdminEnhancements();}
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
