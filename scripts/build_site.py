@@ -128,12 +128,14 @@ def harden_member() -> None:
 
 
 def add_admin_shell() -> None:
-    css = f'<link rel="stylesheet" href="./admin-shell.css?v={VERSION}">'
+    shell_css = f'<link rel="stylesheet" href="./admin-shell.css?v={VERSION}">'
+    pages_css = f'<link rel="stylesheet" href="./admin-pages.css?v={VERSION}">'
     nav = f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>'
     account = f'<script src="./account-menu.js?v={VERSION}" defer></script>'
     for name in ADMIN_PAGES:
         s = read(name)
-        s = inject_head(s, "admin-shell.css", css)
+        s = inject_head(s, "admin-shell.css", shell_css)
+        s = inject_head(s, "admin-pages.css", pages_css)
         s = inject_body(s, "shared-admin-nav.js", nav)
         if name == "index.html":
             s = s.replace('<section id="authView" class="auth">', '<section id="authView" class="auth hidden">', 1)
