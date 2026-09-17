@@ -108,7 +108,8 @@ jobs:
               'classes.html':[
                   f'<script src="./scheduling-engine.js?v={v}" defer></script>',
                   f'<script src="./calendar-mobile.js?v={v}" defer></script>',
-                  f'<script src="./calendar-views.js?v={v}" defer></script>'
+                  f'<script src="./calendar-views.js?v={v}" defer></script>',
+                  f'<script src="./session-manager.js?v={v}" defer></script>'
               ],
               'admin-operations.html':[f'<script src="./operations-scheduling-link.js?v={v}" defer></script>'],
           }
@@ -119,7 +120,8 @@ jobs:
               if name == 'classes.html':
                   styles=[
                       f'<link rel="stylesheet" href="./calendar-mobile.css?v={v}">',
-                      f'<link rel="stylesheet" href="./calendar-views.css?v={v}">'
+                      f'<link rel="stylesheet" href="./calendar-views.css?v={v}">',
+                      f'<link rel="stylesheet" href="./session-manager.css?v={v}">'
                   ]
                   for css in styles:
                       asset=css.split('href="./')[1].split('?')[0]
