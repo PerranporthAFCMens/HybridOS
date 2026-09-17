@@ -75,7 +75,6 @@ if '<a class="mobile-back"' in classes:
 if "class-admin-loader.js" in classes:
     problems.append("classes.html: obsolete runtime script loader still present")
 
-# The shared design system now owns all common mobile shell styling.
 for legacy_asset in ("member-mobile-rail.css", "staff-shell.css"):
     for page in ROOT.glob("*.html"):
         if legacy_asset in page.read_text(encoding="utf-8"):
@@ -104,6 +103,22 @@ if (ROOT / "class-admin-loader.js").exists():
     problems.append("obsolete class-admin-loader.js should not be deployed")
 if (ROOT / "admin-demo.html").exists():
     problems.append("admin-demo.html should not be deployed; Core + Hybrid Hub are the supported entry points")
+
+# Keep handover/docs aligned with the deployed architecture so stale filenames and
+# old priorities do not re-enter the codebase through a future pickup session.
+for doc_name in ("README.md", "HANDOVER.md"):
+    doc = ROOT / doc_name
+    if not doc.exists():
+        problems.append(f"missing project documentation: {doc_name}")
+        continue
+    text = doc.read_text(encoding="utf-8")
+    for stale in ("member-mobile-rail.css", "staff-shell.css", "class-admin-loader.js"):
+        if stale in text:
+            problems.append(f"{doc_name}: stale removed asset still documented: {stale}")
+    if "GoCardless is parked" not in text and "GoCardless is deliberately parked" not in text:
+        problems.append(f"{doc_name}: current parked GoCardless priority is not documented")
+    if "Calendar/session management" not in text and "calendar/session management" not in text:
+        problems.append(f"{doc_name}: current calendar/session-management priority is missing")
 
 if problems:
     raise SystemExit("Hybrid OS smoke checks failed:\n- " + "\n- ".join(problems))
