@@ -45,7 +45,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           admin_pages = (
-              'index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','access-settings.html','reporting.html',
+              'index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html',
           )
           js = '<script src="./shared-admin-nav.js" defer></script>'
           css = '<link rel="stylesheet" href="./admin-shell.css">'
