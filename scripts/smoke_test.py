@@ -12,7 +12,7 @@ CRITICAL = {
     "member.html": ["app-consistency.css", "app-stability.js", "social-nav.js"],
     "member-preview.html": ["app-consistency.css", "app-stability.js", "social-nav.js", "member-preview-classes.js"],
     "classes.html": ["app-consistency.css", "app-stability.js", "calendar-mobile.js", "calendar-views.js", "session-manager.js", "class-admin-loader.js"],
-    "staff.html": ["app-consistency.css", "app-stability.js", "staff-shell.css", "staff-shell.js"],
+    "staff.html": ["app-consistency.css", "app-stability.js", "staff-shell.js"],
     "social.html": ["app-consistency.css", "app-stability.js"],
 }
 JS_CHECKS = (
@@ -53,7 +53,6 @@ for name, needles in CRITICAL.items():
         if text.count(asset) > 1:
             problems.append(f"{name}: duplicate {asset}")
 
-# Ensure local CSS/JS references in every built HTML page point to real files.
 asset_pattern = re.compile(r'''(?:src|href)=["']\.\/([^"'?]+\.(?:js|css))[?"']''', re.I)
 for page in ROOT.glob("*.html"):
     text = page.read_text(encoding="utf-8")
@@ -61,14 +60,12 @@ for page in ROOT.glob("*.html"):
         if not (ROOT / asset).exists():
             problems.append(f"{page.name}: references missing local asset {asset}")
 
-# Guard against the member startup regression without relying on a fake DOM mount.
 member = (ROOT / "member.html").read_text(encoding="utf-8") if (ROOT / "member.html").exists() else ""
 if "$('membershipShort').textContent=" in member:
     problems.append("member.html: brittle membershipShort assignment reintroduced")
 if "$('membershipShort')?.textContent=" not in member:
     problems.append("member.html: safe membershipShort assignment missing")
 
-# Old bottom/mobile-back navigation must not survive into the deployed build.
 for name in ("member.html", "member-preview.html", "staff.html"):
     text = (ROOT / name).read_text(encoding="utf-8") if (ROOT / name).exists() else ""
     if '<nav class="bottom">' in text:
@@ -77,13 +74,22 @@ classes = (ROOT / "classes.html").read_text(encoding="utf-8") if (ROOT / "classe
 if '<a class="mobile-back"' in classes:
     problems.append("classes.html: legacy mobile back link still present")
 
-# Page-specific code must not leak back into tenant-branding.js.
+# The shared design system now owns all common mobile shell styling.
+for legacy_asset in ("member-mobile-rail.css", "staff-shell.css"):
+    for page in ROOT.glob("*.html"):
+        if legacy_asset in page.read_text(encoding="utf-8"):
+            problems.append(f"{page.name}: obsolete {legacy_asset} reference remains")
+
+shared_css = (ROOT / "app-consistency.css").read_text(encoding="utf-8") if (ROOT / "app-consistency.css").exists() else ""
+for required_selector in (".admin-mobile-menu-btn", ".staff-mobile-menu-btn", ".mobile-menu-btn", "body.staff-mobile-open .side", "body.admin-mobile-open .side", "body.mobile-nav-open .side"):
+    if required_selector not in shared_css:
+        problems.append(f"app-consistency.css: shared mobile shell selector missing: {required_selector}")
+
 tenant = (ROOT / "tenant-branding.js").read_text(encoding="utf-8") if (ROOT / "tenant-branding.js").exists() else ""
 for forbidden in ("fixMemberPreviewClasses", "class-admin-enhancements.js", "class-admin-live-refresh.js"):
     if forbidden in tenant:
         problems.append(f"tenant-branding.js contains page-specific runtime: {forbidden}")
 
-# Page-specific helpers must stay on their own page.
 for page in ROOT.glob("*.html"):
     text = page.read_text(encoding="utf-8")
     if page.name != "classes.html" and "class-admin-loader.js" in text:
@@ -93,7 +99,6 @@ for page in ROOT.glob("*.html"):
     if page.name != "staff.html" and "staff-shell.js" in text:
         problems.append(f"{page.name}: staff-shell.js leaked outside staff.html")
 
-# Guard against accidental reintroduction of multiple deployed app shells.
 if (ROOT / "admin-demo.html").exists():
     problems.append("admin-demo.html should not be deployed; Core + Hybrid Hub are the supported entry points")
 
