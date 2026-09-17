@@ -78,6 +78,7 @@ def add_shared_runtime() -> None:
 
 
 def add_tenant_runtime() -> None:
+    """Branding + tenant-wide member access only. No page-specific feature code belongs here."""
     css = f'<link rel="stylesheet" href="./tenant-branding.css?v={VERSION}">'
     js = f'<script src="./tenant-branding.js?v={VERSION}" defer></script>'
     for name in TENANT_PAGES:
@@ -104,6 +105,7 @@ def harden_member() -> None:
     name = "member-preview.html"
     s = read(name)
     s = inject_body(s, "social-nav.js", f'<script src="./social-nav.js?v={VERSION}" defer></script>')
+    s = inject_body(s, "member-preview-classes.js", f'<script src="./member-preview-classes.js?v={VERSION}" defer></script>')
     write(name, s)
 
 
@@ -126,7 +128,10 @@ def add_scheduler_assets() -> None:
     s = read(name)
     for asset in ("calendar-mobile.css", "calendar-views.css", "session-manager.css"):
         s = inject_head(s, asset, f'<link rel="stylesheet" href="./{asset}?v={VERSION}">')
-    for asset in ("scheduling-engine.js", "calendar-mobile.js", "calendar-views.js", "session-manager.js"):
+    for asset in (
+        "scheduling-engine.js", "calendar-mobile.js", "calendar-views.js",
+        "session-manager.js", "class-admin-loader.js",
+    ):
         s = inject_body(s, asset, f'<script src="./{asset}?v={VERSION}" defer></script>')
     write(name, s)
 
