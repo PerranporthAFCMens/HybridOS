@@ -7,6 +7,14 @@
 .tenant-top-brand img{max-width:210px;width:min(58vw,210px);height:auto;display:block}
 .side .tenant-gym-logo{filter:brightness(0) invert(1);max-width:175px}
 .gym .tenant-gym-logo{margin-bottom:8px}
+.door-access-card{padding:12px 13px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);color:#fff}
+.door-access-head{display:flex;align-items:center;gap:10px}
+.door-access-head small{display:block;color:#98a2b3;font-size:11px;margin-bottom:2px}
+.door-access-head strong{font-size:13px}
+.door-key-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.09);font-size:18px}
+.door-code-reveal{width:100%;margin-top:10px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.06);color:#fff;border-radius:10px;padding:8px 10px;font-weight:800;cursor:pointer}
+.door-code-value{font-size:26px;font-weight:900;letter-spacing:.14em;text-align:center;padding:10px 4px 2px}
+.door-code-note{text-align:center;color:#98a2b3;font-size:10px;margin-top:4px}
 @media(max-width:900px){
   .tenant-top-brand{margin:0 auto 14px;padding:2px 0}
   .tenant-top-brand img{width:min(52vw,180px)}
