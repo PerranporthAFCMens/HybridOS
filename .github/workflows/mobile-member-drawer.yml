@@ -1,0 +1,56 @@
+name: Mobile member drawer
+on:
+  push:
+    paths:
+      - '.github/workflows/mobile-member-drawer.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace mobile bottom nav with hamburger drawer
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          for filename in ['member.html','member-preview.html']:
+              p=Path(filename)
+              s=p.read_text()
+
+              # Remove the small Membership stat card from the home dashboard only.
+              s=re.sub(r'<div class="card stat"><div class="muted">Membership</div><div class="num"[^>]*>.*?</div></div>', '', s, count=1, flags=re.S)
+
+              # Add shared mobile drawer styles before the closing style tag.
+              css='''\n.mobile-menu-btn,.mobile-menu-close,.mobile-nav-backdrop{display:none}\n@media(max-width:900px){\n  .bottom{display:none!important}\n  .main{padding:74px 14px 36px}\n  .mobile-menu-btn{display:grid;place-items:center;position:fixed;top:16px;left:14px;z-index:61;width:44px;height:44px;border:1px solid var(--line);border-radius:13px;background:#fff;color:var(--ink);font-size:24px;line-height:1;box-shadow:0 8px 24px rgba(16,24,40,.12);cursor:pointer}\n  .side{display:flex!important;position:fixed;left:0;top:0;bottom:0;width:min(82vw,310px);height:100vh;z-index:70;transform:translateX(-105%);transition:transform .22s ease;box-shadow:18px 0 40px rgba(0,0,0,.22);overflow-y:auto}\n  body.mobile-nav-open .side{transform:translateX(0)}\n  .mobile-menu-close{display:grid;place-items:center;position:absolute;top:14px;right:14px;width:38px;height:38px;border:1px solid rgba(255,255,255,.15);border-radius:11px;background:rgba(255,255,255,.08);color:#fff;font-size:24px;cursor:pointer}\n  .mobile-nav-backdrop{display:block;position:fixed;inset:0;background:rgba(11,16,32,.48);z-index:65;opacity:0;pointer-events:none;transition:opacity .2s ease}\n  body.mobile-nav-open .mobile-nav-backdrop{opacity:1;pointer-events:auto}\n  .top{padding-left:54px;min-height:46px}\n}\n'''
+              s=s.replace('</style>',css+'</style>',1)
+
+              # Make the existing sidebar closable.
+              s=s.replace('<aside class="side">','<aside class="side"><button id="mobileMenuClose" class="mobile-menu-close" aria-label="Close menu">×</button>',1)
+
+              # Add hamburger and backdrop immediately inside main.
+              s=s.replace('<main class="main">','<main class="main"><button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Open menu" aria-expanded="false">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop"></div>',1)
+
+              # Remove old bottom navigation from markup entirely.
+              s=re.sub(r'<nav class="bottom">.*?</nav>', '', s, count=1, flags=re.S)
+
+              # Wire drawer before the module's main app logic. Works for both preview and real member page.
+              js="""\nconst mobileMenuBtn=document.getElementById('mobileMenuBtn'),mobileMenuClose=document.getElementById('mobileMenuClose'),mobileNavBackdrop=document.getElementById('mobileNavBackdrop');\nfunction closeMobileNav(){document.body.classList.remove('mobile-nav-open');mobileMenuBtn?.setAttribute('aria-expanded','false')}\nfunction openMobileNav(){document.body.classList.add('mobile-nav-open');mobileMenuBtn?.setAttribute('aria-expanded','true')}\nmobileMenuBtn?.addEventListener('click',openMobileNav);mobileMenuClose?.addEventListener('click',closeMobileNav);mobileNavBackdrop?.addEventListener('click',closeMobileNav);\ndocument.querySelectorAll('.side .nav button,.side .nav a').forEach(x=>x.addEventListener('click',closeMobileNav));\n"""
+              marker="import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';"
+              if marker in s:
+                  s=s.replace(marker,marker+js,1)
+              else:
+                  # preview is not always module-based; inject before first existing script body if needed
+                  s=s.replace('<script>', '<script>'+js, 1)
+
+              p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add member.html member-preview.html
+          git commit -m "Improve member mobile navigation" || exit 0
+          git push
