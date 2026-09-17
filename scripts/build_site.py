@@ -109,6 +109,9 @@ def add_tenant_runtime() -> None:
 
 
 def harden_member() -> None:
+    member_css = f'<link rel="stylesheet" href="./member-experience.css?v={VERSION}">'
+    member_js = f'<script type="module" src="./member-experience.js?v={VERSION}"></script>'
+
     name = "member.html"
     s = read(name)
     brittle = "$('membershipShort').textContent=membership?.membership_plans?.name||'None';"
@@ -117,14 +120,18 @@ def harden_member() -> None:
         s = s.replace(brittle, safe, 1)
     elif safe not in s:
         raise RuntimeError("member.html membership summary assignment changed; review startup hardening")
+    s = inject_head(s, "member-experience.css", member_css)
     s = inject_body(s, "social-nav.js", f'<script src="./social-nav.js?v={VERSION}" defer></script>')
+    s = inject_body(s, "member-experience.js", member_js)
     write(name, s)
 
     name = "member-preview.html"
     s = read(name)
+    s = inject_head(s, "member-experience.css", member_css)
     s = inject_body(s, "social-nav.js", f'<script src="./social-nav.js?v={VERSION}" defer></script>')
     s = inject_body(s, "member-preview-classes.js", f'<script src="./member-preview-classes.js?v={VERSION}" defer></script>')
     s = inject_body(s, "member-preview-controls.js", f'<script src="./member-preview-controls.js?v={VERSION}" defer></script>')
+    s = inject_body(s, "member-experience.js", member_js)
     write(name, s)
 
 
