@@ -1,0 +1,87 @@
+name: Separate class roles and member booking
+on:
+  push:
+    paths:
+      - '.github/workflows/separate-class-roles-and-member-booking.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch class management and member booking
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          # --- Fix real member booking ID and add notification/calendar controls ---
+          p=Path('member.html')
+          s=p.read_text()
+          s=s.replace('data-session-id="${x.id}"','data-session-id="${x.session_id}"')
+
+          old='''<section id="classes" class="page"><div class="section-title"><div><div class="eyebrow">Book your training</div><h2 style="margin:4px 0">Classes</h2></div><a class="btn secondary" href="./classes.html" style="text-decoration:none">Full calendar</a></div><div class="card"><div id="classList" class="list"></div></div></section>'''
+          new='''<section id="classes" class="page"><div class="section-title"><div><div class="eyebrow">Book your training</div><h2 style="margin:4px 0">Classes</h2></div><div class="actions"><button id="classReminderBtn" class="btn secondary">🔔 Reminders</button><button id="calendarSyncBtn" class="btn secondary">📅 Calendar sync</button></div></div><div id="classSettingsMsg" class="muted" style="margin:-4px 0 12px">Bookings create an in-app confirmation and a class reminder by default.</div><div class="card"><div id="classList" class="list"></div></div></section>'''
+          if old not in s: raise SystemExit('member class section marker not found')
+          s=s.replace(old,new,1)
+
+          marker="function metricFields(type,a='',b='')"
+          inject=r'''async function ensureNotificationPrefs(){
+            const {data}=await supabase.from('notification_preferences').select('*').eq('gym_id',gym.id).eq('user_id',session.user.id).maybeSingle();
+            if(data)return data;
+            const ins=await supabase.from('notification_preferences').insert({gym_id:gym.id,user_id:session.user.id}).select('*').single();
+            return ins.data||{class_reminders:true,reminder_minutes:60};
+          }
+          async function refreshClassSettings(){
+            const p=await ensureNotificationPrefs();
+            if($('classReminderBtn')) $('classReminderBtn').textContent=p?.class_reminders?'🔔 Reminders on':'🔕 Reminders off';
+          }
+          $('classReminderBtn').onclick=async()=>{
+            const p=await ensureNotificationPrefs();
+            const next=!p?.class_reminders;
+            const {error}=await supabase.from('notification_preferences').upsert({gym_id:gym.id,user_id:session.user.id,class_reminders:next,booking_confirmation:true,reminder_minutes:p?.reminder_minutes||60},{onConflict:'gym_id,user_id'});
+            $('classSettingsMsg').textContent=error?'Could not update reminders.':next?'Class reminders are on (default: 1 hour before).':'Class reminders are off. Booking confirmations stay on.';
+            await refreshClassSettings();
+          };
+          $('calendarSyncBtn').onclick=async()=>{
+            let {data:t}=await supabase.from('calendar_feed_tokens').select('token').eq('gym_id',gym.id).eq('user_id',session.user.id).eq('is_active',true).maybeSingle();
+            if(!t){const r=await supabase.from('calendar_feed_tokens').upsert({gym_id:gym.id,user_id:session.user.id,is_active:true},{onConflict:'gym_id,user_id'}).select('token').single();t=r.data}
+            if(!t?.token){$('classSettingsMsg').textContent='Could not create calendar sync.';return}
+            await supabase.from('notification_preferences').upsert({gym_id:gym.id,user_id:session.user.id,calendar_sync_enabled:true},{onConflict:'gym_id,user_id'});
+            const https=`https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/class-calendar?token=${t.token}`;
+            const webcal=https.replace(/^https:/,'webcal:');
+            $('classSettingsMsg').innerHTML=`Calendar subscription ready. <a href="${webcal}">Open calendar subscription</a> · <button id="copyCal" class="btn secondary" style="padding:5px 8px">Copy link</button>`;
+            $('copyCal').onclick=async()=>{await navigator.clipboard.writeText(https);$('copyCal').textContent='Copied'};
+          };
+          '''+marker
+          if marker not in s: raise SystemExit('member metric marker not found')
+          s=s.replace(marker,inject,1)
+          s=s.replace("await Promise.all([loadClasses(),loadWorkouts(),loadPBs()])","await Promise.all([loadClasses(),loadWorkouts(),loadPBs(),refreshClassSettings()])",1)
+          p.write_text(s)
+
+          # --- Clean separation: owner/admin manage timetable; members book in member portal; staff use staff portal ---
+          p=Path('classes.html')
+          s=p.read_text()
+          old="gym=gm[0].gyms;role=gm[0].role;$('gymName').textContent=gym.name;"
+          new="gym=gm[0].gyms;role=gm[0].role;if(role==='member'){location.href='./member.html';return}if(['staff','coach'].includes(role)){location.href='./staff.html';return}if(!['owner','admin'].includes(role)){location.href='./index.html';return}$('gymName').textContent=gym.name;"
+          if old not in s: raise SystemExit('classes role marker not found')
+          s=s.replace(old,new,1)
+          s=s.replace("if(['owner','admin','staff'].includes(role))$('addBtn').classList.remove('hidden');","if(['owner','admin'].includes(role))$('addBtn').classList.remove('hidden');",1)
+          oldbtn="""let button='';if(booked)button=`<button class=\"btn danger\" data-cancel=\"${s.session_id}\">Cancel booking</button>`;else if(!s.is_cancelled)button=`<button class=\"btn ${s.bookable_for_me?'good':'secondary'}\" data-book=\"${s.session_id}\" ${s.bookable_for_me?'':'disabled'}>${full?'Full':s.bookable_for_me?'Book class':'Unavailable'}</button>`;"""
+          if oldbtn in s:
+            s=s.replace(oldbtn,"let button='';",1)
+          p.write_text(s)
+
+          # --- Preview: make the class screen obviously member-facing and keep demo booking interactive ---
+          p=Path('member-preview.html')
+          s=p.read_text()
+          s=s.replace('Open full calendar</a>','Calendar sync (demo)</a>',1)
+          p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add member.html member-preview.html classes.html
+          git commit -m "Separate owner class management from member booking" || exit 0
+          git push
