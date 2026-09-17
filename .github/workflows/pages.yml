@@ -23,6 +23,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Inject shared tenant branding
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          pages = (
+              'index.html',
+              'member.html',
+              'member-preview.html',
+              'classes.html',
+              'staff.html',
+              'member-memberships.html',
+              'integrations.html',
+          )
+          css = '<link rel="stylesheet" href="./tenant-branding.css">'
+          js = '<script src="./tenant-branding.js" defer></script>'
+          for name in pages:
+              p = Path(name)
+              if not p.exists():
+                  continue
+              s = p.read_text()
+              if css not in s:
+                  s = s.replace('</head>', css + '</head>', 1)
+              if js not in s:
+                  s = s.replace('</body>', js + '</body>', 1)
+              p.write_text(s)
+          PY
       - name: Inject shared member mobile rail stylesheet
         run: |
           python3 - <<'PY'
