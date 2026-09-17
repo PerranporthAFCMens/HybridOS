@@ -84,6 +84,9 @@ shared_css = (ROOT / "app-consistency.css").read_text(encoding="utf-8") if (ROOT
 for required_selector in (".admin-mobile-menu-btn", ".staff-mobile-menu-btn", ".mobile-menu-btn", "body.staff-mobile-open .side", "body.admin-mobile-open .side", "body.mobile-nav-open .side"):
     if required_selector not in shared_css:
         problems.append(f"app-consistency.css: shared mobile shell selector missing: {required_selector}")
+for required_rule in ("flex-direction:column!important", ".side .gym{flex:0 0 auto;width:100%;min-height:0;height:auto!important}", ".side .nav{flex:0 0 auto;width:100%;min-width:0}"):
+    if required_rule not in shared_css:
+        problems.append(f"app-consistency.css: mobile drawer structure guard missing: {required_rule}")
 
 tenant = (ROOT / "tenant-branding.js").read_text(encoding="utf-8") if (ROOT / "tenant-branding.js").exists() else ""
 for forbidden in ("fixMemberPreviewClasses", "class-admin-enhancements.js", "class-admin-live-refresh.js"):
