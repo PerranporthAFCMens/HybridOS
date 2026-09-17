@@ -487,3 +487,40 @@ A fresh session should be able to continue by doing only this:
 5. Continue from the Immediate next priorities above.
 
 No reconstruction from old chats should be necessary for normal development after reading these docs.
+
+
+## 19. Strava integration scaffold
+
+Strava has now been scaffolded in the same spirit as GoCardless: the product/database/server flow exists even though production API credentials have not yet been added.
+
+Backend tables:
+
+- `strava_connections` — non-secret connection metadata only
+- `strava_activities` — imported activity summaries, private to the owning member by RLS
+- `private.strava_tokens` — access/refresh tokens; never browser-readable
+- `private.strava_oauth_states` — short-lived OAuth state records
+- `private.strava_webhook_events` — raw webhook event store
+
+Supabase Edge Functions:
+
+- `strava-connect` — authenticated member OAuth start; gracefully reports not configured until secrets exist
+- `strava-callback` — public OAuth callback; exchanges code and stores tokens server-side
+- `strava-webhook` — public Strava webhook verification/event receiver; acknowledges quickly and records events
+- `strava-sync` — authenticated member manual sync; refreshes tokens, imports recent activities and creates corresponding Hybrid OS workout sessions/entries/sets
+
+Required future Supabase secrets:
+
+- `STRAVA_CLIENT_ID`
+- `STRAVA_CLIENT_SECRET`
+- `STRAVA_VERIFY_TOKEN`
+
+Current UI:
+
+- `integrations.html` is the member integrations page
+- `integrations.html?preview=1` provides a no-credentials demo of the Strava experience
+- member Profile links to integrations
+- member preview links to the Strava demo
+
+Imported activity data is intentionally private to the member by default. Do not expose Strava-derived activity detail to coaches, staff or other members unless Strava's current API terms explicitly permit the intended use.
+
+Current Strava architecture uses `activity:read` as the intended default scope, not `activity:read_all`. Webhooks should be used for ongoing activity events rather than aggressive polling. Before activation, re-check current Strava API endpoints/terms because their API base URL changed in June 2026.
