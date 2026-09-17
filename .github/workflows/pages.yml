@@ -195,6 +195,39 @@ jobs:
           """
                   s = s.replace('</body>', hotfix + '</body>', 1); p.write_text(s)
           PY
+      - name: Smoke test built pages
+        run: |
+          node --check app-stability.js
+          node --check social-nav.js
+          node --check shared-admin-nav.js
+          node --check account-menu.js
+          node --check calendar-mobile.js
+          node --check calendar-views.js
+          node --check scheduling-engine.js
+          node --check session-manager.js
+          python3 - <<'PY'
+          from pathlib import Path
+          required = {
+              'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js'],
+              'member.html':['app-consistency.css','app-stability.js','membershipShort','social-nav.js'],
+              'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js'],
+              'staff.html':['app-consistency.css','app-stability.js'],
+              'social.html':['app-consistency.css','app-stability.js'],
+          }
+          problems=[]
+          for name,needles in required.items():
+              p=Path(name)
+              if not p.exists(): problems.append(f'{name}: missing file'); continue
+              s=p.read_text()
+              if '</html>' not in s.lower(): problems.append(f'{name}: missing closing html tag')
+              for needle in needles:
+                  if needle not in s: problems.append(f'{name}: missing {needle}')
+              for asset in ('app-consistency.css','app-stability.js'):
+                  if s.count(asset)>1: problems.append(f'{name}: duplicate {asset}')
+          if problems:
+              raise SystemExit('Smoke checks failed:\n- '+'\n- '.join(problems))
+          print('Hybrid OS smoke checks passed')
+          PY
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
