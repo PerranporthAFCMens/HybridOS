@@ -42,6 +42,19 @@ jobs:
               if 'tenant-branding.js' not in s: s = s.replace('</body>', js + '</body>', 1)
               p.write_text(s)
           PY
+      - name: Inject member social navigation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          v = os.environ.get('GITHUB_SHA','dev')[:12]
+          p = Path('member.html')
+          if p.exists():
+              s = p.read_text()
+              js = f'<script src="./social-nav.js?v={v}" defer></script>'
+              if 'social-nav.js' not in s: s = s.replace('</body>', js + '</body>', 1)
+              p.write_text(s)
+          PY
       - name: Inject shared admin shell and navigation
         run: |
           python3 - <<'PY'
