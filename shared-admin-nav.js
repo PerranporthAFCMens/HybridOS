@@ -41,6 +41,18 @@
     document.head.appendChild(s);
   }
 
+  function closeMobile(){document.body.classList.remove('admin-mobile-open');document.querySelector('.admin-mobile-menu-btn')?.setAttribute('aria-expanded','false')}
+  function ensureMobileMenu(){
+    if(document.querySelector('.admin-mobile-menu-btn'))return;
+    const btn=document.createElement('button');btn.className='admin-mobile-menu-btn';btn.type='button';btn.setAttribute('aria-label','Open admin menu');btn.setAttribute('aria-expanded','false');btn.textContent='☰';
+    const backdrop=document.createElement('div');backdrop.className='admin-mobile-backdrop';
+    document.body.append(btn,backdrop);
+    document.querySelectorAll('.side').forEach(side=>{if(!side.querySelector('.admin-mobile-menu-close')){const close=document.createElement('button');close.className='admin-mobile-menu-close';close.type='button';close.setAttribute('aria-label','Close admin menu');close.textContent='×';close.onclick=closeMobile;side.prepend(close)}});
+    btn.onclick=()=>{const open=!document.body.classList.contains('admin-mobile-open');document.body.classList.toggle('admin-mobile-open',open);btn.setAttribute('aria-expanded',open?'true':'false')};
+    backdrop.onclick=closeMobile;
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMobile()});
+  }
+
   function showDashboardPage(key){
     if(!(location.pathname.endsWith('/index.html')||location.pathname.endsWith('/HybridOS/')||location.pathname.endsWith('/'))) return false;
     if(!['dashboard','memberships','members','community'].includes(key)) return false;
@@ -49,6 +61,7 @@
     document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===key));
     history.replaceState(null,'',key==='dashboard'?'./index.html':'./index.html#'+key);
     document.querySelectorAll('.admin-nav-link').forEach(a=>a.classList.toggle('active',a.dataset.adminKey===key));
+    closeMobile();
     window.scrollTo({top:0,behavior:'smooth'});
     return true;
   }
@@ -63,7 +76,7 @@
   }
 
   function render(){
-    style();
+    style();ensureMobileMenu();
     const active=currentKey();
     document.querySelectorAll('.side .nav').forEach(nav=>{
       nav.innerHTML=items.map(i=>`<a class="admin-nav-link ${i.key===active?'active':''}" data-admin-key="${i.key}" href="${i.href}">${i.label}</a>`).join('');
@@ -73,6 +86,7 @@
         a.addEventListener('click',e=>{
           const key=a.dataset.adminKey;
           if(showDashboardPage(key)){e.preventDefault();return}
+          closeMobile();
           try{
             const u=new URL(a.href,location.href);
             if(u.origin===location.origin && adminPages.has(u.pathname.split('/').pop()||'index.html')) document.body.classList.add('admin-leaving');
