@@ -1,0 +1,59 @@
+/* Shared Hybrid OS visual consistency layer.
+   Keep page-specific layouts intact while normalising backgrounds, safe areas,
+   mobile chrome and the core interaction styling across Admin, Staff and Member. */
+:root{
+  --hybrid-bg:#f5f7fb;
+  --hybrid-panel:#fff;
+  --hybrid-ink:#101828;
+  --hybrid-muted:#667085;
+  --hybrid-line:#e7ebf2;
+  --hybrid-dark:#0b1020;
+  --hybrid-shadow:0 14px 34px rgba(16,24,40,.08);
+}
+html{
+  min-height:100%;
+  background:var(--hybrid-bg)!important;
+  color-scheme:light;
+  -webkit-text-size-adjust:100%;
+}
+body{
+  min-height:100dvh;
+  background:var(--hybrid-bg)!important;
+  color:var(--ink,var(--hybrid-ink));
+}
+.shell,.app,#app,#appView{min-height:100dvh}
+.main{min-height:100dvh;background:var(--bg,var(--hybrid-bg))}
+button,input,select,textarea{font:inherit}
+button{touch-action:manipulation}
+.card,.composer,.post,.modal-card{border-color:var(--line,var(--hybrid-line))}
+
+@media(max-width:900px){
+  html,body{background:var(--hybrid-bg)!important;min-height:100dvh}
+  body{overscroll-behavior-y:none}
+  .shell,.app,#app,#appView{min-height:100dvh;background:var(--hybrid-bg)!important}
+  .main{
+    min-height:100dvh;
+    background:var(--hybrid-bg)!important;
+    padding-bottom:max(36px,env(safe-area-inset-bottom))!important;
+  }
+  .mobile-menu-btn,.admin-mobile-menu-btn{
+    top:calc(env(safe-area-inset-top) + 16px)!important;
+    left:14px!important;
+    width:44px!important;
+    height:44px!important;
+    padding:0!important;
+    border:1px solid var(--line,var(--hybrid-line))!important;
+    border-radius:13px!important;
+    background:#fff!important;
+    color:var(--ink,var(--hybrid-ink))!important;
+    box-shadow:0 8px 24px rgba(16,24,40,.12)!important;
+    font-size:24px!important;
+    line-height:1!important;
+  }
+  .mobile-menu-btn:active,.admin-mobile-menu-btn:active{transform:scale(.96)}
+  .side{
+    padding-top:max(24px,calc(env(safe-area-inset-top) + 18px))!important;
+    padding-bottom:max(24px,calc(env(safe-area-inset-bottom) + 18px))!important;
+  }
+  .mobile-nav-backdrop,.admin-mobile-backdrop{inset:0!important}
+}
