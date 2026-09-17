@@ -4,6 +4,7 @@
     {key:'classes',label:'▦ Classes',href:'./classes.html'},
     {key:'class-setup',label:'⚙ Class setup',href:'./class-setup.html'},
     {key:'operations',label:'⚙ Staff & resources',href:'./admin-operations.html'},
+    {key:'staff-access',label:'◈ Staff access',href:'./staff-permissions.html'},
     {key:'access',label:'🔑 Door access',href:'./access-settings.html'},
     {key:'reporting',label:'▥ Reporting',href:'./reporting.html'},
     {key:'memberships',label:'£ Memberships',href:'./index.html#memberships'},
@@ -11,13 +12,14 @@
     {key:'community',label:'✦ Community',href:'./index.html#community'},
     {key:'member-preview',label:'◎ Member preview',href:'./member-preview.html'}
   ];
-  const adminPages=new Set(['index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','access-settings.html','reporting.html']);
+  const adminPages=new Set(['index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html']);
 
   function currentKey(){
     const p=location.pathname;
     if(p.endsWith('/classes.html')) return 'classes';
     if(p.endsWith('/class-setup.html')) return 'class-setup';
     if(p.endsWith('/admin-operations.html')||p.endsWith('/resource-availability.html')) return 'operations';
+    if(p.endsWith('/staff-permissions.html')) return 'staff-access';
     if(p.endsWith('/access-settings.html')) return 'access';
     if(p.endsWith('/reporting.html')) return 'reporting';
     if(p.endsWith('/member-preview.html')) return 'member-preview';
