@@ -43,6 +43,9 @@ Current public application tables include:
 - `channels`
 - `channel_members`
 - `messages`
+- `class_sessions` / `class_bookings`
+- `workout_sessions` / `workout_entries` / `workout_sets`
+- `personal_bests`
 - `class_sessions`
 - `class_bookings`
 - `class_session_reserved_plans`

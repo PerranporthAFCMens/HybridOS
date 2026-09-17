@@ -132,9 +132,12 @@ Current sections:
 
 - Home
 - Classes
+- Workouts
+- PBs
 - My membership
-- Community
 - Profile
+
+Workouts are now wired to Supabase for save/load/history/delete. PBs have their own icon-led page and persistent records.
 
 The previous attempt to let owners preview this page using `?preview=member` was unreliable in practice. Do not depend on this route for owner preview until it is properly fixed.
 
@@ -211,6 +214,7 @@ Important public tables currently include:
 - `workout_sessions`
 - `workout_entries`
 - `workout_sets`
+- `personal_bests`
 
 GoCardless/private webhook groundwork also exists outside the normal public UI flow.
 
@@ -311,7 +315,7 @@ The prototype has used several daily class times for visual testing:
 
 ## 10. Workouts — newest area
 
-This is the latest feature direction and should be the next main member-area build.
+This area is now live in the real member portal and remains an active development focus.
 
 Requirement: workout tracking must **not** assume every exercise is sets/reps/weight.
 
@@ -331,6 +335,7 @@ The workout backend has now been added using:
 - `workout_sessions`
 - `workout_entries`
 - `workout_sets`
+- `personal_bests`
 
 `workout_sets` supports flexible metrics including:
 
@@ -363,7 +368,9 @@ Tracking options currently include:
 - Calories
 - Custom
 
-The preview UI is currently primarily a design/prototype layer; continue by wiring the real member portal to the workout tables and then add editing/history/PB logic.
+The real `member.html` now saves workout sessions, exercises and sets to Supabase, loads workout history, supports delete, and automatically updates straightforward higher-is-better PBs for weight/distance/calories/custom metrics. Time PBs are not auto-inferred because some timed PBs are lower-is-better (for example a 5K) while others are higher-is-better (for example a plank).
+
+A dedicated `personal_bests` table and PB page now support manual PB records for weight, reps, time, distance, calories and custom units, with `higher` or `lower` comparison direction.
 
 ## 11. Staff assignments
 
@@ -431,15 +438,16 @@ When continuing this project:
 
 Recommended pickup order from this handover:
 
-1. **Workouts:** wire real `member.html` to workout tables; add save/load/history; then PB/progress logic.
-2. **Member portal:** bring the design/features from `member-preview.html` into the real role-gated member portal.
-3. **Classes:** verify/polish the week view on mobile and desktop; add recurring class creation rather than manually creating every session.
-4. **Bookings:** improve direct booking UX inside the member portal so members do not need to jump between pages.
-5. **Staff:** polish roster/attendance/no-show/check-in flows and staff assignment UX.
-6. **Members architecture:** migrate UI fully toward `public.members` and remove temporary auth-user duplication.
-7. **Branding:** add a clean Puffin Performance gym logo separately from the Hybrid OS product mark.
-8. **Security:** tighten profile privacy and review security-definer RPC exposure before production.
-9. **Payments:** connect GoCardless only after the core membership/member flows are stable.
+1. **Workouts:** polish the now-live save/load/history flow; add workout edit/detail view and stronger transactional save behaviour.
+2. **PBs/progress:** build PB history/automatic record detection further, then add progress charts, volume, streaks and attendance.
+4. **Member portal:** continue consolidating preview features into the real role-gated member portal.
+4. **Classes:** verify/polish the week view on mobile and desktop; add recurring class creation rather than manually creating every session.
+5. **Bookings:** improve direct booking UX inside the member portal so members do not need to jump between pages.
+6. **Staff:** polish roster/attendance/no-show/check-in flows and staff assignment UX.
+7. **Members architecture:** migrate UI fully toward `public.members` and remove temporary auth-user duplication.
+8. **Branding:** add a clean Puffin Performance gym logo separately from the Hybrid OS product mark.
+9. **Security:** tighten profile privacy and review security-definer RPC exposure before production.
+10. **Payments:** connect GoCardless only after the core membership/member flows are stable.
 
 ## 16. Known issues / cautions
 
@@ -459,6 +467,8 @@ Recent work immediately before this handover included:
 - owner/admin Member Preview link pointing to standalone preview
 - workout backend migration
 - flexible workout tracking UI added to member preview
+- real member workout persistence and history
+- `personal_bests` table + dedicated PB page with metric icons
 
 The workout preview milestone commit was:
 
