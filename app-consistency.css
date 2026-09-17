@@ -1,5 +1,6 @@
 /* Hybrid OS shared design system.
-   Shared visual primitives live here; page files should only define page-specific layout. */
+   This file is the canonical component layer for every Core, Staff and Member page.
+   Page styles may add feature-specific layout, but should not redefine these primitives. */
 :root{
   --hybrid-bg:#f5f7fb;
   --hybrid-panel:#fff;
@@ -7,6 +8,8 @@
   --hybrid-muted:#667085;
   --hybrid-line:#e7ebf2;
   --hybrid-dark:#0b1020;
+  --hybrid-accent:#00d9a6;
+  --hybrid-accent-dark:#0d7966;
   --hybrid-good:#067647;
   --hybrid-warn:#b54708;
   --hybrid-bad:#b42318;
@@ -14,6 +17,9 @@
   --hybrid-control-radius:12px;
   --hybrid-shadow:0 14px 34px rgba(16,24,40,.08);
   --hybrid-control-shadow:0 8px 24px rgba(16,24,40,.12);
+  --hybrid-page-x:30px;
+  --hybrid-page-y:28px;
+  --hybrid-gap:16px;
 }
 
 html{
@@ -25,29 +31,238 @@ html{
 body{
   min-height:100dvh;
   margin:0;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif!important;
   background:var(--hybrid-bg)!important;
-  color:var(--ink,var(--hybrid-ink));
+  color:var(--hybrid-ink)!important;
+  -webkit-font-smoothing:antialiased;
 }
+*{box-sizing:border-box}
 .shell,.app,#app,#appView{min-height:100dvh}
-.main{min-height:100dvh;background:var(--bg,var(--hybrid-bg))}
+.main{min-height:100dvh;background:var(--hybrid-bg)!important;min-width:0}
 button,input,select,textarea{font:inherit}
 button{touch-action:manipulation}
+a{color:inherit}
+.muted{color:var(--hybrid-muted)!important}
+.hidden{display:none!important}
 
-/* Shared surface and control language. Page-specific colour variants remain local. */
-.card,.composer,.post,.modal-card{
-  border-color:var(--line,var(--hybrid-line));
+/* Canonical typography and page header. */
+.top{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  align-items:center;
+  margin-bottom:22px;
 }
+.eyebrow{
+  font-size:12px;
+  font-weight:850;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#7a8494;
+}
+.top h1{
+  font-size:30px;
+  line-height:1.12;
+  margin:4px 0;
+  letter-spacing:-.02em;
+}
+h2{line-height:1.18}
+.section-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:12px;
+}
+.section-title h2,.section-title h3{margin:0}
+
+/* Canonical surfaces. Hero cards can keep their feature-specific background. */
+.card{
+  border:1px solid var(--hybrid-line)!important;
+  border-radius:var(--hybrid-radius)!important;
+  padding:18px;
+  box-shadow:var(--hybrid-shadow)!important;
+}
+.card:not(.hero){background:var(--hybrid-panel)!important}
+.composer,.post,.modal-card{
+  background:var(--hybrid-panel)!important;
+  border:1px solid var(--hybrid-line)!important;
+  border-radius:var(--hybrid-radius)!important;
+  box-shadow:var(--hybrid-shadow)!important;
+}
+.row{
+  border:1px solid var(--hybrid-line)!important;
+  border-radius:14px!important;
+  padding:12px;
+}
+.rowtop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.list{display:grid;gap:9px}
+.empty,.staff-ops-empty{
+  padding:14px;
+  border:1px dashed #d0d5dd!important;
+  border-radius:14px!important;
+  color:var(--hybrid-muted)!important;
+  background:#fafbfc!important;
+}
+
+/* Canonical buttons. Variants are deliberately shared across every experience. */
 .btn{
-  border-radius:var(--hybrid-control-radius);
-  font-weight:800;
+  border:0;
+  border-radius:var(--hybrid-control-radius)!important;
+  padding:10px 13px;
+  font-weight:800!important;
+  line-height:1.2;
+  cursor:pointer;
   touch-action:manipulation;
+  text-decoration:none;
+}
+.btn.primary,.btn.dark{
+  background:var(--hybrid-dark)!important;
+  color:#fff!important;
+}
+.btn.secondary{
+  background:#fff!important;
+  border:1px solid var(--hybrid-line)!important;
+  color:var(--hybrid-ink)!important;
+}
+.btn.danger{
+  background:#fef3f2!important;
+  color:var(--hybrid-bad)!important;
+  border:1px solid #fecdca!important;
 }
 .btn:disabled{opacity:.55;cursor:not-allowed}
-.userchip{
-  border-color:var(--line,var(--hybrid-line));
+.btn:focus-visible,button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:3px solid rgba(0,217,166,.25);
+  outline-offset:2px;
 }
-.field input,.field select,.field textarea{
-  border-color:var(--line,var(--hybrid-line));
+.hero .btn.primary{background:#fff!important;color:var(--hybrid-dark)!important}
+
+/* Canonical status pills. */
+.tag{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  padding:5px 8px!important;
+  border-radius:999px!important;
+  background:#f2f4f7!important;
+  color:var(--hybrid-ink);
+  font-size:11px!important;
+  font-weight:800!important;
+  line-height:1.2;
+}
+.tag.good{background:#ecfdf3!important;color:var(--hybrid-good)!important}
+.tag.warn{background:#fffaeb!important;color:var(--hybrid-warn)!important}
+.tag.bad{background:#fef3f2!important;color:var(--hybrid-bad)!important}
+
+/* Canonical forms. */
+.field{margin:10px 0}
+.field label{
+  display:block;
+  font-size:12px;
+  font-weight:800;
+  margin-bottom:5px;
+}
+.field input,.field select,.field textarea,
+input.staff-member-search{
+  width:100%;
+  min-height:44px;
+  padding:11px 12px!important;
+  border:1px solid var(--hybrid-line)!important;
+  border-radius:var(--hybrid-control-radius)!important;
+  background:#fff!important;
+  color:var(--hybrid-ink)!important;
+  outline:none;
+}
+.field textarea{min-height:72px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus,input.staff-member-search:focus{
+  border-color:#8d82ff!important;
+  box-shadow:0 0 0 3px #eeecff!important;
+}
+
+/* Canonical signed-in user chip. */
+.userchip{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  background:#fff!important;
+  border:1px solid var(--hybrid-line)!important;
+  border-radius:16px!important;
+  padding:8px 11px!important;
+  box-shadow:none;
+}
+.avatar{
+  width:40px;
+  height:40px;
+  flex:0 0 40px;
+  border-radius:50%!important;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  font-weight:850;
+}
+.avatar img{width:100%;height:100%;object-fit:cover}
+
+/* Canonical modal treatment. */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(11,16,32,.58)!important;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  z-index:100;
+}
+.modal-card{
+  width:min(720px,100%);
+  max-height:90dvh;
+  overflow:auto;
+  padding:20px!important;
+}
+
+/* Shared desktop shell/sidebar language. */
+.shell{display:grid;grid-template-columns:245px 1fr}
+.side{
+  background:var(--hybrid-dark)!important;
+  color:#fff;
+  padding:24px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:22px;
+  position:sticky;
+  top:0;
+  height:100vh;
+}
+.side .gym{
+  padding:13px!important;
+  border-radius:16px!important;
+  background:rgba(255,255,255,.07)!important;
+  border:1px solid rgba(255,255,255,.08)!important;
+}
+.side .gym small{color:#98a2b3!important}
+.side .nav{display:grid;gap:6px}
+.side .nav a,.side .nav button{
+  min-height:44px;
+  border:0;
+  background:transparent;
+  color:#a9b2c2;
+  padding:12px!important;
+  border-radius:12px!important;
+  text-align:left;
+  text-decoration:none;
+  cursor:pointer;
+}
+.side .nav a.active,.side .nav button.active,.side .nav a:hover,.side .nav button:hover{
+  background:rgba(255,255,255,.09)!important;
+  color:#fff!important;
+}
+.logout{
+  margin-top:auto;
+  border:1px solid rgba(255,255,255,.14)!important;
+  background:transparent!important;
+  color:#d0d5dd!important;
+  padding:11px!important;
+  border-radius:12px!important;
 }
 
 /* One mobile drawer system for Member, Staff and Admin. */
@@ -55,15 +270,25 @@ button{touch-action:manipulation}
 .mobile-menu-close,.admin-mobile-menu-close,.staff-mobile-menu-close,
 .mobile-nav-backdrop,.admin-mobile-backdrop,.staff-mobile-backdrop{display:none}
 
+@media(min-width:901px){
+  .main{padding:var(--hybrid-page-y) var(--hybrid-page-x) 96px}
+}
+
 @media(max-width:900px){
   html,body{background:var(--hybrid-bg)!important;min-height:100dvh}
   body{overscroll-behavior-y:none}
-  .shell,.app,#app,#appView{min-height:100dvh;background:var(--hybrid-bg)!important}
+  .shell,.app,#app,#appView{display:block;min-height:100dvh;background:var(--hybrid-bg)!important}
   .main{
     min-height:100dvh;
     background:var(--hybrid-bg)!important;
+    padding-left:14px!important;
+    padding-right:14px!important;
     padding-bottom:max(36px,env(safe-area-inset-bottom))!important;
   }
+  .top{align-items:flex-start;margin-bottom:18px}
+  .top h1{font-size:29px}
+  .userchip .who{display:none}
+  .card{border-radius:18px!important;padding:16px}
   .bottom,.mobile-nav{display:none!important}
 
   .mobile-menu-btn,.admin-mobile-menu-btn,.staff-mobile-menu-btn{
@@ -76,10 +301,10 @@ button{touch-action:manipulation}
     width:44px!important;
     height:44px!important;
     padding:0!important;
-    border:1px solid var(--line,var(--hybrid-line))!important;
+    border:1px solid var(--hybrid-line)!important;
     border-radius:13px!important;
     background:#fff!important;
-    color:var(--ink,var(--hybrid-ink))!important;
+    color:var(--hybrid-ink)!important;
     box-shadow:var(--hybrid-control-shadow)!important;
     font-size:24px!important;
     line-height:1!important;
@@ -94,7 +319,7 @@ button{touch-action:manipulation}
     display:flex!important;
     flex-direction:column!important;
     align-items:stretch!important;
-    gap:0;
+    gap:0!important;
     position:fixed!important;
     left:0!important;
     top:0!important;
@@ -106,11 +331,10 @@ button{touch-action:manipulation}
     transition:transform .22s ease;
     box-shadow:18px 0 40px rgba(0,0,0,.22);
     overflow-y:auto;
-    padding-top:max(24px,calc(env(safe-area-inset-top) + 18px))!important;
-    padding-bottom:max(24px,calc(env(safe-area-inset-bottom) + 18px))!important;
+    padding: max(24px,calc(env(safe-area-inset-top) + 18px)) 18px max(24px,calc(env(safe-area-inset-bottom) + 18px))!important;
   }
-  .side .brand,.side .logo,.side .brand-logo{flex:0 0 auto}
-  .side .gym{flex:0 0 auto;width:100%;min-height:0;height:auto!important}
+  .side .brand,.side .logo,.side .brand-logo{flex:0 0 auto;margin-bottom:22px}
+  .side .gym{flex:0 0 auto;width:100%;min-height:0;height:auto!important;margin-bottom:16px}
   .side .nav{flex:0 0 auto;width:100%;min-width:0}
   .side .nav a,.side .nav button{white-space:normal;overflow-wrap:anywhere}
   body.mobile-nav-open .side,
