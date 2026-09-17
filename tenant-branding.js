@@ -29,16 +29,30 @@
   function addAdminOperationsNav(){
     if(!location.pathname.endsWith('/index.html') && !location.pathname.endsWith('/HybridOS/')) return;
     document.querySelectorAll('.nav').forEach(function(nav){
-      if(nav.querySelector('[data-operations-link]')) return;
-      const reference=[...nav.querySelectorAll('button')].find(b=>/Memberships/i.test(b.textContent||''));
-      const b=document.createElement('button'); b.type='button'; b.dataset.operationsLink='1'; b.textContent='⚙ Staff & resources';
-      b.onclick=()=>location.href='./admin-operations.html';
-      if(reference) nav.insertBefore(b,reference); else nav.appendChild(b);
+      if(!nav.querySelector('[data-class-setup-link]')){
+        const classBtn=[...nav.querySelectorAll('button')].find(b=>/^▦?\s*Classes/i.test((b.textContent||'').trim())||/Classes/i.test(b.textContent||''));
+        const b=document.createElement('button'); b.type='button'; b.dataset.classSetupLink='1'; b.textContent='⚙ Class setup'; b.onclick=()=>location.href='./classes.html?setup=1';
+        if(classBtn?.nextSibling) nav.insertBefore(b,classBtn.nextSibling); else nav.appendChild(b);
+      }
+      if(!nav.querySelector('[data-operations-link]')){
+        const reference=[...nav.querySelectorAll('button')].find(b=>/Memberships/i.test(b.textContent||''));
+        const b=document.createElement('button'); b.type='button'; b.dataset.operationsLink='1'; b.textContent='⚙ Staff & resources'; b.onclick=()=>location.href='./admin-operations.html';
+        if(reference) nav.insertBefore(b,reference); else nav.appendChild(b);
+      }
     });
     document.querySelectorAll('.mobile-nav').forEach(function(nav){
-      if(nav.querySelector('[data-operations-link]')) return;
-      const b=document.createElement('button'); b.type='button'; b.dataset.operationsLink='1'; b.innerHTML='⚙<br>Ops'; b.onclick=()=>location.href='./admin-operations.html'; nav.appendChild(b);
+      if(!nav.querySelector('[data-class-setup-link]')){const b=document.createElement('button');b.type='button';b.dataset.classSetupLink='1';b.innerHTML='⚙<br>Classes';b.onclick=()=>location.href='./classes.html?setup=1';nav.appendChild(b)}
+      if(!nav.querySelector('[data-operations-link]')){const b=document.createElement('button');b.type='button';b.dataset.operationsLink='1';b.innerHTML='⚙<br>Ops';b.onclick=()=>location.href='./admin-operations.html';nav.appendChild(b)}
       nav.style.gridTemplateColumns='repeat('+nav.children.length+',1fr)';
+    });
+  }
+
+  function addClassPageSetupNav(){
+    if(!location.pathname.endsWith('/classes.html')) return;
+    document.querySelectorAll('.side .nav').forEach(function(nav){
+      if(nav.querySelector('[data-class-setup-link]')) return;
+      const a=document.createElement('a'); a.href='./classes.html?setup=1'; a.dataset.classSetupLink='1'; a.textContent='⚙ Class setup';
+      const active=nav.querySelector('a.active'); if(active?.nextSibling)nav.insertBefore(a,active.nextSibling); else nav.appendChild(a);
     });
   }
 
@@ -76,6 +90,6 @@
   }
 
   function loadClassAdminEnhancements(){if(!location.pathname.endsWith('/classes.html'))return;if(document.querySelector('script[data-class-admin-enhancements]'))return;const s=document.createElement('script');s.src='./class-admin-enhancements.js';s.defer=true;s.dataset.classAdminEnhancements='1';document.head.appendChild(s)}
-  function init(){addLogoToGymCards();addTopBrand();ensureGymName();addAdminOperationsNav();addDoorAccessCard();fixMemberPreviewClasses();loadClassAdminEnhancements()}
+  function init(){addLogoToGymCards();addTopBrand();ensureGymName();addAdminOperationsNav();addClassPageSetupNav();addDoorAccessCard();fixMemberPreviewClasses();loadClassAdminEnhancements()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
