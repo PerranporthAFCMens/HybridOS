@@ -1,0 +1,12 @@
+@view-transition { navigation: auto; }
+html{background:#0b1020}
+body{background:#f5f7fb}
+#loading{min-height:100vh;position:relative;color:transparent;background:linear-gradient(90deg,#0b1020 0 255px,#f5f7fb 255px 100%);overflow:hidden}
+#loading::before{content:"HYBRID OS";position:absolute;left:24px;top:26px;color:#fff;font:900 18px/1 Inter,system-ui,sans-serif;letter-spacing:.08em}
+#loading::after{content:"";position:absolute;left:285px;right:30px;top:30px;height:190px;border-radius:22px;background:linear-gradient(100deg,#e9edf3 20%,#f7f8fa 36%,#e9edf3 52%);background-size:220% 100%;animation:adminShimmer 1.05s linear infinite;box-shadow:0 220px 0 #fff,0 430px 0 #fff}
+@keyframes adminShimmer{to{background-position:-220% 0}}
+.side{view-transition-name:admin-sidebar}
+.main{view-transition-name:admin-main}
+body.admin-leaving .main{opacity:.82;transform:translateY(2px);transition:opacity .12s ease,transform .12s ease}
+@media(max-width:900px){#loading{background:#f5f7fb}#loading::before{display:none}#loading::after{left:14px;right:14px;top:20px;height:150px}}
+@media(prefers-reduced-motion:reduce){#loading::after{animation:none}body.admin-leaving .main{transition:none}}
