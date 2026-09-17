@@ -122,6 +122,11 @@ for required in ("member_class_schedule", "member_book_class", "member_cancel_cl
     if required not in member_runtime:
         problems.append(f"member-experience.js: required member workflow missing: {required}")
 
+preview_controls=(ROOT/"member-preview-controls.js").read_text(encoding="utf-8") if (ROOT/"member-preview-controls.js").exists() else ""
+for required in ("openPreviewPage", "wireNavigation", "memberPreviewAccountMenu", "previewAccountSave", "hybridOS_memberPreviewAccount"):
+    if required not in preview_controls:
+        problems.append(f"member-preview-controls.js: required preview navigation/account workflow missing: {required}")
+
 if (ROOT / "class-admin-loader.js").exists():
     problems.append("obsolete class-admin-loader.js should not be deployed")
 if (ROOT / "admin-demo.html").exists():
