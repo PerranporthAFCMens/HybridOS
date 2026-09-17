@@ -2,7 +2,7 @@
 .session{cursor:pointer}
 .session-manager-overlay{position:fixed;inset:0;background:rgba(11,16,32,.52);z-index:120;display:grid;place-items:center;padding:18px}
 .session-manager-overlay.hidden{display:none!important}
-.session-manager-panel{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid var(--line,#e7ebf2);border-radius:24px;box-shadow:0 28px 80px rgba(11,16,32,.22)}
+.session-manager-panel{width:min(820px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid var(--line,#e7ebf2);border-radius:24px;box-shadow:0 28px 80px rgba(11,16,32,.22)}
 .session-manager-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:20px 20px 14px;border-bottom:1px solid #eef1f5}
 .session-manager-head h2{margin:3px 0 0;font-size:26px}
 .session-manager-close{width:42px;height:42px;border:1px solid var(--line,#e7ebf2);border-radius:13px;background:#fff;color:var(--ink,#101828);font-size:24px;line-height:1;cursor:pointer}
@@ -12,9 +12,30 @@
 .session-manager-stat small{display:block;color:#667085;font-weight:700;margin-bottom:5px}
 .session-manager-stat strong{font-size:17px}
 .session-manager-section{margin-top:18px}
-.session-manager-title{font-size:14px;font-weight:900;color:#344054;margin-bottom:9px}
+.session-manager-title{font-size:14px;font-weight:900;color:#344054;margin:15px 0 9px}
 .session-manager-chiprow{display:flex;gap:7px;flex-wrap:wrap}
 .session-manager-chip{display:inline-flex;padding:7px 10px;border-radius:999px;background:#f2f4f7;color:#344054;font-size:12px;font-weight:800}
+.session-manager-edit{border:1px solid #e7ebf2;border-radius:16px;background:#fafbfc;margin-top:12px;overflow:hidden}
+.session-manager-edit>summary{cursor:pointer;padding:13px 14px;font-weight:900;color:#344054;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.session-manager-edit>summary::-webkit-details-marker{display:none}
+.session-manager-edit>summary:after{content:'+';font-size:20px;color:#667085}
+.session-manager-edit[open]>summary:after{content:'−'}
+.session-manager-edit[open]>summary{border-bottom:1px solid #e7ebf2;background:#fff}
+.session-manager-edit>.session-manager-form,.session-manager-edit>.session-manager-checkgrid,.session-manager-edit>.session-manager-field,.session-manager-edit>.session-manager-title,.session-manager-edit>.session-manager-btn,.session-manager-edit>.session-manager-msg{margin-left:14px;margin-right:14px}
+.session-manager-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.session-manager-form label,.session-manager-field{display:grid;gap:6px;font-size:12px;font-weight:800;color:#475467}
+.session-manager-form label.wide{grid-column:1/-1}
+.session-manager-form input,.session-manager-form textarea,.session-manager-field select{width:100%;border:1px solid #d9dee7;border-radius:12px;background:#fff;color:#101828;padding:10px 11px;font:inherit}
+.session-manager-form textarea{min-height:88px;resize:vertical}
+.session-manager-checkgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.session-manager-check{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:center;border:1px solid #e3e8ef;border-radius:12px;padding:10px;background:#fff;font-size:13px}
+.session-manager-check.resource{grid-template-columns:auto 1fr 70px}
+.session-manager-check input[type=checkbox]{width:18px;height:18px}
+.session-manager-check span{display:grid;gap:2px}.session-manager-check small{color:#667085;font-weight:600}
+.session-manager-qty{width:66px;border:1px solid #d9dee7;border-radius:10px;padding:7px;background:#fff}
+.session-manager-field{margin-top:12px!important}
+.session-manager-edit>.session-manager-btn{margin-top:14px;margin-bottom:2px}
+.session-manager-edit>.session-manager-msg{margin-bottom:12px}
 .session-manager-roster{display:grid;gap:8px}
 .session-manager-person{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;border:1px solid #e7ebf2;border-radius:15px;padding:11px 12px}
 .session-manager-person-name{font-weight:850}
@@ -25,8 +46,10 @@
 .session-manager-attendance button.active.no-show{background:#fef3f2;color:#b42318;border-color:#fecdca}
 .session-manager-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid #eef1f5}
 .session-manager-btn{border:0;border-radius:12px;padding:10px 13px;font-weight:850;cursor:pointer}
+.session-manager-btn.primary{background:#0b1020;color:#fff}
 .session-manager-btn.secondary{background:#fff;border:1px solid #e2e7ef;color:#101828}
 .session-manager-btn.danger{background:#fef3f2;color:#b42318;border:1px solid #fecdca}
+.session-manager-btn:disabled{opacity:.55;cursor:not-allowed}
 .session-manager-empty{padding:16px;border:1px dashed #d0d5dd;border-radius:14px;color:#667085;background:#fafbfc}
 .session-manager-msg{font-size:13px;color:#667085;margin-top:10px;min-height:18px}
 @media(max-width:700px){
@@ -35,6 +58,7 @@
  .session-manager-head{padding:18px 16px 13px}
  .session-manager-body{padding:16px 16px calc(env(safe-area-inset-bottom) + 22px)}
  .session-manager-summary{grid-template-columns:1fr 1fr}
+ .session-manager-form,.session-manager-checkgrid{grid-template-columns:1fr}
  .session-manager-person{grid-template-columns:1fr}
  .session-manager-attendance{justify-content:flex-start}
 }
