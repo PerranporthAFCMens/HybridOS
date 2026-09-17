@@ -94,11 +94,12 @@ def add_tenant_runtime() -> None:
 def harden_member() -> None:
     name = "member.html"
     s = read(name)
-    if 'id="membershipShort"' not in s:
-        needle = '<div id="membershipFull"></div>'
-        if needle not in s:
-            raise RuntimeError("member.html no longer contains membershipFull mount point")
-        s = s.replace(needle, '<span id="membershipShort" hidden></span><div id="membershipFull"></div>', 1)
+    brittle = "$('membershipShort').textContent=membership?.membership_plans?.name||'None';"
+    safe = "$('membershipShort')?.textContent=membership?.membership_plans?.name||'None';"
+    if brittle in s:
+        s = s.replace(brittle, safe, 1)
+    elif safe not in s:
+        raise RuntimeError("member.html membership summary assignment changed; review startup hardening")
     s = inject_body(s, "social-nav.js", f'<script src="./social-nav.js?v={VERSION}" defer></script>')
     write(name, s)
 
