@@ -18,7 +18,7 @@
     if(!(path.endsWith('/member.html')||path.endsWith('/member-preview.html'))) return;
     const main=document.querySelector('.main');
     const top=document.querySelector('.main .top');
-    if(!main||!top||document.querySelector('.tenant-top-brand')) return;
+    if(!main||!top||document.querySelector('.tenant-top-brand')||document.querySelector('.member-gym-logo')) return;
     const wrap=document.createElement('div');
     wrap.className='tenant-top-brand';
     wrap.innerHTML='<img src="'+logo+'" alt="'+gymName+'">';
