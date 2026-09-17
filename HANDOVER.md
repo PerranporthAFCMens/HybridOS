@@ -8,66 +8,25 @@ This is the authoritative continuation brief for Hybrid OS. A fresh coding/chat 
 
 Hybrid OS is a reusable multi-gym SaaS / operating system for independent gyms and hybrid-style training facilities.
 
-The product is one underlying operating system with three distinct role experiences:
+It is one underlying product with three role experiences:
 
 ### Admin Console
 
-Owner/admin control over:
-
-- gym setup and branding
-- memberships and revenue configuration
-- members
-- staff and permissions
-- staff working hours
-- staff qualifications/capabilities
-- class/service setup
-- timetable
-- class bookings and attendance
-- rooms/areas/equipment
-- resource availability
-- door access
-- reporting
-- account settings
-- future payment/integration setup
+Owner/admin control over gym setup, memberships, members, staff, permissions, classes, timetable, resources, attendance, access, reporting and account settings.
 
 ### Staff Portal
 
-Staff should see operational tools appropriate to their role rather than a stripped-down Admin page.
-
-Current/future staff concepts include:
-
-- own timetable
-- assigned classes
-- today/upcoming sessions
-- class rosters
-- mark attended/no-show
-- own working hours
-- PT appointments
-- permitted member lookup
-- permitted resource booking
-- permission-aware operational tools
+Operational workspace for staff, including assigned classes, rosters, attendance and future rota/PT/member/resource workflows according to permission.
 
 ### Member Portal
 
-Members should see:
+Member-facing experience for bookings, training, PBs, membership, integrations, access and Social/community.
 
-- account/profile
-- membership
-- classes and bookings
-- workouts
-- PBs/progress
-- Strava/integrations
-- door access
-- Social/community
-- future PT and payment/self-service features
-
-The same underlying data should drive all three experiences.
+All three experiences use the same underlying gym-scoped data.
 
 ---
 
 ## 2. Repository, hosting and backend
-
-### GitHub
 
 Repository: `PerranporthAFCMens/HybridOS`
 
@@ -81,9 +40,9 @@ Actions:
 
 `https://github.com/PerranporthAFCMens/HybridOS/actions`
 
-### Supabase
+Supabase project ref:
 
-Project ref: `mzgnhmeydhhpzgxlgudh`
+`mzgnhmeydhhpzgxlgudh`
 
 Project URL:
 
@@ -91,7 +50,7 @@ Project URL:
 
 Region: London / `eu-west-2`
 
-Do not confuse this with older Football PA/Core projects.
+Do not confuse this project with Football PA/Core.
 
 ---
 
@@ -99,10 +58,10 @@ Do not confuse this with older Football PA/Core projects.
 
 There should be exactly two supported product entry points:
 
-1. **Hybrid OS Core** — the real product code/UI.
-2. **Hybrid Hub demo** — dedicated demo tenant using the same Core product.
+1. **Hybrid OS Core** — the real product code/UI
+2. **Hybrid Hub demo** — dedicated demo tenant using the same Core product
 
-Do not create another standalone Admin demo.
+Do not create a parallel Admin or Member demo application.
 
 ### Hybrid Hub demo
 
@@ -114,8 +73,6 @@ Public demo credentials:
 
 - Email: `demo@hybridhub.test`
 - Password: `HybridHubDemo!26`
-
-These are demo-only.
 
 Hybrid Hub tenant ID:
 
@@ -140,15 +97,61 @@ Original development tenant:
 - GitHub Pages
 - Supabase Auth/database/RLS
 - multi-tenant gym-scoped records
-- GoCardless-ready payment schema
-- Strava scaffold
 - mobile-first UI direction
+- provider-ready payment schema
+- Strava scaffold
 
-A future move to a framework such as Next.js/TypeScript remains reasonable once workflows stabilise, but the current static structure is being retained for speed.
+GoCardless is deliberately parked for now. The schema remains provider-ready, but payment integration is not part of the immediate roadmap.
+
+Email/SMS capability is planned later as a shared communications layer rather than one-off send buttons.
+
+A framework migration such as Next.js/TypeScript can be reconsidered later, but the current static architecture is being retained while product workflows mature.
 
 ---
 
-## 5. Main frontend files
+## 5. Stability architecture — completed cleanup
+
+A dedicated stability/cleanup workstream was completed on 17 September 2026 after the app began feeling glitchy from overlapping page-specific and shared code.
+
+The deployment flow is now:
+
+**source files → isolated `_site` build → smoke tests → GitHub Pages deploy**
+
+Important files:
+
+- `scripts/build_site.py`
+- `scripts/smoke_test.py`
+- `.github/workflows/pages.yml`
+- `app-consistency.css`
+- `app-stability.js`
+
+Key decisions:
+
+- source files are no longer progressively rewritten in place during deployment
+- the build script copies source into `_site` and assembles the deployable version there
+- smoke tests run against the built site before Pages deploys it
+- shared mobile shell styling lives centrally in `app-consistency.css`
+- Admin-only loading/transition styling remains in `admin-shell.css`
+- Staff mobile behaviour uses `staff-shell.js` but shared visual styling
+- obsolete `member-mobile-rail.css` was removed
+- obsolete `staff-shell.css` was removed
+- obsolete `class-admin-loader.js` was removed
+- Classes loads `class-admin-enhancements.js` and `class-admin-live-refresh.js` directly
+- Member Preview-only behaviour lives in `member-preview-classes.js`
+- Classes-only code is not allowed to leak onto other pages
+- Staff-only code is not allowed to leak onto other pages
+- legacy bottom navigation is stripped from Member, Member Preview and Staff in the deployable build
+- the old Classes mobile-back link is stripped because shared Admin navigation owns mobile navigation
+- shared assets are cache-busted by deployment SHA
+- app startup has a stability guard so pages should not silently sit forever on loading screens
+
+The final verification was run against the actual deployed GitHub Pages artifact and passed with zero detected problems.
+
+Do not reintroduce separate CSS implementations for the same mobile shell or script-loader chains where scripts load more scripts at runtime.
+
+---
+
+## 6. Main frontend files
 
 ### Admin
 
@@ -168,32 +171,39 @@ A future move to a framework such as Next.js/TypeScript remains reasonable once 
 ### Member
 
 - `member.html` — canonical Member Portal
-- `member-preview.html` — member experience preview/helper
+- `member-preview.html` — preview/helper only
 - `social.html` — gym social feed
 - `integrations.html` — integrations/Strava
-- `member-memberships.html` — older transitional page; should eventually be retired
+- `member-memberships.html` — older transitional membership-management screen; do not build new product direction around it
 
-### Shared helpers/styles
+### Shared/runtime files
 
+- `app-consistency.css`
+- `app-stability.js`
 - `shared-admin-nav.js`
 - `admin-shell.css`
+- `staff-shell.js`
 - `tenant-branding.js`
 - `tenant-branding.css`
-- `member-mobile-rail.css`
 - `calendar-mobile.js`
 - `calendar-mobile.css`
 - `calendar-views.js`
 - `calendar-views.css`
 - `scheduling-engine.js`
+- `session-manager.js`
+- `session-manager.css`
+- `class-admin-enhancements.js`
+- `class-admin-live-refresh.js`
 - `account-menu.js`
 - `social-nav.js`
+- `member-preview-classes.js`
 - `operations-scheduling-link.js`
 
 ---
 
-## 6. Current Admin Console
+## 7. Admin Console
 
-The Admin Console now includes:
+Current areas include:
 
 - Dashboard
 - Classes
@@ -208,47 +218,15 @@ The Admin Console now includes:
 - Community/admin areas
 - Member preview
 
-On mobile, Admin uses a shared hamburger/drawer rather than the old bottom navigation rail.
+Admin mobile uses the shared hamburger/drawer rather than an old bottom rail.
 
-The top-right user chip on the Admin dashboard now acts as an account menu.
-
-Account settings support updating:
-
-- display name
-- first name
-- last name
-- email
-- password
-
-Profile updates use the user’s own `profiles` row; auth email/password changes use Supabase Auth.
-
----
-
-## 7. Shared styling / CSS consistency
-
-Recent work has focused on stopping each page from drifting visually.
-
-Current shared direction:
-
-- consistent light Hybrid OS page background
-- mobile safe-area coverage
-- no dark/grey bands above/below the page on iPhone
-- consistent 100dvh handling
-- same rounded hamburger treatment across Admin/Member where appropriate
-- consistent drawer/backdrop behaviour
-- shared Admin shell styles
-- shared Member mobile navigation treatment
-- asset cache-busting by deployment SHA
-
-A consistency pass has been applied across Admin, Staff, Member, Social, integrations and setup/reporting pages.
-
-There is still technical debt because individual HTML files contain substantial inline CSS. Long-term, more of this should move into shared source-level styles rather than deployment injection.
+The top-right user chip provides self-service account settings for display name, first/last name, email and password.
 
 ---
 
 ## 8. Classes and timetable
 
-The class system currently uses:
+Core data includes:
 
 - `class_types`
 - `class_sessions`
@@ -266,43 +244,51 @@ RPCs include:
 
 ### Mobile timetable
 
-The mobile Classes page now uses a selected-day model inspired by the supplied reference layout but styled as Hybrid OS:
+The mobile Classes page uses:
 
 - horizontally scrollable date strip
 - selected date tile
 - one-day session list
-- class cards
-- booked/capacity badge
-- Hybrid OS colours and rounded card treatment
+- rounded class cards
+- booked/capacity state
 
 ### Calendar views
 
-Operational view modes now include:
+Operational modes include:
 
 - **Gym** — all sessions
-- **Staff** — filter by selected staff member
-- **Resource** — filter by room/area/equipment
+- **Staff** — sessions filtered by selected staff member
+- **Resource** — sessions filtered by room/area/equipment
 
-Session cards can display assigned staff/resources.
+Session cards can surface assigned staff/resources.
 
-### Next calendar improvement
+### Session manager
 
-The next useful step is richer session management when opening a class:
+A session-management panel exists when a timetable class is tapped.
 
-- full roster
-- staff assignment
-- room/resource assignment
-- capacity
-- attendance status
-- quick Admin actions
+Current capability includes:
+
+- class title/date/time
+- booked/capacity
+- attended/no-show counts
+- assigned staff display
+- room/resource display
+- roster
+- mark attended
+- mark no-show
+- reset booking status
+- cancel/reopen class
+- refresh
+
+This is the immediate feature area to deepen next.
 
 ---
 
-## 9. Scheduling engine — implemented foundation
+## 9. Scheduling engine
 
-This is no longer just a future target.
+The scheduling foundation is implemented.
 
-When a class/session is created, Hybrid OS can validate:
+Class/session creation can validate:
 
 - required staff capabilities
 - staff working hours
@@ -311,48 +297,35 @@ When a class/session is created, Hybrid OS can validate:
 - resource clashes
 - resource/room capacity
 
-Required resources from the class definition can be assigned automatically.
+Required resources from a class definition can be assigned automatically.
 
-The class save flow was also changed to be atomic so a failure does not leave a partially-created session with missing related records.
+Class creation uses an atomic flow so failed related writes do not leave partial sessions.
 
-Important consequence: future scheduling UI should call/use the existing validation flow rather than reimplementing scheduling rules client-side in a second place.
+Future scheduling UI should use the existing validation flow rather than implementing a second set of client-side scheduling rules.
 
 ---
 
-## 10. Class setup / service dependencies
+## 10. Class setup and dependencies
 
-`class-setup.html` is the canonical class/service definition workspace.
+`class-setup.html` is the canonical reusable class/service definition workspace.
 
 A class type supports:
 
 - name
 - description
-- Beginner / Intermediate / Advanced / All levels
+- difficulty/level
 - default duration
 - default capacity
 - required staff capabilities
 - required resources
 
-Examples:
-
-**Spin**
-
-- 45 minutes
-- capacity 10
-- requires Spin-qualified instructor
-- requires Spin Room
-
-### Known limitation
-
-`service_requirements.quantity` exists but the current class setup UI still treats selected requirements as quantity `1`.
-
-A later improvement should allow quantities such as 10 bikes without creating duplicate resources manually.
+Known limitation: `service_requirements.quantity` exists, but the UI still effectively treats selected dependencies as quantity `1`. Explicit quantity editing remains future work.
 
 ---
 
 ## 11. Staff and resources
 
-Important staff/operations tables include:
+Important tables/concepts include:
 
 - `staff_profiles`
 - `staff_working_hours`
@@ -362,38 +335,13 @@ Important staff/operations tables include:
 - `resource_availability`
 - `service_requirements`
 
-Staff profiles can include:
-
-- role
-- job title
-- pay information
-- employment type
-- normal working hours
-- capabilities/qualifications
-
-Resources can represent:
-
-- rooms
-- areas
-- equipment
-- other bookable assets
-
-Each resource may have:
-
-- capacity
-- bookable state
-- overlap rule
-- recurring availability windows
-
-`resource-availability.html` is the recurring availability UI.
+Resources can represent rooms, areas, equipment or other bookable assets and may have capacity, bookable state, overlap rules and recurring availability.
 
 ---
 
 ## 12. Staff Portal and permissions
 
-A separate Staff Portal now exists and should remain distinct from Admin.
-
-Current staff permission model is capability-based rather than one hardcoded role.
+The Staff Portal is deliberately separate from Admin.
 
 Presets include:
 
@@ -402,27 +350,13 @@ Presets include:
 - Manager
 - Custom
 
-Permission areas can include:
-
-- view timetable
-- edit timetable
-- create classes
-- cancel classes
-- mark attendance
-- view member contact details
-- view/manage memberships
-- view reporting
-- manage resources
-- manage staff
-- view own pay
-- member/PT notes
-- community moderation
+Permission areas can include timetable access, class creation/editing/cancellation, attendance, member contact details, memberships, reporting, resources, staff, own pay, notes and community moderation.
 
 Attendance actions are enforced in Supabase as well as the UI.
 
-### Pay privacy
+Staff pay must never be exposed to ordinary members.
 
-Staff pay must never be exposed to ordinary members. Any future reporting or member-facing query must keep this boundary intact.
+Next Staff depth should include rota/working schedule, PT appointments, permitted member lookup, resource/access tools and own profile/pay where allowed.
 
 ---
 
@@ -435,72 +369,29 @@ Staff pay must never be exposed to ordinary members. Any future reporting or mem
 - `attended`
 - `no_show`
 
-The Staff Portal can mark attendance/no-show from class rosters when the user has permission.
-
-This should be the source for class attendance reporting, engagement and future retention automation.
+This is the source for attendance reporting, engagement and future retention automation.
 
 ---
 
 ## 14. Reporting
 
-`reporting.html` exists as the Admin reporting workspace.
+`reporting.html` is the Admin reporting workspace.
 
-Current reporting direction includes:
+Useful reporting areas include:
 
-### Overview
-
-- active members/memberships
+- active memberships/members
 - MRR estimate
-- class fill/utilisation
-- visits/attendance
-- joins
-- ended memberships
-- no-show rate
-
-### Memberships
-
-- active memberships
-- new joins
-- ended/cancelled memberships
-- paused
+- joins/ended memberships
 - plan mix
-- MRR
-- average revenue/member
-
-### Classes
-
-- bookings/attendance by class type
-- fill/utilisation
-- sell-outs and underused sessions
-- cancellations/no-shows
-- weekday analysis
-- time-of-day analysis
-- time-slot analysis
+- class fill/utilisation
+- attendance/no-shows
+- class type performance
+- weekday/time-of-day demand
 - day × time heatmap
+- active/inactive member indicators
+- CSV/Excel export
 
-The goal is to distinguish “popular class” from “popular slot”.
-
-### Members
-
-- most active
-- attended/booked counts
-- inactivity windows
-- declining engagement
-- new members with little/no engagement
-
-### Payments
-
-Future GoCardless area should cover:
-
-- failed payments
-- outstanding amount
-- recovery state
-- mandate problems
-- bad debtors
-
-### Export
-
-Reporting should support CSV/Excel export as the reporting UI matures.
+Payment reporting can remain future-facing while provider integration is parked.
 
 ---
 
@@ -512,49 +403,25 @@ Important tables include:
 - `memberships`
 - `payment_records`
 
-Plans support:
+Plans support price, billing interval, joining fee, access type, open gym/classes/PT, class allowances, trials and public/private state.
 
-- price
-- billing interval
-- joining fee
-- access type
-- open gym
-- classes
-- PT
-- classes/week
-- trial days
-- public/private state
-
-Memberships already carry provider fields for future GoCardless integration.
-
-`payment_records` contains provider payment/customer/mandate/subscription IDs, amount, state, charge date, payout date and failure details.
-
-GoCardless is not yet live.
+Provider fields remain in the schema, but do not prioritise GoCardless unless the user explicitly brings it back onto the roadmap.
 
 ---
 
 ## 16. Door access
 
-Gym access is now persisted rather than just mocked.
+Access settings are persisted in Supabase and currently support enabled state, PIN/code, member-facing label and member note.
 
-Current settings include:
-
-- `access_enabled`
-- `access_code`
-- member-facing label
-- member note
-
-The Hybrid Hub demo currently uses a simple PIN model.
-
-Longer term, if this becomes security-sensitive physical access, move toward a server/RPC/physical access-control integration rather than relying on a plaintext member-readable PIN model.
+The simple member-readable PIN model is acceptable for the current prototype/demo, not a final high-security access-control design.
 
 ---
 
 ## 17. Member Portal
 
-`member.html` is the canonical member UI.
+`member.html` is canonical.
 
-Main areas include:
+Main areas:
 
 - Home
 - Classes
@@ -564,60 +431,43 @@ Main areas include:
 - Integrations
 - Profile
 - Social
+- Door access
 
-The member mobile experience uses the hamburger/drawer model rather than the older bottom rail.
+The Member Home should feel activity/training-first rather than membership-admin-first.
 
-### Current member UX direction
-
-The member home should feel activity/training-first rather than admin/membership-first.
-
-Prefer:
-
-- upcoming training/classes
-- recent activity
-- PBs/workouts
-- community activity
-- contextual membership upgrades only when relevant
+Prefer upcoming sessions, recent activity, workouts/PBs and community activity before commercial/admin content.
 
 ---
 
-## 18. Social/community — newly implemented
+## 18. Social/community
 
-A proper member social feed exists at:
-
-`social.html`
-
-Current tables:
+`social.html` is a gym-scoped member social feed backed by:
 
 - `social_posts`
 - `social_comments`
 - `social_reactions`
 
-The social feed is gym-scoped and supports:
+Current capability:
 
-- posting text updates
+- text posts
 - profile/avatar display
 - relative timestamps
-- link detection
-- likes/reactions
+- clickable links
+- reactions/likes
 - comments
 - replies
-- comment composer
-- gym-specific RLS
+- gym-scoped RLS
 - moderation-ready owner/admin rules
 
-Social has been wired into Member navigation, including the member-preview path used during demo testing.
+Next Social improvements:
 
-### Next social improvements
-
-Most useful next items:
-
-- image/photo upload on posts
-- multiple emoji reactions
+- image/photo upload
+- richer reactions
 - edit/delete own posts/comments
-- notifications for replies/reactions
-- latest community activity on member Home
-- moderation tools/reporting
+- reply/reaction notifications
+- pinned/admin announcements
+- latest community activity on Member Home
+- moderation polish
 
 ---
 
@@ -630,15 +480,9 @@ Core tables:
 - `workout_sets`
 - `personal_bests`
 
-Tracking should remain flexible:
+Tracking supports reps + weight, time, distance, calories and custom value/unit.
 
-- reps + weight
-- time
-- distance
-- calories
-- custom value/unit
-
-Do not assume all timed PBs use the same comparison direction; race times are usually lower-is-better while holds/duration may be higher-is-better.
+Do not assume all timed PBs use the same comparison direction: race times are usually lower-is-better while duration holds may be higher-is-better.
 
 ---
 
@@ -646,12 +490,12 @@ Do not assume all timed PBs use the same comparison direction; race times are us
 
 Strava is scaffolded but not production-connected.
 
-Direction to preserve:
+Preserve this direction:
 
-- **Strava → Hybrid OS:** can be automatic/webhook-driven.
-- **Hybrid OS → Strava:** manual only; explicit member action required.
+- **Strava → Hybrid OS:** may be automatic/webhook-driven
+- **Hybrid OS → Strava:** manual only, requiring explicit member action
 
-Do not automatically publish member workouts to Strava.
+Do not automatically publish workouts to Strava.
 
 ---
 
@@ -666,149 +510,124 @@ Current Hybrid Hub assets:
 - `assets/hybrid-hub-mark.svg`
 - `assets/hybrid-hub-logo-horizontal.svg`
 
-Current `tenant-branding.js` still contains Hybrid Hub-specific behaviour. This is transitional.
-
-Long-term tenant branding should come from gym configuration/onboarding and propagate across Admin, Staff, Member, email and booking surfaces.
+`tenant-branding.js` still contains some Hybrid Hub-specific behaviour. Long-term branding should come from gym configuration/onboarding.
 
 ---
 
-## 22. GitHub Pages deployment behaviour
+## 22. GitHub Pages deployment rules
 
-The workflow is `.github/workflows/pages.yml`.
+Workflow: `.github/workflows/pages.yml`
 
-Important current behaviour:
+Current behaviour:
 
-- deploys on pushes to `main`
+- pushes to `main` deploy
 - `cancel-in-progress: false`
-- shared CSS/JS is injected during deployment
-- asset URLs are versioned with the current commit SHA to reduce mobile Safari caching problems
+- `scripts/build_site.py` produces an isolated `_site` output
+- `scripts/smoke_test.py` tests the built output
+- deployment only proceeds after smoke tests pass
+- asset URLs are versioned by commit SHA to reduce Safari caching problems
 
-This was changed because rapid commits were causing valid deploys to be marked cancelled, and iPhone Safari was sometimes serving older CSS/JS even after HTML updated.
-
-### Rule
-
-Always check the latest GitHub Actions run before telling the user a frontend change is live.
+Always inspect the latest Actions run before telling the user a frontend change is live.
 
 ---
 
-## 23. Deployment-time injection technical debt
+## 23. Remaining technical debt
 
-The workflow currently injects or modifies several shared assets at deploy time, including:
+The major cross-page stability work is complete. Remaining debt is more contained:
 
-- tenant branding
-- Admin shell/navigation
-- account menu
-- scheduling/calendar helpers
-- member mobile CSS
-- Social navigation
-- member preview helpers
-
-This works for rapid iteration but is architectural debt.
-
-Long-term:
-
-1. import shared assets directly in source pages
-2. remove page mutation from Pages workflow
-3. keep the deployment workflow simple
-
-Avoid adding a new one-off deploy mutation if the behaviour can live in a shared source file.
-
----
-
-## 24. Security baseline
-
-- Never commit Supabase secret/service-role keys.
-- Browser code may use only the publishable key.
-- All exposed tables require correct grants/RLS.
-- Authorisation should use protected `gym_members` roles/permissions, not user-editable metadata.
-- Staff pay must remain private.
-- Social data must remain gym-scoped.
-- Payment credentials remain server/provider-side.
-- Security-definer functions need review before production.
-- Simple door PIN storage is acceptable for the demo but should be revisited before serious access-control use.
-
----
-
-## 25. Known current technical/UX debt
-
-- substantial inline CSS remains across individual pages
-- deployment workflow still injects shared assets
-- tenant branding is still partly hardcoded to Hybrid Hub
-- `member-preview.html` is still transitional
-- class dependency quantity UI is not complete
-- deeper PT booking workflows are not complete
-- GoCardless is not live
+- substantial inline CSS/JS remains inside individual HTML files
+- tenant branding is partly hardcoded
+- `member-preview.html` remains transitional
+- `member-memberships.html` is an older transitional screen
+- class dependency quantity editing is incomplete
+- PT booking workflows are incomplete
 - Strava production connection is not live
-- richer session-detail management is the next calendar improvement
-- Social media uploads/notifications are not implemented yet
+- Social media uploads/notifications are not implemented
+- email/SMS communications layer is not built yet
+
+Do not reopen the entire architecture cleanup unless a specific regression requires it.
 
 ---
 
-## 26. Agreed build order from here
+## 24. Current roadmap
+
+GoCardless is parked.
 
 Current sequence:
 
-1. **Calendar/session management refinement**
+1. **Calendar/session management**
    - richer session detail
-   - roster/staff/resource/capacity controls
+   - roster and attendance
+   - edit session details/capacity
+   - reassign staff
+   - reassign room/resource
    - quick Admin actions
 
 2. **Staff Portal expansion**
    - rota/working schedule
    - PT appointments
-   - member lookup where permitted
-   - resource booking
-   - more permission-aware operational tools
+   - permitted member lookup
+   - resource/access tools
+   - own profile/pay where permitted
 
 3. **Member Portal + Social refinement**
-   - cleaner member home
+   - class booking polish
    - workout/PB polish
-   - Social photos/reactions/notifications
-   - account/profile consistency
+   - photos/reactions/edit/delete
+   - notifications
+   - Member Home community activity
 
-4. **GoCardless/payments**
-   - mandates
-   - subscriptions
-   - failed payment handling
-   - bad debtors reporting
+4. **Reporting + engagement**
+   - attendance trends
+   - class/resource/staff utilisation
+   - inactivity windows
+   - new-member engagement
+   - exports
 
-5. **Retention/automation**
+5. **Email + SMS communications**
+   - individual messages
+   - class reminders/changes
+   - announcements
+   - templates
+   - consent/preferences
+   - delivery history
+   - bulk segments
+
+6. **Retention/automation**
    - inactivity detection
-   - declining attendance
-   - 14/30/60-day engagement rules
-   - first 30/60/90-day engagement
-
-6. **Architecture cleanup**
-   - consolidate shared CSS/components
-   - reduce deploy-time injection
-   - continue tenant-neutral branding cleanup
+   - declining engagement
+   - first-30/60/90-day checks
+   - staff follow-up lists/alerts
 
 ---
 
-## 27. Working rules for future sessions
+## 25. Working rules for future sessions
 
-- Prefer doing over explaining.
-- Preserve existing working Supabase persistence.
-- Keep Admin, Staff and Member as different experiences over one data model.
-- Do not create a parallel demo product.
-- Use shared CSS/navigation to avoid visual drift.
-- Mobile-first.
-- Fetch fresh GitHub SHAs before writes.
-- If a workflow is cancelled/incomplete, verify whether its intended changes exist in a later successful commit before dismissing it.
-- Do not claim a frontend change is live until the latest Pages run succeeds.
-- Keep sensitive data protected at database level, not only hidden in the UI.
+- Prefer doing over explaining
+- Preserve working Supabase persistence
+- Keep Admin, Staff and Member distinct experiences over one data model
+- Do not create a parallel demo product
+- Shared code must do shared jobs; page-specific code stays page-specific
+- Mobile-first
+- Fetch fresh GitHub SHAs before writes
+- Verify the built site and latest deployment before saying a change is live
+- Keep sensitive data protected at database level, not only hidden in UI
+- Do not automatically re-prioritise GoCardless
 
 ---
 
-## 28. Immediate pickup point
+## 26. Immediate pickup point
 
-At the time of this handover, the most recent product work was:
+The stability workstream is complete and verified.
 
-- shared CSS/safe-area consistency across pages
-- fixing Member Preview so Social appears in navigation
-- newly implemented Social feed/database
-- account settings from the Admin top-right user chip
-- calendar Gym/Staff/Resource views
-- mobile timetable styling refinement
+The next product task is **Calendar/session management**.
 
-The next meaningful feature task is **richer class/session management**, unless the user asks to continue Social first.
+Start by deepening `session-manager.js` so an Admin can manage a session from the timetable without going back through the create-class flow. Highest-value next controls are:
+
+1. edit date/time/capacity/session details
+2. reassign lead/additional staff
+3. reassign room/resources
+4. keep attendance/roster actions in the same panel
+5. avoid full-page reloads after changes where practical
+
+After Calendar/session management, continue into Staff Portal depth, then Member/Social.
