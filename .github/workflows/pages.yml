@@ -37,6 +37,26 @@ jobs:
                   s = s.replace('</head>', href + '</head>', 1)
                   p.write_text(s)
           PY
+      - name: Brand member preview as Hybrid Hub
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('member-preview.html')
+          if p.exists():
+              s = p.read_text()
+              s = s.replace('<title>Member Preview · Hybrid OS</title>', '<title>Hybrid Hub · Member Preview</title>')
+              old_brand = '<div class="brand"><svg class="mark" viewBox="0 0 54 48"><path d="M6 42 L27 6 M12 42 L30 11 M18 42 L33 16 M48 42 L27 6 M42 42 L24 11 M36 42 L21 16"/></svg><span class="word">HYBRID <b>OS</b></span></div>'
+              new_brand = '<div class="brand hybrid-hub-brand"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>'
+              s = s.replace(old_brand, new_brand)
+              s = s.replace('Puffin Performance', 'Hybrid Hub')
+              brand_css = '''<style id="hybrid-hub-preview-branding">
+              .hybrid-hub-brand{min-height:54px;align-items:center}.hybrid-hub-brand img{display:block;width:100%;max-width:205px;height:auto;filter:brightness(0) invert(1)}
+              .gym{position:relative;overflow:hidden}.gym:after{content:"";position:absolute;right:-10px;bottom:-16px;width:74px;height:74px;background:url("./assets/hybrid-hub-mark.svg") center/contain no-repeat;opacity:.08;filter:brightness(0) invert(1);pointer-events:none}
+              </style>'''
+              if 'hybrid-hub-preview-branding' not in s:
+                  s = s.replace('</head>', brand_css + '</head>', 1)
+              p.write_text(s)
+          PY
       - name: Harden member preview interactions
         run: |
           python3 - <<'PY'
