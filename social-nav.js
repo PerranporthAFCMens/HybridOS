@@ -1,12 +1,16 @@
 (function(){
   function add(){
-    if(!location.pathname.endsWith('/member.html')) return;
+    const path=location.pathname;
+    if(!(path.endsWith('/member.html')||path.endsWith('/member-preview.html'))) return;
     document.querySelectorAll('.side .nav').forEach(nav=>{
       if(nav.querySelector('[data-social-link]')) return;
-      const b=document.createElement('button');
-      b.type='button';b.dataset.socialLink='1';b.textContent='✦ Social';b.onclick=()=>location.href='./social.html';
-      const workouts=[...nav.querySelectorAll('button')].find(x=>/Workouts/i.test(x.textContent||''));
-      if(workouts) nav.insertBefore(b,workouts); else nav.appendChild(b);
+      const isAnchorNav=!!nav.querySelector('a');
+      const item=isAnchorNav?document.createElement('a'):document.createElement('button');
+      if(isAnchorNav){item.href='./social.html'}else{item.type='button';item.onclick=()=>location.href='./social.html'}
+      item.dataset.socialLink='1';item.textContent='✦ Social';
+      const children=[...nav.querySelectorAll('button,a')];
+      const workouts=children.find(x=>/Workouts/i.test(x.textContent||''));
+      if(workouts) nav.insertBefore(item,workouts); else nav.appendChild(item);
     });
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',add);else add();
