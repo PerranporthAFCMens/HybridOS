@@ -89,7 +89,11 @@
     bookBtn.onclick=function(){const wasBooked=bookBtn.dataset.booked==='1';bookBtn.disabled=true;bookBtn.textContent=wasBooked?'Cancelling…':'Booking…';setTimeout(function(){const nowBooked=!wasBooked;bookBtn.disabled=false;bookBtn.dataset.booked=nowBooked?'1':'0';bookBtn.textContent=nowBooked?'Cancel booking':'Book class';bookBtn.className=nowBooked?'btn secondary':'btn primary';if(msg)msg.textContent=nowBooked?'Class booked.':'Booking cancelled.';if(activeRow){let tag=activeRow.querySelector('.tag');if(!tag){tag=document.createElement('span');tag.className='tag';activeRow.querySelector('.rowtop')?.appendChild(tag)}if(nowBooked){tag.textContent='Booked';tag.classList.add('good')}else{tag.textContent='Space available';tag.classList.remove('good')}}},250)};
   }
 
-  function loadClassAdminEnhancements(){if(!location.pathname.endsWith('/classes.html'))return;if(document.querySelector('script[data-class-admin-enhancements]'))return;const s=document.createElement('script');s.src='./class-admin-enhancements.js';s.defer=true;s.dataset.classAdminEnhancements='1';document.head.appendChild(s)}
+  function loadClassAdminEnhancements(){
+    if(!location.pathname.endsWith('/classes.html'))return;
+    if(!document.querySelector('script[data-class-admin-enhancements]')){const s=document.createElement('script');s.src='./class-admin-enhancements.js';s.defer=true;s.dataset.classAdminEnhancements='1';document.head.appendChild(s)}
+    if(!document.querySelector('script[data-class-admin-live-refresh]')){const s=document.createElement('script');s.src='./class-admin-live-refresh.js';s.defer=true;s.dataset.classAdminLiveRefresh='1';document.head.appendChild(s)}
+  }
   function init(){addLogoToGymCards();addTopBrand();ensureGymName();addAdminOperationsNav();addClassPageSetupNav();addDoorAccessCard();fixMemberPreviewClasses();loadClassAdminEnhancements()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
