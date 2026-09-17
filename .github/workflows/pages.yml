@@ -27,34 +27,38 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import os
+          v = os.environ.get('GITHUB_SHA','dev')[:12]
           pages = (
               'index.html','member.html','member-preview.html','classes.html','staff.html','member-memberships.html','integrations.html',
           )
-          css = '<link rel="stylesheet" href="./tenant-branding.css">'
-          js = '<script src="./tenant-branding.js" defer></script>'
+          css = f'<link rel="stylesheet" href="./tenant-branding.css?v={v}">'
+          js = f'<script src="./tenant-branding.js?v={v}" defer></script>'
           for name in pages:
               p = Path(name)
               if not p.exists(): continue
               s = p.read_text()
-              if css not in s: s = s.replace('</head>', css + '</head>', 1)
-              if js not in s: s = s.replace('</body>', js + '</body>', 1)
+              if 'tenant-branding.css' not in s: s = s.replace('</head>', css + '</head>', 1)
+              if 'tenant-branding.js' not in s: s = s.replace('</body>', js + '</body>', 1)
               p.write_text(s)
           PY
       - name: Inject shared admin shell and navigation
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import os
+          v = os.environ.get('GITHUB_SHA','dev')[:12]
           admin_pages = (
               'index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html',
           )
-          js = '<script src="./shared-admin-nav.js" defer></script>'
-          css = '<link rel="stylesheet" href="./admin-shell.css">'
+          js = f'<script src="./shared-admin-nav.js?v={v}" defer></script>'
+          css = f'<link rel="stylesheet" href="./admin-shell.css?v={v}">'
           for name in admin_pages:
               p = Path(name)
               if not p.exists(): continue
               s = p.read_text()
-              if css not in s: s = s.replace('</head>', css + '</head>', 1)
-              if js not in s: s = s.replace('</body>', js + '</body>', 1)
+              if 'admin-shell.css' not in s: s = s.replace('</head>', css + '</head>', 1)
+              if 'shared-admin-nav.js' not in s: s = s.replace('</body>', js + '</body>', 1)
               if name == 'index.html': s = s.replace('<section id="authView" class="auth">', '<section id="authView" class="auth hidden">', 1)
               p.write_text(s)
           PY
@@ -62,30 +66,36 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import os
+          v = os.environ.get('GITHUB_SHA','dev')[:12]
           injections = {
-              'classes.html':['<script src="./scheduling-engine.js" defer></script>','<script src="./calendar-mobile.js" defer></script>'],
-              'admin-operations.html':['<script src="./operations-scheduling-link.js" defer></script>'],
+              'classes.html':[f'<script src="./scheduling-engine.js?v={v}" defer></script>',f'<script src="./calendar-mobile.js?v={v}" defer></script>'],
+              'admin-operations.html':[f'<script src="./operations-scheduling-link.js?v={v}" defer></script>'],
           }
           for name,scripts in injections.items():
               p=Path(name)
               if not p.exists(): continue
               s=p.read_text()
               if name == 'classes.html':
-                  css='<link rel="stylesheet" href="./calendar-mobile.css">'
-                  if css not in s: s=s.replace('</head>',css+'</head>',1)
+                  css=f'<link rel="stylesheet" href="./calendar-mobile.css?v={v}">'
+                  if 'calendar-mobile.css' not in s: s=s.replace('</head>',css+'</head>',1)
               for js in scripts:
-                  if js not in s: s=s.replace('</body>',js+'</body>',1)
+                  base=js.split('?v=')[0]
+                  asset=base.split('src="./')[1]
+                  if asset not in s: s=s.replace('</body>',js+'</body>',1)
               p.write_text(s)
           PY
       - name: Inject shared member mobile rail stylesheet
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import os
+          v = os.environ.get('GITHUB_SHA','dev')[:12]
           for name in ('member.html', 'member-preview.html'):
               p = Path(name)
               if not p.exists(): continue
-              s = p.read_text(); href = '<link rel="stylesheet" href="./member-mobile-rail.css">'
-              if href not in s: s = s.replace('</head>', href + '</head>', 1); p.write_text(s)
+              s = p.read_text(); href = f'<link rel="stylesheet" href="./member-mobile-rail.css?v={v}">'
+              if 'member-mobile-rail.css' not in s: s = s.replace('</head>', href + '</head>', 1); p.write_text(s)
           PY
       - name: Brand member preview as Hybrid Hub
         run: |
