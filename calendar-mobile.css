@@ -1,44 +1,48 @@
-/* Mobile timetable treatment based on the agreed reference layout. Desktop remains unchanged. */
+/* Mobile timetable: reference layout with Hybrid OS visual language. Desktop remains unchanged. */
 @media (max-width:800px){
-  .classes-mobile-head{display:flex;align-items:center;justify-content:center;position:relative;margin:-2px 0 18px;min-height:42px}
-  .classes-mobile-head h1{margin:0;font-size:24px;line-height:1.1;text-align:center}
-  .classes-mobile-tools{position:absolute;right:0;display:flex;gap:16px;align-items:center}
-  .classes-mobile-tool{border:0;background:transparent;padding:4px;color:#19a7e8;font-size:24px;line-height:1;cursor:pointer}
+  body{background:#f5f7fb}
+  .classes-mobile-head{display:flex;align-items:center;justify-content:center;position:relative;margin:0 14px 18px;min-height:46px}
+  .classes-mobile-head h1{margin:0;font-size:24px;line-height:1.1;text-align:center;color:#101828;font-weight:900;letter-spacing:-.02em}
+  .classes-mobile-tools{position:absolute;right:0;display:flex;gap:10px;align-items:center}
+  .classes-mobile-tool{display:grid;place-items:center;width:38px;height:38px;border:1px solid #e7ebf2;background:#fff;padding:0;color:#0b1020;font-size:20px;line-height:1;border-radius:12px;box-shadow:0 8px 20px rgba(16,24,40,.07);cursor:pointer}
 
   .top{display:none!important}
   .weekbar{display:none!important}
   .mobile-back{display:none!important}
-  .main{padding-top:72px!important;padding-left:0!important;padding-right:0!important}
+  .main{padding-top:72px!important;padding-left:0!important;padding-right:0!important;background:#f5f7fb!important}
 
-  .mobile-date-strip{display:flex;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;background:#fff;scrollbar-width:none}
+  .mobile-date-strip{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;border:0;background:transparent;padding:0 14px 14px;scrollbar-width:none}
   .mobile-date-strip::-webkit-scrollbar{display:none}
-  .mobile-date-btn{flex:0 0 18.5%;min-width:74px;scroll-snap-align:center;border:0;border-right:1px solid #e7ebf2;background:#fff;padding:12px 8px 14px;color:#999;cursor:pointer}
-  .mobile-date-btn .dow{display:block;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#a3a3a3;margin-bottom:4px}
-  .mobile-date-btn .dom{display:grid;place-items:center;margin:auto;width:48px;height:48px;border-radius:50%;font-size:28px;line-height:1;color:#555}
-  .mobile-date-btn.selected .dom{background:#19a7e8;color:#fff}
-  .mobile-date-btn.selected .dow{color:#7c8798}
+  .mobile-date-btn{flex:0 0 76px;min-width:76px;scroll-snap-align:center;border:1px solid #e7ebf2;background:#fff;padding:10px 8px 11px;color:#667085;cursor:pointer;border-radius:16px;box-shadow:0 8px 18px rgba(16,24,40,.05)}
+  .mobile-date-btn .dow{display:block;font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:#98a2b3;margin-bottom:6px}
+  .mobile-date-btn .dom{display:grid;place-items:center;margin:auto;width:42px;height:42px;border-radius:13px;font-size:23px;font-weight:850;line-height:1;color:#344054;background:#f8fafc}
+  .mobile-date-btn.selected{border-color:#bfeadf;background:#f2fbf8}
+  .mobile-date-btn.selected .dom{background:#0b1020;color:#fff;box-shadow:0 7px 16px rgba(11,16,32,.2)}
+  .mobile-date-btn.selected .dow{color:#0d7966}
 
-  .calendar{display:block!important;background:#fff;min-height:62vh}
-  .calendar .day{display:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;background:#fff!important}
+  .calendar{display:block!important;background:transparent!important;min-height:62vh;padding:0 14px 28px}
+  .calendar .day{display:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;background:transparent!important}
   .calendar .day.mobile-selected{display:block!important}
   .calendar .dayhead{display:none!important}
-  .calendar .empty{padding:24px 20px!important;font-size:14px!important;color:#98a2b3!important}
+  .calendar .empty{padding:28px 18px!important;font-size:14px!important;color:#667085!important;background:#fff;border:1px dashed #d0d5dd;border-radius:18px;text-align:center}
 
-  .calendar .session{position:relative;margin:0!important;border:0!important;border-bottom:1px solid #f0f1f3!important;border-radius:0!important;padding:17px 72px 18px 30px!important;min-height:118px;background:#fff!important;box-shadow:none!important}
-  .calendar .session::before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;background:#7dd3fc}
-  .calendar .session:nth-of-type(3n+1)::before{background:#86efac}
-  .calendar .session:nth-of-type(3n+2)::before{background:#fde68a}
-  .calendar .session:nth-of-type(3n)::before{background:#c4b5fd}
-  .calendar .session.cancelled{opacity:.5}
-  .calendar .session h3{margin:0 0 14px!important;font-size:20px!important;line-height:1.15;color:#52606d;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .calendar .session .time{font-size:16px!important;font-weight:500!important;color:#b5b8bd!important;letter-spacing:.01em}
-  .calendar .session .meta{font-size:12px!important;color:#9aa0a6!important;margin-top:6px!important}
-  .calendar .session .status{position:absolute;right:18px;top:20px;margin:0!important;background:transparent!important;color:#b5b8bd!important;font-size:12px!important;padding:0!important;border-radius:0!important;font-weight:600!important}
+  .calendar .session{position:relative;margin:0 0 12px!important;border:1px solid #e7ebf2!important;border-radius:20px!important;padding:16px 78px 17px 22px!important;min-height:112px;background:#fff!important;box-shadow:0 12px 28px rgba(16,24,40,.07)!important;overflow:hidden}
+  .calendar .session::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:#00d9a6}
+  .calendar .session:nth-of-type(3n+1)::before{background:#00d9a6}
+  .calendar .session:nth-of-type(3n+2)::before{background:#6d5dfc}
+  .calendar .session:nth-of-type(3n)::before{background:#f79009}
+  .calendar .session.cancelled{opacity:.55}
+  .calendar .session h3{margin:0 0 10px!important;font-size:18px!important;line-height:1.2;color:#101828!important;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .calendar .session .time{font-size:15px!important;font-weight:750!important;color:#475467!important;letter-spacing:0}
+  .calendar .session .meta{font-size:12px!important;color:#667085!important;margin-top:5px!important;line-height:1.4}
+  .calendar .session .status{position:absolute;right:14px;top:15px;margin:0!important;background:#f2f4f7!important;color:#344054!important;font-size:11px!important;padding:6px 8px!important;border-radius:999px!important;font-weight:850!important}
+  .calendar .session .status.good{background:#ecfdf3!important;color:#067647!important}
+  .calendar .session .status.warn{background:#fffaeb!important;color:#b54708!important}
   .calendar .session .meta:nth-of-type(n+2){display:none}
-  .calendar .session .btn{margin-top:10px!important;width:auto!important;min-width:96px}
+  .calendar .session .btn{margin-top:10px!important;width:auto!important;min-width:96px;border-radius:10px!important}
 
-  .mobile-filter-sheet{position:fixed;inset:auto 12px 16px 12px;z-index:90;background:#fff;border:1px solid #e7ebf2;border-radius:18px;padding:16px;box-shadow:0 22px 60px rgba(16,24,40,.2);display:none}
+  .mobile-filter-sheet{position:fixed;inset:auto 12px calc(16px + env(safe-area-inset-bottom)) 12px;z-index:90;background:#fff;border:1px solid #e7ebf2;border-radius:22px;padding:18px;box-shadow:0 24px 70px rgba(11,16,32,.25);display:none}
   body.mobile-filter-open .mobile-filter-sheet{display:block}
-  .mobile-filter-sheet h3{margin:0 0 12px}.mobile-filter-sheet .btn{width:100%;margin-top:8px}
+  .mobile-filter-sheet h3{margin:0 0 12px;color:#101828}.mobile-filter-sheet .btn{width:100%;margin-top:8px}
 }
 @media (min-width:801px){.classes-mobile-head,.mobile-date-strip,.mobile-filter-sheet{display:none!important}}
