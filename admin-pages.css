@@ -1,0 +1,239 @@
+/* Hybrid OS admin experience.
+   Shared admin page layout and visual hierarchy layered on top of app-consistency.css. */
+
+/* Main admin workspace */
+body:has(#appView:not(.hidden)) .main,
+body:not(:has(#appView)) .main{
+  max-width:none;
+}
+
+.page.active{display:block}
+.page > .card + .card{margin-top:16px}
+
+/* Admin page headers and action rows */
+.toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  margin-bottom:18px;
+}
+.toolbar > div:first-child{min-width:0}
+.toolbar h2{
+  margin:4px 0 0!important;
+  font-size:28px;
+  letter-spacing:-.02em;
+}
+.toolbar .btn{flex:0 0 auto}
+
+/* Dashboard */
+#dashboard .grid{
+  display:grid;
+  grid-template-columns:repeat(12,minmax(0,1fr));
+  gap:16px;
+  align-items:stretch;
+}
+#dashboard .hero{
+  grid-column:span 8;
+  min-height:250px;
+  position:relative;
+  overflow:hidden;
+  border:0!important;
+  border-radius:24px!important;
+  background:linear-gradient(135deg,#0b1020 0%,#171f35 58%,#272157 100%)!important;
+  color:#fff!important;
+  box-shadow:0 22px 54px rgba(11,16,32,.18)!important;
+}
+#dashboard .hero:before{
+  content:"";
+  position:absolute;
+  width:340px;
+  height:340px;
+  border-radius:50%;
+  right:-90px;
+  top:-120px;
+  background:radial-gradient(circle,rgba(109,93,252,.5),rgba(109,93,252,0) 68%);
+  pointer-events:none;
+}
+#dashboard .hero > *{position:relative;z-index:1}
+#dashboard .hero h2{
+  margin:12px 0 10px;
+  max-width:720px;
+  font-size:clamp(31px,3.2vw,43px);
+  line-height:1.04;
+  letter-spacing:-.03em;
+}
+#dashboard .hero p{
+  max-width:640px;
+  margin:0;
+  color:#cbd3df!important;
+  font-size:15px;
+  line-height:1.6;
+}
+#dashboard .pills{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:26px;
+}
+#dashboard .pill{
+  display:inline-flex;
+  align-items:center;
+  min-height:32px;
+  padding:7px 10px;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:999px;
+  background:rgba(255,255,255,.08);
+  color:#eef2f7;
+  font-size:12px;
+  font-weight:750;
+  backdrop-filter:blur(8px);
+}
+#dashboard .stat{
+  grid-column:span 4;
+  display:flex;
+  min-height:118px;
+  flex-direction:column;
+  justify-content:space-between;
+  padding:18px!important;
+}
+#dashboard .stat .muted{
+  font-size:13px;
+  font-weight:700;
+}
+#dashboard .num{
+  margin-top:10px;
+  font-size:34px;
+  line-height:1;
+  font-weight:850;
+  letter-spacing:-.035em;
+}
+#dashboard .wide{grid-column:span 7}
+#dashboard .narrow{grid-column:span 5}
+
+/* Shared admin content blocks */
+.section-title{
+  margin-bottom:14px;
+}
+.section-title h3{
+  margin:0;
+  font-size:17px;
+  letter-spacing:-.01em;
+}
+.plan-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+.plan,
+.membership-card{
+  border:1px solid var(--hybrid-line)!important;
+  border-radius:16px!important;
+  background:#fff!important;
+}
+.plan{
+  padding:15px;
+  position:relative;
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+}
+.plan:hover{
+  transform:translateY(-1px);
+  border-color:#d8ddeb!important;
+  box-shadow:0 10px 24px rgba(16,24,40,.06);
+}
+.plan.inactive{opacity:.62}
+.plan .price{
+  margin:10px 0 3px;
+  font-size:27px;
+  line-height:1;
+  font-weight:850;
+  letter-spacing:-.03em;
+}
+.plan-actions,.member-actions,.membership-actions{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  margin-top:13px;
+}
+.channel,.member-row{
+  border-bottom:1px solid var(--hybrid-line)!important;
+}
+.channel:last-child,.member-row:last-child{border-bottom:0!important}
+.member-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  padding:13px 0;
+}
+.member-name{display:flex;align-items:center;gap:10px;min-width:0}
+.member-name > div:last-child{min-width:0}
+.member-name .avatar{width:34px;height:34px;flex-basis:34px;font-size:12px}
+.role{font-size:12px;font-weight:800;text-transform:capitalize}
+.notice{
+  padding:13px 14px;
+  border:1px solid #ded8ff;
+  border-radius:14px;
+  background:#f7f5ff!important;
+  color:#433b75!important;
+  line-height:1.5;
+}
+
+/* Give the admin home a clearer visual rhythm */
+#dashboard .card:not(.hero){
+  background:#fff!important;
+}
+#dashboard .wide,#dashboard .narrow{
+  min-height:220px;
+}
+
+/* Admin modals */
+#appView .modal-card{
+  border-radius:22px!important;
+}
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 14px;
+}
+
+@media(max-width:1100px){
+  #dashboard .hero{grid-column:span 12}
+  #dashboard .stat{grid-column:span 4}
+  #dashboard .wide,#dashboard .narrow{grid-column:span 6}
+  .plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+@media(max-width:900px){
+  .toolbar{
+    align-items:flex-start;
+    margin-bottom:16px;
+  }
+  .toolbar h2{font-size:25px}
+  #dashboard .grid{grid-template-columns:1fr;gap:12px}
+  #dashboard .hero,
+  #dashboard .stat,
+  #dashboard .wide,
+  #dashboard .narrow{grid-column:1}
+  #dashboard .hero{
+    min-height:auto;
+    padding:20px!important;
+    border-radius:20px!important;
+  }
+  #dashboard .hero h2{font-size:30px}
+  #dashboard .stat{
+    min-height:96px;
+    padding:16px!important;
+  }
+  #dashboard .num{font-size:30px}
+  #dashboard .wide,#dashboard .narrow{min-height:0}
+  .plan-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+}
+
+@media(max-width:560px){
+  .toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto}
+  .toolbar .btn{align-self:start}
+  .member-row{grid-template-columns:1fr}
+  .member-actions,.membership-actions{justify-content:flex-start}
+}
