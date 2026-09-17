@@ -1,0 +1,40 @@
+name: Update workout and PB docs
+on:
+  push:
+    paths:
+      - '.github/workflows/update-workout-pb-docs.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update handover and readme
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('HANDOVER.md'); s=p.read_text()
+          s=s.replace("Current sections:\n\n- Home\n- Classes\n- My membership\n- Community\n- Profile", "Current sections:\n\n- Home\n- Classes\n- Workouts\n- PBs\n- My membership\n- Profile\n\nWorkouts are now wired to Supabase for save/load/history/delete. PBs have their own icon-led page and persistent records.")
+          s=s.replace("- `workout_sets`\n", "- `workout_sets`\n- `personal_bests`\n")
+          s=s.replace("This is the latest feature direction and should be the next main member-area build.", "This area is now live in the real member portal and remains an active development focus.")
+          s=s.replace("The preview UI is currently primarily a design/prototype layer; continue by wiring the real member portal to the workout tables and then add editing/history/PB logic.", "The real `member.html` now saves workout sessions, exercises and sets to Supabase, loads workout history, supports delete, and automatically updates straightforward higher-is-better PBs for weight/distance/calories/custom metrics. Time PBs are not auto-inferred because some timed PBs are lower-is-better (for example a 5K) while others are higher-is-better (for example a plank).\n\nA dedicated `personal_bests` table and PB page now support manual PB records for weight, reps, time, distance, calories and custom units, with `higher` or `lower` comparison direction.")
+          old="1. **Workouts:** wire real `member.html` to workout tables; add save/load/history; then PB/progress logic.\n2. **Member portal:** bring the design/features from `member-preview.html` into the real role-gated member portal."
+          new="1. **Workouts:** polish the now-live save/load/history flow; add workout edit/detail view and stronger transactional save behaviour.\n2. **PBs/progress:** build PB history/automatic record detection further, then add progress charts, volume, streaks and attendance.\n3. **Member portal:** continue consolidating preview features into the real role-gated member portal."
+          if old in s:
+            s=s.replace(old,new)
+            for n in range(9,2,-1): s=s.replace(f"{n}. **",f"{n+1}. **")
+          s=s.replace("- workout backend migration\n- flexible workout tracking UI added to member preview", "- workout backend migration\n- flexible workout tracking UI added to member preview\n- real member workout persistence and history\n- `personal_bests` table + dedicated PB page with metric icons")
+          p.write_text(s)
+          r=Path('README.md'); t=r.read_text()
+          t=t.replace("- Staff/admin roles\n- Gym community channels and messaging\n- Future class booking, attendance and reporting", "- Staff/admin roles\n- Class calendar, capacity and bookings\n- Flexible workout logging (strength, time, distance, calories, custom)\n- Personal best records and PB page\n- Gym community channels and messaging\n- Future attendance, progress reporting and richer analytics")
+          t=t.replace("- `messages`\n", "- `messages`\n- `class_sessions` / `class_bookings`\n- `workout_sessions` / `workout_entries` / `workout_sets`\n- `personal_bests`\n")
+          r.write_text(t)
+          PY
+      - name: Commit docs update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md HANDOVER.md
+          git diff --cached --quiet || git commit -m "Document live workouts and PBs"
+          git push
