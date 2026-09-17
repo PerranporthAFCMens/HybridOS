@@ -144,7 +144,6 @@ def add_admin_shell() -> None:
 def add_staff_shell() -> None:
     name = "staff.html"
     s = read(name)
-    s = inject_head(s, "staff-shell.css", f'<link rel="stylesheet" href="./staff-shell.css?v={VERSION}">')
     s = inject_body(s, "staff-shell.js", f'<script src="./staff-shell.js?v={VERSION}" defer></script>')
     write(name, s)
 
@@ -165,13 +164,6 @@ def add_scheduler_assets() -> None:
     s = read(name)
     s = inject_body(s, "operations-scheduling-link.js", f'<script src="./operations-scheduling-link.js?v={VERSION}" defer></script>')
     write(name, s)
-
-
-def add_member_mobile_css() -> None:
-    for name in ("member.html", "member-preview.html", "social.html"):
-        s = read(name)
-        s = inject_head(s, "member-mobile-rail.css", f'<link rel="stylesheet" href="./member-mobile-rail.css?v={VERSION}">')
-        write(name, s)
 
 
 def brand_member_preview() -> None:
@@ -205,7 +197,6 @@ def build() -> None:
     add_admin_shell()
     add_staff_shell()
     add_scheduler_assets()
-    add_member_mobile_css()
     brand_member_preview()
     print(f"Built Hybrid OS site in {OUT}")
 
