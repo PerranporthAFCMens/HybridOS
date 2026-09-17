@@ -23,6 +23,25 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Inject shared visual consistency layer
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          v = os.environ.get('GITHUB_SHA','dev')[:12]
+          pages = (
+              'index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html',
+              'staff-permissions.html','access-settings.html','reporting.html','staff.html','member.html',
+              'member-preview.html','member-memberships.html','integrations.html','social.html','onboarding.html',
+          )
+          css = f'<link rel="stylesheet" href="./app-consistency.css?v={v}">'
+          for name in pages:
+              p=Path(name)
+              if not p.exists(): continue
+              s=p.read_text()
+              if 'app-consistency.css' not in s: s=s.replace('</head>',css+'</head>',1)
+              p.write_text(s)
+          PY
       - name: Inject shared tenant branding
         run: |
           python3 - <<'PY'
@@ -30,7 +49,7 @@ jobs:
           import os
           v = os.environ.get('GITHUB_SHA','dev')[:12]
           pages = (
-              'index.html','member.html','member-preview.html','classes.html','staff.html','member-memberships.html','integrations.html',
+              'index.html','member.html','member-preview.html','classes.html','staff.html','member-memberships.html','integrations.html','social.html',
           )
           css = f'<link rel="stylesheet" href="./tenant-branding.css?v={v}">'
           js = f'<script src="./tenant-branding.js?v={v}" defer></script>'
@@ -48,10 +67,11 @@ jobs:
           from pathlib import Path
           import os
           v = os.environ.get('GITHUB_SHA','dev')[:12]
-          p = Path('member.html')
-          if p.exists():
+          js = f'<script src="./social-nav.js?v={v}" defer></script>'
+          for name in ('member.html','member-preview.html'):
+              p = Path(name)
+              if not p.exists(): continue
               s = p.read_text()
-              js = f'<script src="./social-nav.js?v={v}" defer></script>'
               if 'social-nav.js' not in s: s = s.replace('</body>', js + '</body>', 1)
               p.write_text(s)
           PY
@@ -115,7 +135,7 @@ jobs:
           from pathlib import Path
           import os
           v = os.environ.get('GITHUB_SHA','dev')[:12]
-          for name in ('member.html', 'member-preview.html'):
+          for name in ('member.html', 'member-preview.html', 'social.html'):
               p = Path(name)
               if not p.exists(): continue
               s = p.read_text(); href = f'<link rel="stylesheet" href="./member-mobile-rail.css?v={v}">'
