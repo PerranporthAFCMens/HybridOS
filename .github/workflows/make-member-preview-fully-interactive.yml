@@ -1,0 +1,97 @@
+name: Make member preview fully interactive
+on:
+  push:
+    paths:
+      - '.github/workflows/make-member-preview-fully-interactive.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch member preview interactions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('member-preview.html')
+          s=p.read_text()
+
+          # Extra preview styles.
+          extra_css='''\n.preview-class-row{cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}.preview-class-row:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(16,24,40,.08)}.preview-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.preview-modal{position:fixed;inset:0;background:rgba(11,16,32,.56);display:none;place-items:center;padding:18px;z-index:100}.preview-modal.open{display:grid}.preview-modal-card{width:min(560px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:20px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.24)}.preview-modal-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.preview-modal-head h3{margin:0}.preview-modal-close{border:1px solid var(--line);background:#fff;border-radius:11px;width:38px;height:38px;font-size:22px;cursor:pointer}.preview-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.preview-detail{padding:11px;border:1px solid var(--line);border-radius:13px}.preview-detail small{display:block;color:var(--muted);margin-bottom:4px}.preview-note{padding:11px 12px;border-radius:13px;background:#f6f8fb;color:var(--muted);margin-top:10px}@media(max-width:600px){.preview-detail-grid{grid-template-columns:1fr}.preview-toolbar{width:100%}.preview-toolbar .btn{flex:1}}\n'''
+          if '.preview-class-row{' not in s:
+            s=s.replace('</style>',extra_css+'</style>',1)
+
+          classes='''<section id="classes" class="page"><div class="section-title"><div><div class="eyebrow">Book your training</div><h2 style="margin:4px 0">Classes</h2></div><div class="preview-toolbar"><button id="previewReminderBtn" class="btn secondary">🔔 Reminders on</button><button id="previewCalendarBtn" class="btn secondary">📅 Calendar sync</button></div></div><div class="muted" id="previewClassSettingsMsg" style="margin:-4px 0 12px">Tap any class to read the description before booking.</div><div class="card"><div class="list"><div class="row preview-class-row"><div class="rowtop"><div><h4>Early Engine</h4><div class="muted">Thu 17 Sep · 06:00–07:00 · 14/20 booked</div></div><span class="tag good">Booked</span></div></div><div class="row preview-class-row"><div class="rowtop"><div><h4>Hybrid Strength</h4><div class="muted">Thu 17 Sep · 07:15–08:15 · 14/20 booked</div></div><span class="tag">6 spaces left</span></div></div><div class="row preview-class-row"><div class="rowtop"><div><h4>Express Conditioning</h4><div class="muted">Thu 17 Sep · 16:00–16:45 · 11/16 booked</div></div><span class="tag">5 spaces left</span></div></div><div class="row preview-class-row"><div class="rowtop"><div><h4>Hybrid Conditioning</h4><div class="muted">Thu 17 Sep · 17:30–18:30 · 17/20 booked</div></div><span class="tag">3 spaces left</span></div></div><div class="row preview-class-row"><div class="rowtop"><div><h4>Evening Engine</h4><div class="muted">Thu 17 Sep · 19:00–20:00 · 12/20 booked</div></div><span class="tag">8 spaces left</span></div></div></div></div></section>\n<section id="workouts"'''
+          s,n=re.subn(r'<section id="classes" class="page">.*?</section>\n<section id="workouts"',classes,s,flags=re.S)
+          if n!=1:
+            raise SystemExit(f'Expected one classes section, got {n}')
+
+          # Give Add PB a hook if it does not already have one.
+          s=s.replace('<button class="btn secondary">+ Add PB</button>','<button class="btn secondary" id="previewAddPbBtn">+ Add PB</button>',1)
+
+          modal='''\n<div id="previewClassModal" class="preview-modal" aria-hidden="true"><div class="preview-modal-card"><div class="preview-modal-head"><div><div class="eyebrow">Class details</div><h3 id="previewClassTitle">Class</h3></div><button class="preview-modal-close" id="previewClassClose" aria-label="Close">×</button></div><div class="preview-detail-grid"><div class="preview-detail"><small>When</small><b id="previewClassTime"></b></div><div class="preview-detail"><small>Coach</small><b id="previewClassCoach"></b></div><div class="preview-detail"><small>Availability</small><b id="previewClassAvailability"></b></div><div class="preview-detail"><small>Reminder</small><b id="previewClassReminder">1 hour before</b></div></div><p id="previewClassDescription" class="muted"></p><div class="actions" style="margin-top:16px"><button id="previewClassBookBtn" class="btn primary">Book class</button><button id="previewClassCalendarBtn" class="btn secondary">Add to calendar</button></div><div id="previewClassModalMsg" class="preview-note">Demo mode — actions here simulate the member experience without changing live data.</div></div></div>\n<div id="previewPbModal" class="preview-modal" aria-hidden="true"><div class="preview-modal-card"><div class="preview-modal-head"><div><div class="eyebrow">Personal best</div><h3>Add PB</h3></div><button class="preview-modal-close" id="previewPbClose" aria-label="Close">×</button></div><div class="field"><label>Exercise / event</label><input id="previewPbName" placeholder="e.g. Deadlift or 5K run"></div><div class="preview-detail-grid"><div class="field"><label>Value</label><input id="previewPbValue" type="number" step="0.01" placeholder="145"></div><div class="field"><label>Unit</label><input id="previewPbUnit" placeholder="kg, sec, km..."></div></div><div class="actions"><button id="previewPbSave" class="btn primary">Save PB</button></div><div id="previewPbMsg" class="preview-note">Preview only — this will add a demo PB card.</div></div></div>\n'''
+          if 'id="previewClassModal"' not in s:
+            s=s.replace('<script>',modal+'<script>',1)
+
+          js=r'''
+const previewClassData={
+  'Early Engine':{time:'Thu 17 Sep · 06:00–07:00',coach:'Mia Bennett',availability:'14/20 booked',description:'A coached early-morning engine session mixing intervals, cardio and controlled conditioning work. Scalable for all levels.'},
+  'Hybrid Strength':{time:'Thu 17 Sep · 07:15–08:15',coach:'Jack Morgan',availability:'6 spaces left',description:'Full-body strength work with a focus on quality movement, progressive overload and simple coaching cues. Expect compound lifts plus accessories.'},
+  'Express Conditioning':{time:'Thu 17 Sep · 16:00–16:45',coach:'Sophie Carter',availability:'5 spaces left',description:'A shorter, punchier conditioning class for people who want a hard session without spending an hour in the gym.'},
+  'Hybrid Conditioning':{time:'Thu 17 Sep · 17:30–18:30',coach:'Liam Harris',availability:'3 spaces left',description:'Mixed-modality conditioning using machines, carries, sled-style work and functional movements. Pace is coached and movements are scalable.'},
+  'Evening Engine':{time:'Thu 17 Sep · 19:00–20:00',coach:'Chloe Evans',availability:'8 spaces left',description:'An evening aerobic and conditioning session built around sustainable effort, intervals and engine development.'}
+};
+let previewSelectedClass=null;
+function openPreviewClass(row){
+  const title=row.querySelector('h4')?.textContent?.trim(); if(!title)return;
+  const d=previewClassData[title]||{time:row.querySelector('.muted')?.textContent||'',coach:'Coach TBC',availability:'Space available',description:'Class details will appear here.'};
+  previewSelectedClass={row,title,data:d};
+  document.getElementById('previewClassTitle').textContent=title;
+  document.getElementById('previewClassTime').textContent=d.time;
+  document.getElementById('previewClassCoach').textContent=d.coach;
+  const rowButton=row.querySelector('button');
+  const booked=rowButton?/cancel/i.test(rowButton.textContent):/booked/i.test(row.textContent);
+  const availability=rowButton?(booked?'Booked':d.availability):d.availability;
+  document.getElementById('previewClassAvailability').textContent=availability;
+  document.getElementById('previewClassDescription').textContent=d.description;
+  const bookBtn=document.getElementById('previewClassBookBtn');
+  bookBtn.textContent=booked?'Cancel booking':'Book class';
+  bookBtn.className='btn '+(booked?'secondary':'primary');
+  document.getElementById('previewClassModal').classList.add('open');
+  document.getElementById('previewClassModal').setAttribute('aria-hidden','false');
+}
+function closePreviewClass(){document.getElementById('previewClassModal')?.classList.remove('open');document.getElementById('previewClassModal')?.setAttribute('aria-hidden','true')}
+document.querySelectorAll('#classes .preview-class-row,#home .wide .row').forEach(row=>{row.classList.add('preview-class-row');row.addEventListener('click',e=>{if(e.target.closest('button'))return;openPreviewClass(row)})});
+document.getElementById('previewClassClose')?.addEventListener('click',closePreviewClass);
+document.getElementById('previewClassModal')?.addEventListener('click',e=>{if(e.target.id==='previewClassModal')closePreviewClass()});
+document.getElementById('previewClassBookBtn')?.addEventListener('click',()=>{
+  if(!previewSelectedClass)return;
+  const btn=document.getElementById('previewClassBookBtn'); const cancelling=/cancel/i.test(btn.textContent);
+  btn.disabled=true;btn.textContent=cancelling?'Cancelling…':'Booking…';
+  setTimeout(()=>{btn.disabled=false;btn.textContent=cancelling?'Book class':'Cancel booking';btn.className='btn '+(cancelling?'primary':'secondary');document.getElementById('previewClassAvailability').textContent=cancelling?previewSelectedClass.data.availability:'Booked';const rowBtn=previewSelectedClass.row.querySelector('button');if(rowBtn){rowBtn.textContent=cancelling?'Book class':'Cancel booking';rowBtn.className='btn '+(cancelling?'primary':'secondary')}document.getElementById('previewClassModalMsg').textContent=cancelling?'Demo booking cancelled.':'Demo booking confirmed. Reminder scheduled for 1 hour before.';},350)
+});
+document.getElementById('previewClassCalendarBtn')?.addEventListener('click',()=>{document.getElementById('previewClassModalMsg').textContent='Calendar event added in demo mode. In the live app this will use the member calendar sync.'});
+let previewRemindersOn=true;document.getElementById('previewReminderBtn')?.addEventListener('click',e=>{previewRemindersOn=!previewRemindersOn;e.currentTarget.textContent=previewRemindersOn?'🔔 Reminders on':'🔕 Reminders off';document.getElementById('previewClassSettingsMsg').textContent=previewRemindersOn?'Booked classes will remind you 1 hour before.':'Class reminders are off.'});
+let previewCalendarOn=false;document.getElementById('previewCalendarBtn')?.addEventListener('click',e=>{previewCalendarOn=!previewCalendarOn;e.currentTarget.textContent=previewCalendarOn?'✓ Calendar synced':'📅 Calendar sync';document.getElementById('previewClassSettingsMsg').textContent=previewCalendarOn?'Booked classes will stay synced to your calendar.':'Tap any class to read the description before booking.'});
+
+const previewAddPbBtn=document.getElementById('previewAddPbBtn');previewAddPbBtn?.addEventListener('click',()=>document.getElementById('previewPbModal')?.classList.add('open'));
+document.getElementById('previewPbClose')?.addEventListener('click',()=>document.getElementById('previewPbModal')?.classList.remove('open'));
+document.getElementById('previewPbSave')?.addEventListener('click',()=>{const name=document.getElementById('previewPbName').value.trim(),value=document.getElementById('previewPbValue').value,unit=document.getElementById('previewPbUnit').value.trim();if(!name||!value){document.getElementById('previewPbMsg').textContent='Add an exercise/event and value first.';return}const card=document.createElement('div');card.className='pb-card';card.innerHTML=`<div class="pb-icon">⭐</div><div class="eyebrow" style="margin-top:8px">Manual</div><h3 style="margin:5px 0"></h3><div class="pb-value"></div><div class="muted">Just now · preview</div>`;card.querySelector('h3').textContent=name;card.querySelector('.pb-value').textContent=value+(unit?' '+unit:'');document.querySelector('#pbs .pb-grid')?.prepend(card);document.getElementById('previewPbMsg').textContent='Demo PB added.';setTimeout(()=>document.getElementById('previewPbModal')?.classList.remove('open'),450)});
+'''
+          marker="const mobileMenuBtn=document.getElementById('mobileMenuBtn')"
+          if js.strip() not in s:
+            if marker not in s: raise SystemExit('mobile menu marker missing')
+            s=s.replace(marker,js+'\n'+marker,1)
+
+          p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add member-preview.html
+          git commit -m "Make member preview fully interactive" || exit 0
+          git push
