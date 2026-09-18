@@ -173,6 +173,10 @@ for page_name in ('index.html','community.html','classes.html','class-setup.html
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('admin-embed.js?v=','admin-embedded'):
   if x not in page_text:problems.append(f'{page_name}: embedded admin mode missing: {x}')
+member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
+if 'href="./member-preview.html" target="_top"' not in member_view:problems.append('member-view-settings.html: preview must escape persistent admin frame')
+member_preview=(ROOT/'member-preview.html').read_text(encoding='utf-8')
+if './admin.html?view=member-view-settings.html' not in member_preview:problems.append('member-preview.html: Back to admin must return to persistent admin shell')
 if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
 print('Hybrid OS built-site smoke checks passed')
 
