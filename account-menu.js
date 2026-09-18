@@ -24,7 +24,7 @@
     .account-modal.open{display:grid}
     .account-modal-card{width:min(620px,100%);max-height:min(88vh,760px);overflow:auto;background:#fff;border:1px solid #e7ebf2;border-radius:24px;box-shadow:0 30px 90px rgba(0,0,0,.25);padding:22px}
     .account-modal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}.account-modal-top h2{margin:4px 0 0;font-size:25px}.account-close{width:38px;height:38px;border:1px solid #e7ebf2;border-radius:12px;background:#fff;color:#344054;font-size:22px;cursor:pointer}
-    .account-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.account-field{margin:11px 0}.account-field.full{grid-column:1/-1}.account-field label{display:block;font-size:12px;font-weight:850;color:#344054;margin:0 0 6px}.account-field input{width:100%;padding:12px 13px;border:1px solid #d9dee7;border-radius:13px;background:#fff;color:#101828;outline:none}.account-field input:focus{border-color:#a9a1ff;box-shadow:0 0 0 3px rgba(109,93,252,.09)}
+    .account-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.account-field{margin:11px 0}.account-field.full{grid-column:1/-1}.account-field label{display:block;font-size:12px;font-weight:850;color:#344054;margin:0 0 6px}.account-field input,.account-field select{width:100%;padding:12px 13px;border:1px solid #d9dee7;border-radius:13px;background:#fff;color:#101828;outline:none}.account-field input:focus,.account-field select:focus{border-color:#a9a1ff;box-shadow:0 0 0 3px rgba(109,93,252,.09)}
     .account-divider{height:1px;background:#eef1f5;margin:15px 0}.account-help{font-size:12px;color:#667085;line-height:1.45;margin-top:5px}.account-msg{font-size:13px;min-height:20px;margin:10px 0}.account-msg.good{color:#067647}.account-msg.error{color:#b42318}.account-save{width:100%;border:0;background:#0b1020;color:#fff;border-radius:13px;padding:13px 15px;font-weight:850;cursor:pointer}.account-save:disabled{opacity:.55;cursor:not-allowed}
     .account-avatar-row{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid #e7ebf2;border-radius:16px;background:#fafbfc}.account-avatar-preview{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:#e9e7ff;font-weight:900;font-size:20px;overflow:hidden;flex:0 0 64px}.account-avatar-preview img{width:100%;height:100%;object-fit:cover}.account-avatar-copy{min-width:0;flex:1}.account-avatar-copy b{display:block}.account-avatar-copy input{margin-top:8px;width:100%;font-size:12px}
     @media(max-width:900px){.userchip .who{display:block!important}.userchip{padding:6px 8px}.userchip #userEmail{display:none}.userchip:after{display:none}.account-popover{position:fixed;right:14px;top:72px}.account-modal-card{padding:18px;border-radius:20px}.account-grid{grid-template-columns:1fr}.account-field.full{grid-column:auto}}
@@ -45,6 +45,8 @@
       <div class="account-field full"><label>Display name</label><input id="accountDisplayName" autocomplete="name" placeholder="Your name"></div>
       <div class="account-field"><label>First name</label><input id="accountFirstName" autocomplete="given-name"></div>
       <div class="account-field"><label>Last name</label><input id="accountLastName" autocomplete="family-name"></div>
+      <div class="account-field"><label>Date of birth</label><input id="accountDateOfBirth" type="date"></div>
+      <div class="account-field"><label>Gender</label><select id="accountGender"><option value="">Not set</option><option value="female">Female</option><option value="male">Male</option><option value="non_binary">Non-binary</option><option value="other">Other</option><option value="prefer_not_to_say">Prefer not to say</option></select></div>
       <div class="account-field full"><label>Email address</label><input id="accountEmail" type="email" autocomplete="email"><div class="account-help">If email confirmation is enabled, a confirmation link will be sent before the new address becomes active.</div></div>
     </div>
     <div class="account-divider"></div>
@@ -60,7 +62,7 @@
 
   const q=s=>document.querySelector(s);
   const menuName=q('#accountMenuName'),menuEmail=q('#accountMenuEmail');
-  const displayInput=q('#accountDisplayName'),firstInput=q('#accountFirstName'),lastInput=q('#accountLastName'),emailInput=q('#accountEmail');
+  const displayInput=q('#accountDisplayName'),firstInput=q('#accountFirstName'),lastInput=q('#accountLastName'),dobInput=q('#accountDateOfBirth'),genderInput=q('#accountGender'),emailInput=q('#accountEmail');
   const passwordInput=q('#accountPassword'),password2Input=q('#accountPassword2'),msg=q('#accountMsg'),saveBtn=q('#accountSaveBtn'),avatarFile=q('#accountAvatarFile'),avatarPreview=q('#accountAvatarPreview');
   let user=null,profile=null,membershipRole=null,staffPermissions={};
 
@@ -95,14 +97,14 @@
     if(error||!u) return false;
     user=u;
     const [{data:p},{data:gm}]=await Promise.all([
-      sb.from('profiles').select('display_name,first_name,last_name,avatar_url').eq('id',u.id).maybeSingle(),
+      sb.from('profiles').select('display_name,first_name,last_name,avatar_url,date_of_birth,gender').eq('id',u.id).maybeSingle(),
       sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',u.id).eq('is_active',true).limit(1)
     ]);
     profile=p||{};membershipRole=gm?.[0]||null;staffPermissions={};
     if(membershipRole&&['staff','coach'].includes(membershipRole.role)){const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',membershipRole.gym_id).eq('user_id',u.id).maybeSingle();staffPermissions=sa?.permissions||{}}
     const display=profile.display_name||[profile.first_name,profile.last_name].filter(Boolean).join(' ')||u.user_metadata?.display_name||u.user_metadata?.full_name||u.email?.split('@')[0]||'Account';
     menuName.textContent=display; menuEmail.textContent=u.email||'';
-    displayInput.value=display; firstInput.value=profile.first_name||''; lastInput.value=profile.last_name||''; emailInput.value=u.email||'';
+    displayInput.value=display; firstInput.value=profile.first_name||''; lastInput.value=profile.last_name||''; dobInput.value=profile.date_of_birth||''; genderInput.value=profile.gender||''; emailInput.value=u.email||'';
     avatarPreview.innerHTML=profile.avatar_url?'<img src="'+profile.avatar_url+'" alt="">':display.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H';
     avatarFile.value='';
     renderPortalActions();
@@ -126,7 +128,7 @@
   saveBtn.onclick=async()=>{
     msg.textContent='';msg.className='account-msg';
     if(!user&&!(await loadAccount())){msg.textContent='Could not load your account.';msg.className='account-msg error';return}
-    const display=displayInput.value.trim(),first=firstInput.value.trim(),last=lastInput.value.trim(),email=emailInput.value.trim();
+    const display=displayInput.value.trim(),first=firstInput.value.trim(),last=lastInput.value.trim(),dob=dobInput.value||null,gender=genderInput.value||null,email=emailInput.value.trim();
     const p1=passwordInput.value,p2=password2Input.value;
     if(!display){msg.textContent='Add a display name.';msg.className='account-msg error';return}
     if(!email||!email.includes('@')){msg.textContent='Enter a valid email address.';msg.className='account-msg error';return}
@@ -144,7 +146,7 @@
         const pub=sb.storage.from('avatars').getPublicUrl(path);
         avatarUrl=(pub.data?.publicUrl||'')+'?v='+Date.now();
       }
-      const profileUpdate=await sb.from('profiles').update({display_name:display,first_name:first||null,last_name:last||null,avatar_url:avatarUrl}).eq('id',user.id);
+      const profileUpdate=await sb.from('profiles').update({display_name:display,first_name:first||null,last_name:last||null,avatar_url:avatarUrl,date_of_birth:dob,gender}).eq('id',user.id);
       if(profileUpdate.error) throw profileUpdate.error;
       const authChanges={data:{display_name:display,full_name:display}};
       const emailChanged=(email.toLowerCase()!==(user.email||'').toLowerCase());
@@ -158,7 +160,7 @@
       if(avatar){if(avatarUrl)avatar.innerHTML='<img src="'+avatarUrl+'" alt="">';else if(!avatar.querySelector('img'))avatar.textContent=display.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H'}
       menuName.textContent=display;menuEmail.textContent=email;
       const welcome=document.getElementById('welcomeTitle');if(welcome){const h=new Date().getHours();welcome.textContent='Good '+(h<12?'morning':h<18?'afternoon':'evening')+', '+display.split(' ')[0]}
-      user=authData?.user||user;profile={display_name:display,first_name:first,last_name:last,avatar_url:avatarUrl};avatarFile.value='';
+      user=authData?.user||user;profile={display_name:display,first_name:first,last_name:last,avatar_url:avatarUrl,date_of_birth:dob,gender};avatarFile.value='';
       passwordInput.value='';password2Input.value='';
       msg.textContent=emailChanged?'Profile saved. Check your email to confirm the new address.':'Account details updated.';msg.className='account-msg good';
     }catch(err){msg.textContent=err?.message||'Could not update your account.';msg.className='account-msg error'}
