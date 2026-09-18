@@ -33,8 +33,6 @@ html,body{margin:0;min-height:100%;background:#f5f7fb}
 @media(prefers-reduced-motion:reduce){#loading::after,.hybrid-nav-mask-card{animation:none}#hybridNavigationMask{transition:none}}
 </style>'''
 def clean_legacy_mobile_chrome():
- for n in ('member.html','member-preview.html','staff.html'):
-  if(OUT/n).exists():write(n,re.sub(r'<nav class="bottom">.*?</nav>','',read(n),count=1,flags=re.S))
  write('classes.html',re.sub(r'<a class="mobile-back"[^>]*>.*?</a>','',read('classes.html'),count=1,flags=re.S))
 def add_shared_runtime():
  for n in APP_PAGES:
