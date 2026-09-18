@@ -12,7 +12,7 @@
 .actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:10px 13px;font-weight:800;cursor:pointer}.btn.primary{background:var(--dark);border-color:var(--dark);color:#fff}.btn.good{background:var(--accent);border-color:var(--accent);color:#fff}
 .steps{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.step{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:800;cursor:pointer}.step.active{background:#e9fbf6;border-color:#9de1d1;color:#075f51}.wizard-nav{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:10px 0 18px}.wizard-nav .btn{min-width:130px}.wizard-nav .wizard-spacer{flex:1}.wizard-step-hidden{display:none!important}
 .layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}.panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 28px rgba(16,24,40,.06)}.tools{padding:16px;position:sticky;top:18px}.tools h3{margin:0 0 10px}.section{padding:14px 0;border-top:1px solid var(--line)}.section:first-of-type{border-top:0}.field{margin-top:9px}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:5px}.field input,.field select{width:100%;padding:10px 11px;border:1px solid #d0d5dd;border-radius:11px;font:inherit;background:#fff}.upload{display:block;border:1.5px dashed #b8c0cc;border-radius:14px;padding:14px;text-align:center;cursor:pointer;background:#fafbfc}.upload input{display:none}.tool-row{display:flex;gap:7px}.tool-row>*{flex:1}.catalog{display:grid;gap:7px;max-height:270px;overflow:auto;margin-top:8px}.catalog button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;text-align:left;cursor:pointer}.catalog button:hover{background:#f8fafc}.catalog small{display:block;color:var(--muted);margin-top:2px}
-.workspace{padding:14px}.canvas-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.canvas-wrap{position:relative;width:100%;aspect-ratio:16/10;min-height:420px;border:1px solid #d8dee8;border-radius:18px;overflow:hidden;background-color:#f8fafc;background-image:linear-gradient(#e9edf3 1px,transparent 1px),linear-gradient(90deg,#e9edf3 1px,transparent 1px);background-size:28px 28px;touch-action:none}.floor-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;opacity:.88}.zone{position:absolute;min-width:120px;min-height:70px;border:2px dashed rgba(13,121,102,.55);background:rgba(13,121,102,.10);border-radius:16px;padding:10px;cursor:grab;user-select:none}.zone strong{font-size:12px}.zone .remove,.pin .remove{position:absolute;top:-8px;right:-8px;width:23px;height:23px;border-radius:50%;border:1px solid #d0d5dd;background:#fff;display:grid;place-items:center;font-weight:900;cursor:pointer}
+.workspace{padding:14px}.inline-equipment-picker{display:none;margin:0 0 12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff}.inline-equipment-picker.show{display:block}.inline-equipment-grid{display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr) auto;gap:8px;align-items:end}.inline-equipment-picker label{display:block;font-size:12px;font-weight:800;margin-bottom:5px}.inline-equipment-picker select{width:100%;min-height:42px;padding:9px 10px;border:1px solid #d0d5dd;border-radius:10px;background:#fff;font:inherit}.canvas-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.canvas-wrap{position:relative;width:100%;aspect-ratio:16/10;min-height:420px;border:1px solid #d8dee8;border-radius:18px;overflow:hidden;background-color:#f8fafc;background-image:linear-gradient(#e9edf3 1px,transparent 1px),linear-gradient(90deg,#e9edf3 1px,transparent 1px);background-size:28px 28px;touch-action:none}.floor-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;opacity:.88}.zone{position:absolute;min-width:120px;min-height:70px;border:2px dashed rgba(13,121,102,.55);background:rgba(13,121,102,.10);border-radius:16px;padding:10px;cursor:grab;user-select:none}.zone strong{font-size:12px}.zone .remove,.pin .remove{position:absolute;top:-8px;right:-8px;width:23px;height:23px;border-radius:50%;border:1px solid #d0d5dd;background:#fff;display:grid;place-items:center;font-weight:900;cursor:pointer}
 .pin{position:absolute;transform:translate(-50%,-50%);width:var(--pin-w,12%);height:var(--pin-h,9%);min-width:42px;min-height:34px;background:#0b1020;color:#fff;border-radius:13px;padding:8px 9px;box-shadow:0 8px 20px rgba(11,16,32,.20);cursor:grab;user-select:none;display:flex;flex-direction:column;justify-content:center;overflow:visible}.pin .icon{font-size:18px}.pin strong{display:block;font-size:11px;line-height:1.15;margin-top:2px}.pin small{font-size:10px;color:#cbd5e1}.pin.selected{outline:3px solid #6ee7c8}.size-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-top:8px}.size-row input[type=range]{width:100%}.mini-btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 10px;font-weight:850;cursor:pointer}.size-readout{font-size:12px;font-weight:800;color:var(--muted);text-align:center;margin-top:4px}
 .empty-tip{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:#98a2b3;max-width:330px}.empty-tip b{color:#667085}.status{font-size:12px;font-weight:800;color:#067647}
 .member-bar{display:none;margin-bottom:12px;padding:12px 14px;border-radius:14px;background:#0b1020;color:#fff;justify-content:space-between;align-items:center;gap:12px}.member-bar span{color:#cbd5e1;font-size:13px}.member-workout{display:none;gap:8px;flex-wrap:wrap;margin:0 0 12px}.member-workout button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-weight:750;cursor:pointer}
@@ -36,7 +36,7 @@ body.member-mode .resize-edge{display:none!important}
  .mobile-editor-tab.active{background:var(--dark);border-color:var(--dark);color:#fff}
  .layout{display:block}.tools{position:static;padding:14px;border-radius:16px}.workspace{padding:8px;border-radius:16px}
  body.mobile-panel-map .tools{display:none}body.mobile-panel-setup .workspace{display:none}
- .canvas-head{padding:4px 2px 8px;margin:0}.canvas-wrap{width:100%;height:62svh;min-height:470px;max-height:680px;aspect-ratio:auto;border-radius:14px;touch-action:pan-y;background-size:28px 28px}
+ .canvas-head{padding:4px 2px 8px;margin:0}.inline-equipment-picker{padding:10px;margin-bottom:8px}.inline-equipment-grid{grid-template-columns:1fr;gap:8px}.inline-equipment-picker select{font-size:16px;min-height:46px}.inline-equipment-picker .btn{width:100%}.canvas-wrap{width:100%;height:62svh;min-height:470px;max-height:680px;aspect-ratio:auto;border-radius:14px;touch-action:pan-y;background-size:28px 28px}
  .pin,.zone,.resize-edge{touch-action:none}
  .resize-right{right:-11px;width:24px;height:54px}.resize-bottom{bottom:-11px;height:24px;width:54px}.resize-corner{right:-14px;bottom:-14px;width:30px;height:30px}
  .resize-right::after,.resize-bottom::after,.resize-corner::after{font-size:13px}
@@ -82,6 +82,13 @@ body.member-mode .resize-edge{display:none!important}
 <div class="section"><h3 style="font-size:14px">Selected item</h3><div id="selectedPanel" class="muted" style="font-size:13px">Select an item on the map to edit it.</div></div>
 </section>
 <section class="panel workspace">
+<div id="inlineEquipmentPicker" class="inline-equipment-picker">
+  <div class="inline-equipment-grid">
+    <div><label for="mapCategory">Category</label><select id="mapCategory"><option value="">All equipment</option></select></div>
+    <div><label for="mapEquipment">Equipment</label><select id="mapEquipment"></select></div>
+    <button id="mapAddEquipment" type="button" class="btn primary">+ Add to gym</button>
+  </div>
+</div>
 <div class="canvas-head"><div><b>Main gym floor</b><div class="muted" style="font-size:12px">Drag zones and equipment to match the real gym.</div></div><div id="status" class="status">Draft</div></div>
 <div id="canvas" class="canvas-wrap"><svg id="layoutSvg" class="layout-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg><img id="floorBg" class="floor-bg hidden" alt=""><div id="emptyTip" class="empty-tip"><b>Draw your gym</b><br>Choose Outline above and tap around the edge of the gym, or upload a reference image.</div></div>
 <div class="legend"><span><i class="dot"></i>Equipment</span><span><i class="dot zone-dot"></i>Zone</span><span>Member view highlights the equipment used by an exercise.</span></div>
@@ -220,14 +227,16 @@ function setWizardStep(step){
  $('drawTools').classList.toggle('wizard-step-hidden',wizardStep!==1);
  $('drawHint').classList.toggle('wizard-step-hidden',wizardStep!==1);
  $('zoneSection').classList.toggle('wizard-step-hidden',wizardStep!==2);
- $('equipmentSection').classList.toggle('wizard-step-hidden',wizardStep!==3);
+ $('equipmentSection').classList.toggle('wizard-step-hidden',wizardStep!==3||mobileMq.matches);
+ $('inlineEquipmentPicker').classList.toggle('show',wizardStep===3);
  if(wizardStep===4){
    document.body.classList.add('member-mode');selected=null;render();
    if(mobileMq.matches)setMobilePanel('map');
  }else{
    document.body.classList.remove('member-mode');
    if(wizardStep===1&&mobileMq.matches)setMobilePanel('map');
-   if((wizardStep===2||wizardStep===3)&&mobileMq.matches)setMobilePanel('setup');
+   if(wizardStep===2&&mobileMq.matches)setMobilePanel('setup');
+   if(wizardStep===3&&mobileMq.matches)setMobilePanel('map');
  }
  if(wizardStep===2)setTool('select');
  if(wizardStep===3)setTool('select');
@@ -249,6 +258,12 @@ function toast(t){$('toast').textContent=t;$('toast').classList.add('show');setT
 function save(silent=false){try{localStorage.setItem(KEY,JSON.stringify(state));$('status').textContent='Saved locally';if(!silent)toast('Layout draft saved')}catch(e){$('status').textContent='Draft too large to save';if(!silent)toast('Could not save this image locally')}}
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){state=d;state.outline=state.outline||[];state.rooms=state.rooms||[];state.walls=state.walls||[];state.doors=state.doors||[];(state.items||[]).forEach(i=>{if(!i.w||!i.h){const scale=(i.size||100)/100;i.w=Math.max(4,12*scale);i.h=Math.max(4,9*scale)}})}}catch(e){}render()}
 function renderCatalog(){const q=$('search').value.trim().toLowerCase(),cat=$('categoryFilter').value;$('catalog').innerHTML=equipment.filter(x=>(!cat||x[1]===cat)&&(!q||x[0].toLowerCase().includes(q)||x[1].toLowerCase().includes(q)||x[3].some(e=>e.toLowerCase().includes(q)))).map(x=>'<button data-eq="'+equipment.indexOf(x)+'"><b>'+x[2]+' '+x[0]+'</b><small>'+x[1]+' · '+x[3].join(', ')+'</small></button>').join('')||'<div class="muted" style="padding:8px">No equipment matches that search.</div>';document.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>addEquipment(equipment[+b.dataset.eq]))}
+function renderMapEquipmentPicker(){
+ const cat=$('mapCategory').value;
+ const list=equipment.filter(x=>!cat||x[1]===cat);
+ $('mapEquipment').innerHTML=list.map(x=>'<option value="'+equipment.indexOf(x)+'">'+escapeHtml(x[2]+' '+x[0])+'</option>').join('');
+ $('mapAddEquipment').disabled=!list.length;
+}
 function setTool(tool){
  currentTool=tool;pendingPoint=null;
  if(tool!=='outline')draftOutline=[];
@@ -300,7 +315,7 @@ function handleCanvasTap(e){
  }
  renderStructure();save(true);
 }
-function addEquipment(eq){remember();const same=state.items.filter(x=>x.name===eq[0]).length;const item={id:uid(),name:eq[0],category:eq[1],icon:eq[2],exercises:eq[3],x:48+((state.items.length*6)%35),y:48+((state.items.length*5)%30),quantity:1,w:12,h:9,label:same?eq[0]+' '+(same+1):eq[0]};state.items.push(item);selected={type:'item',id:item.id};render();save(true);if(mobileMq.matches){setMobilePanel('map');setTimeout(()=>document.querySelector('.pin.selected')?.scrollIntoView({behavior:'smooth',block:'center'}),50)}}
+function addEquipment(eq){remember();const same=state.items.filter(x=>x.name===eq[0]).length;const item={id:uid(),name:eq[0],category:eq[1],icon:eq[2],exercises:eq[3],x:48+((state.items.length*6)%35),y:48+((state.items.length*5)%30),quantity:1,w:12,h:9,label:same?eq[0]+' '+(same+1):eq[0]};state.items.push(item);selected={type:'item',id:item.id};render();save(true);if(mobileMq.matches)setMobilePanel('map')}
 function addZone(){const name=$('zoneName').value.trim();if(!name)return toast('Give the zone a name');remember();state.zones.push({id:uid(),name,x:snap(8+((state.zones.length*8)%35),1),y:snap(8+((state.zones.length*7)%25),1),w:30,h:25});$('zoneName').value='';render();save(true);if(mobileMq.matches)setMobilePanel('map')}
 function remove(type,id){remember();if(type==='item')state.items=state.items.filter(x=>x.id!==id);else state.zones=state.zones.filter(x=>x.id!==id);selected=null;render();save(true)}
 function pct(n,min=0,max=100){return Math.max(min,Math.min(max,n))}
@@ -375,6 +390,7 @@ function attr(s){return escapeHtml(s).replace(/"/g,'&quot;')}
 document.querySelectorAll('.draw-tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));$('finishOutlineBtn').onclick=finishOutline;$('canvas').addEventListener('click',handleCanvasTap);
 document.querySelectorAll('.mobile-editor-tab').forEach(b=>b.onclick=()=>setMobilePanel(b.dataset.mobilePanel));setMobilePanel('map');mobileMq.addEventListener?.('change',e=>{if(e.matches)setMobilePanel('map');else document.body.classList.remove('mobile-panel-map','mobile-panel-setup')});
 document.querySelectorAll('.step[data-step]').forEach(b=>b.onclick=()=>setWizardStep(+b.dataset.step));$('wizardBack').onclick=wizardBack;$('wizardNext').onclick=wizardNext;setWizardStep(1);
+const mapCats=[...new Set(equipment.map(x=>x[1]))];$('mapCategory').innerHTML='<option value="">All equipment</option>'+mapCats.map(c=>'<option>'+escapeHtml(c)+'</option>').join('');$('mapCategory').onchange=renderMapEquipmentPicker;$('mapAddEquipment').onclick=()=>{const idx=+$('mapEquipment').value;if(Number.isInteger(idx)&&equipment[idx])addEquipment(equipment[idx])};renderMapEquipmentPicker();
 $('search').oninput=renderCatalog;$('categoryFilter').onchange=renderCatalog;$('addZoneBtn').onclick=addZone;$('saveBtn').onclick=()=>save();
 $('floorUpload').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{remember();state.background=rd.result;render();save(true);if(mobileMq.matches)setMobilePanel('map')};rd.readAsDataURL(f)};
 $('blankBtn').onclick=()=>{remember();state.background='';render();toast('Blank grid ready')};$('clearBgBtn').onclick=()=>{remember();state.background='';render();save(true)};
