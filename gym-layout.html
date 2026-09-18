@@ -29,7 +29,7 @@ body.member-mode .resize-edge{display:none!important}
 .draw-toolbar{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;margin-bottom:10px;scrollbar-width:none}.draw-toolbar::-webkit-scrollbar{display:none}.draw-tool{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;min-height:40px;padding:8px 11px;font-weight:850;cursor:pointer}.draw-tool.active{background:var(--dark);border-color:var(--dark);color:#fff}.draw-tool.finish{background:#e9fbf6;border-color:#9de1d1;color:#075f51}.layout-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}.layout-outline{fill:rgba(13,121,102,.035);stroke:#0d7966;stroke-width:2.5;stroke-linejoin:round;vector-effect:non-scaling-stroke}.layout-outline.draft{stroke-dasharray:6 5;fill:none}.layout-room{fill:rgba(11,16,32,.035);stroke:#667085;stroke-width:2;vector-effect:non-scaling-stroke}.layout-wall{stroke:#344054;stroke-width:4;stroke-linecap:round;vector-effect:non-scaling-stroke}.layout-door{fill:#fff;stroke:#0d7966;stroke-width:2.5;vector-effect:non-scaling-stroke}.layout-node{fill:#6ee7c8;stroke:#0b1020;stroke-width:1.5;vector-effect:non-scaling-stroke}.drawing-hint{font-size:12px;color:var(--muted);margin:0 0 9px}.canvas-wrap.drawing{cursor:crosshair}.canvas-wrap.drawing .empty-tip{display:none!important}.mobile-editor-tabs{display:none}
 @media(max-width:950px){
  .shell{display:block}.side{display:none}.main{padding:14px 10px 34px}.top{flex-direction:column;gap:10px;margin-bottom:10px}.top h1{font-size:26px}.top .muted{font-size:13px;line-height:1.4}
- .actions{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.draw-toolbar{margin-left:-2px;margin-right:-2px;padding-bottom:8px}.draw-tool{min-height:44px;padding:8px 12px}.actions .btn{padding:9px 7px;font-size:12px;min-width:0}
+ .actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.draw-toolbar{margin-left:-2px;margin-right:-2px;padding-bottom:8px}.draw-tool{min-height:44px;padding:8px 12px}.actions .btn{padding:9px 7px;font-size:12px;min-width:0}
  .steps{margin-bottom:10px;gap:6px}.step{font-size:11px;padding:7px 9px}
  .mobile-editor-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;position:sticky;top:0;z-index:20;background:var(--bg);padding:7px 0 9px;margin-bottom:8px}
  .mobile-editor-tab{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;min-height:44px;font-weight:850;font-size:14px}
@@ -49,7 +49,7 @@ body.member-mode .resize-edge{display:none!important}
 <body>
 <div class="shell gym-layout-shell">
 <main class="main">
-<header class="top"><div><div class="eyebrow">Services & resources</div><h1>Gym layout</h1><div class="muted">Build a simple member-friendly map of your gym and show people where equipment lives.</div></div><div class="actions"><button id="resetBtn" class="btn">Reset draft</button><button id="previewBtn" class="btn">Preview as member</button><button id="saveBtn" class="btn good">Save draft</button></div></header>
+<header class="top"><div><div class="eyebrow">Services & resources</div><h1>Gym layout</h1><div class="muted">Build a simple member-friendly map of your gym and show people where equipment lives.</div></div><div class="actions"><button id="undoBtn" class="btn" disabled>Undo</button><button id="resetBtn" class="btn">Clear</button><button id="previewBtn" class="btn">Preview as member</button><button id="saveBtn" class="btn good">Save draft</button></div></header>
 <div class="steps"><span class="step active">1. Draw gym</span><span class="step">2. Mark zones</span><span class="step">3. Place equipment</span><span class="step">4. Preview</span></div>
 <div class="draw-toolbar" aria-label="Gym drawing tools">
  <button type="button" class="draw-tool active" data-tool="select">Select</button>
@@ -196,7 +196,11 @@ const equipment=[
  ['Body composition scanner','Mobility & recovery','◎',['Body composition assessment']]
 ]
 let state={background:'',zones:[],items:[],outline:[],rooms:[],walls:[],doors:[]},selected=null;
-let currentTool='select',draftPoints=[],drawStart=null;
+let currentTool='select',draftPoints=[],drawStart=null,history=[];
+function cloneState(){return JSON.parse(JSON.stringify(state))}
+function syncUndo(){const b=$('undoBtn');if(b)b.disabled=!history.length}
+function remember(){history.push(cloneState());if(history.length>40)history.shift();syncUndo()}
+function undoLast(){if(!history.length)return;state=history.pop();selected=null;draftPoints=[];drawStart=null;setTool('select');render();save(true);syncUndo();toast('Last change undone')}
 const mobileMq=window.matchMedia('(max-width:950px)');
 function setMobilePanel(panel){
  if(!mobileMq.matches)return;
@@ -241,23 +245,23 @@ function renderStructure(){
 }
 function finishOutline(){
  if(draftPoints.length<3)return toast('Add at least three outline points');
- state.outline=draftPoints.map(p=>({...p}));draftPoints=[];setTool('select');save(true);render();toast('Gym outline saved');
+ remember();state.outline=draftPoints.map(p=>({...p}));draftPoints=[];setTool('select');save(true);render();toast('Gym outline saved');
 }
 function handleCanvasPointerDown(e){
  if(currentTool==='select'||['zone','equipment'].includes(currentTool))return;
  if(e.target.closest?.('.pin,.zone,.resize-edge,.remove'))return;
  e.preventDefault();
  const p=canvasPoint(e);
- if(currentTool==='outline'){draftPoints.push(p);renderStructure();return}
- if(currentTool==='door'){state.doors.push({id:uid(),x:p.x,y:p.y});renderStructure();save(true);return}
+ if(currentTool==='outline'){remember();draftPoints.push(p);renderStructure();return}
+ if(currentTool==='door'){remember();state.doors.push({id:uid(),x:p.x,y:p.y});renderStructure();save(true);return}
  drawStart=p;
  const move=ev=>{if(!drawStart)return;const q=canvasPoint(ev);const svg=$('layoutSvg');if(!svg)return;renderStructure();if(currentTool==='room'){const x=Math.min(drawStart.x,q.x),y=Math.min(drawStart.y,q.y),w=Math.abs(q.x-drawStart.x),h=Math.abs(q.y-drawStart.y);svg.insertAdjacentHTML('beforeend','<rect class="layout-room" x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="1"></rect>')}else if(currentTool==='wall'){svg.insertAdjacentHTML('beforeend','<line class="layout-wall" x1="'+drawStart.x+'" y1="'+drawStart.y+'" x2="'+q.x+'" y2="'+q.y+'"></line>')}};
- const up=ev=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);if(!drawStart)return;const q=canvasPoint(ev);if(currentTool==='room'){const x=Math.min(drawStart.x,q.x),y=Math.min(drawStart.y,q.y),w=Math.abs(q.x-drawStart.x),h=Math.abs(q.y-drawStart.y);if(w>1&&h>1)state.rooms.push({id:uid(),x,y,w,h})}else if(currentTool==='wall'){if(Math.hypot(q.x-drawStart.x,q.y-drawStart.y)>1)state.walls.push({id:uid(),x1:drawStart.x,y1:drawStart.y,x2:q.x,y2:q.y})}drawStart=null;renderStructure();save(true)};
+ const up=ev=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);if(!drawStart)return;const q=canvasPoint(ev);if(currentTool==='room'){const x=Math.min(drawStart.x,q.x),y=Math.min(drawStart.y,q.y),w=Math.abs(q.x-drawStart.x),h=Math.abs(q.y-drawStart.y);if(w>1&&h>1){remember();state.rooms.push({id:uid(),x,y,w,h})}}else if(currentTool==='wall'){if(Math.hypot(q.x-drawStart.x,q.y-drawStart.y)>1){remember();state.walls.push({id:uid(),x1:drawStart.x,y1:drawStart.y,x2:q.x,y2:q.y})}}drawStart=null;renderStructure();save(true)};
  window.addEventListener('pointermove',move,{passive:false});window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
 }
-function addEquipment(eq){const same=state.items.filter(x=>x.name===eq[0]).length;const item={id:uid(),name:eq[0],category:eq[1],icon:eq[2],exercises:eq[3],x:48+((state.items.length*6)%35),y:48+((state.items.length*5)%30),quantity:1,w:12,h:9,label:same?eq[0]+' '+(same+1):eq[0]};state.items.push(item);selected={type:'item',id:item.id};render();save(true);if(mobileMq.matches){setMobilePanel('map');setTimeout(()=>document.querySelector('.pin.selected')?.scrollIntoView({behavior:'smooth',block:'center'}),50)}}
-function addZone(){const name=$('zoneName').value.trim();if(!name)return toast('Give the zone a name');state.zones.push({id:uid(),name,x:snap(8+((state.zones.length*8)%35),1),y:snap(8+((state.zones.length*7)%25),1),w:30,h:25});$('zoneName').value='';render();save(true);if(mobileMq.matches)setMobilePanel('map')}
-function remove(type,id){if(type==='item')state.items=state.items.filter(x=>x.id!==id);else state.zones=state.zones.filter(x=>x.id!==id);selected=null;render();save(true)}
+function addEquipment(eq){remember();const same=state.items.filter(x=>x.name===eq[0]).length;const item={id:uid(),name:eq[0],category:eq[1],icon:eq[2],exercises:eq[3],x:48+((state.items.length*6)%35),y:48+((state.items.length*5)%30),quantity:1,w:12,h:9,label:same?eq[0]+' '+(same+1):eq[0]};state.items.push(item);selected={type:'item',id:item.id};render();save(true);if(mobileMq.matches){setMobilePanel('map');setTimeout(()=>document.querySelector('.pin.selected')?.scrollIntoView({behavior:'smooth',block:'center'}),50)}}
+function addZone(){const name=$('zoneName').value.trim();if(!name)return toast('Give the zone a name');remember();state.zones.push({id:uid(),name,x:snap(8+((state.zones.length*8)%35),1),y:snap(8+((state.zones.length*7)%25),1),w:30,h:25});$('zoneName').value='';render();save(true);if(mobileMq.matches)setMobilePanel('map')}
+function remove(type,id){remember();if(type==='item')state.items=state.items.filter(x=>x.id!==id);else state.zones=state.zones.filter(x=>x.id!==id);selected=null;render();save(true)}
 function pct(n,min=0,max=100){return Math.max(min,Math.min(max,n))}
 const GRID_PX=28;
 function snapPx(n){return Math.round(n/GRID_PX)*GRID_PX}
@@ -266,7 +270,7 @@ function drag(el,obj,type,e){
  if(document.body.classList.contains('member-mode'))return;
  if(e.target.classList.contains('remove')||e.target.closest?.('.resize-edge'))return;
  e.preventDefault();
- selected={type,id:obj.id};renderSelected();
+ remember();selected={type,id:obj.id};renderSelected();
  const r=$('canvas').getBoundingClientRect();
  const startX=e.clientX,startY=e.clientY;
  let leftPx,topPx,wPx=0,hPx=0;
@@ -295,7 +299,7 @@ function drag(el,obj,type,e){
 function resizeEquipment(el,obj,mode,e){
  if(document.body.classList.contains('member-mode'))return;
  e.preventDefault();e.stopPropagation();
- selected={type:'item',id:obj.id};
+ remember();selected={type:'item',id:obj.id};
  const r=$('canvas').getBoundingClientRect();
  const startW=(obj.w||12)/100*r.width,startH=(obj.h||9)/100*r.height;
  const startCX=obj.x/100*r.width,startCY=obj.y/100*r.height;
@@ -329,11 +333,11 @@ function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;',
 function attr(s){return escapeHtml(s).replace(/"/g,'&quot;')}
 document.querySelectorAll('.draw-tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));$('finishOutlineBtn').onclick=finishOutline;$('canvas').addEventListener('pointerdown',handleCanvasPointerDown);document.querySelectorAll('.mobile-editor-tab').forEach(b=>b.onclick=()=>setMobilePanel(b.dataset.mobilePanel));setMobilePanel('map');mobileMq.addEventListener?.('change',e=>{if(e.matches)setMobilePanel('map');else document.body.classList.remove('mobile-panel-map','mobile-panel-setup')});
 $('search').oninput=renderCatalog;$('categoryFilter').onchange=renderCatalog;$('addZoneBtn').onclick=addZone;$('saveBtn').onclick=()=>save();
-$('floorUpload').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{state.background=rd.result;render();save(true);if(mobileMq.matches)setMobilePanel('map')};rd.readAsDataURL(f)};
-$('blankBtn').onclick=()=>{state.background='';render();toast('Blank grid ready')};$('clearBgBtn').onclick=()=>{state.background='';render();save(true)};
+$('floorUpload').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{remember();state.background=rd.result;render();save(true);if(mobileMq.matches)setMobilePanel('map')};rd.readAsDataURL(f)};
+$('blankBtn').onclick=()=>{remember();state.background='';render();toast('Blank grid ready')};$('clearBgBtn').onclick=()=>{remember();state.background='';render();save(true)};
 $('previewBtn').onclick=()=>{document.body.classList.add('member-mode');selected=null;render()};$('exitPreview').onclick=()=>document.body.classList.remove('member-mode');
 document.querySelectorAll('[data-find]').forEach(b=>b.onclick=()=>highlight(b.dataset.find));
-$('resetBtn').onclick=()=>{if(!confirm('Reset this gym layout draft?'))return;state={background:'',zones:[],items:[],outline:[],rooms:[],walls:[],doors:[]};selected=null;draftPoints=[];setTool('select');localStorage.removeItem(KEY);render()};
-renderCatalog();load();
+$('undoBtn').onclick=undoLast;$('resetBtn').onclick=()=>{if(!confirm('Clear the entire gym layout? You can undo this immediately afterwards.'))return;remember();state={background:'',zones:[],items:[],outline:[],rooms:[],walls:[],doors:[]};selected=null;draftPoints=[];setTool('select');save(true);render();toast('Layout cleared')};
+renderCatalog();load();syncUndo();
 </script>
 </body></html>
