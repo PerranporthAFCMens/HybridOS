@@ -3,6 +3,8 @@
     dashboard:'<rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect>',
     home:'<path d="M3 11.5 12 4l9 7.5"></path><path d="M5 10.5V20h5v-5h4v5h5v-9.5"></path>',
     community:'<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.6-4.8A7 7 0 0 1 3 12c0-4 3.6-7 8-7h3c4.4 0 8 3 8 7 0 1.1-.3 2.1-1 3z"></path><path d="M8 12h.01M12 12h.01M16 12h.01"></path>',
+    social:'<path d="M4 5.5h11a3 3 0 0 1 3 3v3a3 3 0 0 1-3 3H9l-4.5 3 .9-3.5A3 3 0 0 1 3 11V8.5a3 3 0 0 1 1-3z"></path><path d="M13 17h3l4 2.5-.8-3.1A3 3 0 0 0 21 13.7V11a3 3 0 0 0-2-2.8"></path><path d="M7 9.5h7M7 12h4"></path>',
+    groups:'<circle cx="12" cy="7" r="3"></circle><circle cx="5.5" cy="10" r="2.5"></circle><circle cx="18.5" cy="10" r="2.5"></circle><path d="M6.8 20a5.2 5.2 0 0 1 10.4 0"></path><path d="M1.8 19a4 4 0 0 1 5.4-3.7M22.2 19a4 4 0 0 0-5.4-3.7"></path>',
     classes:'<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path>',
     services:'<rect x="3" y="4" width="8" height="6" rx="1.5"></rect><rect x="13" y="4" width="8" height="6" rx="1.5"></rect><rect x="3" y="14" width="8" height="6" rx="1.5"></rect><rect x="13" y="14" width="8" height="6" rx="1.5"></rect><path d="M7 10v4M17 10v4"></path>',
     staff:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path>',
