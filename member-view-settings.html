@@ -8,7 +8,7 @@
 <style>
 :root{--bg:#f5f7fb;--panel:#fff;--ink:#101828;--muted:#667085;--line:#e7ebf2;--dark:#0b1020;--good:#067647;--bad:#b42318}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
-.hidden{display:none!important}.shell{min-height:100vh;display:grid;grid-template-columns:255px 1fr}.side{background:var(--dark);color:#fff;padding:24px 18px;display:flex;flex-direction:column;gap:20px}.brand{font-size:18px;font-weight:900;letter-spacing:.08em}.gym{padding:13px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08)}.nav{display:grid;gap:6px}.nav a{color:#a9b2c2;text-decoration:none;padding:12px;border-radius:12px}.main{padding:28px 30px 80px;min-width:0}.top{margin-bottom:20px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}.top h1{font-size:32px;margin:4px 0}.muted{color:var(--muted)}.workspace{display:grid;grid-template-columns:minmax(320px,1fr) minmax(320px,440px);gap:24px;align-items:start}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 14px 34px rgba(16,24,40,.08)}.controls{display:grid;gap:10px}.tile-control{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:10px;background:#fff;transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s ease,border-color .18s ease,opacity .18s ease}.drag{width:34px;height:38px;border:0;border-radius:10px;background:#f2f4f7;color:#667085;font-size:18px;cursor:grab;touch-action:none;user-select:none}.drag:active{cursor:grabbing}.tile-control.dragging{opacity:.18}.tile-control.drag-over{border-color:#9ca9bb;box-shadow:0 10px 24px rgba(16,24,40,.10);transform:translateY(2px)}.drag-ghost{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;margin:0;transform:translate3d(0,0,0) scale(1.035) rotate(-.5deg);box-shadow:0 22px 50px rgba(16,24,40,.22);border-color:#b9c2d0;background:#fff;opacity:.98;transition:box-shadow .12s ease,transform .12s ease}.controls.drag-active{user-select:none;touch-action:none}.controls.drag-active .tile-control:not(.dragging){transition:transform .2s cubic-bezier(.2,.8,.2,1)}body.member-layout-dragging{overflow:hidden;overscroll-behavior:none;touch-action:none}.tile-name b{display:block}.tile-name span{display:block;font-size:12px;color:var(--muted);margin-top:2px}.switch{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800}.switch input{width:18px;height:18px}.phone-wrap{position:sticky;top:24px;display:grid;place-items:center}.phone{width:min(360px,100%);background:#111827;border-radius:42px;padding:12px;box-shadow:0 24px 60px rgba(16,24,40,.22)}.screen{background:#f5f7fb;border-radius:32px;min-height:660px;padding:20px 14px 24px;overflow:hidden}.phone-top{display:flex;justify-content:space-between;align-items:center;margin:3px 4px 14px}.phone-top b{font-size:13px}.mini-list{display:grid;gap:9px}.mini-tile{border:1px solid #e7ebf2;border-radius:16px;background:#fff;padding:12px;box-shadow:0 8px 18px rgba(16,24,40,.06);transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .18s ease,box-shadow .18s ease}.mini-tile.goal{background:linear-gradient(135deg,#fff,#f3fbf8);border-color:#d4e8e1}.mini-tile.hero{background:#0b1020;color:#fff}.mini-tile.off{display:none}.mini-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.mini-head b{font-size:12px}.mini-pill{font-size:9px;padding:3px 6px;border-radius:999px;background:#ecfdf3;color:#067647;font-weight:850}.mini-lines{display:grid;gap:5px;margin-top:8px}.mini-lines i{display:block;height:6px;border-radius:99px;background:#e8edf3}.hero .mini-lines i{background:#334155}.mini-lines i:nth-child(2){width:70%}.goal-ring{width:44px;height:44px;border-radius:50%;background:conic-gradient(#0b1020 240deg,#e5e7eb 0);display:grid;place-items:center;font-size:9px;font-weight:900}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.btn{border:0;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer}.btn.primary{background:var(--dark);color:#fff}.btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);text-decoration:none}.msg{min-height:20px;margin-top:10px;font-size:13px}.good{color:var(--good)}.bad{color:var(--bad)}
+.hidden{display:none!important}.shell{min-height:100vh;display:grid;grid-template-columns:255px 1fr}.side{background:var(--dark);color:#fff;padding:24px 18px;display:flex;flex-direction:column;gap:20px}.brand{font-size:18px;font-weight:900;letter-spacing:.08em}.gym{padding:13px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08)}.nav{display:grid;gap:6px}.nav a{color:#a9b2c2;text-decoration:none;padding:12px;border-radius:12px}.main{padding:28px 30px 80px;min-width:0}.top{margin-bottom:20px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}.top h1{font-size:32px;margin:4px 0}.muted{color:var(--muted)}.workspace{display:grid;grid-template-columns:minmax(320px,1fr) minmax(320px,440px);gap:24px;align-items:start}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 14px 34px rgba(16,24,40,.08)}.controls{display:grid;gap:10px}.tile-control{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:10px;background:#fff;transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s ease,border-color .18s ease,opacity .18s ease}.drag{width:34px;height:38px;border:0;border-radius:10px;background:#f2f4f7;color:#667085;font-size:18px;cursor:grab;touch-action:none;user-select:none}.drag:active{cursor:grabbing}.tile-control.dragging{opacity:.18}.tile-control.drag-over{border-color:#9ca9bb;box-shadow:0 10px 24px rgba(16,24,40,.10);transform:translateY(2px)}.tile-placeholder{border:1px dashed #9ca9bb;border-radius:14px;background:#f8fafc;box-shadow:inset 0 0 0 1px rgba(156,169,187,.14);transition:height .14s ease,transform .18s cubic-bezier(.2,.8,.2,1)}.drag-ghost{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;margin:0;transform:translate3d(0,0,0) scale(1.035) rotate(-.5deg);box-shadow:0 22px 50px rgba(16,24,40,.22);border-color:#b9c2d0;background:#fff;opacity:.98;transition:box-shadow .12s ease,transform .12s ease}.controls.drag-active{user-select:none;touch-action:none}.controls.drag-active .tile-control:not(.dragging){transition:transform .2s cubic-bezier(.2,.8,.2,1)}body.member-layout-dragging{overflow:hidden;overscroll-behavior:none;touch-action:none}.tile-name b{display:block}.tile-name span{display:block;font-size:12px;color:var(--muted);margin-top:2px}.switch{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800}.switch input{width:18px;height:18px}.phone-wrap{position:sticky;top:24px;display:grid;place-items:center}.phone{width:min(360px,100%);background:#111827;border-radius:42px;padding:12px;box-shadow:0 24px 60px rgba(16,24,40,.22)}.screen{background:#f5f7fb;border-radius:32px;min-height:660px;padding:20px 14px 24px;overflow:hidden}.phone-top{display:flex;justify-content:space-between;align-items:center;margin:3px 4px 14px}.phone-top b{font-size:13px}.mini-list{display:grid;gap:9px}.mini-tile{border:1px solid #e7ebf2;border-radius:16px;background:#fff;padding:12px;box-shadow:0 8px 18px rgba(16,24,40,.06);transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .18s ease,box-shadow .18s ease}.mini-tile.goal{background:linear-gradient(135deg,#fff,#f3fbf8);border-color:#d4e8e1}.mini-tile.hero{background:#0b1020;color:#fff}.mini-tile.off{display:none}.mini-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.mini-head b{font-size:12px}.mini-pill{font-size:9px;padding:3px 6px;border-radius:999px;background:#ecfdf3;color:#067647;font-weight:850}.mini-lines{display:grid;gap:5px;margin-top:8px}.mini-lines i{display:block;height:6px;border-radius:99px;background:#e8edf3}.hero .mini-lines i{background:#334155}.mini-lines i:nth-child(2){width:70%}.goal-ring{width:44px;height:44px;border-radius:50%;background:conic-gradient(#0b1020 240deg,#e5e7eb 0);display:grid;place-items:center;font-size:9px;font-weight:900}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.btn{border:0;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer}.btn.primary{background:var(--dark);color:#fff}.btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);text-decoration:none}.msg{min-height:20px;margin-top:10px;font-size:13px}.good{color:var(--good)}.bad{color:var(--bad)}
 @media(max-width:950px){.workspace{grid-template-columns:1fr}.phone-wrap{position:static}.phone{width:min(340px,92vw)}}@media(max-width:850px){.shell{display:block}.side{display:none}.main{padding:18px 14px 60px}}
 </style>
 </head>
@@ -48,20 +48,20 @@ function animatePositions(root,selector,before){root.querySelectorAll(selector).
 function syncLayoutFromDom(){layout=[...$('controls').querySelectorAll('.tile-control')].map(row=>{const old=layout.find(x=>x.key===row.dataset.key);return {key:row.dataset.key,visible:old?.visible!==false}})}
 function renderPhoneAnimated(){const host=$('phoneTiles'),before=snapshotPositions(host,'.mini-tile');host.innerHTML=layout.map(miniHTML).join('');requestAnimationFrame(()=>animatePositions(host,'.mini-tile',before))}
 function render(){const controls=$('controls');controls.innerHTML=layout.map(item=>{const m=META[item.key];return `<div class="tile-control" data-key="${item.key}"><button class="drag" type="button" aria-label="Drag ${m.label}">☰</button><div class="tile-name"><b>${m.label}</b><span>${m.desc}</span></div><label class="switch"><input type="checkbox" ${item.visible?'checked':''}> Show</label></div>`}).join('');$('phoneTiles').innerHTML=layout.map(miniHTML).join('');wire()}
-function reorderPreviewToMatch(){
- const phone=$('phoneTiles'),before=snapshotPositions(phone,'.mini-tile'),order=[...$('controls').querySelectorAll('.tile-control')].map(x=>x.dataset.key);
+function previewOrderWithPlaceholder(placeholder,dragKey){
+ const out=[];
+ [...$('controls').children].forEach(el=>{
+  if(el===placeholder)out.push(dragKey);
+  else if(el.classList.contains('tile-control'))out.push(el.dataset.key);
+ });
+ return out;
+}
+function reorderPreview(order){
+ const phone=$('phoneTiles'),before=snapshotPositions(phone,'.mini-tile');
  order.forEach(key=>{const tile=phone.querySelector('[data-mini="'+key+'"]');if(tile)phone.appendChild(tile)});
  requestAnimationFrame(()=>animatePositions(phone,'.mini-tile',before))
 }
-function moveRow(row,target,after){
- if(!row||!target||row===target)return false;
- const controls=$('controls'),before=snapshotPositions(controls,'.tile-control');
- if(after)target.after(row);else target.before(row);
- syncLayoutFromDom();
- requestAnimationFrame(()=>animatePositions(controls,'.tile-control',before));
- reorderPreviewToMatch();
- return true
-}
+function reorderPreviewToMatch(){reorderPreview([...$('controls').querySelectorAll('.tile-control')].map(x=>x.dataset.key))}
 function wire(){
  document.querySelectorAll('.tile-control').forEach(row=>{
   const key=row.dataset.key;
@@ -70,46 +70,37 @@ function wire(){
   handle.addEventListener('pointerdown',e=>{
    if(e.pointerType==='mouse'&&e.button!==0)return;
    e.preventDefault();
-   const controls=$('controls'),rect=row.getBoundingClientRect(),ghost=row.cloneNode(true);
+   const controls=$('controls'),rect=row.getBoundingClientRect(),ghost=row.cloneNode(true),placeholder=document.createElement('div');
+   placeholder.className='tile-placeholder';placeholder.style.height=rect.height+'px';placeholder.dataset.dragKey=key;
+   controls.insertBefore(placeholder,row);row.remove();
    ghost.classList.add('drag-ghost');ghost.style.width=rect.width+'px';ghost.style.height=rect.height+'px';
-   document.body.appendChild(ghost);row.classList.add('dragging');controls.classList.add('drag-active');document.body.classList.add('member-layout-dragging');
+   document.body.appendChild(ghost);controls.classList.add('drag-active');document.body.classList.add('member-layout-dragging');
    const offX=e.clientX-rect.left,offY=e.clientY-rect.top,pointerId=e.pointerId;
-   let latestX=e.clientX,latestY=e.clientY,raf=0,lastTarget=null,lastSide=null,finished=false;
+   let latestX=e.clientX,latestY=e.clientY,raf=0,finished=false,lastIndex=-1;
    const place=()=>{ghost.style.left=(latestX-offX)+'px';ghost.style.top=(latestY-offY)+'px'};
+   const currentIndex=()=>[...controls.children].indexOf(placeholder);
+   const placePlaceholder=()=>{
+    const rows=[...controls.querySelectorAll('.tile-control')];
+    let before=null;
+    for(const candidate of rows){
+      const r=candidate.getBoundingClientRect();
+      if(latestY<r.top+r.height/2){before=candidate;break}
+    }
+    if(before)controls.insertBefore(placeholder,before);else controls.appendChild(placeholder);
+   };
+   const frame=()=>{
+    raf=0;place();placePlaceholder();
+    const ix=currentIndex();
+    if(ix!==lastIndex){lastIndex=ix;reorderPreview(previewOrderWithPlaceholder(placeholder,key))}
+   };
    place();
    try{handle.setPointerCapture(pointerId)}catch(_){}
-   const clearOver=()=>document.querySelectorAll('.tile-control.drag-over').forEach(x=>x.classList.remove('drag-over'));
-   const frame=()=>{
-    raf=0;place();
-    const rows=[...controls.querySelectorAll('.tile-control:not(.dragging)')];
-    let target=null,after=false,best=Infinity;
-    for(const candidate of rows){
-      const r=candidate.getBoundingClientRect(),mid=r.top+r.height/2,d=Math.abs(latestY-mid);
-      if(d<best){best=d;target=candidate;after=latestY>mid}
-    }
-    clearOver();
-    if(!target)return;
-    target.classList.add('drag-over');
-    const side=after?'after':'before';
-    if(target!==lastTarget||side!==lastSide){
-      const targetRect=target.getBoundingClientRect();
-      const rowRect=row.getBoundingClientRect();
-      const alreadyBefore=rowRect.bottom<=targetRect.top+1;
-      const alreadyAfter=rowRect.top>=targetRect.bottom-1;
-      if(!((!after&&alreadyBefore)||(after&&alreadyAfter)))moveRow(row,target,after);
-      lastTarget=target;lastSide=side;
-    }
-   };
-   const move=ev=>{
-    if(ev.pointerId!==pointerId)return;
-    latestX=ev.clientX;latestY=ev.clientY;
-    if(!raf)raf=requestAnimationFrame(frame);
-   };
+   const move=ev=>{if(ev.pointerId!==pointerId)return;latestX=ev.clientX;latestY=ev.clientY;if(!raf)raf=requestAnimationFrame(frame)};
    const finish=ev=>{
     if(finished||ev.pointerId!==pointerId)return;finished=true;
     if(raf)cancelAnimationFrame(raf);
     handle.removeEventListener('pointermove',move);handle.removeEventListener('pointerup',finish);handle.removeEventListener('pointercancel',finish);handle.removeEventListener('lostpointercapture',finish);
-    clearOver();row.classList.remove('dragging');controls.classList.remove('drag-active');document.body.classList.remove('member-layout-dragging');
+    placeholder.replaceWith(row);controls.classList.remove('drag-active');document.body.classList.remove('member-layout-dragging');
     syncLayoutFromDom();reorderPreviewToMatch();
     ghost.style.transition='opacity .12s ease,transform .12s ease';ghost.style.transform='scale(.98)';ghost.style.opacity='0';setTimeout(()=>ghost.remove(),130);
     try{if(handle.hasPointerCapture?.(pointerId))handle.releasePointerCapture(pointerId)}catch(_){}
