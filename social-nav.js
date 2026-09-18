@@ -11,6 +11,7 @@
       const children=[...nav.querySelectorAll('button,a')];
       const workouts=children.find(x=>/Workouts/i.test(x.textContent||''));
       if(workouts) nav.insertBefore(item,workouts); else nav.appendChild(item);
+      if(window.HybridShell?.decorateNav) window.HybridShell.decorateNav(nav);
     });
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',add);else add();
