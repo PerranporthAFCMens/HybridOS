@@ -12,6 +12,7 @@ html.admin-embedded .side{display:none!important}
 html.admin-embedded .admin-mobile-menu-btn,
 html.admin-embedded .mobile-menu-btn,
 html.admin-embedded .staff-mobile-menu-btn,
+html.admin-embedded .mobile-back,
 html.admin-embedded .admin-mobile-backdrop,
 html.admin-embedded .mobile-nav-backdrop,
 html.admin-embedded .staff-mobile-backdrop{display:none!important}
