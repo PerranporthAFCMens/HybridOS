@@ -10,9 +10,10 @@
     {key:'memberships',label:'£ Memberships',href:'./index.html#memberships'},
     {key:'members',label:'◉ Members',href:'./index.html#members'},
     {key:'community',label:'✦ Community',href:'./index.html#community'},
+    {key:'member-view',label:'▣ Member view',href:'./member-view-settings.html'},
     {key:'member-preview',label:'◎ Member preview',href:'./member-preview.html'}
   ];
-  const adminPages=new Set(['index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html']);
+  const adminPages=new Set(['index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html']);
 
   function currentKey(){
     const p=location.pathname;
@@ -22,6 +23,7 @@
     if(p.endsWith('/staff-permissions.html')) return 'staff-access';
     if(p.endsWith('/access-settings.html')) return 'access';
     if(p.endsWith('/reporting.html')) return 'reporting';
+    if(p.endsWith('/member-view-settings.html')) return 'member-view';
     if(p.endsWith('/member-preview.html')) return 'member-preview';
     if(p.endsWith('/index.html')||p.endsWith('/HybridOS/')||p.endsWith('/')){
       const h=location.hash.replace('#','');
