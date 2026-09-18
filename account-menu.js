@@ -18,6 +18,8 @@
     .account-popover-head b{display:block;font-size:14px;color:#101828}.account-popover-head span{display:block;font-size:12px;color:#667085;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .account-menu-action{width:100%;border:0;background:transparent;border-radius:12px;padding:11px 12px;text-align:left;color:#344054;font-weight:750;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px}
     .account-menu-action:hover{background:#f7f8fa}.account-menu-action.danger{color:#b42318}
+    .account-menu-context{padding:8px 11px 6px;color:#667085;font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+    .account-menu-divider{height:1px;background:#eef1f5;margin:6px 4px}
     .account-modal{position:fixed;inset:0;background:rgba(11,16,32,.55);display:none;place-items:center;padding:18px;z-index:130;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
     .account-modal.open{display:grid}
     .account-modal-card{width:min(620px,100%);max-height:min(88vh,760px);overflow:auto;background:#fff;border:1px solid #e7ebf2;border-radius:24px;box-shadow:0 30px 90px rgba(0,0,0,.25);padding:22px}
@@ -30,7 +32,7 @@
 
   const pop=document.createElement('div');
   pop.className='account-popover';
-  pop.innerHTML=`<div class="account-popover-head"><b id="accountMenuName">My account</b><span id="accountMenuEmail"></span></div><button type="button" class="account-menu-action" id="accountEditBtn"><span>Account settings</span><span>›</span></button><button type="button" class="account-menu-action danger" id="accountSignOutBtn"><span>Sign out</span><span>↗</span></button>`;
+  pop.innerHTML=`<div class="account-popover-head"><b id="accountMenuName">My account</b><span id="accountMenuEmail"></span></div><div id="accountPortalContext" class="account-menu-context hidden"></div><div id="accountPortalActions"></div><div id="accountPortalDivider" class="account-menu-divider hidden"></div><button type="button" class="account-menu-action" id="accountEditBtn"><span>Account settings</span><span>›</span></button><button type="button" class="account-menu-action danger" id="accountSignOutBtn"><span>Sign out</span><span>↗</span></button>`;
   chip.appendChild(pop);
 
   const modal=document.createElement('div');
@@ -58,17 +60,47 @@
   const menuName=q('#accountMenuName'),menuEmail=q('#accountMenuEmail');
   const displayInput=q('#accountDisplayName'),firstInput=q('#accountFirstName'),lastInput=q('#accountLastName'),emailInput=q('#accountEmail');
   const passwordInput=q('#accountPassword'),password2Input=q('#accountPassword2'),msg=q('#accountMsg'),saveBtn=q('#accountSaveBtn');
-  let user=null,profile=null;
+  let user=null,profile=null,membershipRole=null;
+
+  function currentPortal(){
+    if(location.pathname.endsWith('/member.html'))return 'member';
+    if(location.pathname.endsWith('/staff.html'))return 'staff';
+    return 'owner';
+  }
+  function portalLabel(p){return p==='owner'?'Owner':'Staff/Employee'}
+  function portalHref(p){
+    if(p==='owner')return './index.html';
+    if(p==='staff')return './staff.html';
+    return membershipRole?.role==='member'?'./member.html':'./member.html?view=member';
+  }
+  function renderPortalActions(){
+    const wrap=q('#accountPortalActions'),context=q('#accountPortalContext'),divider=q('#accountPortalDivider');
+    if(!wrap||!context||!divider)return;
+    const role=membershipRole?.role||'member',current=currentPortal(),targets=[];
+    if(['owner','admin'].includes(role))targets.push('owner','staff','member');
+    else if(['staff','coach'].includes(role))targets.push('staff','member');
+    const available=targets.filter(x=>x!==current);
+    const currentName=current==='member'?'Member':portalLabel(current);
+    context.textContent='Viewing '+currentName;
+    context.classList.toggle('hidden',targets.length<2);
+    wrap.innerHTML=available.map(p=>`<button type="button" class="account-menu-action account-portal-action" data-portal="${p}"><span>Switch to ${p==='member'?'Member':portalLabel(p)} view</span><span>↗</span></button>`).join('');
+    divider.classList.toggle('hidden',available.length===0);
+    wrap.querySelectorAll('.account-portal-action').forEach(btn=>btn.onclick=e=>{e.stopPropagation();location.href=portalHref(btn.dataset.portal)});
+  }
 
   async function loadAccount(){
     const {data:{user:u},error}=await sb.auth.getUser();
     if(error||!u) return false;
     user=u;
-    const {data:p}=await sb.from('profiles').select('display_name,first_name,last_name').eq('id',u.id).maybeSingle();
-    profile=p||{};
+    const [{data:p},{data:gm}]=await Promise.all([
+      sb.from('profiles').select('display_name,first_name,last_name,avatar_url').eq('id',u.id).maybeSingle(),
+      sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',u.id).eq('is_active',true).limit(1)
+    ]);
+    profile=p||{};membershipRole=gm?.[0]||null;
     const display=profile.display_name||[profile.first_name,profile.last_name].filter(Boolean).join(' ')||u.user_metadata?.display_name||u.user_metadata?.full_name||u.email?.split('@')[0]||'Account';
     menuName.textContent=display; menuEmail.textContent=u.email||'';
     displayInput.value=display; firstInput.value=profile.first_name||''; lastInput.value=profile.last_name||''; emailInput.value=u.email||'';
+    renderPortalActions();
     return true;
   }
 
@@ -104,7 +136,7 @@
       if(p1) authChanges.password=p1;
       const {data:authData,error:authError}=await sb.auth.updateUser(authChanges);
       if(authError) throw authError;
-      const nameNode=document.getElementById('userName'),emailNode=document.getElementById('userEmail'),avatar=document.getElementById('userAvatar');
+      const nameNode=document.getElementById('userName')||document.getElementById('displayName'),emailNode=document.getElementById('userEmail')||document.getElementById('email'),avatar=document.getElementById('userAvatar')||document.getElementById('avatar');
       if(nameNode) nameNode.textContent=display;
       if(emailNode&&!emailChanged) emailNode.textContent=email;
       if(avatar&&!avatar.querySelector('img')) avatar.textContent=display.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H';
