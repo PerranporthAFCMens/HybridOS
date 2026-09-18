@@ -115,10 +115,10 @@
       nav.innerHTML=groups.map(group=>{
         if(!group.children)return itemHtml(group,active);
         const open=group.key===activeParent;
-        return `<div class="admin-nav-section ${open?'open':''}" data-admin-group="${group.key}">
-          <button class="admin-nav-group ${open?'active':''}" type="button" aria-expanded="${open?'true':'false}"><span>${group.label}</span><span class="admin-nav-caret">▶</span></button>
-          <div class="admin-nav-children">${group.children.map(child=>itemHtml(child,active).replace('admin-nav-link','admin-nav-link admin-nav-child')).join('')}</div>
-        </div>`;
+        return '<div class="admin-nav-section '+(open?'open':'')+'" data-admin-group="'+group.key+'">'
+          +'<button class="admin-nav-group '+(open?'active':'')+'" type="button" aria-expanded="'+(open?'true':'false')+'"><span>'+group.label+'</span><span class="admin-nav-caret">▶</span></button>'
+          +'<div class="admin-nav-children">'+group.children.map(child=>itemHtml(child,active).replace('admin-nav-link','admin-nav-link admin-nav-child')).join('')+'</div>'
+          +'</div>';
       }).join('');
 
       nav.querySelectorAll('.admin-nav-group').forEach(btn=>btn.onclick=()=>{
