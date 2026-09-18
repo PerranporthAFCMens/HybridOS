@@ -95,6 +95,8 @@ admin_embed=(ROOT/'admin-embed.js').read_text(encoding='utf-8')
 for x in ('admin-embedded','parent.postMessage','hybrid-admin-nav'):
  if x not in admin_embed:problems.append(f'admin-embed.js: embedded bridge missing: {x}')
 admin_nav=(ROOT/'shared-admin-nav.js').read_text(encoding='utf-8')
+for x in ("const adminPages=new Set","enterPersistentShell","shellUrlFor"):
+ if x not in admin_nav:problems.append(f'shared-admin-nav.js: persistent router registry missing: {x}')
 for x in ('enterPersistentShell','admin.html?view=','shellUrlFor'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: persistent shell routing missing: {x}')
 for x in ('markAdminHotNav','hybrid-admin-hot-nav','sessionStorage.setItem'):
