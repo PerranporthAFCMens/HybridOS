@@ -3,7 +3,7 @@ import re,subprocess,sys
 from pathlib import Path
 ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
 CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
-JS=('app-stability.js','social-nav.js','shared-admin-nav.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js')
+JS=('app-stability.js','social-nav.js','shared-admin-nav.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
 for js in JS:
  p=ROOT/js
@@ -82,7 +82,18 @@ for x in (".eq('user_id',userId)","data-mine=\"${p.user_id===userId}\"","data-mi
 staff_perms=(ROOT/'staff-permissions.html').read_text(encoding='utf-8')
 for x in ('own_calendar','full_access','Full access','Own calendar only'):
  if x not in staff_perms:problems.append(f'staff-permissions.html: access ladder missing: {x}')
+admin_frame=(ROOT/'admin.html').read_text(encoding='utf-8')
+for x in ('adminContentFrame','adminFrameNav','admin-frame.js','admin-frame.css'):
+ if x not in admin_frame:problems.append(f'admin.html: persistent shell missing: {x}')
+admin_frame_js=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
+for x in ('hybrid-admin-nav','embedded=1','history.pushState','adminContentFrame','postMessage'):
+ if x not in admin_frame_js:problems.append(f'admin-frame.js: persistent routing missing: {x}')
+admin_embed=(ROOT/'admin-embed.js').read_text(encoding='utf-8')
+for x in ('admin-embedded','parent.postMessage','hybrid-admin-nav'):
+ if x not in admin_embed:problems.append(f'admin-embed.js: embedded bridge missing: {x}')
 admin_nav=(ROOT/'shared-admin-nav.js').read_text(encoding='utf-8')
+for x in ('enterPersistentShell','admin.html?view=','shellUrlFor'):
+ if x not in admin_nav:problems.append(f'shared-admin-nav.js: persistent shell routing missing: {x}')
 for x in ('markAdminHotNav','hybrid-admin-hot-nav','sessionStorage.setItem'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: smooth admin hand-off missing: {x}')
 if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: duplicate Member memberships tab returned')
@@ -153,6 +164,10 @@ for page_name in ('index.html','community.html','classes.html','class-setup.html
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('hybrid-admin-hot-nav','admin-hot-nav','html.admin-hot-nav #loading'):
   if x not in page_text:problems.append(f'{page_name}: admin hot first-paint missing: {x}')
+for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html'):
+ page_text=(ROOT/page_name).read_text(encoding='utf-8')
+ for x in ('admin-embed.js?v=','admin-embedded'):
+  if x not in page_text:problems.append(f'{page_name}: embedded admin mode missing: {x}')
 if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
 print('Hybrid OS built-site smoke checks passed')
 
