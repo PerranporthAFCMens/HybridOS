@@ -139,7 +139,6 @@
           const targetKey=a.dataset.adminKey==='members-group'?'members':a.dataset.adminKey;
           if(showDashboardPage(targetKey)){e.preventDefault();return}
           closeMobile();
-          try{const u=new URL(a.href,location.href);if(u.origin===location.origin&&adminPages.has(u.pathname.split('/').pop()||'index.html'))document.body.classList.add('admin-leaving')}catch(_e){}
         });
       });
     });
