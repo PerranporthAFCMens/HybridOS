@@ -19,12 +19,20 @@ for n,needles in CRITICAL.items():
   if x not in t:problems.append(f'{n}: missing {x}')
 for page in ROOT.glob('*.html'):
  t=page.read_text(encoding='utf-8')
+ for i,body in enumerate(re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',t,flags=re.S|re.I),1):
+  if not body.strip():continue
+  tmp=ROOT/f'.smoke-inline-{page.stem}-{i}.mjs'
+  tmp.write_text(body,encoding='utf-8')
+  r=subprocess.run(['node','--check',str(tmp)],capture_output=True,text=True)
+  tmp.unlink(missing_ok=True)
+  if r.returncode:problems.append(f'{page.name}: inline JavaScript syntax error: {r.stderr.strip()}')
  if page.name!='classes.html' and ('class-admin-enhancements.js' in t or 'class-admin-live-refresh.js' in t):problems.append(f'{page.name}: class admin runtime leaked')
  if page.name!='member-preview.html' and ('member-preview-classes.js' in t or 'member-preview-controls.js' in t):problems.append(f'{page.name}: preview runtime leaked')
  if page.name not in ('member.html','member-preview.html') and ('member-experience.js' in t or 'member-experience.css' in t or 'member-coach.js' in t or 'member-coach.css' in t):problems.append(f'{page.name}: member runtime leaked')
  if page.name!='social.html' and 'social-enhancements.js' in t:problems.append(f'{page.name}: social runtime leaked')
 member=(ROOT/'member.html').read_text(encoding='utf-8')
-if "$('membershipShort')?.textContent=" not in member:problems.append('member.html: safe membership summary missing')
+if "const membershipShort=$('membershipShort');if(membershipShort)membershipShort.textContent=" not in member:problems.append('member.html: safe membership summary missing')
+if "?.textContent=" in member:problems.append('member.html: invalid optional-chain assignment present')
 mr=(ROOT/'member-experience.js').read_text(encoding='utf-8')
 for x in ('member_class_schedule','member_book_class','member_cancel_class','pt_appointments','workout_sessions','personal_bests','memberProgressSnapshot','loadProgress','memberWeeklyGoal','loadWeeklyGoal','hybrid_member_weekly_goal','memberRecentActivity','loadRecentActivity','memberActivityList','get_member_home_layout','applyHomeLayout','memberHomeCanvas'):
  if x not in mr:problems.append(f'member-experience.js: required workflow missing: {x}')
