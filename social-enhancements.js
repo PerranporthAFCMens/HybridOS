@@ -2,6 +2,8 @@
   if(!location.pathname.endsWith('/social.html')) return;
   const REACTIONS=['❤️','🔥','👏','💪','😂'];
   const pendingReactions=new Set();
+  const pendingComments=new WeakSet();
+
   function enhance(){
     document.querySelectorAll('.post').forEach(post=>{
       const actions=post.querySelector('.post-actions'); if(!actions||actions.querySelector('.reaction-picker')) return;
@@ -18,7 +20,29 @@
       }
     });
     document.querySelectorAll('.comment[data-mine="true"]').forEach(comment=>{const tools=comment.querySelector('.comment-tools');if(tools&&!tools.querySelector('.comment-owner')){const edit=document.createElement('button');edit.type='button';edit.className='comment-owner';edit.textContent='Edit';edit.onclick=()=>editComment(comment);const del=document.createElement('button');del.type='button';del.className='comment-owner';del.textContent='Delete';del.onclick=()=>deleteComment(comment);tools.append(edit,del)}});
+    document.querySelectorAll('.comment-composer').forEach(wireCommentComposer);
   }
+
+  function wireCommentComposer(composer){
+    if(composer.dataset.submitGuard==='1')return;
+    composer.dataset.submitGuard='1';
+    const input=composer.querySelector('[data-comment-input]');
+    const button=composer.querySelector('.send-comment');
+    if(!input||!button)return;
+    const reset=()=>{pendingComments.delete(input);button.disabled=false;button.textContent='Post';composer.classList.remove('saving')};
+    const begin=()=>{
+      if(pendingComments.has(input)||input.disabled)return false;
+      if(!input.value.trim())return true;
+      pendingComments.add(input);button.disabled=true;button.textContent='Posting…';composer.classList.add('saving');
+      const watch=new MutationObserver(()=>{if(!input.disabled){watch.disconnect();reset()}});
+      watch.observe(input,{attributes:true,attributeFilter:['disabled']});
+      setTimeout(()=>{watch.disconnect();reset()},10000);
+      return true;
+    };
+    button.addEventListener('click',e=>{if(!begin()){e.preventDefault();e.stopImmediatePropagation()}},true);
+    input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!begin()){e.preventDefault();e.stopImmediatePropagation()}},true);
+  }
+
   function closePickers(){document.querySelectorAll('.reaction-picker.open').forEach(p=>{p.classList.remove('open');p.parentElement?.querySelector('.reaction-trigger')?.setAttribute('aria-expanded','false')})}
   function closeOwnerMenus(){document.querySelectorAll('.owner-menu.open').forEach(m=>{m.classList.remove('open');m.querySelector('.owner-more')?.setAttribute('aria-expanded','false')})}
   async function setReaction(postId,reaction,picker,choice){
@@ -34,6 +58,6 @@
   async function deleteComment(comment){if(!confirm('Delete this comment?'))return;try{await window.__hybridSocial.deleteComment(comment.dataset.comment);toast('Comment deleted.')}catch(e){toast(e.message||'Could not delete comment.')}}
   function toast(msg){let el=document.getElementById('socialEnhancementToast');if(!el){el=document.createElement('div');el.id='socialEnhancementToast';el.className='social-enhancement-toast';el.setAttribute('role','status');el.setAttribute('aria-live','polite');document.body.appendChild(el)}el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2400)}
   document.addEventListener('click',()=>{closePickers();closeOwnerMenus()});document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePickers();closeOwnerMenus()}});
-  const style=document.createElement('style');style.textContent='.post-actions{position:relative;flex-wrap:wrap}.reaction-picker{display:none;position:absolute;left:0;bottom:48px;background:#fff;border:1px solid #e7ebf2;border-radius:999px;padding:6px;box-shadow:0 12px 28px rgba(16,24,40,.16);gap:2px;z-index:4}.reaction-picker.open{display:flex}.reaction-choice{border:0;background:transparent;font-size:20px;padding:7px 9px;border-radius:999px;cursor:pointer;transition:transform .14s ease,background .14s ease}.reaction-choice:hover,.reaction-choice:focus-visible,.reaction-choice.selected{background:#f2f4f7;transform:scale(1.12)}.reaction-picker.saving{pointer-events:none;opacity:.65}.reaction-trigger:disabled{cursor:wait;opacity:.7}.owner-menu{margin-left:auto;position:relative}.owner-pop{display:none;position:absolute;right:0;top:32px;background:#fff;border:1px solid #e7ebf2;border-radius:12px;box-shadow:0 12px 28px rgba(16,24,40,.14);padding:6px;min-width:130px;z-index:5}.owner-menu.open .owner-pop{display:grid}.owner-pop button{border:0;background:transparent;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer}.social-enhancement-toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;background:#0b1020;color:#fff;padding:11px 15px;border-radius:12px;z-index:100;transition:.2s;max-width:min(90vw,520px);text-align:center}.social-enhancement-toast.show{opacity:1;transform:translate(-50%,0)}@media(max-width:900px){.reaction-picker{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translateX(-50%);padding:9px;z-index:90}.reaction-choice{font-size:24px;padding:9px 11px;min-width:44px;min-height:44px}.social-enhancement-toast{bottom:calc(env(safe-area-inset-bottom) + 18px)}}';document.head.appendChild(style);
+  const style=document.createElement('style');style.textContent='.post-actions{position:relative;flex-wrap:wrap}.reaction-picker{display:none;position:absolute;left:0;bottom:48px;background:#fff;border:1px solid #e7ebf2;border-radius:999px;padding:6px;box-shadow:0 12px 28px rgba(16,24,40,.16);gap:2px;z-index:4}.reaction-picker.open{display:flex}.reaction-choice{border:0;background:transparent;font-size:20px;padding:7px 9px;border-radius:999px;cursor:pointer;transition:transform .14s ease,background .14s ease}.reaction-choice:hover,.reaction-choice:focus-visible,.reaction-choice.selected{background:#f2f4f7;transform:scale(1.12)}.reaction-picker.saving{pointer-events:none;opacity:.65}.reaction-trigger:disabled{cursor:wait;opacity:.7}.comment-composer.saving{opacity:.72}.comment-composer .send-comment:disabled{cursor:wait;opacity:.7}.owner-menu{margin-left:auto;position:relative}.owner-pop{display:none;position:absolute;right:0;top:32px;background:#fff;border:1px solid #e7ebf2;border-radius:12px;box-shadow:0 12px 28px rgba(16,24,40,.14);padding:6px;min-width:130px;z-index:5}.owner-menu.open .owner-pop{display:grid}.owner-pop button{border:0;background:transparent;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer}.social-enhancement-toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;background:#0b1020;color:#fff;padding:11px 15px;border-radius:12px;z-index:100;transition:.2s;max-width:min(90vw,520px);text-align:center}.social-enhancement-toast.show{opacity:1;transform:translate(-50%,0)}@media(max-width:900px){.reaction-picker{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translateX(-50%);padding:9px;z-index:90}.reaction-choice{font-size:24px;padding:9px 11px;min-width:44px;min-height:44px}.comment-composer .send-comment{min-width:62px;min-height:44px}.social-enhancement-toast{bottom:calc(env(safe-area-inset-bottom) + 18px)}}';document.head.appendChild(style);
   const observer=new MutationObserver(enhance);observer.observe(document.documentElement,{subtree:true,childList:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance,{once:true});else enhance();
 })();
