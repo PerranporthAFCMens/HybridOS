@@ -73,6 +73,10 @@ for x in ('showOpsTab','location.hash.replace','history.replaceState','resources
 account=(ROOT/'account-menu.js').read_text(encoding='utf-8')
 for x in ("storage.from('avatars')",'accountAvatarFile','staffPermissions.full_access'):
  if x not in account:problems.append(f'account-menu.js: profile/portal workflow missing: {x}')
+for page_name in ('member.html','member-preview.html'):
+ member_page=(ROOT/page_name).read_text(encoding='utf-8')
+ for x in ('member-nav-icon','My membership','Integrations','Profile'):
+  if x not in member_page:problems.append(f'{page_name}: member sidebar icon system missing: {x}')
 member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
 for x in ('requestAnimationFrame(frame)','reorderPreviewToMatch','member-layout-dragging','pointermove','pointerup','tile-placeholder','window.scrollBy','previewOrderWithPlaceholder'):
  if x not in member_view:problems.append(f'member-view-settings.html: drag stability guard missing: {x}')
