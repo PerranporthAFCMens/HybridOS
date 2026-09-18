@@ -58,6 +58,12 @@ def harden_member():
  css=f'<link rel="stylesheet" href="./member-experience.css?v={VERSION}">';coachcss=f'<link rel="stylesheet" href="./member-coach.css?v={VERSION}">';js=f'<script type="module" src="./member-experience.js?v={VERSION}"></script>';coachjs=f'<script type="module" src="./member-coach.js?v={VERSION}"></script>';activities=f'<script src="./gym-activities.js?v={VERSION}" defer></script>';classaccess=f'<script type="module" src="./class-booking-access.js?v={VERSION}"></script>';socialnotice=f'<script type="module" src="./social-notifications.js?v={VERSION}"></script>';s=read('member.html');s=inject_head(s,'member-experience.css',css);s=inject_head(s,'member-coach.css',coachcss);s=inject_body(s,'social-nav.js',f'<script src="./social-nav.js?v={VERSION}" defer></script>');s=inject_body(s,'gym-activities.js',activities);s=inject_body(s,'class-booking-access.js',classaccess);s=inject_body(s,'social-notifications.js',socialnotice);s=inject_body(s,'member-experience.js',js);write('member.html',inject_body(s,'member-coach.js',coachjs));s=read('member-preview.html');s=inject_head(s,'member-experience.css',css);s=inject_head(s,'member-coach.css',coachcss)
  for a in ('social-nav.js','member-preview-classes.js','member-preview-controls.js'):s=inject_body(s,a,f'<script src="./{a}?v={VERSION}" defer></script>')
  s=inject_body(s,'gym-activities.js',activities);s=inject_body(s,'member-experience.js',js);write('member-preview.html',inject_body(s,'member-coach.js',coachjs))
+def version_admin_frame_assets():
+ s=read('admin.html')
+ s=re.sub(r'href=["\']\.\/admin-frame\.css(?:\?[^"\']*)?["\']',f'href="./admin-frame.css?v={VERSION}"',s,count=1)
+ s=re.sub(r'src=["\']\.\/admin-frame\.js(?:\?[^"\']*)?["\']',f'src="./admin-frame.js?v={VERSION}"',s,count=1)
+ s=re.sub(r'src=["\']\.\/shared-shell\.js(?:\?[^"\']*)?["\']',f'src="./shared-shell.js?v={VERSION}"',s,count=1)
+ write('admin.html',s)
 def add_admin_shell():
  for n in ADMIN_PAGES:
   s=read(n)
@@ -85,5 +91,5 @@ def brand_member_preview():
  n='member-preview.html';s=read(n);s=s.replace('<title>Member Preview · Hybrid OS</title>','<title>Hybrid Hub · Member Preview</title>').replace('Puffin Performance','Hybrid Hub')
  if 'member-gym-logo' not in s:s=s.replace('<main class="main">','<main class="main"><div class="member-gym-logo"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>',1)
  write(n,s)
-def build():copy_source();clean_legacy_class_mobile_back();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();print(f'Built Hybrid OS site in {OUT}')
+def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();print(f'Built Hybrid OS site in {OUT}')
 if __name__=='__main__':build()
