@@ -163,8 +163,9 @@ for x in ('memberSearch','memberSort','registered_desc','registered_asc','member
  if x not in admin_index:problems.append(f'index.html: member directory control missing: {x}')
 for x in ('Customer lifecycle','avgCustomerLifecycle','avgLiveTenure','genderLifecycleBreakdown','ageLifecycleBreakdown','renderLifecycleInsights','date_of_birth','gender'):
  if x not in admin_index:problems.append(f'index.html: lifecycle demographic reporting missing: {x}')
-for x in ('Net customer movement','lifecycleYoYLegend','monthly net customers','const prior=year-1','stroke-dasharray="7 6"'):
- if x not in admin_index:problems.append(f'index.html: YoY customer movement chart missing: {x}')
+for x in ('Net customer movement','yoy-summary','yoy-grid','YoY difference','net customers by month','const prior=year-1'):
+ if x not in admin_index:problems.append(f'index.html: YoY customer seasonality view missing: {x}')
+if 'stroke-dasharray="7 6"' in admin_index:problems.append('index.html: retired YoY line chart returned')
 if 'Last 30 days ·' in admin_index:problems.append('index.html: retired rolling customer movement chart copy returned')
 workout_builder=(ROOT/'workout-builder.html').read_text(encoding='utf-8')
 for x in ('Assign to member','Publish as WOD','workout_assignments','workout_wods','templateSnapshot'):
