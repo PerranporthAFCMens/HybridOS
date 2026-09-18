@@ -135,11 +135,11 @@
     saveBtn.disabled=true;saveBtn.textContent='Saving…';
     try{
       let avatarUrl=profile.avatar_url||null;
-      const avatar=avatarFile.files?.[0];
-      if(avatar){
-        const ext=avatar.type==='image/png'?'png':avatar.type==='image/webp'?'webp':'jpg';
+      const avatarUpload=avatarFile.files?.[0];
+      if(avatarUpload){
+        const ext=avatarUpload.type==='image/png'?'png':avatarUpload.type==='image/webp'?'webp':'jpg';
         const path=user.id+'/profile.'+ext;
-        const upload=await sb.storage.from('avatars').upload(path,avatar,{upsert:true,contentType:avatar.type,cacheControl:'3600'});
+        const upload=await sb.storage.from('avatars').upload(path,avatarUpload,{upsert:true,contentType:avatarUpload.type,cacheControl:'3600'});
         if(upload.error)throw upload.error;
         const pub=sb.storage.from('avatars').getPublicUrl(path);
         avatarUrl=(pub.data?.publicUrl||'')+'?v='+Date.now();
