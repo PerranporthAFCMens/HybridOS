@@ -86,8 +86,11 @@ admin_frame=(ROOT/'admin.html').read_text(encoding='utf-8')
 for x in ('adminContentFrameA','adminContentFrameB','adminFrameNav','admin-frame.js','admin-frame.css'):
  if x not in admin_frame:problems.append(f'admin.html: persistent shell missing: {x}')
 admin_frame_js=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
-for x in ('hybrid-admin-nav','embedded=1','history.pushState','adminContentFrameA','adminContentFrameB','swapTo','loadSeq',"addEventListener('message'"):
+for x in ('hybrid-admin-nav','embedded=1','history.pushState','adminContentFrameA','adminContentFrameB','swapTo','loadSeq',"addEventListener('message'",'shellVersion','embedded=1&v='):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: persistent routing missing: {x}')
+admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
+for x in ('admin-frame.css?v=','admin-frame.js?v=','shared-shell.js?v='):
+ if x not in admin_frame_html:problems.append(f'admin.html: persistent shell asset is not cache-busted: {x}')
 admin_frame_css=(ROOT/'admin-frame.css').read_text(encoding='utf-8')
 for x in ('.admin-content-frame','.admin-content-frame.active','visibility:hidden'):
  if x not in admin_frame_css:problems.append(f'admin-frame.css: buffered frame styling missing: {x}')
