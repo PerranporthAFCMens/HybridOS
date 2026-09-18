@@ -86,7 +86,7 @@ admin_frame=(ROOT/'admin.html').read_text(encoding='utf-8')
 for x in ('adminContentFrame','adminFrameNav','admin-frame.js','admin-frame.css'):
  if x not in admin_frame:problems.append(f'admin.html: persistent shell missing: {x}')
 admin_frame_js=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
-for x in ('hybrid-admin-nav','embedded=1','history.pushState','adminContentFrame','postMessage'):
+for x in ('hybrid-admin-nav','embedded=1','history.pushState','adminContentFrame',"addEventListener('message'"):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: persistent routing missing: {x}')
 admin_embed=(ROOT/'admin-embed.js').read_text(encoding='utf-8')
 for x in ('admin-embedded','parent.postMessage','hybrid-admin-nav'):
