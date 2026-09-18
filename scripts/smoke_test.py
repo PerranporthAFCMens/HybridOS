@@ -93,7 +93,7 @@ app_css=(ROOT/'app-consistency.css').read_text(encoding='utf-8')
 for x in ('Centralised Hybrid OS sidebar shell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','grid-template-columns:254px'):
  if x not in app_css:problems.append(f'app-consistency.css: central shell styling missing: {x}')
 community=(ROOT/'community.html').read_text(encoding='utf-8')
-for x in ('Member community','social_posts','social_comments','social_reactions','Post to community'):
+for x in ('Member community','social_posts','social_comments','social_reactions','Post to community','sendComment','reply-comment','parent_comment_id','Add a comment'):
  if x not in community:problems.append(f'community.html: admin social feed missing: {x}')
 ops=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
 for x in ('showOpsTab','location.hash.replace','history.replaceState','resources','services'):
