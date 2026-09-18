@@ -57,7 +57,7 @@ admin_nav=(ROOT/'shared-admin-nav.js').read_text(encoding='utf-8')
 for x in ('classes-group','services-group','staff-group','members-group','Rooms & equipment','Service dependencies','Staff & working hours'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: consolidated admin navigation missing: {x}')
 ops=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
-for x in ('showOpsTab','location.hash.replace','#resources','#services'):
+for x in ('showOpsTab','location.hash.replace','history.replaceState','resources','services'):
  if x not in ops:problems.append(f'admin-operations.html: grouped-nav deep link support missing: {x}')
 account=(ROOT/'account-menu.js').read_text(encoding='utf-8')
 for x in ("storage.from('avatars')",'accountAvatarFile','staffPermissions.full_access'):
