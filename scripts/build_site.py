@@ -37,7 +37,11 @@ def harden_member():
  s=inject_body(s,'member-experience.js',js);write('member-preview.html',inject_body(s,'member-coach.js',coachjs))
 def add_admin_shell():
  for n in ADMIN_PAGES:
-  s=read(n);s=inject_head(s,'admin-shell.css',f'<link rel="stylesheet" href="./admin-shell.css?v={VERSION}">');s=inject_head(s,'admin-pages.css',f'<link rel="stylesheet" href="./admin-pages.css?v={VERSION}">');s=inject_body(s,'shared-admin-nav.js',f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>')
+  s=read(n)
+  s=re.sub(r'<script[^>]+src=["\']\.\/shared-admin-nav\.js(?:\?[^"\']*)?["\'][^>]*>\s*<\/script>','',s,flags=re.I)
+  s=inject_head(s,'admin-shell.css',f'<link rel="stylesheet" href="./admin-shell.css?v={VERSION}">')
+  s=inject_head(s,'admin-pages.css',f'<link rel="stylesheet" href="./admin-pages.css?v={VERSION}">')
+  s=inject_body(s,'shared-admin-nav.js',f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>')
   if n=='index.html':s=s.replace('<section id="authView" class="auth">','<section id="authView" class="auth hidden">',1)
   write(n,s)
 def add_staff_shell():
