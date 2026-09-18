@@ -83,6 +83,8 @@ staff_perms=(ROOT/'staff-permissions.html').read_text(encoding='utf-8')
 for x in ('own_calendar','full_access','Full access','Own calendar only'):
  if x not in staff_perms:problems.append(f'staff-permissions.html: access ladder missing: {x}')
 admin_nav=(ROOT/'shared-admin-nav.js').read_text(encoding='utf-8')
+for x in ('markAdminHotNav','hybrid-admin-hot-nav','sessionStorage.setItem'):
+ if x not in admin_nav:problems.append(f'shared-admin-nav.js: smooth admin hand-off missing: {x}')
 if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: duplicate Member memberships tab returned')
 
 for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member view','Door access'):
@@ -147,5 +149,9 @@ if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(pr
 print('Hybrid OS built-site smoke checks passed')
 
 admin_ops=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
-for x in ('transitionOpsTab','document.startViewTransition'):
- if x not in admin_ops:problems.append(f'admin-operations.html: native internal admin transition missing: {x}')
+for x in ('showOpsTab','history.replaceState'):
+ if x not in admin_ops:problems.append(f'admin-operations.html: direct internal admin switch missing: {x}')
+
+build_script=(ROOT/'scripts/build_site.py').read_text(encoding='utf-8')
+for x in ('admin-hot-nav','hybrid-admin-hot-nav','html.admin-hot-nav #loading'):
+ if x not in build_script:problems.append(f'scripts/build_site.py: admin hot first-paint missing: {x}')
