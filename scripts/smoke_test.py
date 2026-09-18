@@ -5,6 +5,24 @@ ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
 CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
 JS=('app-stability.js','social-nav.js','shared-admin-nav.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
+# Core rendering assets are intentionally locked to the last known-good mobile/admin baseline.
+# Any deliberate change to these files must update this list as part of the same reviewed change.
+RENDER_BASELINE={
+ 'app-consistency.css':'86a433a3acf6dfabd195a92bca9f22f201195e60',
+ 'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
+ 'admin-shell.css':'15e7767c16f9f971e803484795430cd955cebc20',
+ 'admin-frame.css':'2e1008213ece071ab870238e227c2ef1a65f2b91',
+ 'admin-embed.js':'a7ec746c779513b712cf2c0c968caea2f04c15da',
+}
+def git_blob_sha(path):
+ import hashlib
+ raw=path.read_bytes()
+ return hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
+for asset,expected in RENDER_BASELINE.items():
+ p=ROOT/asset
+ if not p.exists():problems.append(f'missing locked rendering asset: {asset}');continue
+ actual=git_blob_sha(p)
+ if actual!=expected:problems.append(f'{asset}: rendering baseline changed ({actual}); review shell/mobile impact before updating the lock')
 for js in JS:
  p=ROOT/js
  if not p.exists():problems.append(f'missing JavaScript asset: {js}');continue
