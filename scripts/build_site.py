@@ -26,7 +26,7 @@ def clean_legacy_mobile_chrome():
 def add_shared_runtime():
  for n in APP_PAGES:
   if not(OUT/n).exists():continue
-  s=inject_head(read(n),'app-consistency.css',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}">');s=inject_head(s,'app-stability.js',f'<script src="./app-stability.js?v={VERSION}"></script>');write(n,inject_body(s,'account-menu.js',f'<script src="./account-menu.js?v={VERSION}" defer></script>'))
+  s=inject_head(read(n),'app-consistency.css',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}">');s=inject_head(s,'app-stability.js',f'<script src="./app-stability.js?v={VERSION}"></script>');s=inject_body(s,'shared-shell.js',f'<script src="./shared-shell.js?v={VERSION}" defer></script>');write(n,inject_body(s,'account-menu.js',f'<script src="./account-menu.js?v={VERSION}" defer></script>'))
 def add_tenant_runtime():
  for n in TENANT_PAGES:
   if not(OUT/n).exists():continue
