@@ -26,7 +26,7 @@ for page in ROOT.glob('*.html'):
 member=(ROOT/'member.html').read_text(encoding='utf-8')
 if "$('membershipShort')?.textContent=" not in member:problems.append('member.html: safe membership summary missing')
 mr=(ROOT/'member-experience.js').read_text(encoding='utf-8')
-for x in ('member_class_schedule','member_book_class','member_cancel_class','pt_appointments','workout_sessions','personal_bests','memberProgressSnapshot','loadProgress','memberRecentActivity','loadRecentActivity','memberActivityList'):
+for x in ('member_class_schedule','member_book_class','member_cancel_class','pt_appointments','workout_sessions','personal_bests','memberProgressSnapshot','loadProgress','memberWeeklyGoal','loadWeeklyGoal','hybrid_member_weekly_goal','memberRecentActivity','loadRecentActivity','memberActivityList'):
  if x not in mr:problems.append(f'member-experience.js: required workflow missing: {x}')
 pc=(ROOT/'member-preview-controls.js').read_text(encoding='utf-8')
 for x in ('openPreviewPage','wireNavigation','memberPreviewAccountMenu','previewAccountSave','hybridOS_memberPreviewAccount'):
