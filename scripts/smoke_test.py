@@ -129,7 +129,7 @@ for x in ('Centralised Hybrid OS sidebar shell','hybrid-shell-brand','hybrid-she
  if x not in app_css:problems.append(f'app-consistency.css: central shell styling missing: {x}')
 
 admin_mobile=(ROOT/'admin-mobile-contract.css').read_text(encoding='utf-8')
-for x in ('Persistent Admin shell contract','html.admin-embedded .main','overflow-x:hidden!important','.tabs{','flex-wrap:nowrap!important','.toolbar{','grid-template-columns:minmax(0,1fr)!important'):
+for x in ('Persistent Admin shell contract','html.admin-embedded .main','html.admin-embedded .mobile-back','overflow-x:hidden!important','.tabs{','flex-wrap:nowrap!important','.toolbar{','grid-template-columns:minmax(0,1fr)!important'):
  if x not in admin_mobile:problems.append(f'admin-mobile-contract.css: central mobile contract missing: {x}')
 admin_pages=('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html')
 for page_name in admin_pages:
