@@ -49,3 +49,52 @@
 .member-home-tile[data-home-key="pt"]{grid-column:span 6}
 #memberHomeCanvas>.member-weekly-goal,#memberHomeCanvas>.member-progress-snapshot,#memberHomeCanvas>.member-recent-activity{margin:0!important}
 @media(max-width:900px){.member-home-canvas{grid-template-columns:minmax(0,1fr);gap:12px}.member-home-tile{grid-column:1!important;width:100%!important;max-width:100%!important}}
+
+
+/* Desktop member workspace: app-like proportions rather than stretched mobile content. */
+@media(min-width:901px){
+  body:has(.member-gym-logo) .main{
+    padding:26px 32px 72px!important;
+  }
+  body:has(.member-gym-logo) .member-gym-logo{
+    display:none!important;
+  }
+  body:has(.member-gym-logo) .top,
+  body:has(.member-gym-logo) .page{
+    width:min(1220px,100%)!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+  body:has(.member-gym-logo) .top{
+    margin-bottom:18px!important;
+  }
+  body:has(.member-gym-logo) .top h1{
+    font-size:30px!important;
+  }
+  body:has(.member-gym-logo) .member-home-canvas{
+    gap:14px!important;
+  }
+  body:has(.member-gym-logo) .member-home-tile[data-home-key="hero"]{
+    grid-column:span 8!important;
+  }
+  body:has(.member-gym-logo) .member-home-tile[data-home-key="upcoming_count"]{
+    grid-column:span 4!important;
+  }
+  body:has(.member-gym-logo) .member-home-tile[data-home-key="next_classes"]{
+    grid-column:span 7!important;
+  }
+  body:has(.member-gym-logo) .member-home-tile[data-home-key="membership"]{
+    grid-column:span 5!important;
+  }
+  body:has(.member-gym-logo) .hero{
+    min-height:190px!important;
+    padding:20px!important;
+  }
+  body:has(.member-gym-logo) .hero h2{
+    font-size:31px!important;
+    margin:8px 0!important;
+  }
+  body:has(.member-gym-logo) .card{
+    box-shadow:0 10px 28px rgba(16,24,40,.07)!important;
+  }
+}
