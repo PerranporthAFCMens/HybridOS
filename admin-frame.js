@@ -23,7 +23,8 @@ function cleanView(raw){
 }
 function embeddedUrl(view){
  const [file,hash='']=cleanView(view).split('#');
- return './'+file+'?embedded=1'+(hash?'#'+hash:'');
+ const bust=file==='gym-layout.html'?'&v='+Date.now():'';
+ return './'+file+'?embedded=1'+bust+(hash?'#'+hash:'');
 }
 function keyFor(view){
  const v=cleanView(view),[file,hash='']=v.split('#');
