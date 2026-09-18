@@ -146,6 +146,9 @@ staff_page=(ROOT/'staff.html').read_text(encoding='utf-8')
 for x in ("$('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true","Assigned classes failed","Staff portal failed to initialise"):
  if x not in staff_page:problems.append(f'staff.html: non-blocking startup guard missing: {x}')
 if '<nav class="bottom">' in staff_page:problems.append('staff.html: retired mobile bottom navigation returned')
+for x in ('staffTimetableLink','ownerPreviewNav','Back to Owner/Admin','Gym timetable',"supabase.from('class_sessions')"):
+ if x not in staff_page:problems.append(f'staff.html: staff role-switch/timetable boundary missing: {x}')
+if 'href="./classes.html"' in staff_page:problems.append('staff.html: Staff View must not link into Owner/Admin classes page')
 member_exp_css=(ROOT/'member-experience.css').read_text(encoding='utf-8')
 for x in ('Desktop member workspace','display:none!important','width:min(1220px,100%)','member-home-tile[data-home-key="hero"]'):
  if x not in member_exp_css:problems.append(f'member-experience.css: desktop member layout guard missing: {x}')
