@@ -1,6 +1,6 @@
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
-const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html']);
+const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html']);
 const routes=[
  {key:'dashboard',label:'Dashboard',icon:'dashboard',view:'index.html'},
  {key:'community',label:'Community',icon:'community',view:'community.html'},
@@ -31,7 +31,7 @@ function keyFor(view){
  if(file==='classes.html'||file==='class-setup.html')return'classes';
  if(file==='admin-operations.html')return hash==='staff'?'staff':'services';
  if(file==='staff-permissions.html')return'staff';
- if(file==='resource-availability.html')return'services';
+ if(file==='resource-availability.html'||file==='gym-layout.html')return'services';
  if(file==='reporting.html')return'reporting';
  if(file==='member-view-settings.html')return'member-view';
  if(file==='index.html'&&hash==='members')return'members';
