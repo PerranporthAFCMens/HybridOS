@@ -1,4 +1,5 @@
 (function(){
+  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html']);
   const sidebar=[
     {key:'dashboard',label:'Dashboard',icon:'dashboard',href:'./index.html'},
     {key:'community-group',label:'Community',icon:'community',href:'./community.html'},
