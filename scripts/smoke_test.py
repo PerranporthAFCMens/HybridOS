@@ -54,13 +54,16 @@ staff_perms=(ROOT/'staff-permissions.html').read_text(encoding='utf-8')
 for x in ('own_calendar','full_access','Full access','Own calendar only'):
  if x not in staff_perms:problems.append(f'staff-permissions.html: access ladder missing: {x}')
 admin_nav=(ROOT/'shared-admin-nav.js').read_text(encoding='utf-8')
-for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','admin-nav-icon','ICONS','Rooms & equipment','Service dependencies','Staff & working hours','Member view','Door access'):
+for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','admin-nav-icon','ICONS','normaliseSidebarChrome','admin-brand-lock','admin-gym-lock','Rooms & equipment','Service dependencies','Staff & working hours','Member view','Door access'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: consolidated admin navigation missing: {x}')
 for page_name in ('index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  nav_refs=re.findall(r'<script[^>]+src=["\']\.\/shared-admin-nav\.js(?:\?[^"\']*)?["\'][^>]*>\s*<\/script>',page_text,flags=re.I)
  if len(nav_refs)!=1:problems.append(f'{page_name}: expected exactly one admin nav runtime, found {len(nav_refs)}')
  elif '?v=' not in nav_refs[0]:problems.append(f'{page_name}: admin nav runtime is not cache-busted')
+admin_shell=(ROOT/'admin-shell.css').read_text(encoding='utf-8')
+for x in ('Canonical admin sidebar chrome','admin-brand-lock','admin-gym-lock','grid-template-columns:254px'):
+ if x not in admin_shell:problems.append(f'admin-shell.css: canonical sidebar shell missing: {x}')
 ops=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
 for x in ('showOpsTab','location.hash.replace','history.replaceState','resources','services'):
  if x not in ops:problems.append(f'admin-operations.html: grouped-nav deep link support missing: {x}')
