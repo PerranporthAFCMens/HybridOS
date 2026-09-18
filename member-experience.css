@@ -34,3 +34,18 @@
   #home>.member-weekly-goal .member-goal-body{grid-template-columns:92px minmax(0,1fr)}
   #home>.member-weekly-goal .member-goal-ring{width:88px;height:88px}
 }
+
+.member-home-canvas{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.member-home-tile{min-width:0}
+.member-home-hidden{display:none!important}
+.member-home-tile[data-home-key="goal"],
+.member-home-tile[data-home-key="progress"],
+.member-home-tile[data-home-key="activity"]{grid-column:1/-1}
+.member-home-tile[data-home-key="hero"]{grid-column:span 8}
+.member-home-tile[data-home-key="upcoming_count"]{grid-column:span 4}
+.member-home-tile[data-home-key="next_classes"]{grid-column:span 7}
+.member-home-tile[data-home-key="membership"]{grid-column:span 5}
+.member-home-tile[data-home-key="booked_classes"],
+.member-home-tile[data-home-key="pt"]{grid-column:span 6}
+#memberHomeCanvas>.member-weekly-goal,#memberHomeCanvas>.member-progress-snapshot,#memberHomeCanvas>.member-recent-activity{margin:0!important}
+@media(max-width:900px){.member-home-canvas{grid-template-columns:minmax(0,1fr);gap:12px}.member-home-tile{grid-column:1!important;width:100%!important;max-width:100%!important}}
