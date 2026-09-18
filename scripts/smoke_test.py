@@ -102,6 +102,9 @@ for x in ('get_member_home_settings','applyHomeCta','primary_target','secondary_
 if 'get_member_home_layout' in member_exp_js:problems.append('member-experience.js: retired member layout RPC reference returned')
 member_css=(ROOT/'member-experience.css').read_text(encoding='utf-8')
 if '.member-home-tile[data-home-key="hero"]{grid-column:1/-1}' not in member_css:problems.append('member-experience.css: full-width member CTA missing')
+admin_index=(ROOT/'index.html').read_text(encoding='utf-8')
+for x in ('memberSearch','memberSort','registered_desc','registered_asc','memberJump','renderMemberDirectory','memberFilterLetter'):
+ if x not in admin_index:problems.append(f'index.html: member directory control missing: {x}')
 member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
 for x in ('requestAnimationFrame(frame)','reorderPreviewToMatch','member-layout-dragging','pointermove','pointerup','tile-placeholder','window.scrollBy','previewOrderWithPlaceholder','cta_config','ctaTitle','ctaPrimaryTarget','ctaSecondaryTarget','Gym call to action'):
  if x not in member_view:problems.append(f'member-view-settings.html: drag stability guard missing: {x}')
