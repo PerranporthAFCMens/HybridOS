@@ -128,6 +128,17 @@ app_css=(ROOT/'app-consistency.css').read_text(encoding='utf-8')
 for x in ('Centralised Hybrid OS sidebar shell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','grid-template-columns:254px'):
  if x not in app_css:problems.append(f'app-consistency.css: central shell styling missing: {x}')
 
+admin_mobile=(ROOT/'admin-mobile-contract.css').read_text(encoding='utf-8')
+for x in ('Persistent Admin shell contract','html.admin-embedded .main','overflow-x:hidden!important','.tabs{','flex-wrap:nowrap!important','.toolbar{','grid-template-columns:minmax(0,1fr)!important'):
+ if x not in admin_mobile:problems.append(f'admin-mobile-contract.css: central mobile contract missing: {x}')
+admin_pages=('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html')
+for page_name in admin_pages:
+ page_text=(ROOT/page_name).read_text(encoding='utf-8')
+ if 'admin-mobile-contract.css?v=' not in page_text:problems.append(f'{page_name}: central admin mobile contract not loaded')
+ for block in re.findall(r'@media\(max-width:[^)]+\)\{[\s\S]*?(?=@media|</style>)',page_text):
+  if re.search(r'\.(?:shell|side|main)\s*\{',block):
+   problems.append(f'{page_name}: page-level mobile shell ownership returned')
+
 for x in ('html.admin-embedded .main{padding-top:18px!important;padding-left:14px!important;padding-right:14px!important}','html.admin-embedded .top{padding-left:0!important;min-height:0!important','html.admin-embedded .admin-mobile-menu-btn','overflow-x:hidden!important','max-width:100%!important;min-width:0!important'):
  if x not in app_css:problems.append(f'app-consistency.css: embedded admin mobile contract missing: {x}')
 if 'html.admin-embedded body:has(.admin-mobile-menu-btn) .top{padding-left:54px' in app_css:
@@ -139,8 +150,6 @@ ops=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
 for x in ('showOpsTab','location.hash.replace','history.replaceState','resources','services'):
  if x not in ops:problems.append(f'admin-operations.html: grouped-nav deep link support missing: {x}')
 
-for x in ('flex-wrap:nowrap','overflow-x:auto','.toolbar,.section-title{display:flex!important;flex-direction:column','width:100%;text-align:center','overflow-wrap:anywhere'):
- if x not in ops:problems.append(f'admin-operations.html: mobile containment guard missing: {x}')
 stability=(ROOT/'app-stability.js').read_text(encoding='utf-8')
 for x in ('hybridNavigationMask','beginNavigation','HybridNavigation','adminFiles.indexOf(currentFile)','adminFiles.indexOf(targetFile)'):
  if x not in stability:problems.append(f'app-stability.js: admin navigation transition rule missing: {x}')
