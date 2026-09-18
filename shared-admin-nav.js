@@ -36,46 +36,6 @@
     ]
   };
 
-  const ICONS={
-    dashboard:'<rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect>',
-    community:'<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.6-4.8A7 7 0 0 1 3 12c0-4 3.6-7 8-7h3c4.4 0 8 3 8 7 0 1.1-.3 2.1-1 3z"></path><path d="M8 12h.01M12 12h.01M16 12h.01"></path>',
-    classes:'<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path>',
-    services:'<rect x="3" y="4" width="8" height="6" rx="1.5"></rect><rect x="13" y="4" width="8" height="6" rx="1.5"></rect><rect x="3" y="14" width="8" height="6" rx="1.5"></rect><rect x="13" y="14" width="8" height="6" rx="1.5"></rect><path d="M7 10v4M17 10v4"></path>',
-    staff:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path>',
-    members:'<circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path>',
-    reporting:'<path d="M4 19V9M10 19V5M16 19v-7M22 19V3"></path><path d="M2 21h22"></path>'
-  };
-  function icon(name){return '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||'')+'</svg>';}
-
-  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html']);
-
-  function normaliseSidebarChrome(){
-    document.querySelectorAll('.side').forEach(side=>{
-      let brand=side.querySelector('.brand-logo,.brand,.logo');
-      if(!brand){
-        brand=document.createElement('div');
-        side.prepend(brand);
-      }
-      brand.className='logo brand-logo admin-brand-lock';
-      brand.innerHTML='<svg class="brand-mark" viewBox="0 0 54 48" aria-hidden="true"><path d="M6 42 L27 6 M12 42 L30 11 M18 42 L33 16 M48 42 L27 6 M42 42 L24 11 M36 42 L21 16"/></svg><span class="brand-word">HYBRID <b>OS</b></span>';
-
-      const gym=side.querySelector('.gym');
-      if(gym){
-        gym.classList.add('admin-gym-lock');
-        if(!gym.querySelector('.tenant-gym-logo')){
-          const legacy=gym.querySelector('img');
-          if(legacy)legacy.classList.add('tenant-gym-logo');
-          else{
-            const img=document.createElement('img');
-            img.src='./assets/hybrid-hub-logo-horizontal.svg';
-            img.alt='Hybrid Hub';
-            img.className='tenant-gym-logo';
-            gym.insertBefore(img,gym.firstChild);
-          }
-        }
-      }
-    });
-  }
 
 
 
@@ -111,7 +71,7 @@
     const s=document.createElement('style');s.id='shared-admin-nav-style';
     s.textContent=`
       .nav .admin-nav-link{display:flex;width:100%;min-height:44px;border:0;background:transparent;color:#a9b2c2;padding:11px 12px;border-radius:12px;text-align:left;cursor:pointer;text-decoration:none;font:inherit;align-items:center;gap:11px}
-      .admin-nav-icon{width:18px;height:18px;flex:0 0 18px;opacity:.9}.admin-nav-link.active .admin-nav-icon{opacity:1}
+      
       .nav .admin-nav-link:hover,.nav .admin-nav-link.active{background:rgba(255,255,255,.09);color:#fff}
       .admin-context-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px;padding:4px 0}
       .admin-context-tab{display:inline-flex;align-items:center;min-height:40px;padding:9px 13px;border:1px solid var(--hybrid-line,#e7ebf2);border-radius:12px;background:#fff;color:var(--hybrid-ink,#101828);font-weight:800;text-decoration:none;cursor:pointer;box-shadow:0 4px 12px rgba(16,24,40,.04)}
@@ -170,10 +130,10 @@
   }
 
   function render(){
-    style();normaliseSidebarChrome();ensureMobileMenu();
+    style();window.HybridShell?.apply();ensureMobileMenu();
     const group=groupFor(currentKey());
     document.querySelectorAll('.side .nav').forEach(nav=>{
-      nav.innerHTML=sidebar.map(i=>'<a class="admin-nav-link '+(i.key===group?'active':'')+'" data-admin-key="'+i.key+'" href="'+i.href+'">'+icon(i.icon)+'<span>'+i.label+'</span></a>').join('');
+      nav.innerHTML=sidebar.map(i=>'<a class="admin-nav-link '+(i.key===group?'active':'')+'" data-admin-key="'+i.key+'" href="'+i.href+'">'+(window.HybridShell?.icon(i.icon)||'')+'<span>'+i.label+'</span></a>').join('');
       nav.querySelectorAll('.admin-nav-link').forEach(a=>{
         a.addEventListener('pointerenter',()=>prefetch(a.href),{passive:true});
         a.addEventListener('touchstart',()=>prefetch(a.href),{passive:true});
