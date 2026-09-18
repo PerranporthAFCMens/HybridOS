@@ -19,3 +19,23 @@
   .tenant-top-brand{margin:0 auto 14px;padding:2px 0}
   .tenant-top-brand img{width:min(52vw,180px)}
 }
+
+
+/* Mobile member app header: keep branding compact and content-first. */
+@media(max-width:900px){
+  body:has(#memberHomeCanvas) .tenant-top-brand{
+    position:fixed;
+    top:18px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:60;
+    margin:0;
+    padding:0;
+    width:auto;
+    pointer-events:none;
+  }
+  body:has(#memberHomeCanvas) .tenant-top-brand img{
+    width:132px!important;
+    max-width:132px!important;
+  }
+}
