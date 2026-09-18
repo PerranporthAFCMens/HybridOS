@@ -31,6 +31,9 @@ html,body{margin:0;min-height:100%;background:#f5f7fb}
 @keyframes hybridCriticalShimmer{to{background-position:-220% 0}}
 @media(max-width:900px){#loading{background:#f5f7fb}#loading::before{display:none}#loading::after{left:14px;right:14px;top:20px;height:150px}#hybridNavigationMask{grid-template-columns:1fr}.hybrid-nav-mask-side{display:none}.hybrid-nav-mask-main{padding:20px 14px}.hybrid-nav-mask-bar{width:62%}}
 @media(prefers-reduced-motion:reduce){#loading::after,.hybrid-nav-mask-card{animation:none}#hybridNavigationMask{transition:none}}
+html.admin-hot-nav #loading{display:none!important}
+html.admin-hot-nav #app.hidden{display:grid!important}
+@media(max-width:900px){html.admin-hot-nav #app.hidden{display:block!important}}
 </style>'''
 def clean_legacy_class_mobile_back():
  write('classes.html',re.sub(r'<a class="mobile-back"[^>]*>.*?</a>','',read('classes.html'),count=1,flags=re.S))
@@ -52,7 +55,7 @@ def add_admin_shell():
  for n in ADMIN_PAGES:
   s=read(n)
   s=re.sub(r'<script[^>]+src=["\']\.\/shared-admin-nav\.js(?:\?[^"\']*)?["\'][^>]*>\s*<\/script>','',s,flags=re.I)
-  s=inject_head(s,'admin-shell.css',f'<link rel="stylesheet" href="./admin-shell.css?v={VERSION}">')
+  s=s.replace('<head>','<head><script>(function(){try{if(sessionStorage.getItem("hybrid-admin-hot-nav")==="1"){document.documentElement.classList.add("admin-hot-nav");sessionStorage.removeItem("hybrid-admin-hot-nav")}}catch(e){}})();</script>',1);s=inject_head(s,'admin-shell.css',f'<link rel="stylesheet" href="./admin-shell.css?v={VERSION}">')
   s=inject_head(s,'admin-pages.css',f'<link rel="stylesheet" href="./admin-pages.css?v={VERSION}">')
   s=inject_body(s,'shared-admin-nav.js',f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>')
   if n=='index.html':s=s.replace('<section id="authView" class="auth">','<section id="authView" class="auth hidden">',1)
