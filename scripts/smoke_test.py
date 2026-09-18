@@ -155,3 +155,6 @@ for page_name in ('index.html','community.html','classes.html','class-setup.html
   if x not in page_text:problems.append(f'{page_name}: admin hot first-paint missing: {x}')
 if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
 print('Hybrid OS built-site smoke checks passed')
+
+admin_css=(ROOT/'admin-shell.css').read_text(encoding='utf-8')
+if '@view-transition' in admin_css or 'view-transition-name' in admin_css:problems.append('admin-shell.css: cross-document admin view transitions must stay disabled')
