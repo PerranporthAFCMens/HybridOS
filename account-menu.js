@@ -71,8 +71,8 @@
   }
   function portalLabel(p){return p==='owner'?'Owner':'Staff/Employee'}
   function portalHref(p){
-    if(p==='owner')return './index.html';
-    if(p==='staff')return './staff.html';
+    if(p==='owner')return './admin.html?view=index.html';
+    if(p==='staff')return ['owner','admin'].includes(membershipRole?.role)?'./staff.html?view=staff':'./staff.html';
     return membershipRole?.role==='member'?'./member.html':'./member.html?view=member';
   }
   function renderPortalActions(){
