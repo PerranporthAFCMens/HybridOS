@@ -19,8 +19,11 @@ for n,needles in CRITICAL.items():
   if x not in t:problems.append(f'{n}: missing {x}')
 for page in ROOT.glob('*.html'):
  t=page.read_text(encoding='utf-8')
- for i,body in enumerate(re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',t,flags=re.S|re.I),1):
-  if not body.strip():continue
+ for i,m in enumerate(re.finditer(r'<script([^>]*)>(.*?)</script>',t,flags=re.S|re.I),1):
+  attrs,body=m.group(1),m.group(2)
+  if re.search(r'\bsrc\s*=',attrs,flags=re.I) or not body.strip():continue
+  tm=re.search(r'\btype\s*=\s*["\']([^"\']+)["\']',attrs,flags=re.I)
+  if tm and tm.group(1).lower() not in ('module','text/javascript','application/javascript'):continue
   tmp=ROOT/f'.smoke-inline-{page.stem}-{i}.mjs'
   tmp.write_text(body,encoding='utf-8')
   r=subprocess.run(['node','--check',str(tmp)],capture_output=True,text=True)
