@@ -12,7 +12,7 @@ RENDER_BASELINE={
  'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
  'admin-shell.css':'15e7767c16f9f971e803484795430cd955cebc20',
  'admin-frame.css':'2e1008213ece071ab870238e227c2ef1a65f2b91',
- 'admin-embed.js':'a7ec746c779513b712cf2c0c968caea2f04c15da',
+ 'admin-embed.js':'f17da585e62b40e8d507887079d1aa9e6f7aba59',
 }
 def git_blob_sha(path):
  import hashlib
@@ -106,6 +106,8 @@ for x in ('adminContentFrameA','adminContentFrameB','adminFrameNav','admin-frame
 admin_frame_js=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
 for x in ('hybrid-admin-nav','embedded=1','history.pushState','adminContentFrameA','adminContentFrameB','swapTo','loadSeq',"addEventListener('message'",'shellVersion','embedded=1&v='):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: persistent routing missing: {x}')
+for x in ('hybrid-admin-ready','pendingSwap','completeSwap','Fallback only'):
+ if x not in admin_frame_js:problems.append(f'admin-frame.js: embedded readiness handoff missing: {x}')
 admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
 for x in ('admin-frame.css?v=','admin-frame.js?v=','shared-shell.js?v='):
  if x not in admin_frame_html:problems.append(f'admin.html: persistent shell asset is not cache-busted: {x}')
@@ -117,7 +119,7 @@ admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
 if 'viewport-fit=cover' in admin_frame_html:problems.append('admin.html: experimental full-bleed viewport returned')
 if 'top:calc(env(safe-area-inset-top)' in admin_frame_css:problems.append('admin-frame.css: experimental safe-area menu offset returned')
 admin_embed=(ROOT/'admin-embed.js').read_text(encoding='utf-8')
-for x in ('admin-embedded','parent.postMessage','hybrid-admin-nav'):
+for x in ('admin-embedded','parent.postMessage','hybrid-admin-nav','hybrid-admin-ready','signalReady','requestAnimationFrame'):
  if x not in admin_embed:problems.append(f'admin-embed.js: embedded bridge missing: {x}')
 admin_nav=(ROOT/'shared-admin-nav.js').read_text(encoding='utf-8')
 for x in ("const adminPages=new Set","enterPersistentShell","shellUrlFor"):
