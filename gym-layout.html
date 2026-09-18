@@ -33,7 +33,7 @@ body.member-mode .tools,body.member-mode .steps,body.member-mode .top .actions{d
 <h3>Set up your map</h3>
 <div class="section"><label class="upload"><b>Upload a floorplan or sketch</b><div class="muted" style="font-size:12px;margin-top:3px">JPG, PNG or a screenshot of a PDF</div><input id="floorUpload" type="file" accept="image/png,image/jpeg,image/webp"></label><div class="tool-row" style="margin-top:8px"><button id="blankBtn" class="btn">Use blank layout</button><button id="clearBgBtn" class="btn">Remove image</button></div></div>
 <div class="section"><h3 style="font-size:14px">Add a zone</h3><div class="field"><label>Zone name</label><input id="zoneName" placeholder="e.g. Free weights"></div><button id="addZoneBtn" class="btn primary" style="width:100%;margin-top:8px">+ Add zone</button></div>
-<div class="section"><h3 style="font-size:14px">Equipment catalogue</h3><div class="field"><input id="search" placeholder="Search equipment"></div><div id="catalog" class="catalog"></div></div>
+<div class="section"><h3 style="font-size:14px">Equipment catalogue</h3><div class="field"><label>Category</label><select id="categoryFilter"><option value="">All equipment</option><option>Cardio</option><option>Selectorised strength</option><option>Plate-loaded strength</option><option>Benches & racks</option><option>Cables & functional</option><option>Free weights</option><option>Studio & conditioning</option><option>Mobility & recovery</option></select></div><div class="field"><input id="search" placeholder="Search equipment"></div><div id="catalog" class="catalog"></div></div>
 <div class="section"><h3 style="font-size:14px">Selected item</h3><div id="selectedPanel" class="muted" style="font-size:13px">Select an item on the map to edit it.</div></div>
 </section>
 <section class="panel workspace">
@@ -47,28 +47,123 @@ body.member-mode .tools,body.member-mode .steps,body.member-mode .top .actions{d
 const $=id=>document.getElementById(id);
 const KEY='hybrid_gym_layout_draft_v1';
 const equipment=[
- ['Squat rack','Strength','🏋️',['Back squat','Front squat','Overhead press']],
- ['Bench','Strength','▰',['Bench press','Dumbbell press']],
- ['Dumbbell rack','Strength','▥',['Dumbbell press','Goblet squat','Lunges']],
- ['Cable machine','Strength','⇅',['Cable row','Lat pulldown','Tricep pushdown']],
- ['Leg press','Strength','◩',['Leg press']],
- ['SkiErg','Cardio','⛷️',['SkiErg intervals']],
- ['RowErg','Cardio','🚣',['Rowing']],
+ ['Treadmill','Cardio','🏃',['Run','Walk','Incline walk','Sprint']],
+ ['Curved treadmill','Cardio','🏃',['Sprint','Run','Walking lunges']],
+ ['Elliptical / cross trainer','Cardio','◯',['Elliptical']],
+ ['Upright bike','Cardio','🚲',['Bike intervals','Cycle']],
+ ['Recumbent bike','Cardio','🚲',['Recumbent cycle']],
+ ['Spin bike','Cardio','🚲',['Spin','Cycle']],
+ ['Air bike','Cardio','🚲',['Air bike intervals']],
  ['BikeErg','Cardio','🚲',['Bike intervals']],
- ['Treadmill','Cardio','🏃',['Run']],
- ['Sled','Functional','➜',['Sled push','Sled pull']],
- ['Plyo box','Functional','▣',['Box jumps','Step ups']],
- ['Kettlebells','Functional','●',['Kettlebell swing','Goblet squat']],
- ['Rig / pull-up bar','Functional','⌁',['Pull-up','Toes to bar']],
- ['Spin bike','Studio','🚲',['Spin']],
- ['Mats','Studio','▭',['Mobility','Core','Yoga']]
-];
+ ['RowErg','Cardio','🚣',['Rowing']],
+ ['SkiErg','Cardio','⛷️',['SkiErg intervals']],
+ ['Stair climber','Cardio','⇧',['Stair climb']],
+ ['Stepper','Cardio','⇧',['Step intervals']],
+ ['Upper-body ergometer','Cardio','↻',['Upper body cardio']],
+ ['Arc trainer / variable stride','Cardio','◯',['Cross training']],
+ ['Squat rack','Benches & racks','🏋️',['Back squat','Front squat','Overhead press']],
+ ['Power rack','Benches & racks','🏋️',['Back squat','Front squat','Bench press','Rack pull']],
+ ['Half rack','Benches & racks','🏋️',['Back squat','Bench press','Overhead press']],
+ ['Smith machine','Benches & racks','▥',['Smith squat','Smith bench press','Split squat']],
+ ['Flat bench','Benches & racks','▰',['Bench press','Dumbbell press']],
+ ['Adjustable bench','Benches & racks','▰',['Incline press','Shoulder press','Dumbbell row']],
+ ['Olympic bench press','Benches & racks','▰',['Bench press']],
+ ['Incline Olympic bench','Benches & racks','▰',['Incline bench press']],
+ ['Decline Olympic bench','Benches & racks','▰',['Decline bench press']],
+ ['Preacher curl bench','Benches & racks','▰',['Preacher curl']],
+ ['Glute ham developer','Benches & racks','▰',['Glute ham raise','Back extension']],
+ ['Roman chair / back extension','Benches & racks','▰',['Back extension']],
+ ['Chest press','Selectorised strength','⬌',['Chest press']],
+ ['Incline chest press','Selectorised strength','⬌',['Incline chest press']],
+ ['Shoulder press','Selectorised strength','⬆',['Shoulder press']],
+ ['Pec deck / rear delt','Selectorised strength','↔',['Chest fly','Rear delt fly']],
+ ['Lat pulldown','Selectorised strength','⬇',['Lat pulldown']],
+ ['Seated row','Selectorised strength','⬅',['Seated row']],
+ ['Low row','Selectorised strength','⬅',['Low row']],
+ ['Vertical traction / high row','Selectorised strength','⬇',['High row','Lat pull']],
+ ['Pullover machine','Selectorised strength','↘',['Pullover']],
+ ['Biceps curl machine','Selectorised strength','↗',['Bicep curl']],
+ ['Triceps press machine','Selectorised strength','↘',['Tricep press']],
+ ['Abdominal crunch machine','Selectorised strength','◒',['Ab crunch']],
+ ['Rotary torso','Selectorised strength','↻',['Torso rotation']],
+ ['Lower back machine','Selectorised strength','↩',['Back extension']],
+ ['Leg press','Selectorised strength','◩',['Leg press']],
+ ['Leg extension','Selectorised strength','⇧',['Leg extension']],
+ ['Seated leg curl','Selectorised strength','⇩',['Seated leg curl']],
+ ['Lying leg curl','Selectorised strength','⇩',['Lying leg curl']],
+ ['Standing leg curl','Selectorised strength','⇩',['Standing leg curl']],
+ ['Hip abductor','Selectorised strength','↔',['Hip abduction']],
+ ['Hip adductor','Selectorised strength','↔',['Hip adduction']],
+ ['Glute machine','Selectorised strength','↗',['Glute extension']],
+ ['Calf raise machine','Selectorised strength','⇧',['Calf raise']],
+ ['Hack squat','Plate-loaded strength','◩',['Hack squat']],
+ ['Pendulum squat','Plate-loaded strength','◩',['Pendulum squat']],
+ ['V squat','Plate-loaded strength','◩',['V squat']],
+ ['45° leg press','Plate-loaded strength','◩',['Leg press']],
+ ['Horizontal leg press','Plate-loaded strength','◩',['Leg press']],
+ ['Hip thrust machine','Plate-loaded strength','↗',['Hip thrust']],
+ ['Standing hip abductor','Plate-loaded strength','↔',['Standing hip abduction']],
+ ['Seated calf raise','Plate-loaded strength','⇧',['Seated calf raise']],
+ ['Standing calf raise','Plate-loaded strength','⇧',['Standing calf raise']],
+ ['Plate-loaded chest press','Plate-loaded strength','⬌',['Chest press']],
+ ['Plate-loaded incline press','Plate-loaded strength','⬌',['Incline chest press']],
+ ['Plate-loaded shoulder press','Plate-loaded strength','⬆',['Shoulder press']],
+ ['Plate-loaded row','Plate-loaded strength','⬅',['Row']],
+ ['Plate-loaded high row','Plate-loaded strength','⬇',['High row']],
+ ['Plate-loaded pullover','Plate-loaded strength','↘',['Pullover']],
+ ['Plate-loaded lat pulldown','Plate-loaded strength','⬇',['Lat pulldown']],
+ ['Plate-loaded biceps curl','Plate-loaded strength','↗',['Bicep curl']],
+ ['Plate-loaded triceps press','Plate-loaded strength','↘',['Tricep press']],
+ ['Cable machine','Cables & functional','⇅',['Cable row','Lat pulldown','Tricep pushdown']],
+ ['Dual adjustable pulley','Cables & functional','⇅',['Cable fly','Cable row','Cable press','Face pull']],
+ ['Cable crossover','Cables & functional','⇆',['Cable fly','Cable crossover']],
+ ['Functional trainer','Cables & functional','✣',['Cable exercises','Functional training']],
+ ['Kinesis / multi-plane cable station','Cables & functional','✣',['Functional cable work','Mobility']],
+ ['Assisted pull-up / dip','Cables & functional','↕',['Assisted pull-up','Assisted dip']],
+ ['Pull-up station','Cables & functional','⌁',['Pull-up','Chin-up']],
+ ['Dip station','Cables & functional','∩',['Dip']],
+ ['Multi-gym station','Cables & functional','✣',['Multi-station strength']],
+ ['Dumbbell rack','Free weights','▥',['Dumbbell press','Goblet squat','Lunges']],
+ ['Fixed barbell rack','Free weights','═',['Barbell curl','Barbell press']],
+ ['Olympic bar storage','Free weights','═',['Barbell exercises']],
+ ['Weight plate tree','Free weights','◉',['Plate exercises']],
+ ['Kettlebell rack','Free weights','●',['Kettlebell swing','Goblet squat','Turkish get-up']],
+ ['Medicine ball rack','Free weights','⚫',['Medicine ball throw','Wall ball']],
+ ['Sandbag rack','Free weights','▰',['Sandbag carry','Sandbag squat']],
+ ['Trap bar','Free weights','◇',['Trap bar deadlift']],
+ ['Safety squat bar','Free weights','═',['Safety bar squat']],
+ ['EZ curl bar','Free weights','═',['EZ curl']],
+ ['Sled','Studio & conditioning','➜',['Sled push','Sled pull']],
+ ['Sled track','Studio & conditioning','➜',['Sled push','Sled pull','Walking lunges']],
+ ['Plyo box','Studio & conditioning','▣',['Box jumps','Step ups']],
+ ['Wall ball target','Studio & conditioning','◎',['Wall ball']],
+ ['Battle ropes','Studio & conditioning','〰',['Battle ropes']],
+ ['TRX / suspension trainer','Studio & conditioning','V',['TRX row','Suspension squat']],
+ ['Punch bag','Studio & conditioning','🥊',['Boxing','Punch bag']],
+ ['Speed bag','Studio & conditioning','🥊',['Speed bag']],
+ ['Agility ladder','Studio & conditioning','▤',['Agility ladder']],
+ ['Turf lane','Studio & conditioning','▰',['Sled push','Carries','Sprint drills']],
+ ['Gymnastics rings','Studio & conditioning','◉',['Ring row','Ring dip']],
+ ['Climbing rope','Studio & conditioning','│',['Rope climb']],
+ ['Monkey bars / rig','Studio & conditioning','⌁',['Monkey bars','Pull-up']],
+ ['Landmine station','Studio & conditioning','◒',['Landmine press','Landmine row']],
+ ['Core bag / Bulgarian bag rack','Studio & conditioning','▰',['Bag carries','Rotational work']],
+ ['Step platforms','Studio & conditioning','▤',['Step class','Step ups']],
+ ['Studio mats','Studio & conditioning','▭',['Mobility','Core','Yoga']],
+ ['Resistance band station','Studio & conditioning','〰',['Band work','Activation']],
+ ['Foam roller rack','Mobility & recovery','▰',['Foam rolling','Mobility']],
+ ['Stretching station','Mobility & recovery','↔',['Stretching']],
+ ['Mobility area','Mobility & recovery','◯',['Mobility','Warm-up']],
+ ['Recovery boots station','Mobility & recovery','◫',['Compression recovery']],
+ ['Massage gun station','Mobility & recovery','⌁',['Recovery']],
+ ['Body composition scanner','Mobility & recovery','◎',['Body composition assessment']]
+]
 let state={background:'',zones:[],items:[]},selected=null;
 function uid(){return Math.random().toString(36).slice(2,9)}
 function toast(t){$('toast').textContent=t;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),1500)}
 function save(silent=false){try{localStorage.setItem(KEY,JSON.stringify(state));$('status').textContent='Saved locally';if(!silent)toast('Layout draft saved')}catch(e){$('status').textContent='Draft too large to save';if(!silent)toast('Could not save this image locally')}}
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){state=d;(state.items||[]).forEach(i=>{if(!i.size)i.size=100})}}catch(e){}render()}
-function renderCatalog(filter=''){const q=filter.toLowerCase();$('catalog').innerHTML=equipment.filter(x=>x[0].toLowerCase().includes(q)||x[1].toLowerCase().includes(q)).map((x,i)=>'<button data-eq="'+equipment.indexOf(x)+'"><b>'+x[2]+' '+x[0]+'</b><small>'+x[1]+' · '+x[3].join(', ')+'</small></button>').join('');document.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>addEquipment(equipment[+b.dataset.eq]))}
+function renderCatalog(){const q=$('search').value.trim().toLowerCase(),cat=$('categoryFilter').value;$('catalog').innerHTML=equipment.filter(x=>(!cat||x[1]===cat)&&(!q||x[0].toLowerCase().includes(q)||x[1].toLowerCase().includes(q)||x[3].some(e=>e.toLowerCase().includes(q)))).map(x=>'<button data-eq="'+equipment.indexOf(x)+'"><b>'+x[2]+' '+x[0]+'</b><small>'+x[1]+' · '+x[3].join(', ')+'</small></button>').join('')||'<div class="muted" style="padding:8px">No equipment matches that search.</div>';document.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>addEquipment(equipment[+b.dataset.eq]))}
 function addEquipment(eq){const same=state.items.filter(x=>x.name===eq[0]).length;const item={id:uid(),name:eq[0],category:eq[1],icon:eq[2],exercises:eq[3],x:48+((state.items.length*6)%35),y:48+((state.items.length*5)%30),quantity:1,size:100,label:same?eq[0]+' '+(same+1):eq[0]};state.items.push(item);selected={type:'item',id:item.id};render();save(true)}
 function addZone(){const name=$('zoneName').value.trim();if(!name)return toast('Give the zone a name');state.zones.push({id:uid(),name,x:8+((state.zones.length*8)%35),y:8+((state.zones.length*7)%25),w:30,h:25});$('zoneName').value='';render();save(true)}
 function remove(type,id){if(type==='item')state.items=state.items.filter(x=>x.id!==id);else state.zones=state.zones.filter(x=>x.id!==id);selected=null;render();save(true)}
@@ -86,7 +181,7 @@ function renderSelected(){const host=$('selectedPanel');if(!selected){host.class
 function highlight(name){const item=state.items.find(x=>x.name===name||x.exercises?.includes(name));if(!item)return toast('That equipment has not been placed yet');selected={type:'item',id:item.id};render();const pin=[...document.querySelectorAll('.pin')].find(x=>x.classList.contains('selected'));pin?.scrollIntoView({behavior:'smooth',block:'center'});toast((item.label||item.name)+' highlighted')}
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function attr(s){return escapeHtml(s).replace(/"/g,'&quot;')}
-$('search').oninput=e=>renderCatalog(e.target.value);$('addZoneBtn').onclick=addZone;$('saveBtn').onclick=()=>save();
+$('search').oninput=renderCatalog;$('categoryFilter').onchange=renderCatalog;$('addZoneBtn').onclick=addZone;$('saveBtn').onclick=()=>save();
 $('floorUpload').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{state.background=rd.result;render();save(true)};rd.readAsDataURL(f)};
 $('blankBtn').onclick=()=>{state.background='';render();toast('Blank grid ready')};$('clearBgBtn').onclick=()=>{state.background='';render();save(true)};
 $('previewBtn').onclick=()=>{document.body.classList.add('member-mode');selected=null;render()};$('exitPreview').onclick=()=>document.body.classList.remove('member-mode');
