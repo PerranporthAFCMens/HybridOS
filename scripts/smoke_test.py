@@ -2,8 +2,8 @@ from __future__ import annotations
 import re,subprocess,sys
 from pathlib import Path
 ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
-CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial']}
-JS=('app-stability.js','social-nav.js','shared-admin-nav.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js')
+CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','get_my_training_groups','get_training_group_dashboard'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
+JS=('app-stability.js','social-nav.js','shared-admin-nav.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
 for js in JS:
  p=ROOT/js
@@ -37,6 +37,9 @@ activity_picker=(ROOT/'gym-activities.js').read_text(encoding='utf-8')
 for x in ('Bench Press','HYROX Sled Push','Start typing to search exercises and activities','HybridGymActivities','#pbExercise,.exerciseName'):
  if x not in activity_picker:problems.append(f'gym-activities.js: searchable activity catalogue missing: {x}')
 for page_name in ('member.html','member-preview.html'):
+ page_text=(ROOT/page_name).read_text(encoding='utf-8')
+ if 'Training groups' not in page_text:problems.append(f'{page_name}: training groups navigation missing')
+
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  if 'gym-activities.js?v=' not in page_text:problems.append(f'{page_name}: searchable activity picker not loaded')
 member=(ROOT/'member.html').read_text(encoding='utf-8')
@@ -84,7 +87,7 @@ for x in ('showOpsTab','location.hash.replace','history.replaceState','resources
 stability=(ROOT/'app-stability.js').read_text(encoding='utf-8')
 for x in ('hybridNavigationMask','beginNavigation','HybridNavigation'):
  if x not in stability:problems.append(f'app-stability.js: smooth navigation mask missing: {x}')
-for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','staff.html','member.html','member-preview.html','social.html'):
+for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','staff.html','member.html','member-preview.html','social.html','groups.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  if 'hybrid-critical-shell' not in page_text:problems.append(f'{page_name}: critical first-paint shell missing')
  if '#hybridNavigationMask' not in page_text:problems.append(f'{page_name}: navigation mask critical CSS missing')
@@ -95,6 +98,9 @@ for page_name in ('member.html','member-preview.html','staff.html','social.html'
  shell_page=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('data-shell-icon','Hybrid'):
   if x not in shell_page:problems.append(f'{page_name}: shared shell navigation missing: {x}')
+groups_js=(ROOT/'groups.js').read_text(encoding='utf-8')
+for x in ('create_training_group','get_training_group_dashboard','create_training_group_challenge','submit_training_group_challenge_result','Copy invite link'):
+ if x not in groups_js:problems.append(f'groups.js: training groups workflow missing: {x}')
 staff_page=(ROOT/'staff.html').read_text(encoding='utf-8')
 for x in ("$('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true","Assigned classes failed","Staff portal failed to initialise"):
  if x not in staff_page:problems.append(f'staff.html: non-blocking startup guard missing: {x}')
