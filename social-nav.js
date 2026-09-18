@@ -1,18 +1,27 @@
 (function(){
-  function add(){
-    const path=location.pathname;
-    if(!(path.endsWith('/member.html')||path.endsWith('/member-preview.html'))) return;
+  const isMember=()=>location.pathname.endsWith('/member.html')||location.pathname.endsWith('/member-preview.html');
+  const isPreview=()=>location.pathname.endsWith('/member-preview.html');
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const ago=v=>{const ms=Date.now()-new Date(v).getTime(),m=Math.max(0,Math.floor(ms/60000));if(m<1)return'now';if(m<60)return m+'m';const h=Math.floor(m/60);if(h<24)return h+'h';const d=Math.floor(h/24);return d<14?d+'d':new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short'}).format(new Date(v))};
+  function addNav(){
     document.querySelectorAll('.side .nav').forEach(nav=>{
       if(nav.querySelector('[data-social-link]')) return;
-      const isAnchorNav=!!nav.querySelector('a');
-      const item=isAnchorNav?document.createElement('a'):document.createElement('button');
-      if(isAnchorNav){item.href='./social.html'}else{item.type='button';item.onclick=()=>location.href='./social.html'}
+      const isAnchorNav=!!nav.querySelector('a'),item=isAnchorNav?document.createElement('a'):document.createElement('button');
+      if(isAnchorNav)item.href='./social.html';else{item.type='button';item.onclick=()=>location.href='./social.html'}
       item.dataset.socialLink='1';item.dataset.shellIcon='social';item.innerHTML='<span>Social</span>';
-      const children=[...nav.querySelectorAll('button,a')];
-      const workouts=children.find(x=>/Workouts/i.test(x.textContent||''));
-      if(workouts) nav.insertBefore(item,workouts); else nav.appendChild(item);
-      if(window.HybridShell?.decorateNav) window.HybridShell.decorateNav(nav);
+      const workouts=[...nav.querySelectorAll('button,a')].find(x=>/Workouts/i.test(x.textContent||''));
+      if(workouts)nav.insertBefore(item,workouts);else nav.appendChild(item);
+      window.HybridShell?.decorateNav?.(nav);
     });
   }
+  function style(){if(document.getElementById('member-social-home-style'))return;const s=document.createElement('style');s.id='member-social-home-style';s.textContent='.member-social-home{margin-top:16px}.member-social-home .section-title{margin-bottom:10px}.member-social-home-list{display:grid;gap:9px}.member-social-home-post{display:grid;grid-template-columns:38px 1fr;gap:10px;padding:11px;border:1px solid var(--line);border-radius:14px;background:#fff;text-decoration:none;color:inherit}.member-social-home-avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#e9e7ff;font-size:12px;font-weight:850;overflow:hidden}.member-social-home-avatar img{width:100%;height:100%;object-fit:cover}.member-social-home-copy{min-width:0}.member-social-home-meta{display:flex;gap:7px;align-items:center;font-size:12px;color:var(--muted)}.member-social-home-body{margin-top:3px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.member-social-home .btn{text-decoration:none}@media(max-width:900px){.member-social-home{margin:14px 0}.member-social-home-post{min-height:64px}}';document.head.appendChild(s)}
+  function initials(n){return String(n||'M').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()}
+  function render(rows,profiles){const list=document.getElementById('memberSocialHomeList');if(!list)return;if(!rows.length){list.innerHTML='<div class="empty">Nothing new in Social yet.</div>';return}list.innerHTML=rows.map(p=>{const pr=profiles.get(p.user_id)||{},name=pr.display_name||[pr.first_name,pr.last_name].filter(Boolean).join(' ')||'Member',av=pr.avatar_url?'<img src="'+esc(pr.avatar_url)+'" alt="">':esc(initials(name));return '<a class="member-social-home-post" href="./social.html"><div class="member-social-home-avatar">'+av+'</div><div class="member-social-home-copy"><div class="member-social-home-meta"><b>'+esc(name)+'</b><span>· '+ago(p.created_at)+'</span></div><div class="member-social-home-body">'+esc(p.body)+'</div></div></a>'}).join('')}
+  async function loadSocial(){
+    if(isPreview()){const now=Date.now();render([{user_id:'a',body:'Saturday partner WOD is up. Who is in?',created_at:new Date(now-18*60000).toISOString()},{user_id:'b',body:'New PB on the deadlift today 💪',created_at:new Date(now-2*3600000).toISOString()}],new Map([['a',{display_name:'Coach Sam'}],['b',{display_name:'Jamie R'}]]));return}
+    try{const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'),sb=mod.createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD'),{data:{user}}=await sb.auth.getUser();if(!user)return;const{data:gm}=await sb.from('gym_members').select('gym_id').eq('user_id',user.id).eq('is_active',true).limit(1).maybeSingle();if(!gm)return;const{data:posts,error}=await sb.from('social_posts').select('user_id,body,created_at').eq('gym_id',gm.gym_id).order('created_at',{ascending:false}).limit(3);if(error)throw error;const ids=[...new Set((posts||[]).map(p=>p.user_id))];let profiles=new Map();if(ids.length){const{data:ps}=await sb.from('profiles').select('id,display_name,first_name,last_name,avatar_url').in('id',ids);profiles=new Map((ps||[]).map(p=>[p.id,p]))}render(posts||[],profiles)}catch(e){console.warn('Member social preview unavailable',e);const list=document.getElementById('memberSocialHomeList');if(list)list.innerHTML='<div class="empty">Social is temporarily unavailable.</div>'}
+  }
+  function addHome(){const home=document.getElementById('home');if(!home||document.getElementById('memberSocialHome'))return;style();const card=document.createElement('section');card.id='memberSocialHome';card.className='card member-social-home';card.innerHTML='<div class="section-title"><div><div class="eyebrow">YOUR COMMUNITY</div><h3 style="margin:4px 0">Latest from Social</h3></div><a class="btn secondary" href="./social.html">Open Social</a></div><div id="memberSocialHomeList" class="member-social-home-list"><div class="empty">Loading Social…</div></div>';home.appendChild(card);loadSocial()}
+  function add(){if(!isMember())return;addNav();addHome()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',add);else add();
 })();
