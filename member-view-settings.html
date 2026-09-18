@@ -101,18 +101,35 @@ function wire(){
     if(scrollStep&&!finished)raf=requestAnimationFrame(frame);
    };
    place();
-   try{handle.setPointerCapture(pointerId)}catch(_){}
-   const move=ev=>{if(ev.pointerId!==pointerId)return;latestX=ev.clientX;latestY=ev.clientY;if(!raf)raf=requestAnimationFrame(frame)};
+   const move=ev=>{
+    if(ev.pointerId!==pointerId)return;
+    if(ev.cancelable)ev.preventDefault();
+    latestX=ev.clientX;latestY=ev.clientY;
+    if(!raf)raf=requestAnimationFrame(frame)
+   };
+   const cleanup=()=>{
+    window.removeEventListener('pointermove',move);
+    window.removeEventListener('pointerup',finish);
+    window.removeEventListener('pointercancel',finish);
+    window.removeEventListener('blur',cancelDrag);
+    document.removeEventListener('visibilitychange',visibilityCancel)
+   };
    const finish=ev=>{
-    if(finished||ev.pointerId!==pointerId)return;finished=true;
+    if(finished||(ev?.pointerId!=null&&ev.pointerId!==pointerId))return;
+    finished=true;
     if(raf)cancelAnimationFrame(raf);
-    handle.removeEventListener('pointermove',move);handle.removeEventListener('pointerup',finish);handle.removeEventListener('pointercancel',finish);handle.removeEventListener('lostpointercapture',finish);
+    cleanup();
     placeholder.replaceWith(row);controls.classList.remove('drag-active');document.body.classList.remove('member-layout-dragging');
     syncLayoutFromDom();reorderPreviewToMatch();
-    ghost.style.transition='opacity .12s ease,transform .12s ease';ghost.style.transform='scale(.98)';ghost.style.opacity='0';setTimeout(()=>ghost.remove(),130);
-    try{if(handle.hasPointerCapture?.(pointerId))handle.releasePointerCapture(pointerId)}catch(_){}
+    ghost.style.transition='opacity .12s ease,transform .12s ease';ghost.style.transform='scale(.98)';ghost.style.opacity='0';setTimeout(()=>ghost.remove(),130)
    };
-   handle.addEventListener('pointermove',move,{passive:true});handle.addEventListener('pointerup',finish);handle.addEventListener('pointercancel',finish);handle.addEventListener('lostpointercapture',finish);
+   const cancelDrag=()=>finish();
+   const visibilityCancel=()=>{if(document.hidden)finish()};
+   window.addEventListener('pointermove',move,{passive:false});
+   window.addEventListener('pointerup',finish);
+   window.addEventListener('pointercancel',finish);
+   window.addEventListener('blur',cancelDrag);
+   document.addEventListener('visibilitychange',visibilityCancel);
   })
  })
 }
