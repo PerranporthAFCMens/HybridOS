@@ -1,7 +1,7 @@
 (function(){
   const sidebar=[
     {key:'dashboard',label:'Dashboard',icon:'dashboard',href:'./index.html'},
-    {key:'community',label:'Community',icon:'community',href:'./index.html#community'},
+    {key:'community-group',label:'Community',icon:'community',href:'./community.html'},
     {key:'classes-group',label:'Classes',icon:'classes',href:'./classes.html'},
     {key:'services-group',label:'Services & resources',icon:'services',href:'./admin-operations.html#resources'},
     {key:'staff-group',label:'Staff management',icon:'staff',href:'./admin-operations.html#staff'},
@@ -10,6 +10,10 @@
   ];
 
   const contextTabs={
+    'community-group':[
+      {key:'community-social',label:'Social feed',href:'./community.html'},
+      {key:'community',label:'Channels',href:'./index.html#community'}
+    ],
     'classes-group':[
       {key:'classes',label:'Timetable',href:'./classes.html'},
       {key:'class-setup',label:'Class setup',href:'./class-setup.html'}
@@ -42,7 +46,7 @@
   };
   function icon(name){return '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||'')+'</svg>';}
 
-  const adminPages=new Set(['index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html']);
+  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html']);
 
   function normaliseSidebarChrome(){
     document.querySelectorAll('.side').forEach(side=>{
@@ -76,6 +80,7 @@
 
   function currentKey(){
     const p=location.pathname,h=location.hash.replace('#','');
+    if(p.endsWith('/community.html'))return'community-social';
     if(p.endsWith('/classes.html'))return'classes';
     if(p.endsWith('/class-setup.html'))return'class-setup';
     if(p.endsWith('/admin-operations.html'))return['staff','resources','services'].includes(h)?h:'staff';
@@ -91,6 +96,7 @@
   }
 
   function groupFor(key){
+    if(['community-social','community'].includes(key))return'community-group';
     if(['classes','class-setup'].includes(key))return'classes-group';
     if(['resources','services','resource-availability'].includes(key))return'services-group';
     if(['staff','staff-access'].includes(key))return'staff-group';
@@ -170,7 +176,7 @@
         a.addEventListener('pointerenter',()=>prefetch(a.href),{passive:true});
         a.addEventListener('touchstart',()=>prefetch(a.href),{passive:true});
         a.addEventListener('click',e=>{
-          const targetKey=a.dataset.adminKey==='members-group'?'members':a.dataset.adminKey==='community'?'community':a.dataset.adminKey;
+          const targetKey=a.dataset.adminKey==='members-group'?'members':a.dataset.adminKey;
           if(showDashboardPage(targetKey)){e.preventDefault();return}
           closeMobile();
           try{const u=new URL(a.href,location.href);if(u.origin===location.origin&&adminPages.has(u.pathname.split('/').pop()||'index.html'))document.body.classList.add('admin-leaving')}catch(_e){}
