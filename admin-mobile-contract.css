@@ -1,0 +1,109 @@
+/* Hybrid OS Admin Mobile Contract
+   Loaded LAST on every Admin page. This file owns mobile containment and
+   overrides page-local responsive rules so admin pages cannot drift apart. */
+
+html,body{max-width:100%;overflow-x:hidden}
+html.admin-embedded,html.admin-embedded body{width:100%;max-width:100%;overflow-x:hidden}
+html.admin-embedded .shell,
+html.admin-embedded #app,
+html.admin-embedded #appView,
+html.admin-embedded .main{width:100%!important;max-width:100%!important;min-width:0!important}
+html.admin-embedded .side{display:none!important}
+html.admin-embedded .admin-mobile-menu-btn,
+html.admin-embedded .mobile-menu-btn,
+html.admin-embedded .staff-mobile-menu-btn,
+html.admin-embedded .admin-mobile-backdrop,
+html.admin-embedded .mobile-nav-backdrop,
+html.admin-embedded .staff-mobile-backdrop{display:none!important}
+
+@media(max-width:900px){
+  html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important}
+  .shell,#app,#appView,.main{width:100%!important;max-width:100%!important;min-width:0!important}
+  .main{padding-left:14px!important;padding-right:14px!important;padding-bottom:max(36px,env(safe-area-inset-bottom))!important}
+  html.admin-embedded .main{padding-top:74px!important}
+  html.admin-embedded .top{padding-left:0!important;margin-top:0!important;min-height:0!important}
+
+  .top,.toolbar,.section-title,.rowtop,
+  .card,.row,.plan,.membership-card,.report-card,
+  .composer,.post{max-width:100%!important;min-width:0!important}
+  .top>*,.toolbar>*,.section-title>*,.rowtop>*{min-width:0!important;max-width:100%!important}
+
+  .top h1{font-size:29px!important;line-height:1.08!important;overflow-wrap:anywhere}
+  .top .muted,.toolbar .muted,.section-title .muted{overflow-wrap:anywhere}
+
+  .tabs{
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    gap:8px!important;
+    width:100%!important;
+    max-width:100%!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    padding-bottom:3px;
+  }
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto!important;white-space:nowrap!important;max-width:none!important}
+
+  .toolbar{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:10px!important;
+  }
+  .toolbar>div:first-child{width:100%!important;min-width:0!important}
+  .toolbar>.btn,.toolbar>a.btn,.toolbar>button,.toolbar>select{
+    width:100%!important;
+    max-width:100%!important;
+    flex:0 0 auto!important;
+  }
+
+  .section-title{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    align-items:flex-start!important;
+    gap:10px!important;
+  }
+  .section-title>div:first-child{min-width:0!important;flex:1 1 180px}
+  .section-title>.btn,.section-title>a.btn{max-width:100%!important}
+
+  .grid,.plan-grid,.form2,.form-grid,.checkgrid,.days,.report-grid,
+  .lifecycle-breakdowns,.report-lifecycle-grid{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+
+  .card,.row,.plan,.membership-card,.report-card,.composer,.post{
+    width:100%!important;
+    overflow-wrap:anywhere!important;
+  }
+  .card{overflow:hidden}
+  .rowtop{display:flex!important;flex-wrap:wrap!important;align-items:flex-start!important}
+  .rowtop>div:first-child{flex:1 1 190px;min-width:0!important}
+  .rowtop>.btn,.rowtop>button{flex:0 1 auto;max-width:100%!important}
+
+  input,select,textarea,.field input,.field select,.field textarea{
+    max-width:100%!important;
+    min-width:0!important;
+  }
+  img,svg,canvas{max-width:100%}
+
+  .table-wrap,.calendar-wrap,.heat-wrap{
+    width:100%!important;
+    max-width:100%!important;
+    overflow-x:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+  table,.table{max-width:none}
+}
+
+@media(max-width:560px){
+  .main{padding-left:14px!important;padding-right:14px!important}
+  .card{padding:15px!important}
+  .row{padding:12px!important}
+  .section-title>.btn,.section-title>a.btn,
+  .rowtop>.btn,.rowtop>button{width:auto!important}
+  .modal{padding:10px!important}
+  .modal-card{width:100%!important;max-width:100%!important;padding:16px!important}
+}
