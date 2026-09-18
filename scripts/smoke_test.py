@@ -87,6 +87,9 @@ for page_name in ('member.html','member-preview.html','staff.html','social.html'
  shell_page=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('data-shell-icon','Hybrid'):
   if x not in shell_page:problems.append(f'{page_name}: shared shell navigation missing: {x}')
+staff_page=(ROOT/'staff.html').read_text(encoding='utf-8')
+for x in ("$('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true","Assigned classes failed","Staff portal failed to initialise"):
+ if x not in staff_page:problems.append(f'staff.html: non-blocking startup guard missing: {x}')
 member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
 for x in ('requestAnimationFrame(frame)','reorderPreviewToMatch','member-layout-dragging','pointermove','pointerup','tile-placeholder','window.scrollBy','previewOrderWithPlaceholder'):
  if x not in member_view:problems.append(f'member-view-settings.html: drag stability guard missing: {x}')
