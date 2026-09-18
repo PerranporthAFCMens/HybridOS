@@ -163,7 +163,7 @@ for x in ('memberSearch','memberSort','registered_desc','registered_asc','member
  if x not in admin_index:problems.append(f'index.html: member directory control missing: {x}')
 for x in ('Customer lifecycle','avgCustomerLifecycle','avgLiveTenure','genderLifecycleBreakdown','ageLifecycleBreakdown','renderLifecycleInsights','date_of_birth','gender'):
  if x not in admin_index:problems.append(f'index.html: lifecycle demographic reporting missing: {x}')
-for x in ('Customer pulse','pulse-head','seasonality-grid','YOY SWING','seasonality at a glance','const prior=year-1'):
+for x in ('Customer pulse','pulse-head','seasonality-grid','YOY SWING','seasonality at a glance','prior=year-1'):
  if x not in admin_index:problems.append(f'index.html: customer pulse view missing: {x}')
 if 'stroke-dasharray="7 6"' in admin_index or 'yoy-grid' in admin_index:problems.append('index.html: retired customer comparison view returned')
 if 'Last 30 days ·' in admin_index:problems.append('index.html: retired rolling customer movement chart copy returned')
