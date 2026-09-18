@@ -90,12 +90,14 @@ for page_name in ('member.html','member-preview.html','staff.html','social.html'
 staff_page=(ROOT/'staff.html').read_text(encoding='utf-8')
 for x in ("$('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true","Assigned classes failed","Staff portal failed to initialise"):
  if x not in staff_page:problems.append(f'staff.html: non-blocking startup guard missing: {x}')
-member_exp=(ROOT/'member-experience.css').read_text(encoding='utf-8')
+if '<nav class="bottom">' in staff_page:problems.append('staff.html: retired mobile bottom navigation returned')
+member_exp_css=(ROOT/'member-experience.css').read_text(encoding='utf-8')
 for x in ('Desktop member workspace','display:none!important','width:min(1220px,100%)','member-home-tile[data-home-key="hero"]'):
- if x not in member_exp:problems.append(f'member-experience.css: desktop member layout guard missing: {x}')
-member_exp=(ROOT/'member-experience.js').read_text(encoding='utf-8')
+ if x not in member_exp_css:problems.append(f'member-experience.css: desktop member layout guard missing: {x}')
+member_exp_js=(ROOT/'member-experience.js').read_text(encoding='utf-8')
 for x in ('get_member_home_settings','applyHomeCta','primary_target','secondary_target','data-cta-page'):
- if x not in member_exp:problems.append(f'member-experience.js: member CTA runtime missing: {x}')
+ if x not in member_exp_js:problems.append(f'member-experience.js: member CTA runtime missing: {x}')
+if 'get_member_home_layout' in member_exp_js:problems.append('member-experience.js: retired member layout RPC reference returned')
 member_css=(ROOT/'member-experience.css').read_text(encoding='utf-8')
 if '.member-home-tile[data-home-key="hero"]{grid-column:1/-1}' not in member_css:problems.append('member-experience.css: full-width member CTA missing')
 member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
