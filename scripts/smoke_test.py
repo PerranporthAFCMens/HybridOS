@@ -127,6 +127,9 @@ for x in ('HybridShell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon
 app_css=(ROOT/'app-consistency.css').read_text(encoding='utf-8')
 for x in ('Centralised Hybrid OS sidebar shell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','grid-template-columns:254px'):
  if x not in app_css:problems.append(f'app-consistency.css: central shell styling missing: {x}')
+
+for x in ('html.admin-embedded body:has(.admin-mobile-menu-btn) .main{padding-top:74px!important}','html.admin-embedded body:has(.admin-mobile-menu-btn) .top{padding-left:54px!important;min-height:46px}'):
+ if x not in app_css:problems.append(f'app-consistency.css: embedded mobile spacing guard missing: {x}')
 community=(ROOT/'community.html').read_text(encoding='utf-8')
 for x in ('Member community','social_posts','social_comments','social_reactions','Post to community','sendComment','reply-comment','parent_comment_id','Add a comment'):
  if x not in community:problems.append(f'community.html: admin social feed missing: {x}')
