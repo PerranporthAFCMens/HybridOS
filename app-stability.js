@@ -5,6 +5,18 @@
   var started=Date.now();
   var lastError=null;
   var recoveryShown=false;
+  var navMask=null;
+
+  function beginNavigation(){
+    if(navMask)return;
+    navMask=document.createElement('div');
+    navMask.id='hybridNavigationMask';
+    navMask.setAttribute('aria-hidden','true');
+    navMask.innerHTML='<div class="hybrid-nav-mask-side"><div class="hybrid-nav-mask-brand">HYBRID <b>OS</b></div><div class="hybrid-nav-mask-gym"></div><div class="hybrid-nav-mask-lines"><i></i><i></i><i></i><i></i><i></i></div></div><div class="hybrid-nav-mask-main"><div class="hybrid-nav-mask-bar"></div><div class="hybrid-nav-mask-card"></div><div class="hybrid-nav-mask-card short"></div></div>';
+    document.body.appendChild(navMask);
+    requestAnimationFrame(function(){navMask.classList.add('show')});
+  }
+  window.HybridNavigation={begin:beginNavigation};
 
   function byId(id){return document.getElementById(id)}
   function loadingStillVisible(){
@@ -50,6 +62,19 @@
     document.body.appendChild(el);
   }
   window.addEventListener('online',connectionBanner);window.addEventListener('offline',connectionBanner);
+
+  document.addEventListener('click',function(e){
+    if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+    var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;
+    if(a.target&&a.target!=='_self'||a.hasAttribute('download'))return;
+    try{
+      var u=new URL(a.href,location.href);
+      if(u.origin!==location.origin)return;
+      if(u.pathname===location.pathname&&u.search===location.search)return;
+      if(!/\.html$|\/$/.test(u.pathname))return;
+      beginNavigation();
+    }catch(_e){}
+  },true);
 
   document.addEventListener('DOMContentLoaded',function(){
     connectionBanner();
