@@ -37,7 +37,7 @@ member=(ROOT/'member.html').read_text(encoding='utf-8')
 if "const membershipShort=$('membershipShort');if(membershipShort)membershipShort.textContent=" not in member:problems.append('member.html: safe membership summary missing')
 if "?.textContent=" in member:problems.append('member.html: invalid optional-chain assignment present')
 mr=(ROOT/'member-experience.js').read_text(encoding='utf-8')
-for x in ('member_class_schedule','member_book_class','member_cancel_class','pt_appointments','workout_sessions','personal_bests','memberProgressSnapshot','loadProgress','memberWeeklyGoal','loadWeeklyGoal','hybrid_member_weekly_goal','memberRecentActivity','loadRecentActivity','memberActivityList','get_member_home_layout','applyHomeLayout','memberHomeCanvas'):
+for x in ('member_class_schedule','member_book_class','member_cancel_class','pt_appointments','workout_sessions','personal_bests','memberProgressSnapshot','loadProgress','memberWeeklyGoal','loadWeeklyGoal','hybrid_member_weekly_goal','memberRecentActivity','loadRecentActivity','memberActivityList','get_member_home_settings','applyHomeLayout','memberHomeCanvas'):
  if x not in mr:problems.append(f'member-experience.js: required workflow missing: {x}')
 coach=(ROOT/'member-coach.js').read_text(encoding='utf-8')
 for x in ('memberWeekPlan','member_class_schedule','workout_sessions','hybrid_member_weekly_goal','NEXT 7 DAYS'):
