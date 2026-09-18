@@ -145,13 +145,13 @@ for x in ('memberSearch','memberSort','registered_desc','registered_asc','member
 member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
 for x in ('requestAnimationFrame(frame)','reorderPreviewToMatch','member-layout-dragging','pointermove','pointerup','tile-placeholder','window.scrollBy','previewOrderWithPlaceholder','cta_config','ctaTitle','ctaPrimaryTarget','ctaSecondaryTarget','Gym call to action'):
  if x not in member_view:problems.append(f'member-view-settings.html: drag stability guard missing: {x}')
-if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
-print('Hybrid OS built-site smoke checks passed')
-
 admin_ops=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
 for x in ('showOpsTab','history.replaceState'):
  if x not in admin_ops:problems.append(f'admin-operations.html: direct internal admin switch missing: {x}')
 
-build_script=(ROOT/'scripts/build_site.py').read_text(encoding='utf-8')
-for x in ('admin-hot-nav','hybrid-admin-hot-nav','html.admin-hot-nav #loading'):
- if x not in build_script:problems.append(f'scripts/build_site.py: admin hot first-paint missing: {x}')
+for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html'):
+ page_text=(ROOT/page_name).read_text(encoding='utf-8')
+ for x in ('hybrid-admin-hot-nav','admin-hot-nav','html.admin-hot-nav #loading'):
+  if x not in page_text:problems.append(f'{page_name}: admin hot first-paint missing: {x}')
+if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
+print('Hybrid OS built-site smoke checks passed')
