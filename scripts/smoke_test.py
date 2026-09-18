@@ -98,8 +98,10 @@ for x in ('.admin-content-frame','.admin-content-frame.active','visibility:hidde
 admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
 for x in ('viewport-fit=cover','name="theme-color" content="#f5f7fb"'):
  if x not in admin_frame_html:problems.append(f'admin.html: iPhone full-bleed shell guard missing: {x}')
-for x in ('env(safe-area-inset-top)','env(safe-area-inset-bottom)','top:calc(env(safe-area-inset-top) + 16px)','background:#f5f7fb'):
+for x in ('top:calc(env(safe-area-inset-top) + 16px)','background:#f5f7fb','height:100dvh'):
  if x not in admin_frame_css:problems.append(f'admin-frame.css: safe-area shell guard missing: {x}')
+if 'padding-top:env(safe-area-inset-top)' in admin_frame_css or 'height:calc(100dvh - env(safe-area-inset-top)' in admin_frame_css:
+ problems.append('admin-frame.css: risky safe-area shell sizing returned')
 admin_embed=(ROOT/'admin-embed.js').read_text(encoding='utf-8')
 for x in ('admin-embedded','parent.postMessage','hybrid-admin-nav'):
  if x not in admin_embed:problems.append(f'admin-embed.js: embedded bridge missing: {x}')
