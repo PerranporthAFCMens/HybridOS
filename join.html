@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>Join Hybrid Hub</title>
+<style>
+:root{--bg:#f5f7fb;--ink:#101828;--muted:#667085;--line:#e7ebf2;--dark:#0b1020;--good:#067647}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{min-height:100vh;display:grid;grid-template-columns:minmax(320px,.9fr) minmax(0,1.1fr)}
+.brand{background:linear-gradient(145deg,#0b1020,#14233a 70%,#103d3a);color:#fff;padding:clamp(28px,5vw,64px);display:flex;flex-direction:column;justify-content:space-between}
+.brand img{width:min(330px,78%);filter:brightness(0) invert(1)}.brand h1{font-size:clamp(42px,6vw,76px);line-height:.96;margin:28px 0 14px}.brand p{max-width:540px;color:#cbd5e1;font-size:18px;line-height:1.55}
+.main{padding:32px;display:grid;place-items:center}.panel{width:min(760px,100%);background:#fff;border:1px solid var(--line);border-radius:26px;padding:28px;box-shadow:0 24px 60px rgba(16,24,40,.10)}
+.eyebrow{font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}.panel h2{font-size:34px;margin:6px 0 8px}.muted{color:var(--muted)}
+.fields{display:grid;gap:14px;margin-top:20px}.field label{display:block;font-size:13px;font-weight:800;margin-bottom:6px}.field input{width:100%;padding:13px 14px;border:1px solid #d0d5dd;border-radius:12px;font:inherit}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.btn{border:0;border-radius:12px;padding:12px 15px;font-weight:850;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.btn.primary{background:var(--dark);color:#fff}.btn.secondary{background:#fff;border:1px solid var(--line);color:var(--ink)}.btn:disabled{opacity:.55;cursor:not-allowed}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.msg{min-height:22px;margin-top:10px;font-size:13px}.msg.bad{color:#b42318}.msg.good{color:var(--good)}
+.plans{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:20px}.plan{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fff;display:flex;flex-direction:column;gap:9px}.plan h3{margin:0}.price{font-size:28px;font-weight:900}.plan .btn{margin-top:auto}
+.tag{display:inline-flex;width:max-content;padding:5px 8px;border-radius:999px;background:#ecfdf3;color:#067647;font-size:11px;font-weight:850}.notice{padding:12px 14px;border-radius:14px;background:#fffaeb;color:#7a4d00;margin-top:16px;font-size:13px}.success{font-size:56px}.hidden{display:none!important}
+@media(max-width:800px){.wrap{grid-template-columns:1fr}.brand{min-height:260px;padding:28px}.brand h1{font-size:42px}.main{padding:18px}.panel{padding:22px}.plans,.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section class="brand"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"><div><h1>Join<br><span id="brandGym">Hybrid Hub</span></h1><p>Create your member account, choose your membership and start booking classes straight away.</p></div><small>Powered by Hybrid OS</small></section>
+<main class="main">
+<section class="panel" id="authStep"><div class="eyebrow">Member registration</div><h2 id="authTitle">Create your account</h2><p class="muted" id="authIntro">Use your own email address so you can access your account during the live test.</p><div class="fields"><div class="field" id="nameField"><label>Name</label><input id="name" autocomplete="name" placeholder="Alex Taylor"></div><div class="field"><label>Email</label><input id="email" type="email" autocomplete="email" placeholder="you@example.com"></div><div class="row"><div class="field"><label>Password</label><input id="password" type="password" autocomplete="new-password"></div><div class="field" id="confirmField"><label>Confirm password</label><input id="confirmPassword" type="password" autocomplete="new-password"></div></div></div><div class="actions"><button id="authBtn" class="btn primary">Create member account</button><button id="modeBtn" class="btn secondary">I already have an account</button></div><div id="authMsg" class="msg"></div></section>
+<section class="panel hidden" id="planStep"><div class="eyebrow">Step 2</div><h2>Choose your membership</h2><p class="muted">For this live test, your membership activates immediately. No payment will be taken.</p><div class="notice">When GoCardless is connected later, this step will become the payment mandate and subscription setup.</div><div id="plans" class="plans"></div><div id="planMsg" class="msg"></div></section>
+<section class="panel hidden" id="successStep"><div class="success">✓</div><div class="eyebrow">You're in</div><h2 id="successTitle">Membership active</h2><p class="muted">Your live Hybrid Hub member account is ready. You can now book classes, update your details and use the Member Portal.</p><div class="actions"><a class="btn primary" href="./member.html">Open Member Portal</a></div></section>
+</main>
+</div>
+<script type="module">
+import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
+const $=id=>document.getElementById(id);
+const params=new URLSearchParams(location.search),gymSlug=params.get('gym')||'hybrid-hub-demo';
+let joinData=null,mode='signup';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+function show(id){['authStep','planStep','successStep'].forEach(x=>$(x).classList.toggle('hidden',x!==id))}
+function msg(id,text,kind){$(id).textContent=text;$(id).className='msg '+(kind||'')}
+function price(p){var amount='£'+(Number(p.price_pence||0)/100).toFixed(2);return p.billing_interval==='one_off'?amount:amount+' / '+p.billing_interval}
+function perks(p){var out=[];if(p.includes_open_gym)out.push('Open gym');if(p.includes_classes)out.push(p.classes_per_week?p.classes_per_week+' classes / week':'Classes included');if(p.includes_pt)out.push('PT included');return out}
+async function loadJoin(){const r=await supabase.rpc('get_public_gym_join_options',{p_gym_slug:gymSlug});if(r.error)throw r.error;joinData=r.data;$('brandGym').textContent=joinData.gym_name||'Hybrid Hub';document.title='Join '+(joinData.gym_name||'Hybrid Hub')}
+function renderPlans(){var rows=Array.isArray(joinData&&joinData.plans)?joinData.plans:[];$('plans').innerHTML=rows.length?rows.map(function(p){return '<article class="plan"><span class="tag">'+esc(p.access_type||'membership')+'</span><h3>'+esc(p.name)+'</h3><div class="price">'+esc(price(p))+'</div><div class="muted">'+esc(p.description||perks(p).join(' · ')||'Membership')+'</div><button class="btn primary" data-plan="'+p.id+'">Choose '+esc(p.name)+'</button></article>'}).join(''):'<div class="muted">No public memberships are available right now.</div>';document.querySelectorAll('[data-plan]').forEach(function(b){b.onclick=function(){choosePlan(b.dataset.plan,b)}})}
+async function choosePlan(planId,btn){btn.disabled=true;var old=btn.textContent;btn.textContent='Activating…';msg('planMsg','');try{var r=await supabase.rpc('join_public_gym_with_membership',{p_gym_slug:gymSlug,p_plan_id:planId});if(r.error)throw r.error;$('successTitle').textContent=((r.data&&r.data.plan_name)||'Membership')+' is active';show('successStep')}catch(e){msg('planMsg',e.message||'Could not activate membership.','bad');btn.disabled=false;btn.textContent=old}}
+function setMode(next){mode=next;var signup=mode==='signup';$('authTitle').textContent=signup?'Create your account':'Sign in to continue';$('authIntro').textContent=signup?'Use your own email address so you can access your account during the live test.':'Sign in, then choose your Hybrid Hub membership.';$('nameField').classList.toggle('hidden',!signup);$('confirmField').classList.toggle('hidden',!signup);$('password').autocomplete=signup?'new-password':'current-password';$('authBtn').textContent=signup?'Create member account':'Sign in';$('modeBtn').textContent=signup?'I already have an account':'Create a new account';msg('authMsg','')}
+$('modeBtn').onclick=function(){setMode(mode==='signup'?'signin':'signup')};
+$('authBtn').onclick=async function(){var email=$('email').value.trim().toLowerCase(),password=$('password').value,name=$('name').value.trim();if(!email||!password)return msg('authMsg','Enter your email and password.','bad');if(mode==='signup'&&password!==$('confirmPassword').value)return msg('authMsg','Passwords do not match.','bad');if(mode==='signup'&&password.length<8)return msg('authMsg','Use a password with at least 8 characters.','bad');var b=$('authBtn'),old=b.textContent;b.disabled=true;b.textContent=mode==='signup'?'Creating…':'Signing in…';msg('authMsg','');try{if(mode==='signup'){var redirect=location.origin+location.pathname+'?gym='+encodeURIComponent(gymSlug);var r=await supabase.auth.signUp({email:email,password:password,options:{emailRedirectTo:redirect,data:{display_name:name||email.split('@')[0],full_name:name||email.split('@')[0]}}});if(r.error)throw r.error;if(!r.data.session){msg('authMsg','Account created. Check your email to confirm it, then return here to choose your membership.','good');return}}else{var s=await supabase.auth.signInWithPassword({email:email,password:password});if(s.error)throw s.error}await afterAuth()}catch(e){msg('authMsg',e.message||'Could not continue.','bad')}finally{b.disabled=false;b.textContent=old}};
+async function afterAuth(){var s=await supabase.auth.getSession();if(!s.data.session)return;show('planStep');renderPlans()}
+try{await loadJoin();await afterAuth()}catch(e){msg('authMsg',e.message||'Could not load this gym.','bad')}
+supabase.auth.onAuthStateChange(function(_event,session){if(session){show('planStep');renderPlans()}});
+</script>
+</body>
+</html>
