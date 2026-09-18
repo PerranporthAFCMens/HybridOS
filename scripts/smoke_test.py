@@ -96,12 +96,8 @@ for x in ('.admin-content-frame','.admin-content-frame.active','visibility:hidde
  if x not in admin_frame_css:problems.append(f'admin-frame.css: buffered frame styling missing: {x}')
 
 admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
-for x in ('viewport-fit=cover','name="theme-color" content="#f5f7fb"'):
- if x not in admin_frame_html:problems.append(f'admin.html: iPhone full-bleed shell guard missing: {x}')
-for x in ('top:calc(env(safe-area-inset-top) + 16px)','background:#f5f7fb','height:100dvh'):
- if x not in admin_frame_css:problems.append(f'admin-frame.css: safe-area shell guard missing: {x}')
-if 'padding-top:env(safe-area-inset-top)' in admin_frame_css or 'height:calc(100dvh - env(safe-area-inset-top)' in admin_frame_css:
- problems.append('admin-frame.css: risky safe-area shell sizing returned')
+if 'viewport-fit=cover' in admin_frame_html:problems.append('admin.html: experimental full-bleed viewport returned')
+if 'top:calc(env(safe-area-inset-top)' in admin_frame_css:problems.append('admin-frame.css: experimental safe-area menu offset returned')
 admin_embed=(ROOT/'admin-embed.js').read_text(encoding='utf-8')
 for x in ('admin-embedded','parent.postMessage','hybrid-admin-nav'):
  if x not in admin_embed:problems.append(f'admin-embed.js: embedded bridge missing: {x}')
@@ -136,19 +132,12 @@ app_css=(ROOT/'app-consistency.css').read_text(encoding='utf-8')
 for x in ('Centralised Hybrid OS sidebar shell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','grid-template-columns:254px'):
  if x not in app_css:problems.append(f'app-consistency.css: central shell styling missing: {x}')
 
-admin_mobile=(ROOT/'admin-mobile-contract.css').read_text(encoding='utf-8')
-for x in ('Persistent Admin shell contract','html.admin-embedded .main','html.admin-embedded .mobile-back','overflow-x:hidden!important','.tabs{','flex-wrap:nowrap!important','.toolbar{','grid-template-columns:minmax(0,1fr)!important'):
- if x not in admin_mobile:problems.append(f'admin-mobile-contract.css: central mobile contract missing: {x}')
 admin_pages=('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html')
 for page_name in admin_pages:
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
- if 'admin-mobile-contract.css?v=' not in page_text:problems.append(f'{page_name}: central admin mobile contract not loaded')
- for block in re.findall(r'@media\(max-width:[^)]+\)\{[\s\S]*?(?=@media|</style>)',page_text):
-  if re.search(r'\.(?:shell|side|main)\s*\{',block):
-   problems.append(f'{page_name}: page-level mobile shell ownership returned')
-
-if 'Persistent Admin shell contract' in app_css:
- problems.append('app-consistency.css: embedded admin mobile ownership must stay in admin-mobile-contract.css')
+ for x in ('html.admin-embedded .side{display:none!important}','html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView{display:block!important;grid-template-columns:1fr!important}','html.admin-embedded .main{min-height:100dvh!important}'):
+  if x not in page_text:problems.append(f'{page_name}: original embedded admin shell guard missing: {x}')
+ if 'admin-mobile-contract.css' in page_text:problems.append(f'{page_name}: duplicate admin mobile contract returned')
 community=(ROOT/'community.html').read_text(encoding='utf-8')
 for x in ('Member community','social_posts','social_comments','social_reactions','Post to community','sendComment','reply-comment','parent_comment_id','Add a comment'):
  if x not in community:problems.append(f'community.html: admin social feed missing: {x}')
