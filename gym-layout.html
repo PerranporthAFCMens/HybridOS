@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gym layout · Hybrid OS</title>
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--ink:#101828;--muted:#667085;--line:#e7ebf2;--dark:#0b1020;--accent:#0d7966;--soft:#ecfdf3}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+.shell{min-height:100vh;display:grid;grid-template-columns:254px 1fr}.side{background:var(--dark);color:#fff;padding:24px 18px}.logo{font-weight:900;letter-spacing:.08em}.gym{margin:22px 0;padding:14px;border-radius:16px;background:rgba(255,255,255,.07)}.nav{display:grid;gap:6px}.main{padding:28px 30px 60px;min-width:0}
+.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}.top h1{margin:4px 0 5px;font-size:30px}.muted{color:var(--muted)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:10px 13px;font-weight:800;cursor:pointer}.btn.primary{background:var(--dark);border-color:var(--dark);color:#fff}.btn.good{background:var(--accent);border-color:var(--accent);color:#fff}
+.steps{display:flex;gap:8px;overflow:auto;margin-bottom:18px}.step{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:800}.step.active{background:#e9fbf6;border-color:#9de1d1;color:#075f51}
+.layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}.panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 28px rgba(16,24,40,.06)}.tools{padding:16px;position:sticky;top:18px}.tools h3{margin:0 0 10px}.section{padding:14px 0;border-top:1px solid var(--line)}.section:first-of-type{border-top:0}.field{margin-top:9px}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:5px}.field input,.field select{width:100%;padding:10px 11px;border:1px solid #d0d5dd;border-radius:11px;font:inherit;background:#fff}.upload{display:block;border:1.5px dashed #b8c0cc;border-radius:14px;padding:14px;text-align:center;cursor:pointer;background:#fafbfc}.upload input{display:none}.tool-row{display:flex;gap:7px}.tool-row>*{flex:1}.catalog{display:grid;gap:7px;max-height:270px;overflow:auto;margin-top:8px}.catalog button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;text-align:left;cursor:pointer}.catalog button:hover{background:#f8fafc}.catalog small{display:block;color:var(--muted);margin-top:2px}
+.workspace{padding:14px}.canvas-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.canvas-wrap{position:relative;width:100%;aspect-ratio:16/10;min-height:420px;border:1px solid #d8dee8;border-radius:18px;overflow:hidden;background-color:#f8fafc;background-image:linear-gradient(#e9edf3 1px,transparent 1px),linear-gradient(90deg,#e9edf3 1px,transparent 1px);background-size:28px 28px;touch-action:none}.floor-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;opacity:.88}.zone{position:absolute;min-width:120px;min-height:70px;border:2px dashed rgba(13,121,102,.55);background:rgba(13,121,102,.10);border-radius:16px;padding:10px;cursor:grab;user-select:none}.zone strong{font-size:12px}.zone .remove,.pin .remove{position:absolute;top:-8px;right:-8px;width:23px;height:23px;border-radius:50%;border:1px solid #d0d5dd;background:#fff;display:grid;place-items:center;font-weight:900;cursor:pointer}
+.pin{position:absolute;transform:translate(-50%,-50%);min-width:78px;max-width:140px;background:#0b1020;color:#fff;border-radius:13px;padding:9px 10px;box-shadow:0 8px 20px rgba(11,16,32,.20);cursor:grab;user-select:none}.pin .icon{font-size:18px}.pin strong{display:block;font-size:11px;line-height:1.15;margin-top:2px}.pin small{font-size:10px;color:#cbd5e1}.pin.selected{outline:3px solid #6ee7c8}
+.empty-tip{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:#98a2b3;max-width:330px}.empty-tip b{color:#667085}.status{font-size:12px;font-weight:800;color:#067647}
+.member-bar{display:none;margin-bottom:12px;padding:12px 14px;border-radius:14px;background:#0b1020;color:#fff;justify-content:space-between;align-items:center;gap:12px}.member-bar span{color:#cbd5e1;font-size:13px}.member-workout{display:none;gap:8px;flex-wrap:wrap;margin:0 0 12px}.member-workout button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-weight:750;cursor:pointer}
+body.member-mode .tools,body.member-mode .steps,body.member-mode .top .actions{display:none}body.member-mode .layout{grid-template-columns:1fr}body.member-mode .member-bar{display:flex}body.member-mode .member-workout{display:flex}body.member-mode .remove{display:none}body.member-mode .pin,body.member-mode .zone{cursor:pointer}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}.dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:#0b1020;margin-right:5px}.zone-dot{background:#86d9c7}
+.toast{position:fixed;right:22px;bottom:22px;background:#0b1020;color:#fff;padding:11px 14px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.18);opacity:0;transform:translateY(8px);transition:.18s;pointer-events:none;z-index:99}.toast.show{opacity:1;transform:none}
+@media(max-width:950px){.shell{display:block}.side{display:none}.main{padding:18px 14px 40px}.layout{grid-template-columns:1fr}.tools{position:static}.canvas-wrap{min-height:360px}.top{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="shell"><aside class="side"><div class="logo">HYBRID OS</div><div class="gym"><small>Gym workspace</small><div style="font-weight:800;margin-top:4px">Hybrid Hub</div></div><nav class="nav"></nav></aside>
+<main class="main">
+<header class="top"><div><div class="eyebrow">Services & resources</div><h1>Gym layout</h1><div class="muted">Build a simple member-friendly map of your gym and show people where equipment lives.</div></div><div class="actions"><button id="resetBtn" class="btn">Reset draft</button><button id="previewBtn" class="btn">Preview as member</button><button id="saveBtn" class="btn good">Save draft</button></div></header>
+<div class="steps"><span class="step active">1. Add floorplan</span><span class="step">2. Mark zones</span><span class="step">3. Place equipment</span><span class="step">4. Preview</span></div>
+<div class="member-bar"><div><b>Member map preview</b><br><span>Tap an exercise below to find its equipment.</span></div><button id="exitPreview" class="btn">Back to editor</button></div>
+<div class="member-workout"><button data-find="Squat rack">Back squat</button><button data-find="Bench">Bench press</button><button data-find="SkiErg">SkiErg intervals</button><button data-find="Cable machine">Cable row</button><button data-find="Sled">Sled push</button></div>
+<div class="layout">
+<section class="panel tools">
+<h3>Set up your map</h3>
+<div class="section"><label class="upload"><b>Upload a floorplan or sketch</b><div class="muted" style="font-size:12px;margin-top:3px">JPG, PNG or a screenshot of a PDF</div><input id="floorUpload" type="file" accept="image/png,image/jpeg,image/webp"></label><div class="tool-row" style="margin-top:8px"><button id="blankBtn" class="btn">Use blank layout</button><button id="clearBgBtn" class="btn">Remove image</button></div></div>
+<div class="section"><h3 style="font-size:14px">Add a zone</h3><div class="field"><label>Zone name</label><input id="zoneName" placeholder="e.g. Free weights"></div><button id="addZoneBtn" class="btn primary" style="width:100%;margin-top:8px">+ Add zone</button></div>
+<div class="section"><h3 style="font-size:14px">Equipment catalogue</h3><div class="field"><input id="search" placeholder="Search equipment"></div><div id="catalog" class="catalog"></div></div>
+<div class="section"><h3 style="font-size:14px">Selected item</h3><div id="selectedPanel" class="muted" style="font-size:13px">Select an item on the map to edit it.</div></div>
+</section>
+<section class="panel workspace">
+<div class="canvas-head"><div><b>Main gym floor</b><div class="muted" style="font-size:12px">Drag zones and equipment to match the real gym.</div></div><div id="status" class="status">Draft</div></div>
+<div id="canvas" class="canvas-wrap"><img id="floorBg" class="floor-bg hidden" alt=""><div id="emptyTip" class="empty-tip"><b>Start with your floorplan</b><br>Upload an image, or use the blank grid and build the layout yourself.</div></div>
+<div class="legend"><span><i class="dot"></i>Equipment</span><span><i class="dot zone-dot"></i>Zone</span><span>Member view highlights the equipment used by an exercise.</span></div>
+</section>
+</div>
+</main></div><div id="toast" class="toast"></div>
+<script>
+const $=id=>document.getElementById(id);
+const KEY='hybrid_gym_layout_draft_v1';
+const equipment=[
+ ['Squat rack','Strength','🏋️',['Back squat','Front squat','Overhead press']],
+ ['Bench','Strength','▰',['Bench press','Dumbbell press']],
+ ['Dumbbell rack','Strength','▥',['Dumbbell press','Goblet squat','Lunges']],
+ ['Cable machine','Strength','⇅',['Cable row','Lat pulldown','Tricep pushdown']],
+ ['Leg press','Strength','◩',['Leg press']],
+ ['SkiErg','Cardio','⛷️',['SkiErg intervals']],
+ ['RowErg','Cardio','🚣',['Rowing']],
+ ['BikeErg','Cardio','🚲',['Bike intervals']],
+ ['Treadmill','Cardio','🏃',['Run']],
+ ['Sled','Functional','➜',['Sled push','Sled pull']],
+ ['Plyo box','Functional','▣',['Box jumps','Step ups']],
+ ['Kettlebells','Functional','●',['Kettlebell swing','Goblet squat']],
+ ['Rig / pull-up bar','Functional','⌁',['Pull-up','Toes to bar']],
+ ['Spin bike','Studio','🚲',['Spin']],
+ ['Mats','Studio','▭',['Mobility','Core','Yoga']]
+];
+let state={background:'',zones:[],items:[]},selected=null;
+function uid(){return Math.random().toString(36).slice(2,9)}
+function toast(t){$('toast').textContent=t;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),1500)}
+function save(silent=false){try{localStorage.setItem(KEY,JSON.stringify(state));$('status').textContent='Saved locally';if(!silent)toast('Layout draft saved')}catch(e){$('status').textContent='Draft too large to save';if(!silent)toast('Could not save this image locally')}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d)state=d}catch(e){}render()}
+function renderCatalog(filter=''){const q=filter.toLowerCase();$('catalog').innerHTML=equipment.filter(x=>x[0].toLowerCase().includes(q)||x[1].toLowerCase().includes(q)).map((x,i)=>'<button data-eq="'+equipment.indexOf(x)+'"><b>'+x[2]+' '+x[0]+'</b><small>'+x[1]+' · '+x[3].join(', ')+'</small></button>').join('');document.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>addEquipment(equipment[+b.dataset.eq]))}
+function addEquipment(eq){const same=state.items.filter(x=>x.name===eq[0]).length;const item={id:uid(),name:eq[0],category:eq[1],icon:eq[2],exercises:eq[3],x:48+((state.items.length*6)%35),y:48+((state.items.length*5)%30),quantity:1,label:same?eq[0]+' '+(same+1):eq[0]};state.items.push(item);selected={type:'item',id:item.id};render();save(true)}
+function addZone(){const name=$('zoneName').value.trim();if(!name)return toast('Give the zone a name');state.zones.push({id:uid(),name,x:8+((state.zones.length*8)%35),y:8+((state.zones.length*7)%25),w:30,h:25});$('zoneName').value='';render();save(true)}
+function remove(type,id){if(type==='item')state.items=state.items.filter(x=>x.id!==id);else state.zones=state.zones.filter(x=>x.id!==id);selected=null;render();save(true)}
+function pct(n,min=0,max=100){return Math.max(min,Math.min(max,n))}
+function drag(el,obj,type,e){if(document.body.classList.contains('member-mode'))return;if(e.target.classList.contains('remove'))return;e.preventDefault();selected={type,id:obj.id};renderSelected();const c=$('canvas'),r=c.getBoundingClientRect();const startX=e.clientX,startY=e.clientY,ox=obj.x,oy=obj.y;function move(ev){const dx=(ev.clientX-startX)/r.width*100,dy=(ev.clientY-startY)/r.height*100;obj.x=pct(ox+dx,0,type==='item'?100:85);obj.y=pct(oy+dy,0,type==='item'?100:80);el.style.left=obj.x+'%';el.style.top=obj.y+'%'}function up(){window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);save(true)}window.addEventListener('pointermove',move);window.addEventListener('pointerup',up)}
+function render(){
+ $('floorBg').classList.toggle('hidden',!state.background);if(state.background)$('floorBg').src=state.background;
+ $('emptyTip').style.display=(state.background||state.zones.length||state.items.length)?'none':'block';
+ [...$('canvas').querySelectorAll('.zone,.pin')].forEach(x=>x.remove());
+ state.zones.forEach(z=>{const el=document.createElement('div');el.className='zone';el.style.left=z.x+'%';el.style.top=z.y+'%';el.style.width=z.w+'%';el.style.height=z.h+'%';el.innerHTML='<button class="remove">×</button><strong>'+escapeHtml(z.name)+'</strong>';el.querySelector('.remove').onclick=e=>{e.stopPropagation();remove('zone',z.id)};el.onpointerdown=e=>drag(el,z,'zone',e);el.onclick=()=>{selected={type:'zone',id:z.id};renderSelected()};$('canvas').appendChild(el)});
+ state.items.forEach(i=>{const el=document.createElement('div');el.className='pin'+(selected?.type==='item'&&selected.id===i.id?' selected':'');el.style.left=i.x+'%';el.style.top=i.y+'%';el.innerHTML='<button class="remove">×</button><span class="icon">'+i.icon+'</span><strong>'+escapeHtml(i.label||i.name)+'</strong><small>'+(i.quantity>1?'×'+i.quantity+' · ':'')+escapeHtml(i.category)+'</small>';el.querySelector('.remove').onclick=e=>{e.stopPropagation();remove('item',i.id)};el.onpointerdown=e=>drag(el,i,'item',e);el.onclick=()=>{selected={type:'item',id:i.id};render();renderSelected()};$('canvas').appendChild(el)});
+ renderSelected();
+}
+function renderSelected(){const host=$('selectedPanel');if(!selected){host.className='muted';host.innerHTML='Select an item on the map to edit it.';return}const arr=selected.type==='item'?state.items:state.zones,o=arr.find(x=>x.id===selected.id);if(!o){selected=null;return renderSelected()}host.className='';if(selected.type==='zone'){host.innerHTML='<div class="field"><label>Zone name</label><input id="editName" value="'+attr(o.name)+'"></div><div class="tool-row" style="margin-top:8px"><div class="field"><label>Width %</label><input id="editW" type="number" min="10" max="90" value="'+o.w+'"></div><div class="field"><label>Height %</label><input id="editH" type="number" min="8" max="90" value="'+o.h+'"></div></div>';['editName','editW','editH'].forEach(id=>$(id).oninput=()=>{o.name=$('editName').value;o.w=+$('editW').value||o.w;o.h=+$('editH').value||o.h;render();save(true)})}else{host.innerHTML='<div class="field"><label>Map label</label><input id="editLabel" value="'+attr(o.label||o.name)+'"></div><div class="field"><label>Quantity at this point</label><input id="editQty" type="number" min="1" max="50" value="'+o.quantity+'"></div><div class="muted" style="font-size:12px;margin-top:8px"><b>Linked exercises</b><br>'+o.exercises.map(escapeHtml).join(' · ')+'</div>';$('editLabel').onchange=()=>{o.label=$('editLabel').value.trim()||o.name;render();save(true)};$('editQty').onchange=()=>{o.quantity=Math.max(1,+$('editQty').value||1);render();save(true)}}}
+function highlight(name){const item=state.items.find(x=>x.name===name||x.exercises?.includes(name));if(!item)return toast('That equipment has not been placed yet');selected={type:'item',id:item.id};render();const pin=[...document.querySelectorAll('.pin')].find(x=>x.classList.contains('selected'));pin?.scrollIntoView({behavior:'smooth',block:'center'});toast((item.label||item.name)+' highlighted')}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function attr(s){return escapeHtml(s).replace(/"/g,'&quot;')}
+$('search').oninput=e=>renderCatalog(e.target.value);$('addZoneBtn').onclick=addZone;$('saveBtn').onclick=()=>save();
+$('floorUpload').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{state.background=rd.result;render();save(true)};rd.readAsDataURL(f)};
+$('blankBtn').onclick=()=>{state.background='';render();toast('Blank grid ready')};$('clearBgBtn').onclick=()=>{state.background='';render();save(true)};
+$('previewBtn').onclick=()=>{document.body.classList.add('member-mode');selected=null;render()};$('exitPreview').onclick=()=>document.body.classList.remove('member-mode');
+document.querySelectorAll('[data-find]').forEach(b=>b.onclick=()=>highlight(b.dataset.find));
+$('resetBtn').onclick=()=>{if(!confirm('Reset this gym layout draft?'))return;state={background:'',zones:[],items:[]};selected=null;localStorage.removeItem(KEY);render()};
+renderCatalog();load();
+</script>
+</body></html>
