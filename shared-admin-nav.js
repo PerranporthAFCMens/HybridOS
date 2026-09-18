@@ -7,6 +7,7 @@
     {key:'services-group',label:'Services & resources',icon:'services',href:'./admin-operations.html#resources'},
     {key:'staff-group',label:'Staff management',icon:'staff',href:'./admin-operations.html#staff'},
     {key:'members-group',label:'Members',icon:'members',href:'./index.html#members'},
+    {key:'member-view',label:'Member view',icon:'profile',href:'./member-view-settings.html'},
     {key:'reporting',label:'Reporting',icon:'reporting',href:'./reporting.html'}
   ];
 
@@ -61,7 +62,7 @@
     if(['classes','class-setup'].includes(key))return'classes-group';
     if(['resources','services','resource-availability'].includes(key))return'services-group';
     if(['staff','staff-access'].includes(key))return'staff-group';
-    if(['members','memberships','member-view','access'].includes(key))return'members-group';
+    if(['members','memberships','access'].includes(key))return'members-group';
     return key;
   }
 
