@@ -70,7 +70,6 @@ def add_admin_shell():
   s=re.sub(r'<script[^>]+src=["\']\.\/shared-admin-nav\.js(?:\?[^"\']*)?["\'][^>]*>\s*<\/script>','',s,flags=re.I)
   s=s.replace('<head>','<head><script>(function(){try{var q=new URLSearchParams(location.search);if(q.get("embedded")==="1")document.documentElement.classList.add("admin-embedded");if(sessionStorage.getItem("hybrid-admin-hot-nav")==="1"){document.documentElement.classList.add("admin-hot-nav");sessionStorage.removeItem("hybrid-admin-hot-nav")}}catch(e){}})();</script>',1);s=inject_head(s,'admin-shell.css',f'<link rel="stylesheet" href="./admin-shell.css?v={VERSION}">')
   s=inject_head(s,'admin-pages.css',f'<link rel="stylesheet" href="./admin-pages.css?v={VERSION}">')
-  s=inject_head(s,'admin-mobile-contract.css',f'<link rel="stylesheet" href="./admin-mobile-contract.css?v={VERSION}">')
   s=inject_body(s,'admin-embed.js',f'<script src="./admin-embed.js?v={VERSION}" defer></script>');s=inject_body(s,'shared-admin-nav.js',f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>')
   if n=='index.html':s=s.replace('<section id="authView" class="auth">','<section id="authView" class="auth hidden">',1)
   write(n,s)
