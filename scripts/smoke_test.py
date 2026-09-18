@@ -2,7 +2,7 @@ from __future__ import annotations
 import re,subprocess,sys
 from pathlib import Path
 ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
-CRITICAL={'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial']}
+CRITICAL={'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial']}
 JS=('app-stability.js','social-nav.js','shared-admin-nav.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
 for js in JS:
@@ -52,3 +52,10 @@ for x in (".eq('user_id',userId)","data-mine=\"${p.user_id===userId}\"","data-mi
  if x not in social:problems.append(f'social ownership guard missing: {x}')
 if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
 print('Hybrid OS built-site smoke checks passed')
+
+staff_perms=(ROOT/'staff-permissions.html').read_text(encoding='utf-8')
+for x in ('own_calendar','full_access','Full access','Own calendar only'):
+ if x not in staff_perms:problems.append(f'staff-permissions.html: access ladder missing: {x}')
+account=(ROOT/'account-menu.js').read_text(encoding='utf-8')
+for x in ("storage.from('avatars')",'accountAvatarFile','staffPermissions.full_access'):
+ if x not in account:problems.append(f'account-menu.js: profile/portal workflow missing: {x}')
