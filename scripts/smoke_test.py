@@ -139,10 +139,8 @@ for page_name in admin_pages:
   if re.search(r'\.(?:shell|side|main)\s*\{',block):
    problems.append(f'{page_name}: page-level mobile shell ownership returned')
 
-for x in ('html.admin-embedded .main{padding-top:18px!important;padding-left:14px!important;padding-right:14px!important}','html.admin-embedded .top{padding-left:0!important;min-height:0!important','html.admin-embedded .admin-mobile-menu-btn','overflow-x:hidden!important','max-width:100%!important;min-width:0!important'):
- if x not in app_css:problems.append(f'app-consistency.css: embedded admin mobile contract missing: {x}')
-if 'html.admin-embedded body:has(.admin-mobile-menu-btn) .top{padding-left:54px' in app_css:
- problems.append('app-consistency.css: embedded admin page still reserves space for inner mobile menu')
+if 'Persistent Admin shell contract' in app_css:
+ problems.append('app-consistency.css: embedded admin mobile ownership must stay in admin-mobile-contract.css')
 community=(ROOT/'community.html').read_text(encoding='utf-8')
 for x in ('Member community','social_posts','social_comments','social_reactions','Post to community','sendComment','reply-comment','parent_comment_id','Add a comment'):
  if x not in community:problems.append(f'community.html: admin social feed missing: {x}')
