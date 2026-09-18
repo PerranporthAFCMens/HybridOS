@@ -26,7 +26,7 @@ def clean_legacy_mobile_chrome():
 def add_shared_runtime():
  for n in APP_PAGES:
   if not(OUT/n).exists():continue
-  s=inject_head(read(n),'app-consistency.css',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}">');write(n,inject_head(s,'app-stability.js',f'<script src="./app-stability.js?v={VERSION}"></script>'))
+  s=inject_head(read(n),'app-consistency.css',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}">');s=inject_head(s,'app-stability.js',f'<script src="./app-stability.js?v={VERSION}"></script>');write(n,inject_body(s,'account-menu.js',f'<script src="./account-menu.js?v={VERSION}" defer></script>'))
 def add_tenant_runtime():
  for n in TENANT_PAGES:
   if not(OUT/n).exists():continue
@@ -38,7 +38,7 @@ def harden_member():
 def add_admin_shell():
  for n in ADMIN_PAGES:
   s=read(n);s=inject_head(s,'admin-shell.css',f'<link rel="stylesheet" href="./admin-shell.css?v={VERSION}">');s=inject_head(s,'admin-pages.css',f'<link rel="stylesheet" href="./admin-pages.css?v={VERSION}">');s=inject_body(s,'shared-admin-nav.js',f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>')
-  if n=='index.html':s=s.replace('<section id="authView" class="auth">','<section id="authView" class="auth hidden">',1);s=inject_body(s,'account-menu.js',f'<script src="./account-menu.js?v={VERSION}" defer></script>')
+  if n=='index.html':s=s.replace('<section id="authView" class="auth">','<section id="authView" class="auth hidden">',1)
   write(n,s)
 def add_staff_shell():
  s=read('staff.html');s=inject_head(s,'staff-operations.css',f'<link rel="stylesheet" href="./staff-operations.css?v={VERSION}">');s=inject_body(s,'staff-shell.js',f'<script src="./staff-shell.js?v={VERSION}" defer></script>');write('staff.html',inject_body(s,'staff-operations.js',f'<script src="./staff-operations.js?v={VERSION}" defer></script>'))
