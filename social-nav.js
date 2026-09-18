@@ -7,7 +7,7 @@
       const isAnchorNav=!!nav.querySelector('a');
       const item=isAnchorNav?document.createElement('a'):document.createElement('button');
       if(isAnchorNav){item.href='./social.html'}else{item.type='button';item.onclick=()=>location.href='./social.html'}
-      item.dataset.socialLink='1';item.textContent='✦ Social';
+      item.dataset.socialLink='1';item.dataset.shellIcon='social';item.innerHTML='<span>Social</span>';
       const children=[...nav.querySelectorAll('button,a')];
       const workouts=children.find(x=>/Workouts/i.test(x.textContent||''));
       if(workouts) nav.insertBefore(item,workouts); else nav.appendChild(item);
