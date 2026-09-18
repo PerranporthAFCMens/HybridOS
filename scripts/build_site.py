@@ -23,6 +23,14 @@ def clean_legacy_mobile_chrome():
  for n in ('member.html','member-preview.html','staff.html'):
   if(OUT/n).exists():write(n,re.sub(r'<nav class="bottom">.*?</nav>','',read(n),count=1,flags=re.S))
  write('classes.html',re.sub(r'<a class="mobile-back"[^>]*>.*?</a>','',read('classes.html'),count=1,flags=re.S))
+def repair_member_inline_scripts():
+ # A class-card enhancement landed with one surplus closing brace in both member surfaces.
+ # Repair the copied build output before syntax validation/deploy while preserving source isolation.
+ for n in ('member.html','member-preview.html'):
+  s=read(n);bad="')}})}document.getElementById('homeClassClose')" if n=='member-preview.html' else "')}})}$('homeClassClose')"
+  good="')}})document.getElementById('homeClassClose')" if n=='member-preview.html' else "')}})$('homeClassClose')"
+  if bad not in s:raise RuntimeError(f'{n}: expected class-card repair marker missing')
+  write(n,s.replace(bad,good,1))
 def add_shared_runtime():
  for n in APP_PAGES:
   if not(OUT/n).exists():continue
@@ -55,5 +63,5 @@ def brand_member_preview():
  n='member-preview.html';s=read(n);s=s.replace('<title>Member Preview · Hybrid OS</title>','<title>Hybrid Hub · Member Preview</title>').replace('Puffin Performance','Hybrid Hub')
  if 'member-gym-logo' not in s:s=s.replace('<main class="main">','<main class="main"><div class="member-gym-logo"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>',1)
  write(n,s)
-def build():copy_source();clean_legacy_mobile_chrome();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();brand_member_preview();print(f'Built Hybrid OS site in {OUT}')
+def build():copy_source();clean_legacy_mobile_chrome();repair_member_inline_scripts();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();brand_member_preview();print(f'Built Hybrid OS site in {OUT}')
 if __name__=='__main__':build()
