@@ -1,7 +1,7 @@
 import {createClient} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 let userId=null,gymId=null,poll=null;
-const TYPES=['social_comment','social_reply'];
+const TYPES=['social_comment','social_reply','social_reaction'];
 
 function style(){
  if(document.getElementById('hybridSocialNoticeStyle'))return;
