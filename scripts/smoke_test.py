@@ -158,6 +158,16 @@ if '.member-home-tile[data-home-key="hero"]{grid-column:1/-1}' not in member_css
 admin_index=(ROOT/'index.html').read_text(encoding='utf-8')
 for x in ('memberSearch','memberSort','registered_desc','registered_asc','memberJump','renderMemberDirectory','memberFilterLetter'):
  if x not in admin_index:problems.append(f'index.html: member directory control missing: {x}')
+workout_builder=(ROOT/'workout-builder.html').read_text(encoding='utf-8')
+for x in ('Assign to member','Publish as WOD','workout_assignments','workout_wods','templateSnapshot'):
+ if x not in workout_builder:problems.append(f'workout-builder.html: Workout V2 assignment/WOD boundary missing: {x}')
+member_v2=(ROOT/'member-workouts-v2.js').read_text(encoding='utf-8')
+for x in ('workout_assignments','workout_wods','Start workout','Complete workout',"source:'wod'"):
+ if x not in member_v2:problems.append(f'member-workouts-v2.js: member Workout V2 boundary missing: {x}')
+for page_name in ('member.html','member-preview.html'):
+ page_text=(ROOT/page_name).read_text(encoding='utf-8')
+ for x in ('member-workouts-v2.js','member-workouts-v2.css'):
+  if x not in page_text:problems.append(f'{page_name}: Workout V2 runtime not isolated/mounted: {x}')
 member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
 for x in ('requestAnimationFrame(frame)','reorderPreviewToMatch','member-layout-dragging','pointermove','pointerup','tile-placeholder','window.scrollBy','previewOrderWithPlaceholder','cta_config','ctaTitle','ctaPrimaryTarget','ctaSecondaryTarget','Gym call to action'):
  if x not in member_view:problems.append(f'member-view-settings.html: drag stability guard missing: {x}')
