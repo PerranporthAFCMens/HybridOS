@@ -50,12 +50,11 @@ for x in ('updatePost','deletePost','updateComment','deleteComment','setPostReac
  if x not in social or x not in enh:problems.append(f'social persistence bridge missing: {x}')
 for x in (".eq('user_id',userId)","data-mine=\"${p.user_id===userId}\"","data-mine=\"${c.user_id===userId}\""):
  if x not in social:problems.append(f'social ownership guard missing: {x}')
-if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
-print('Hybrid OS built-site smoke checks passed')
-
 staff_perms=(ROOT/'staff-permissions.html').read_text(encoding='utf-8')
 for x in ('own_calendar','full_access','Full access','Own calendar only'):
  if x not in staff_perms:problems.append(f'staff-permissions.html: access ladder missing: {x}')
 account=(ROOT/'account-menu.js').read_text(encoding='utf-8')
 for x in ("storage.from('avatars')",'accountAvatarFile','staffPermissions.full_access'):
  if x not in account:problems.append(f'account-menu.js: profile/portal workflow missing: {x}')
+if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
+print('Hybrid OS built-site smoke checks passed')
