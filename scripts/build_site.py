@@ -32,7 +32,7 @@ html,body{margin:0;min-height:100%;background:#f5f7fb}
 @media(max-width:900px){#loading{background:#f5f7fb}#loading::before{display:none}#loading::after{left:14px;right:14px;top:20px;height:150px}#hybridNavigationMask{grid-template-columns:1fr}.hybrid-nav-mask-side{display:none}.hybrid-nav-mask-main{padding:20px 14px}.hybrid-nav-mask-bar{width:62%}}
 @media(prefers-reduced-motion:reduce){#loading::after,.hybrid-nav-mask-card{animation:none}#hybridNavigationMask{transition:none}}
 </style>'''
-def clean_legacy_mobile_chrome():
+def clean_legacy_class_mobile_back():
  write('classes.html',re.sub(r'<a class="mobile-back"[^>]*>.*?</a>','',read('classes.html'),count=1,flags=re.S))
 def add_shared_runtime():
  for n in APP_PAGES:
@@ -72,5 +72,5 @@ def brand_member_preview():
  n='member-preview.html';s=read(n);s=s.replace('<title>Member Preview · Hybrid OS</title>','<title>Hybrid Hub · Member Preview</title>').replace('Puffin Performance','Hybrid Hub')
  if 'member-gym-logo' not in s:s=s.replace('<main class="main">','<main class="main"><div class="member-gym-logo"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>',1)
  write(n,s)
-def build():copy_source();clean_legacy_mobile_chrome();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();brand_member_preview();print(f'Built Hybrid OS site in {OUT}')
+def build():copy_source();clean_legacy_class_mobile_back();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();brand_member_preview();print(f'Built Hybrid OS site in {OUT}')
 if __name__=='__main__':build()
