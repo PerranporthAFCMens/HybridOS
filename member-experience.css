@@ -5,3 +5,21 @@
 .member-activity-item{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--hybrid-line)}.member-activity-item:last-child{border-bottom:0}.member-activity-icon{width:36px;height:36px;border-radius:12px;background:#f1f5f9;display:grid;place-items:center;font-size:17px;font-weight:900}.member-activity-copy{min-width:0}.member-activity-copy b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.member-activity-copy .member-schedule-time{margin-top:2px}
 @media(max-width:900px){.member-home-schedule{grid-template-columns:1fr;gap:12px}.member-class-row{grid-template-columns:1fr}.member-class-actions{justify-content:space-between}.member-progress-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:520px){.member-class-actions{align-items:stretch}.member-class-actions .btn{flex:1}.member-progress-snapshot,.member-weekly-goal,.member-recent-activity{margin:12px}.member-progress-grid{grid-template-columns:1fr}.member-progress-stat{display:flex;align-items:center;justify-content:space-between;gap:12px}.member-progress-stat b{font-size:20px}.member-progress-stat span{margin:0;text-align:right}.member-goal-body{grid-template-columns:78px minmax(0,1fr);gap:14px}.member-goal-ring{width:76px;height:76px}.member-goal-ring b{font-size:17px}.member-goal-ring span{font-size:9px}.member-activity-item{grid-template-columns:34px minmax(0,1fr) auto}.member-activity-icon{width:32px;height:32px;border-radius:10px}}
+
+
+/* Mobile containment guard: member pages must never create a desktop-width canvas. */
+@media(max-width:900px){
+  html,body{max-width:100%;overflow-x:hidden}
+  body:has(.member-gym-logo) .main{width:100%!important;max-width:100%!important;min-width:0!important}
+  body:has(.member-gym-logo) .page,
+  body:has(.member-gym-logo) .grid,
+  body:has(.member-gym-logo) .card{min-width:0;max-width:100%;width:100%}
+  body:has(.member-gym-logo) #home .grid{grid-template-columns:minmax(0,1fr)!important}
+  body:has(.member-gym-logo) .hero,
+  body:has(.member-gym-logo) .stat,
+  body:has(.member-gym-logo) .wide,
+  body:has(.member-gym-logo) .narrow,
+  body:has(.member-gym-logo) .member-home-schedule{grid-column:1/-1!important;width:100%!important;max-width:100%!important}
+  .member-gym-logo{width:100%!important;max-width:100%!important;overflow:hidden!important}
+  .member-gym-logo img{display:block!important;width:min(185px,52vw)!important;max-width:185px!important;height:auto!important;margin:0 auto!important}
+}
