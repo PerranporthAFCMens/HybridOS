@@ -54,7 +54,7 @@ staff_perms=(ROOT/'staff-permissions.html').read_text(encoding='utf-8')
 for x in ('own_calendar','full_access','Full access','Own calendar only'):
  if x not in staff_perms:problems.append(f'staff-permissions.html: access ladder missing: {x}')
 admin_nav=(ROOT/'shared-admin-nav.js').read_text(encoding='utf-8')
-for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','Rooms & equipment','Service dependencies','Staff & working hours','Member view','Door access'):
+for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','admin-nav-icon','ICONS','Rooms & equipment','Service dependencies','Staff & working hours','Member view','Door access'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: consolidated admin navigation missing: {x}')
 for page_name in ('index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
