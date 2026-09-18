@@ -19,6 +19,19 @@ def inject_body(t,a,m):
  if a in t:return t
  if '</body>' not in t:raise RuntimeError(f'Cannot inject {a}: missing </body>')
  return t.replace('</body>',m+'</body>',1)
+
+CRITICAL_SHELL_STYLE='''<style id="hybrid-critical-shell">
+html,body{margin:0;min-height:100%;background:#f5f7fb}
+#loading{position:fixed;inset:0;z-index:9998;min-height:100vh;color:transparent!important;background:linear-gradient(90deg,#0b1020 0 254px,#f5f7fb 254px 100%);overflow:hidden}
+#loading::before{content:"HYBRID OS";position:absolute;left:24px;top:26px;color:#fff;font:900 18px/1 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.08em}
+#loading::after{content:"";position:absolute;left:284px;right:30px;top:30px;height:190px;border-radius:22px;background:linear-gradient(100deg,#e9edf3 20%,#f7f8fa 36%,#e9edf3 52%);background-size:220% 100%;animation:hybridCriticalShimmer 1.05s linear infinite;box-shadow:0 220px 0 #fff,0 430px 0 #fff}
+#hybridNavigationMask{position:fixed;inset:0;z-index:9999;display:grid;grid-template-columns:254px minmax(0,1fr);background:#f5f7fb;opacity:0;pointer-events:none;transition:opacity .08s linear}
+#hybridNavigationMask.show{opacity:1}
+.hybrid-nav-mask-side{background:#0b1020;padding:26px 18px}.hybrid-nav-mask-brand{color:#fff;font:900 18px/1 Inter,system-ui,sans-serif;letter-spacing:.08em}.hybrid-nav-mask-gym{height:138px;margin-top:24px;border-radius:17px;background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.10)}.hybrid-nav-mask-lines{display:grid;gap:9px;margin-top:18px}.hybrid-nav-mask-lines i{display:block;height:45px;border-radius:12px;background:rgba(255,255,255,.06)}.hybrid-nav-mask-main{padding:30px}.hybrid-nav-mask-bar{width:46%;height:34px;border-radius:12px;background:#e9edf3}.hybrid-nav-mask-card{height:190px;margin-top:22px;border-radius:22px;background:linear-gradient(100deg,#e9edf3 20%,#f7f8fa 36%,#e9edf3 52%);background-size:220% 100%;animation:hybridCriticalShimmer 1.05s linear infinite}.hybrid-nav-mask-card.short{height:150px}
+@keyframes hybridCriticalShimmer{to{background-position:-220% 0}}
+@media(max-width:900px){#loading{background:#f5f7fb}#loading::before{display:none}#loading::after{left:14px;right:14px;top:20px;height:150px}#hybridNavigationMask{grid-template-columns:1fr}.hybrid-nav-mask-side{display:none}.hybrid-nav-mask-main{padding:20px 14px}.hybrid-nav-mask-bar{width:62%}}
+@media(prefers-reduced-motion:reduce){#loading::after,.hybrid-nav-mask-card{animation:none}#hybridNavigationMask{transition:none}}
+</style>'''
 def clean_legacy_mobile_chrome():
  for n in ('member.html','member-preview.html','staff.html'):
   if(OUT/n).exists():write(n,re.sub(r'<nav class="bottom">.*?</nav>','',read(n),count=1,flags=re.S))
@@ -26,7 +39,9 @@ def clean_legacy_mobile_chrome():
 def add_shared_runtime():
  for n in APP_PAGES:
   if not(OUT/n).exists():continue
-  s=inject_head(read(n),'app-consistency.css',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}">');s=inject_head(s,'app-stability.js',f'<script src="./app-stability.js?v={VERSION}"></script>');s=inject_body(s,'shared-shell.js',f'<script src="./shared-shell.js?v={VERSION}" defer></script>');write(n,inject_body(s,'account-menu.js',f'<script src="./account-menu.js?v={VERSION}" defer></script>'))
+  s=read(n)
+  if 'hybrid-critical-shell' not in s:s=s.replace('</head>',CRITICAL_SHELL_STYLE+'</head>',1)
+  s=inject_head(s,'app-consistency.css',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}">');s=inject_head(s,'app-stability.js',f'<script src="./app-stability.js?v={VERSION}"></script>');s=inject_body(s,'shared-shell.js',f'<script src="./shared-shell.js?v={VERSION}" defer></script>');write(n,inject_body(s,'account-menu.js',f'<script src="./account-menu.js?v={VERSION}" defer></script>'))
 def add_tenant_runtime():
  for n in TENANT_PAGES:
   if not(OUT/n).exists():continue
