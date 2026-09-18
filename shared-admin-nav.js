@@ -91,6 +91,21 @@
     backdrop.onclick=closeMobile;document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMobile()});
   }
 
+  function shellUrlFor(href){
+    try{
+      const u=new URL(href,location.href),file=u.pathname.split('/').pop()||'index.html';
+      if(!adminPages.has(file)||u.origin!==location.origin)return null;
+      const view=file+(u.hash||'');
+      return './admin.html?view='+encodeURIComponent(view);
+    }catch(_e){return null}
+  }
+
+  function enterPersistentShell(e,href){
+    if(window.top!==window.self)return false;
+    const dest=shellUrlFor(href);if(!dest)return false;
+    e.preventDefault();location.href=dest;return true;
+  }
+
   function showDashboardPage(key){
     if(!(location.pathname.endsWith('/index.html')||location.pathname.endsWith('/HybridOS/')||location.pathname.endsWith('/')))return false;
     if(!['dashboard','memberships','members','community'].includes(key))return false;
@@ -109,7 +124,7 @@
     const wrap=document.createElement('nav');wrap.className='admin-context-tabs';wrap.setAttribute('aria-label','Section navigation');
     wrap.innerHTML=tabs.map(tab=>'<a class="admin-context-tab '+(tab.key===key?'active':'')+'" data-admin-context="'+tab.key+'" href="'+tab.href+'">'+tab.label+'</a>').join('');
     if(top?.nextSibling)host.insertBefore(wrap,top.nextSibling);else host.appendChild(wrap);
-    wrap.querySelectorAll('.admin-context-tab').forEach(a=>a.addEventListener('click',e=>{if(showDashboardPage(a.dataset.adminContext)){e.preventDefault();return}markAdminHotNav(a.href);closeMobile()}));
+    wrap.querySelectorAll('.admin-context-tab').forEach(a=>a.addEventListener('click',e=>{if(e.defaultPrevented)return;if(enterPersistentShell(e,a.href)){closeMobile();return}if(showDashboardPage(a.dataset.adminContext)){e.preventDefault();return}markAdminHotNav(a.href);closeMobile()}));
   }
 
   function refresh(){
@@ -145,6 +160,8 @@
         a.addEventListener('pointerenter',()=>prefetch(a.href),{passive:true});
         a.addEventListener('touchstart',()=>prefetch(a.href),{passive:true});
         a.addEventListener('click',e=>{
+          if(e.defaultPrevented)return;
+          if(enterPersistentShell(e,a.href)){closeMobile();return}
           const targetKey=a.dataset.adminKey==='members-group'?'members':a.dataset.adminKey;
           if(showDashboardPage(targetKey)){e.preventDefault();return}
           markAdminHotNav(a.href);
