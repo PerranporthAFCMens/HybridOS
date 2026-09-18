@@ -19,6 +19,14 @@
     return true;
   }
 
+  function signalReady(){
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      parent.postMessage({type:'hybrid-admin-ready'},location.origin);
+    }));
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',signalReady,{once:true});
+  else signalReady();
+
   document.addEventListener('click',e=>{
     if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
     const a=e.target.closest?.('a[href]');if(!a||a.target==='_blank'||a.hasAttribute('download'))return;
