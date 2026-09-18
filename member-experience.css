@@ -41,7 +41,7 @@
 .member-home-tile[data-home-key="goal"],
 .member-home-tile[data-home-key="progress"],
 .member-home-tile[data-home-key="activity"]{grid-column:1/-1}
-.member-home-tile[data-home-key="hero"]{grid-column:span 8}
+.member-home-tile[data-home-key="hero"]{grid-column:1/-1}
 .member-home-tile[data-home-key="upcoming_count"]{grid-column:span 4}
 .member-home-tile[data-home-key="next_classes"]{grid-column:span 7}
 .member-home-tile[data-home-key="membership"]{grid-column:span 5}
@@ -75,7 +75,7 @@
     gap:14px!important;
   }
   body:has(.member-gym-logo) .member-home-tile[data-home-key="hero"]{
-    grid-column:span 8!important;
+    grid-column:1/-1!important;
   }
   body:has(.member-gym-logo) .member-home-tile[data-home-key="upcoming_count"]{
     grid-column:span 4!important;
