@@ -33,7 +33,14 @@ html,body{margin:0;min-height:100%;background:#f5f7fb}
 @media(prefers-reduced-motion:reduce){#loading::after,.hybrid-nav-mask-card{animation:none}#hybridNavigationMask{transition:none}}
 html.admin-hot-nav #loading{display:none!important}
 html.admin-hot-nav #app.hidden{display:grid!important}
-@media(max-width:900px){html.admin-hot-nav #app.hidden{display:block!important}}
+html.admin-embedded #loading{background:#f5f7fb!important}
+html.admin-embedded #loading::before{display:none!important}
+html.admin-embedded #loading::after{left:30px!important}
+html.admin-embedded .side{display:none!important}
+html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView{display:block!important;grid-template-columns:1fr!important}
+html.admin-embedded .main{min-height:100dvh!important}
+html.admin-embedded .admin-mobile-menu-btn,html.admin-embedded .admin-mobile-backdrop{display:none!important}
+@media(max-width:900px){html.admin-hot-nav #app.hidden{display:block!important}html.admin-embedded #loading::after{left:14px!important}}
 </style>'''
 def clean_legacy_class_mobile_back():
  write('classes.html',re.sub(r'<a class="mobile-back"[^>]*>.*?</a>','',read('classes.html'),count=1,flags=re.S))
@@ -55,9 +62,9 @@ def add_admin_shell():
  for n in ADMIN_PAGES:
   s=read(n)
   s=re.sub(r'<script[^>]+src=["\']\.\/shared-admin-nav\.js(?:\?[^"\']*)?["\'][^>]*>\s*<\/script>','',s,flags=re.I)
-  s=s.replace('<head>','<head><script>(function(){try{if(sessionStorage.getItem("hybrid-admin-hot-nav")==="1"){document.documentElement.classList.add("admin-hot-nav");sessionStorage.removeItem("hybrid-admin-hot-nav")}}catch(e){}})();</script>',1);s=inject_head(s,'admin-shell.css',f'<link rel="stylesheet" href="./admin-shell.css?v={VERSION}">')
+  s=s.replace('<head>','<head><script>(function(){try{var q=new URLSearchParams(location.search);if(q.get("embedded")==="1")document.documentElement.classList.add("admin-embedded");if(sessionStorage.getItem("hybrid-admin-hot-nav")==="1"){document.documentElement.classList.add("admin-hot-nav");sessionStorage.removeItem("hybrid-admin-hot-nav")}}catch(e){}})();</script>',1);s=inject_head(s,'admin-shell.css',f'<link rel="stylesheet" href="./admin-shell.css?v={VERSION}">')
   s=inject_head(s,'admin-pages.css',f'<link rel="stylesheet" href="./admin-pages.css?v={VERSION}">')
-  s=inject_body(s,'shared-admin-nav.js',f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>')
+  s=inject_body(s,'admin-embed.js',f'<script src="./admin-embed.js?v={VERSION}" defer></script>');s=inject_body(s,'shared-admin-nav.js',f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>')
   if n=='index.html':s=s.replace('<section id="authView" class="auth">','<section id="authView" class="auth hidden">',1)
   write(n,s)
 def add_staff_shell():
