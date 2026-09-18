@@ -1,14 +1,4 @@
-@view-transition { navigation: auto; }
 
-.side{view-transition-name:admin-sidebar}
-.main{view-transition-name:admin-main}
-
-body.admin-leaving .main{
-  opacity:.82;
-  transform:translateY(2px);
-  transition:opacity .12s ease,transform .12s ease;
-}
-
-@media(prefers-reduced-motion:reduce){
-  body.admin-leaving .main{transition:none}
-}
+/* Admin navigation deliberately avoids cross-document View Transitions.
+   They can leave a translucent browser snapshot over the destination page.
+   Smoothness comes from the hot-navigation loader bypass instead. */
