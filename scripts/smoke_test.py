@@ -136,6 +136,9 @@ for x in ('Member community','social_posts','social_comments','social_reactions'
 ops=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
 for x in ('showOpsTab','location.hash.replace','history.replaceState','resources','services'):
  if x not in ops:problems.append(f'admin-operations.html: grouped-nav deep link support missing: {x}')
+
+for x in ('flex-wrap:nowrap','overflow-x:auto','.toolbar,.section-title{display:flex!important;flex-direction:column','width:100%;text-align:center','overflow-wrap:anywhere'):
+ if x not in ops:problems.append(f'admin-operations.html: mobile containment guard missing: {x}')
 stability=(ROOT/'app-stability.js').read_text(encoding='utf-8')
 for x in ('hybridNavigationMask','beginNavigation','HybridNavigation','adminFiles.indexOf(currentFile)','adminFiles.indexOf(targetFile)'):
  if x not in stability:problems.append(f'app-stability.js: admin navigation transition rule missing: {x}')
