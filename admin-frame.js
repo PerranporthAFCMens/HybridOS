@@ -14,7 +14,7 @@ const routes=[
  {key:'reporting',label:'Reporting',icon:'reporting',view:'reporting.html'}
 ];
 const frameA=document.getElementById('adminContentFrameA'),frameB=document.getElementById('adminContentFrameB'),nav=document.getElementById('adminFrameNav'),gymName=document.getElementById('adminFrameGym');
-let activeFrame=frameA,inactiveFrame=frameB,currentView='',loadSeq=0;
+let activeFrame=frameA,inactiveFrame=frameB,currentView='',loadSeq=0,pendingSwap=null;
 
 function cleanView(raw){
  raw=String(raw||'index.html').replace(/^\.\//,'');
@@ -49,16 +49,25 @@ function drawNav(){
  }).join('');
  nav.querySelectorAll('[data-view]').forEach(a=>a.onclick=e=>{e.preventDefault();navigate(a.dataset.view,true);closeMenu()});
 }
+function completeSwap(seq,target,previous){
+ if(!pendingSwap||pendingSwap.seq!==seq||seq!==loadSeq||pendingSwap.target!==target)return;
+ clearTimeout(pendingSwap.fallback);
+ pendingSwap=null;
+ target.classList.add('active');
+ previous.classList.remove('active');
+ activeFrame=target;
+ inactiveFrame=previous;
+}
 function swapTo(view){
  const seq=++loadSeq,target=inactiveFrame,previous=activeFrame;
+ if(pendingSwap?.fallback)clearTimeout(pendingSwap.fallback);
  target.onload=()=>{
    if(seq!==loadSeq)return;
    target.onload=null;
-   target.classList.add('active');
-   previous.classList.remove('active');
-   activeFrame=target;
-   inactiveFrame=previous;
+   // Fallback only. Normal swaps wait for the embedded page's explicit ready signal.
+   if(pendingSwap)pendingSwap.fallback=setTimeout(()=>completeSwap(seq,target,previous),1200);
  };
+ pendingSwap={seq,target,previous,fallback:null};
  target.src=embeddedUrl(view);
 }
 function navigate(view,push){
@@ -94,8 +103,12 @@ async function init(){
  currentView=start;drawNav();activeFrame.src=embeddedUrl(start);
 }
 window.addEventListener('message',e=>{
- if(e.origin!==location.origin||e.data?.type!=='hybrid-admin-nav')return;
- if(e.source!==activeFrame.contentWindow)return;
+ if(e.origin!==location.origin)return;
+ if(e.data?.type==='hybrid-admin-ready'){
+   if(pendingSwap&&e.source===pendingSwap.target.contentWindow)completeSwap(pendingSwap.seq,pendingSwap.target,pendingSwap.previous);
+   return;
+ }
+ if(e.data?.type!=='hybrid-admin-nav'||e.source!==activeFrame.contentWindow)return;
  navigate(e.data.view,true);
 });
 window.addEventListener('popstate',()=>navigate(new URLSearchParams(location.search).get('view')||'index.html',false));
