@@ -2,7 +2,7 @@ from __future__ import annotations
 import os,re,shutil
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'_site';VERSION=os.environ.get('GITHUB_SHA','dev')[:12];EXCLUDE={'.git','.github','scripts','_site'}
-APP_PAGES=('index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','onboarding.html');TENANT_PAGES=('index.html','member.html','member-preview.html','classes.html','staff.html','member-memberships.html','integrations.html','social.html');ADMIN_PAGES=('index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html')
+APP_PAGES=('index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','onboarding.html');TENANT_PAGES=('index.html','member.html','member-preview.html','classes.html','staff.html','member-memberships.html','integrations.html','social.html');ADMIN_PAGES=('index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html')
 def copy_source():
  if OUT.exists():shutil.rmtree(OUT)
  OUT.mkdir()
