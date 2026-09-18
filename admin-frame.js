@@ -1,5 +1,6 @@
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
+const shellVersion=new URL(import.meta.url).searchParams.get('v')||Date.now().toString();
 const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html']);
 const routes=[
  {key:'dashboard',label:'Dashboard',icon:'dashboard',view:'index.html'},
@@ -24,8 +25,7 @@ function cleanView(raw){
 }
 function embeddedUrl(view){
  const [file,hash='']=cleanView(view).split('#');
- const bust=file==='gym-layout.html'?'&v='+Date.now():'';
- return './'+file+'?embedded=1'+bust+(hash?'#'+hash:'');
+ return './'+file+'?embedded=1&v='+encodeURIComponent(shellVersion)+(hash?'#'+hash:'');
 }
 function keyFor(view){
  const v=cleanView(view),[file,hash='']=v.split('#');
