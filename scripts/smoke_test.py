@@ -145,7 +145,7 @@ for x in ('create_training_group','get_training_group_dashboard','create_trainin
 staff_page=(ROOT/'staff.html').read_text(encoding='utf-8')
 for x in ("$('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true","Assigned classes failed","Staff portal failed to initialise"):
  if x not in staff_page:problems.append(f'staff.html: non-blocking startup guard missing: {x}')
-if '<nav class="bottom">' in staff_page:problems.append('staff.html: retired mobile bottom navigation returned')
+if '<nav class="bottom">' in staff_page:problems.append('staff.html: retired mobile bottom navigation returned')\nfor x in ("staffViewMode","view')==='staff'",'Staff view · Previewing the staff experience as an owner/admin','Back to Owner/Admin'):\n if x not in staff_page:problems.append(f'staff.html: owner/admin Staff View preview missing: {x}')\nfor x in ("key:'staff-view'","label:'Staff view'","./staff.html?view=staff"):\n if x not in admin_nav:problems.append(f'shared-admin-nav.js: Staff View navigation missing: {x}')
 member_exp_css=(ROOT/'member-experience.css').read_text(encoding='utf-8')
 for x in ('Desktop member workspace','display:none!important','width:min(1220px,100%)','member-home-tile[data-home-key="hero"]'):
  if x not in member_exp_css:problems.append(f'member-experience.css: desktop member layout guard missing: {x}')

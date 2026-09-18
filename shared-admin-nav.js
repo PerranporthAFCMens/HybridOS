@@ -8,7 +8,7 @@
     {key:'services-group',label:'Services & resources',icon:'services',href:'./admin-operations.html#resources'},
     {key:'staff-group',label:'Staff management',icon:'staff',href:'./admin-operations.html#staff'},
     {key:'members-group',label:'Members',icon:'members',href:'./index.html#members'},
-    {key:'member-view',label:'Member view',icon:'profile',href:'./member-view-settings.html'},
+    {key:'member-view',label:'Member view',icon:'profile',href:'./member-view-settings.html'},\n    {key:'staff-view',label:'Staff view',icon:'staff',href:'./staff.html?view=staff'},
     {key:'reporting',label:'Reporting',icon:'reporting',href:'./reporting.html'}
   ];
   const contextTabs={
