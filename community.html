@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>Community · Hybrid OS</title>
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--ink:#101828;--muted:#667085;--line:#e7ebf2;--dark:#0b1020}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+.hidden{display:none!important}.shell{min-height:100vh;display:grid;grid-template-columns:255px 1fr}.side{background:var(--dark);color:#fff;padding:24px 18px}.brand{font-weight:900;letter-spacing:.08em}.gym{margin-top:20px;padding:13px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08)}.nav{margin-top:18px}.main{padding:28px 30px 80px;min-width:0}.top h1{margin:4px 0}.feed{max-width:860px}.composer,.post{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 14px 34px rgba(16,24,40,.08)}.composer{padding:16px;margin-bottom:14px}.composer textarea{width:100%;border:0;outline:0;resize:vertical;min-height:86px;font-size:15px;background:transparent}.composer-actions{display:flex;justify-content:flex-end;border-top:1px solid #eef1f5;padding-top:12px}.post{padding:16px;margin-bottom:14px}.post-head{display:flex;gap:10px;align-items:center}.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#e9e7ff;font-weight:850;overflow:hidden;flex:0 0 40px}.avatar img{width:100%;height:100%;object-fit:cover}.post-meta{min-width:0}.post-author{font-weight:850}.post-time{font-size:12px;color:#667085;margin-top:2px}.post-body{margin:14px 0;line-height:1.55;color:#344054;white-space:pre-wrap;overflow-wrap:anywhere}.post-stats{font-size:12px;color:#667085;padding-top:10px;border-top:1px solid #eef1f5}.comments{display:grid;gap:8px;margin-top:10px}.comment{display:flex;gap:8px;align-items:flex-start}.comment .avatar{width:30px;height:30px;flex-basis:30px;font-size:11px}.bubble{flex:1;background:#f2f4f7;border-radius:14px;padding:8px 10px}.bubble b{font-size:12px}.bubble div{font-size:13px;color:#475467;margin-top:2px}.post-tools{margin-left:auto;display:flex;gap:7px}.empty{padding:26px;text-align:center;color:#667085;background:#fff;border:1px dashed #d0d5dd;border-radius:18px}.msg{font-size:13px;min-height:18px;margin-top:8px}.bad{color:#b42318}
+@media(max-width:900px){.shell{display:block}.main{padding:18px 14px 60px}.feed{max-width:none}}
+</style>
+</head>
+<body>
+<div id="loading" style="padding:28px">Loading community…</div>
+<div id="app" class="shell hidden">
+<aside class="side"><div class="brand">HYBRID <b>OS</b></div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:800;margin-top:4px"></div></div><nav class="nav"></nav></aside>
+<main class="main">
+<header class="top"><div><div class="eyebrow">Member community</div><h1>Community</h1><div class="muted">See and manage the social feed your members use.</div></div></header>
+<div class="feed">
+<section class="composer"><textarea id="postBody" placeholder="Post an update to your members…"></textarea><div class="composer-actions"><button id="postBtn" class="btn primary">Post to community</button></div><div id="postMsg" class="msg"></div></section>
+<div id="feed"></div>
+</div>
+</main>
+</div>
+<script type="module">
+import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
+const $=id=>document.getElementById(id);let gymId,userId,profiles=new Map();
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const initials=n=>String(n||'H').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+function nameOf(id){const p=profiles.get(id)||{};return p.display_name||[p.first_name,p.last_name].filter(Boolean).join(' ')||'Member'}
+function avatar(id){const p=profiles.get(id)||{};return '<div class="avatar">'+(p.avatar_url?'<img src="'+esc(p.avatar_url)+'" alt="">':esc(initials(nameOf(id))))+'</div>'}
+function when(v){try{return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(v))}catch{return''}}
+async function init(){
+ const{data:{session}}=await sb.auth.getSession();if(!session){location.href='./index.html';return}userId=session.user.id;
+ const{data:gm}=await sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',userId).eq('is_active',true).limit(1);
+ if(!gm?.length){location.href='./index.html';return}
+ let allowed=['owner','admin'].includes(gm[0].role);
+ if(!allowed&&['staff','coach'].includes(gm[0].role)){const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',gm[0].gym_id).eq('user_id',userId).maybeSingle();allowed=sa?.permissions?.full_access===true}
+ if(!allowed){location.href='./staff.html';return}
+ gymId=gm[0].gym_id;$('gymName').textContent=gm[0].gyms?.name||'Gym';
+ const{data:pf}=await sb.from('profiles').select('id,display_name,first_name,last_name,avatar_url');(pf||[]).forEach(p=>profiles.set(p.id,p));
+ $('loading').classList.add('hidden');$('app').classList.remove('hidden');await loadFeed()
+}
+async function loadFeed(){
+ const[{data:posts,error},{data:comments},{data:reactions}]=await Promise.all([
+  sb.from('social_posts').select('*').eq('gym_id',gymId).order('created_at',{ascending:false}).limit(100),
+  sb.from('social_comments').select('*').eq('gym_id',gymId).order('created_at'),
+  sb.from('social_reactions').select('*').eq('gym_id',gymId)
+ ]);
+ if(error){$('feed').innerHTML='<div class="empty">Could not load the social feed.</div>';return}
+ const cs=comments||[],rs=reactions||[];
+ $('feed').innerHTML=(posts||[]).length?(posts||[]).map(p=>{
+  const pc=cs.filter(c=>c.post_id===p.id),pr=rs.filter(r=>r.post_id===p.id);
+  return '<article class="post" data-post="'+p.id+'"><div class="post-head">'+avatar(p.user_id)+'<div class="post-meta"><div class="post-author">'+esc(nameOf(p.user_id))+'</div><div class="post-time">'+esc(when(p.created_at))+'</div></div><div class="post-tools"><button class="btn secondary delete-post" data-id="'+p.id+'">Delete</button></div></div><div class="post-body">'+esc(p.body||'')+'</div><div class="post-stats">'+pr.length+' reaction'+(pr.length===1?'':'s')+' · '+pc.length+' comment'+(pc.length===1?'':'s')+'</div><div class="comments">'+pc.map(c=>'<div class="comment">'+avatar(c.user_id)+'<div class="bubble"><b>'+esc(nameOf(c.user_id))+'</b><div>'+esc(c.body||'')+'</div></div><button class="btn secondary delete-comment" data-id="'+c.id+'">Delete</button></div>').join('')+'</div></article>'
+ }).join(''):'<div class="empty">No community posts yet.</div>';
+ document.querySelectorAll('.delete-post').forEach(b=>b.onclick=()=>removePost(b.dataset.id,b));
+ document.querySelectorAll('.delete-comment').forEach(b=>b.onclick=()=>removeComment(b.dataset.id,b))
+}
+async function removePost(id,btn){if(!confirm('Delete this post?'))return;btn.disabled=true;const{error}=await sb.from('social_posts').delete().eq('id',id).eq('gym_id',gymId);if(error)alert(error.message);await loadFeed()}
+async function removeComment(id,btn){if(!confirm('Delete this comment?'))return;btn.disabled=true;const{error}=await sb.from('social_comments').delete().eq('id',id).eq('gym_id',gymId);if(error)alert(error.message);await loadFeed()}
+$('postBtn').onclick=async()=>{const body=$('postBody').value.trim();if(!body)return;const b=$('postBtn');b.disabled=true;b.textContent='Posting…';const{error}=await sb.from('social_posts').insert({gym_id:gymId,user_id:userId,body});b.disabled=false;b.textContent='Post to community';if(error){$('postMsg').textContent=error.message;$('postMsg').className='msg bad';return}$('postBody').value='';$('postMsg').textContent='';await loadFeed()};
+init();
+</script>
+</body>
+</html>
