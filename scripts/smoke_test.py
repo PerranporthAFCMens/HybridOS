@@ -72,8 +72,11 @@ for page_name in ('index.html','community.html','classes.html','class-setup.html
  nav_refs=re.findall(r'<script[^>]+src=["\']\.\/shared-admin-nav\.js(?:\?[^"\']*)?["\'][^>]*>\s*<\/script>',page_text,flags=re.I)
  if len(nav_refs)!=1:problems.append(f'{page_name}: expected exactly one admin nav runtime, found {len(nav_refs)}')
  elif '?v=' not in nav_refs[0]:problems.append(f'{page_name}: admin nav runtime is not cache-busted')
+social_nav=(ROOT/'social-nav.js').read_text(encoding='utf-8')
+for x in ("data.shellIcon='social'","<span>Social</span>"):
+ if x not in social_nav:problems.append(f'social-nav.js: dedicated social icon missing: {x}')
 shared_shell=(ROOT/'shared-shell.js').read_text(encoding='utf-8')
-for x in ('HybridShell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','dashboard','workouts','pbs','membership'):
+for x in ('HybridShell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','dashboard','workouts','pbs','membership','social:','groups:'):
  if x not in shared_shell:problems.append(f'shared-shell.js: central shell capability missing: {x}')
 app_css=(ROOT/'app-consistency.css').read_text(encoding='utf-8')
 for x in ('Centralised Hybrid OS sidebar shell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','grid-template-columns:254px'):
