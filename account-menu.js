@@ -26,6 +26,7 @@
     .account-modal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}.account-modal-top h2{margin:4px 0 0;font-size:25px}.account-close{width:38px;height:38px;border:1px solid #e7ebf2;border-radius:12px;background:#fff;color:#344054;font-size:22px;cursor:pointer}
     .account-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.account-field{margin:11px 0}.account-field.full{grid-column:1/-1}.account-field label{display:block;font-size:12px;font-weight:850;color:#344054;margin:0 0 6px}.account-field input{width:100%;padding:12px 13px;border:1px solid #d9dee7;border-radius:13px;background:#fff;color:#101828;outline:none}.account-field input:focus{border-color:#a9a1ff;box-shadow:0 0 0 3px rgba(109,93,252,.09)}
     .account-divider{height:1px;background:#eef1f5;margin:15px 0}.account-help{font-size:12px;color:#667085;line-height:1.45;margin-top:5px}.account-msg{font-size:13px;min-height:20px;margin:10px 0}.account-msg.good{color:#067647}.account-msg.error{color:#b42318}.account-save{width:100%;border:0;background:#0b1020;color:#fff;border-radius:13px;padding:13px 15px;font-weight:850;cursor:pointer}.account-save:disabled{opacity:.55;cursor:not-allowed}
+    .account-avatar-row{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid #e7ebf2;border-radius:16px;background:#fafbfc}.account-avatar-preview{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:#e9e7ff;font-weight:900;font-size:20px;overflow:hidden;flex:0 0 64px}.account-avatar-preview img{width:100%;height:100%;object-fit:cover}.account-avatar-copy{min-width:0;flex:1}.account-avatar-copy b{display:block}.account-avatar-copy input{margin-top:8px;width:100%;font-size:12px}
     @media(max-width:900px){.userchip .who{display:block!important}.userchip{padding:6px 8px}.userchip #userEmail{display:none}.userchip:after{display:none}.account-popover{position:fixed;right:14px;top:72px}.account-modal-card{padding:18px;border-radius:20px}.account-grid{grid-template-columns:1fr}.account-field.full{grid-column:auto}}
   `;
   document.head.appendChild(style);
@@ -39,6 +40,7 @@
   modal.className='account-modal';
   modal.innerHTML=`<div class="account-modal-card" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
     <div class="account-modal-top"><div><div class="eyebrow">Personal account</div><h2 id="accountModalTitle">Account settings</h2><div class="muted" style="font-size:13px;margin-top:4px">Update your own Hybrid OS sign-in and profile details.</div></div><button type="button" class="account-close" id="accountCloseBtn" aria-label="Close">×</button></div>
+    <div class="account-avatar-row"><div id="accountAvatarPreview" class="account-avatar-preview">H</div><div class="account-avatar-copy"><b>Profile photo</b><div class="account-help">JPEG, PNG or WebP up to 5 MB.</div><input id="accountAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></div></div>
     <div class="account-grid">
       <div class="account-field full"><label>Display name</label><input id="accountDisplayName" autocomplete="name" placeholder="Your name"></div>
       <div class="account-field"><label>First name</label><input id="accountFirstName" autocomplete="given-name"></div>
@@ -59,8 +61,8 @@
   const q=s=>document.querySelector(s);
   const menuName=q('#accountMenuName'),menuEmail=q('#accountMenuEmail');
   const displayInput=q('#accountDisplayName'),firstInput=q('#accountFirstName'),lastInput=q('#accountLastName'),emailInput=q('#accountEmail');
-  const passwordInput=q('#accountPassword'),password2Input=q('#accountPassword2'),msg=q('#accountMsg'),saveBtn=q('#accountSaveBtn');
-  let user=null,profile=null,membershipRole=null;
+  const passwordInput=q('#accountPassword'),password2Input=q('#accountPassword2'),msg=q('#accountMsg'),saveBtn=q('#accountSaveBtn'),avatarFile=q('#accountAvatarFile'),avatarPreview=q('#accountAvatarPreview');
+  let user=null,profile=null,membershipRole=null,staffPermissions={};
 
   function currentPortal(){
     if(location.pathname.endsWith('/member.html'))return 'member';
@@ -78,7 +80,7 @@
     if(!wrap||!context||!divider)return;
     const role=membershipRole?.role||'member',current=currentPortal(),targets=[];
     if(['owner','admin'].includes(role))targets.push('owner','staff','member');
-    else if(['staff','coach'].includes(role))targets.push('staff','member');
+    else if(['staff','coach'].includes(role)){if(staffPermissions.full_access===true)targets.push('owner');targets.push('staff','member')}
     const available=targets.filter(x=>x!==current);
     const currentName=current==='member'?'Member':portalLabel(current);
     context.textContent='Viewing '+currentName;
@@ -96,10 +98,13 @@
       sb.from('profiles').select('display_name,first_name,last_name,avatar_url').eq('id',u.id).maybeSingle(),
       sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',u.id).eq('is_active',true).limit(1)
     ]);
-    profile=p||{};membershipRole=gm?.[0]||null;
+    profile=p||{};membershipRole=gm?.[0]||null;staffPermissions={};
+    if(membershipRole&&['staff','coach'].includes(membershipRole.role)){const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',membershipRole.gym_id).eq('user_id',u.id).maybeSingle();staffPermissions=sa?.permissions||{}}
     const display=profile.display_name||[profile.first_name,profile.last_name].filter(Boolean).join(' ')||u.user_metadata?.display_name||u.user_metadata?.full_name||u.email?.split('@')[0]||'Account';
     menuName.textContent=display; menuEmail.textContent=u.email||'';
     displayInput.value=display; firstInput.value=profile.first_name||''; lastInput.value=profile.last_name||''; emailInput.value=u.email||'';
+    avatarPreview.innerHTML=profile.avatar_url?'<img src="'+profile.avatar_url+'" alt="">':display.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H';
+    avatarFile.value='';
     renderPortalActions();
     return true;
   }
@@ -113,6 +118,7 @@
   document.addEventListener('click',e=>{if(!chip.contains(e.target))closeMenu()});
   q('#accountEditBtn').onclick=async()=>{closeMenu();await loadAccount();modal.classList.add('open');setTimeout(()=>displayInput.focus(),20)};
   q('#accountCloseBtn').onclick=closeModal;
+  avatarFile.onchange=()=>{const file=avatarFile.files?.[0];if(!file)return;if(file.size>5242880){msg.textContent='Profile photo must be 5 MB or smaller.';msg.className='account-msg error';avatarFile.value='';return}const url=URL.createObjectURL(file);avatarPreview.innerHTML='<img src="'+url+'" alt="New profile photo preview">'};
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();if(modal.classList.contains('open'))closeModal()}});
   q('#accountSignOutBtn').onclick=async()=>{q('#accountSignOutBtn').disabled=true;await sb.auth.signOut();location.href='./index.html'};
@@ -128,7 +134,17 @@
     if(p1&&p1.length<6){msg.textContent='Your new password must be at least 6 characters.';msg.className='account-msg error';return}
     saveBtn.disabled=true;saveBtn.textContent='Saving…';
     try{
-      const profileUpdate=await sb.from('profiles').update({display_name:display,first_name:first||null,last_name:last||null}).eq('id',user.id);
+      let avatarUrl=profile.avatar_url||null;
+      const avatar=avatarFile.files?.[0];
+      if(avatar){
+        const ext=avatar.type==='image/png'?'png':avatar.type==='image/webp'?'webp':'jpg';
+        const path=user.id+'/profile.'+ext;
+        const upload=await sb.storage.from('avatars').upload(path,avatar,{upsert:true,contentType:avatar.type,cacheControl:'3600'});
+        if(upload.error)throw upload.error;
+        const pub=sb.storage.from('avatars').getPublicUrl(path);
+        avatarUrl=(pub.data?.publicUrl||'')+'?v='+Date.now();
+      }
+      const profileUpdate=await sb.from('profiles').update({display_name:display,first_name:first||null,last_name:last||null,avatar_url:avatarUrl}).eq('id',user.id);
       if(profileUpdate.error) throw profileUpdate.error;
       const authChanges={data:{display_name:display,full_name:display}};
       const emailChanged=(email.toLowerCase()!==(user.email||'').toLowerCase());
@@ -139,10 +155,10 @@
       const nameNode=document.getElementById('userName')||document.getElementById('displayName'),emailNode=document.getElementById('userEmail')||document.getElementById('email'),avatar=document.getElementById('userAvatar')||document.getElementById('avatar');
       if(nameNode) nameNode.textContent=display;
       if(emailNode&&!emailChanged) emailNode.textContent=email;
-      if(avatar&&!avatar.querySelector('img')) avatar.textContent=display.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H';
+      if(avatar){if(avatarUrl)avatar.innerHTML='<img src="'+avatarUrl+'" alt="">';else if(!avatar.querySelector('img'))avatar.textContent=display.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H'}
       menuName.textContent=display;menuEmail.textContent=email;
       const welcome=document.getElementById('welcomeTitle');if(welcome){const h=new Date().getHours();welcome.textContent='Good '+(h<12?'morning':h<18?'afternoon':'evening')+', '+display.split(' ')[0]}
-      user=authData?.user||user;profile={display_name:display,first_name:first,last_name:last};
+      user=authData?.user||user;profile={display_name:display,first_name:first,last_name:last,avatar_url:avatarUrl};avatarFile.value='';
       passwordInput.value='';password2Input.value='';
       msg.textContent=emailChanged?'Profile saved. Check your email to confirm the new address.':'Account details updated.';msg.className='account-msg good';
     }catch(err){msg.textContent=err?.message||'Could not update your account.';msg.className='account-msg error'}
