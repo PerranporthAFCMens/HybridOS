@@ -9,6 +9,7 @@ const routes=[
  {key:'staff',label:'Staff management',icon:'staff',view:'admin-operations.html#staff'},
  {key:'members',label:'Members',icon:'members',view:'index.html#members'},
  {key:'member-view',label:'Member view',icon:'profile',view:'member-view-settings.html'},
+ {key:'staff-view',label:'Staff view',icon:'staff',href:'./staff.html?view=staff'},
  {key:'reporting',label:'Reporting',icon:'reporting',view:'reporting.html'}
 ];
 const frameA=document.getElementById('adminContentFrameA'),frameB=document.getElementById('adminContentFrameB'),nav=document.getElementById('adminFrameNav'),gymName=document.getElementById('adminFrameGym');
@@ -41,7 +42,7 @@ function keyFor(view){
 }
 function drawNav(){
  const active=keyFor(currentView);
- nav.innerHTML=routes.map(r=>'<a href="./admin.html?view='+encodeURIComponent(r.view)+'" data-view="'+r.view+'" class="'+(r.key===active?'active':'')+'">'+(window.HybridShell?.icon(r.icon)||'')+'<span>'+r.label+'</span></a>').join('');
+ nav.innerHTML=routes.map(r=>r.href?'<a href="'+r.href+'" class="'+(r.key===active?'active':'')+'">'+(window.HybridShell?.icon(r.icon)||'')+'<span>'+r.label+'</span></a>':'<a href="./admin.html?view='+encodeURIComponent(r.view)+'" data-view="'+r.view+'" class="'+(r.key===active?'active':'')+'">'+(window.HybridShell?.icon(r.icon)||'')+'<span>'+r.label+'</span></a>').join('');
  nav.querySelectorAll('[data-view]').forEach(a=>a.onclick=e=>{e.preventDefault();navigate(a.dataset.view,true);closeMenu()});
 }
 function swapTo(view){
