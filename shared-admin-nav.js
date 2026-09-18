@@ -109,13 +109,22 @@
     const wrap=document.createElement('nav');wrap.className='admin-context-tabs';wrap.setAttribute('aria-label','Section navigation');
     wrap.innerHTML=tabs.map(tab=>'<a class="admin-context-tab '+(tab.key===key?'active':'')+'" data-admin-context="'+tab.key+'" href="'+tab.href+'">'+tab.label+'</a>').join('');
     if(top?.nextSibling)host.insertBefore(wrap,top.nextSibling);else host.appendChild(wrap);
-    wrap.querySelectorAll('.admin-context-tab').forEach(a=>a.addEventListener('click',e=>{if(showDashboardPage(a.dataset.adminContext)){e.preventDefault();return}closeMobile()}));
+    wrap.querySelectorAll('.admin-context-tab').forEach(a=>a.addEventListener('click',e=>{if(showDashboardPage(a.dataset.adminContext)){e.preventDefault();return}markAdminHotNav(a.href);closeMobile()}));
   }
 
   function refresh(){
     const key=currentKey(),group=groupFor(key);
     document.querySelectorAll('.admin-nav-link').forEach(a=>a.classList.toggle('active',a.dataset.adminKey===group));
     renderContextTabs();
+  }
+
+  function markAdminHotNav(href){
+    try{
+      const u=new URL(href,location.href),file=u.pathname.split('/').pop()||'index.html';
+      if(u.origin===location.origin&&adminPages.has(file)&&u.pathname!==location.pathname){
+        sessionStorage.setItem('hybrid-admin-hot-nav','1');
+      }
+    }catch(_e){}
   }
 
   function prefetch(href){
@@ -138,6 +147,7 @@
         a.addEventListener('click',e=>{
           const targetKey=a.dataset.adminKey==='members-group'?'members':a.dataset.adminKey;
           if(showDashboardPage(targetKey)){e.preventDefault();return}
+          markAdminHotNav(a.href);
           closeMobile();
         });
       });
