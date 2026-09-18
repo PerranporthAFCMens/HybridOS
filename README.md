@@ -41,6 +41,20 @@ Public Hybrid Hub demo credentials:
 - `demo@hybridhub.test`
 - `HybridHubDemo!26`
 
+## Latest verified production checkpoint
+
+Latest successful GitHub Pages deployment at handover time:
+
+- Workflow: `Deploy Hybrid OS prototype`
+- Run: `#234`
+- Run ID: `35319011330`
+- Head SHA: `719046a45cc5c7a1de4777f95a8b56921e3181fb`
+- Commit: `Remove obsolete member inline repair step`
+- Status: `completed / success`
+- Completed: 18 September 2026
+
+This is the current known-good production checkpoint. A new chat must still check GitHub Actions first because the hourly Hybrid OS development automation may have landed newer commits.
+
 ## Supported entry points
 
 There are only two supported product entry points:
@@ -106,6 +120,16 @@ Persistence:
 - direct table access is owner/admin only
 - members obtain the safe layout via `get_member_home_layout(uuid)`
 - members do **not** get direct table read/write access
+
+### Most recent Member-view security decision
+
+The Member Home layout controls are an **Admin configuration feature**, not a member-facing setting.
+
+- `member-view-settings.html` is for owner/admin logins only.
+- `gym_member_view_settings` direct SELECT/INSERT/UPDATE/DELETE policies are owner/admin only.
+- normal members must not query the configuration table directly.
+- Member Portal rendering uses `get_member_home_layout(p_gym_id uuid)`, which authenticates the caller, verifies active gym membership and returns only the layout JSON needed to render Home.
+- keep this pattern if more member-view configuration is added later.
 
 ### Classes and session management
 
