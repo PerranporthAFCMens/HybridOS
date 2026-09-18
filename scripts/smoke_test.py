@@ -83,11 +83,14 @@ staff_perms=(ROOT/'staff-permissions.html').read_text(encoding='utf-8')
 for x in ('own_calendar','full_access','Full access','Own calendar only'):
  if x not in staff_perms:problems.append(f'staff-permissions.html: access ladder missing: {x}')
 admin_frame=(ROOT/'admin.html').read_text(encoding='utf-8')
-for x in ('adminContentFrame','adminFrameNav','admin-frame.js','admin-frame.css'):
+for x in ('adminContentFrameA','adminContentFrameB','adminFrameNav','admin-frame.js','admin-frame.css'):
  if x not in admin_frame:problems.append(f'admin.html: persistent shell missing: {x}')
 admin_frame_js=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
-for x in ('hybrid-admin-nav','embedded=1','history.pushState','adminContentFrame',"addEventListener('message'"):
+for x in ('hybrid-admin-nav','embedded=1','history.pushState','adminContentFrameA','adminContentFrameB','swapTo','loadSeq',"addEventListener('message'"):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: persistent routing missing: {x}')
+admin_frame_css=(ROOT/'admin-frame.css').read_text(encoding='utf-8')
+for x in ('.admin-content-frame','.admin-content-frame.active','visibility:hidden'):
+ if x not in admin_frame_css:problems.append(f'admin-frame.css: buffered frame styling missing: {x}')
 admin_embed=(ROOT/'admin-embed.js').read_text(encoding='utf-8')
 for x in ('admin-embedded','parent.postMessage','hybrid-admin-nav'):
  if x not in admin_embed:problems.append(f'admin-embed.js: embedded bridge missing: {x}')
