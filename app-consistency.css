@@ -129,6 +129,11 @@ input.staff-member-search{width:100%;min-height:44px;padding:11px 12px!important
 
   body:has(.mobile-menu-btn) .main,body:has(.admin-mobile-menu-btn) .main,body:has(.staff-mobile-menu-btn) .main{padding-top:calc(env(safe-area-inset-top) + 74px)!important}
   body:has(.mobile-menu-btn) .top,body:has(.admin-mobile-menu-btn) .top,body:has(.staff-mobile-menu-btn) .top{padding-left:54px!important;min-height:46px}
+
+  /* Embedded admin pages sit inside the persistent shell iframe. The outer
+     shell already handles the device safe area, so do not add it a second time. */
+  html.admin-embedded body:has(.admin-mobile-menu-btn) .main{padding-top:74px!important}
+  html.admin-embedded body:has(.admin-mobile-menu-btn) .top{padding-left:54px!important;min-height:46px}
 }
 
 @media(prefers-reduced-motion:reduce){.side,.mobile-nav-backdrop,.admin-mobile-backdrop,.staff-mobile-backdrop{transition:none!important}}
