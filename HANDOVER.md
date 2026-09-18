@@ -59,6 +59,22 @@ Do **not** confuse Hybrid OS with Football PA/Core. This project must not modify
 
 ---
 
+## 2A. Current verified production checkpoint
+
+At the time this handover was refreshed, the latest verified successful deployment was:
+
+- Workflow: `Deploy Hybrid OS prototype`
+- Run number: `234`
+- Run ID: `35319011330`
+- Head SHA: `719046a45cc5c7a1de4777f95a8b56921e3181fb`
+- Commit title: `Remove obsolete member inline repair step`
+- Status: `completed / success`
+- Completed: 18 September 2026
+
+Treat this as the last known-good production checkpoint, **not** as a promise that it will still be the newest commit in the next chat. The hourly Hybrid OS development automation is active and may have pushed newer work. Always inspect the latest Actions run before editing or calling anything live.
+
+---
+
 ## 3. Supported entry points
 
 There are two supported product entry points:
@@ -437,6 +453,19 @@ The drag interaction is intentionally tactile:
 - tile clips/snaps into place
 - phone preview animates into the new order
 
+### Recent Member-view interaction refinement
+
+The reordering interaction was deliberately upgraded from simple row jumping to a visual editor:
+
+- the dragged tile lifts out of the list
+- it gets stronger shadow, scale and slight tilt
+- it follows mouse/finger position
+- other tiles animate out of the way
+- the tile snaps/clips into its new position
+- the phone preview animates to the same new order
+
+Do not regress this back to instant non-visual reordering.
+
 ### Configurable tiles
 
 Keys/default labels:
@@ -478,7 +507,7 @@ Columns include:
 
 Important security decision:
 
-**The table itself should only be available directly to owner/admin logins.**
+**The table itself is Admin configuration and should only be directly available to owner/admin logins.**
 
 Current policies:
 
@@ -494,6 +523,16 @@ Members consume the layout through:
 That RPC is security-definer, requires authentication, verifies the caller is an active member of the requested gym, and only returns the layout JSON.
 
 This preserves the requirement that the setting itself is Admin-only while still allowing the Member Portal to render the Admin-selected layout.
+
+### Admin-only security rule for this feature
+
+This was explicitly confirmed after the first layout-editor pass:
+
+- the **editor UI is for owner/admin logins only**
+- ordinary members must not gain direct read access to `gym_member_view_settings`
+- ordinary members must not insert/update/delete rows in that table
+- member rendering should keep using the narrow `get_member_home_layout` RPC rather than weakening table RLS
+- if more Member Home settings are added later, extend the JSON/RPC pattern rather than exposing the Admin table
 
 Member Preview can also cache the saved layout locally for realistic preview behaviour.
 
@@ -737,7 +776,7 @@ Be aware of this in a new chat: repository changes may have landed since this ha
 
 Do **not** start another cleanup workstream unless a concrete regression appears.
 
-First, verify current production after the recent Member startup/layout changes:
+First, verify current production from the last known-good deployment and any newer automation commits:
 
 1. latest GitHub Actions run is successful
 2. `member.html` loads on iPhone
