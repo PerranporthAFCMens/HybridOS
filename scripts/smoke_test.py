@@ -54,16 +54,19 @@ staff_perms=(ROOT/'staff-permissions.html').read_text(encoding='utf-8')
 for x in ('own_calendar','full_access','Full access','Own calendar only'):
  if x not in staff_perms:problems.append(f'staff-permissions.html: access ladder missing: {x}')
 admin_nav=(ROOT/'shared-admin-nav.js').read_text(encoding='utf-8')
-for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','admin-nav-icon','ICONS','normaliseSidebarChrome','admin-brand-lock','admin-gym-lock','Member memberships','Rooms & equipment','Service dependencies','Staff & working hours','Member view','Door access'):
+for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','HybridShell','Member memberships','Rooms & equipment','Service dependencies','Staff & working hours','Member view','Door access'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: consolidated admin navigation missing: {x}')
 for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  nav_refs=re.findall(r'<script[^>]+src=["\']\.\/shared-admin-nav\.js(?:\?[^"\']*)?["\'][^>]*>\s*<\/script>',page_text,flags=re.I)
  if len(nav_refs)!=1:problems.append(f'{page_name}: expected exactly one admin nav runtime, found {len(nav_refs)}')
  elif '?v=' not in nav_refs[0]:problems.append(f'{page_name}: admin nav runtime is not cache-busted')
-admin_shell=(ROOT/'admin-shell.css').read_text(encoding='utf-8')
-for x in ('Canonical admin sidebar chrome','admin-brand-lock','admin-gym-lock','grid-template-columns:254px'):
- if x not in admin_shell:problems.append(f'admin-shell.css: canonical sidebar shell missing: {x}')
+shared_shell=(ROOT/'shared-shell.js').read_text(encoding='utf-8')
+for x in ('HybridShell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','dashboard','workouts','pbs','membership'):
+ if x not in shared_shell:problems.append(f'shared-shell.js: central shell capability missing: {x}')
+app_css=(ROOT/'app-consistency.css').read_text(encoding='utf-8')
+for x in ('Centralised Hybrid OS sidebar shell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','grid-template-columns:254px'):
+ if x not in app_css:problems.append(f'app-consistency.css: central shell styling missing: {x}')
 community=(ROOT/'community.html').read_text(encoding='utf-8')
 for x in ('Member community','social_posts','social_comments','social_reactions','Post to community'):
  if x not in community:problems.append(f'community.html: admin social feed missing: {x}')
@@ -73,10 +76,10 @@ for x in ('showOpsTab','location.hash.replace','history.replaceState','resources
 account=(ROOT/'account-menu.js').read_text(encoding='utf-8')
 for x in ("storage.from('avatars')",'accountAvatarFile','staffPermissions.full_access'):
  if x not in account:problems.append(f'account-menu.js: profile/portal workflow missing: {x}')
-for page_name in ('member.html','member-preview.html'):
- member_page=(ROOT/page_name).read_text(encoding='utf-8')
- for x in ('member-nav-icon','My membership','Integrations','Profile'):
-  if x not in member_page:problems.append(f'{page_name}: member sidebar icon system missing: {x}')
+for page_name in ('member.html','member-preview.html','staff.html','social.html'):
+ shell_page=(ROOT/page_name).read_text(encoding='utf-8')
+ for x in ('data-shell-icon','Hybrid'):
+  if x not in shell_page:problems.append(f'{page_name}: shared shell navigation missing: {x}')
 member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
 for x in ('requestAnimationFrame(frame)','reorderPreviewToMatch','member-layout-dragging','pointermove','pointerup','tile-placeholder','window.scrollBy','previewOrderWithPlaceholder'):
  if x not in member_view:problems.append(f'member-view-settings.html: drag stability guard missing: {x}')
