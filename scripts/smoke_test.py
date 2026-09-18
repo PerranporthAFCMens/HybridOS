@@ -93,8 +93,13 @@ for x in ("$('loading').classList.add('hidden');$('app').classList.remove('hidde
 member_exp=(ROOT/'member-experience.css').read_text(encoding='utf-8')
 for x in ('Desktop member workspace','display:none!important','width:min(1220px,100%)','member-home-tile[data-home-key="hero"]'):
  if x not in member_exp:problems.append(f'member-experience.css: desktop member layout guard missing: {x}')
+member_exp=(ROOT/'member-experience.js').read_text(encoding='utf-8')
+for x in ('get_member_home_settings','applyHomeCta','primary_target','secondary_target','data-cta-page'):
+ if x not in member_exp:problems.append(f'member-experience.js: member CTA runtime missing: {x}')
+member_css=(ROOT/'member-experience.css').read_text(encoding='utf-8')
+if '.member-home-tile[data-home-key="hero"]{grid-column:1/-1}' not in member_css:problems.append('member-experience.css: full-width member CTA missing')
 member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
-for x in ('requestAnimationFrame(frame)','reorderPreviewToMatch','member-layout-dragging','pointermove','pointerup','tile-placeholder','window.scrollBy','previewOrderWithPlaceholder'):
+for x in ('requestAnimationFrame(frame)','reorderPreviewToMatch','member-layout-dragging','pointermove','pointerup','tile-placeholder','window.scrollBy','previewOrderWithPlaceholder','cta_config','ctaTitle','ctaPrimaryTarget','ctaSecondaryTarget','Gym call to action'):
  if x not in member_view:problems.append(f'member-view-settings.html: drag stability guard missing: {x}')
 if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
 print('Hybrid OS built-site smoke checks passed')
