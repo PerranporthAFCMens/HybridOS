@@ -156,6 +156,10 @@ for page_name in admin_pages:
  for x in ('html.admin-embedded .side{display:none!important}','html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView{display:block!important;grid-template-columns:1fr!important}','html.admin-embedded .main{min-height:100dvh!important}'):
   if x not in page_text:problems.append(f'{page_name}: original embedded admin shell guard missing: {x}')
  if 'admin-mobile-contract.css' in page_text:problems.append(f'{page_name}: duplicate admin mobile contract returned')
+ for asset in ('app-consistency.css','admin-shell.css','admin-pages.css','admin-embed.js','shared-admin-nav.js'):
+  if page_text.count(asset)!=1:problems.append(f'{page_name}: expected exactly one {asset}, found {page_text.count(asset)}')
+ css_order=[page_text.find('app-consistency.css'),page_text.find('admin-shell.css'),page_text.find('admin-pages.css')]
+ if min(css_order)<0 or css_order!=sorted(css_order):problems.append(f'{page_name}: shared admin stylesheet order drifted')
 community=(ROOT/'community.html').read_text(encoding='utf-8')
 for x in ('Member community','social_posts','social_comments','social_reactions','Post to community','sendComment','reply-comment','parent_comment_id','Add a comment'):
  if x not in community:problems.append(f'community.html: admin social feed missing: {x}')
