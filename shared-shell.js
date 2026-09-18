@@ -49,7 +49,7 @@
   function decorateNav(side){
     if(!side)return;
     side.querySelectorAll('.nav [data-shell-icon]').forEach(item=>{
-      item.querySelectorAll('.hybrid-nav-icon,.member-nav-icon,.admin-nav-icon').forEach(svg=>svg.remove());
+      item.querySelectorAll('.hybrid-nav-icon').forEach(svg=>svg.remove());
       item.insertAdjacentHTML('afterbegin',icon(item.dataset.shellIcon));
       if(!item.querySelector(':scope > span')){
         const text=[...item.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE).map(n=>n.textContent).join('').trim();
