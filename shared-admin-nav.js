@@ -30,6 +30,7 @@
     'members-group':[
       {key:'members',label:'Members',href:'./index.html#members'},
       {key:'memberships',label:'Memberships',href:'./index.html#memberships'},
+      {key:'member-memberships',label:'Member memberships',href:'./member-memberships.html'},
       {key:'member-view',label:'Member view',href:'./member-view-settings.html'},
       {key:'access',label:'Door access',href:'./access-settings.html'}
     ]
@@ -46,7 +47,7 @@
   };
   function icon(name){return '<svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||'')+'</svg>';}
 
-  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html']);
+  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html']);
 
   function normaliseSidebarChrome(){
     document.querySelectorAll('.side').forEach(side=>{
@@ -88,6 +89,7 @@
     if(p.endsWith('/staff-permissions.html'))return'staff-access';
     if(p.endsWith('/access-settings.html'))return'access';
     if(p.endsWith('/reporting.html'))return'reporting';
+    if(p.endsWith('/member-memberships.html'))return'member-memberships';
     if(p.endsWith('/member-view-settings.html'))return'member-view';
     if(p.endsWith('/index.html')||p.endsWith('/HybridOS/')||p.endsWith('/')){
       return['memberships','members','community'].includes(h)?h:'dashboard';
@@ -100,7 +102,7 @@
     if(['classes','class-setup'].includes(key))return'classes-group';
     if(['resources','services','resource-availability'].includes(key))return'services-group';
     if(['staff','staff-access'].includes(key))return'staff-group';
-    if(['members','memberships','member-view','access'].includes(key))return'members-group';
+    if(['members','memberships','member-memberships','member-view','access'].includes(key))return'members-group';
     return key;
   }
 
