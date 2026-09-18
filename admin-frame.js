@@ -8,6 +8,7 @@ const routes=[
  {key:'services',label:'Services & resources',icon:'services',view:'admin-operations.html#resources'},
  {key:'staff',label:'Staff management',icon:'staff',view:'admin-operations.html#staff'},
  {key:'members',label:'Members',icon:'members',view:'index.html#members'},
+ {key:'member-view',label:'Member view',icon:'profile',view:'member-view-settings.html'},
  {key:'reporting',label:'Reporting',icon:'reporting',view:'reporting.html'}
 ];
 const frameA=document.getElementById('adminContentFrameA'),frameB=document.getElementById('adminContentFrameB'),nav=document.getElementById('adminFrameNav'),gymName=document.getElementById('adminFrameGym');
@@ -32,6 +33,7 @@ function keyFor(view){
  if(file==='staff-permissions.html')return'staff';
  if(file==='resource-availability.html')return'services';
  if(file==='reporting.html')return'reporting';
+ if(file==='member-view-settings.html')return'member-view';
  if(file==='index.html'&&hash==='members')return'members';
  if(file==='index.html')return'dashboard';
  return '';
