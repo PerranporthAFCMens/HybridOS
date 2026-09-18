@@ -26,7 +26,24 @@ body.member-mode .tools,body.member-mode .steps,body.member-mode .top .actions{d
 .resize-corner{right:-11px;bottom:-11px;width:22px;height:22px;border-radius:6px;cursor:nwse-resize}
 .resize-right::after{content:"↔";position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:900;color:#0b1020}.resize-bottom::after{content:"↕";position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:900;color:#0b1020}.resize-corner::after{content:"↘";position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:900;color:#0b1020}.pin.selected .resize-edge{display:block}
 body.member-mode .resize-edge{display:none!important}
-@media(max-width:950px){.shell{display:block}.side{display:none}.main{padding:18px 14px 40px}.layout{grid-template-columns:1fr}.tools{position:static}.canvas-wrap{min-height:360px}.top{flex-direction:column}}
+.mobile-editor-tabs{display:none}
+@media(max-width:950px){
+ .shell{display:block}.side{display:none}.main{padding:14px 10px 34px}.top{flex-direction:column;gap:10px;margin-bottom:10px}.top h1{font-size:26px}.top .muted{font-size:13px;line-height:1.4}
+ .actions{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.actions .btn{padding:9px 7px;font-size:12px;min-width:0}
+ .steps{margin-bottom:10px;gap:6px}.step{font-size:11px;padding:7px 9px}
+ .mobile-editor-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;position:sticky;top:0;z-index:20;background:var(--bg);padding:7px 0 9px;margin-bottom:8px}
+ .mobile-editor-tab{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;min-height:44px;font-weight:850;font-size:14px}
+ .mobile-editor-tab.active{background:var(--dark);border-color:var(--dark);color:#fff}
+ .layout{display:block}.tools{position:static;padding:14px;border-radius:16px}.workspace{padding:8px;border-radius:16px}
+ body.mobile-panel-map .tools{display:none}body.mobile-panel-setup .workspace{display:none}
+ .canvas-head{padding:4px 2px 8px;margin:0}.canvas-wrap{width:100%;height:62svh;min-height:470px;max-height:680px;aspect-ratio:auto;border-radius:14px;touch-action:pan-y;background-size:28px 28px}
+ .pin,.zone,.resize-edge{touch-action:none}
+ .resize-right{right:-11px;width:24px;height:54px}.resize-bottom{bottom:-11px;height:24px;width:54px}.resize-corner{right:-14px;bottom:-14px;width:30px;height:30px}
+ .resize-right::after,.resize-bottom::after,.resize-corner::after{font-size:13px}
+ .pin .remove,.zone .remove{width:30px;height:30px;top:-12px;right:-12px;font-size:16px}
+ .catalog{max-height:none}.field input,.field select{font-size:16px;min-height:46px}.btn{min-height:44px}.upload{padding:18px 12px}
+ .legend{font-size:11px;gap:8px}.member-bar{align-items:flex-start}.member-bar .btn{flex:0 0 auto}
+}
 </style>
 </head>
 <body>
@@ -34,6 +51,7 @@ body.member-mode .resize-edge{display:none!important}
 <main class="main">
 <header class="top"><div><div class="eyebrow">Services & resources</div><h1>Gym layout</h1><div class="muted">Build a simple member-friendly map of your gym and show people where equipment lives.</div></div><div class="actions"><button id="resetBtn" class="btn">Reset draft</button><button id="previewBtn" class="btn">Preview as member</button><button id="saveBtn" class="btn good">Save draft</button></div></header>
 <div class="steps"><span class="step active">1. Add floorplan</span><span class="step">2. Mark zones</span><span class="step">3. Place equipment</span><span class="step">4. Preview</span></div>
+<div class="mobile-editor-tabs" aria-label="Gym layout mobile editor"><button type="button" class="mobile-editor-tab active" data-mobile-panel="map">Map</button><button type="button" class="mobile-editor-tab" data-mobile-panel="setup">Setup</button></div>
 <div class="member-bar"><div><b>Member map preview</b><br><span>Tap an exercise below to find its equipment.</span></div><button id="exitPreview" class="btn">Back to editor</button></div>
 <div class="member-workout"><button data-find="Squat rack">Back squat</button><button data-find="Bench">Bench press</button><button data-find="SkiErg">SkiErg intervals</button><button data-find="Cable machine">Cable row</button><button data-find="Sled">Sled push</button></div>
 <div class="layout">
@@ -167,13 +185,20 @@ const equipment=[
  ['Body composition scanner','Mobility & recovery','◎',['Body composition assessment']]
 ]
 let state={background:'',zones:[],items:[]},selected=null;
+const mobileMq=window.matchMedia('(max-width:950px)');
+function setMobilePanel(panel){
+ if(!mobileMq.matches)return;
+ document.body.classList.toggle('mobile-panel-map',panel==='map');
+ document.body.classList.toggle('mobile-panel-setup',panel==='setup');
+ document.querySelectorAll('.mobile-editor-tab').forEach(b=>b.classList.toggle('active',b.dataset.mobilePanel===panel));
+}
 function uid(){return Math.random().toString(36).slice(2,9)}
 function toast(t){$('toast').textContent=t;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),1500)}
 function save(silent=false){try{localStorage.setItem(KEY,JSON.stringify(state));$('status').textContent='Saved locally';if(!silent)toast('Layout draft saved')}catch(e){$('status').textContent='Draft too large to save';if(!silent)toast('Could not save this image locally')}}
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){state=d;(state.items||[]).forEach(i=>{if(!i.w||!i.h){const scale=(i.size||100)/100;i.w=Math.max(4,12*scale);i.h=Math.max(4,9*scale)}})}}catch(e){}render()}
 function renderCatalog(){const q=$('search').value.trim().toLowerCase(),cat=$('categoryFilter').value;$('catalog').innerHTML=equipment.filter(x=>(!cat||x[1]===cat)&&(!q||x[0].toLowerCase().includes(q)||x[1].toLowerCase().includes(q)||x[3].some(e=>e.toLowerCase().includes(q)))).map(x=>'<button data-eq="'+equipment.indexOf(x)+'"><b>'+x[2]+' '+x[0]+'</b><small>'+x[1]+' · '+x[3].join(', ')+'</small></button>').join('')||'<div class="muted" style="padding:8px">No equipment matches that search.</div>';document.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>addEquipment(equipment[+b.dataset.eq]))}
-function addEquipment(eq){const same=state.items.filter(x=>x.name===eq[0]).length;const item={id:uid(),name:eq[0],category:eq[1],icon:eq[2],exercises:eq[3],x:48+((state.items.length*6)%35),y:48+((state.items.length*5)%30),quantity:1,w:12,h:9,label:same?eq[0]+' '+(same+1):eq[0]};state.items.push(item);selected={type:'item',id:item.id};render();save(true)}
-function addZone(){const name=$('zoneName').value.trim();if(!name)return toast('Give the zone a name');state.zones.push({id:uid(),name,x:snap(8+((state.zones.length*8)%35),1),y:snap(8+((state.zones.length*7)%25),1),w:30,h:25});$('zoneName').value='';render();save(true)}
+function addEquipment(eq){const same=state.items.filter(x=>x.name===eq[0]).length;const item={id:uid(),name:eq[0],category:eq[1],icon:eq[2],exercises:eq[3],x:48+((state.items.length*6)%35),y:48+((state.items.length*5)%30),quantity:1,w:12,h:9,label:same?eq[0]+' '+(same+1):eq[0]};state.items.push(item);selected={type:'item',id:item.id};render();save(true);if(mobileMq.matches){setMobilePanel('map');setTimeout(()=>document.querySelector('.pin.selected')?.scrollIntoView({behavior:'smooth',block:'center'}),50)}}
+function addZone(){const name=$('zoneName').value.trim();if(!name)return toast('Give the zone a name');state.zones.push({id:uid(),name,x:snap(8+((state.zones.length*8)%35),1),y:snap(8+((state.zones.length*7)%25),1),w:30,h:25});$('zoneName').value='';render();save(true);if(mobileMq.matches)setMobilePanel('map')}
 function remove(type,id){if(type==='item')state.items=state.items.filter(x=>x.id!==id);else state.zones=state.zones.filter(x=>x.id!==id);selected=null;render();save(true)}
 function pct(n,min=0,max=100){return Math.max(min,Math.min(max,n))}
 const GRID_PX=28;
@@ -244,8 +269,9 @@ function renderSelected(){const host=$('selectedPanel');if(!selected){host.class
 function highlight(name){const item=state.items.find(x=>x.name===name||x.exercises?.includes(name));if(!item)return toast('That equipment has not been placed yet');selected={type:'item',id:item.id};render();const pin=[...document.querySelectorAll('.pin')].find(x=>x.classList.contains('selected'));pin?.scrollIntoView({behavior:'smooth',block:'center'});toast((item.label||item.name)+' highlighted')}
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function attr(s){return escapeHtml(s).replace(/"/g,'&quot;')}
+document.querySelectorAll('.mobile-editor-tab').forEach(b=>b.onclick=()=>setMobilePanel(b.dataset.mobilePanel));setMobilePanel('map');mobileMq.addEventListener?.('change',e=>{if(e.matches)setMobilePanel('map');else document.body.classList.remove('mobile-panel-map','mobile-panel-setup')});
 $('search').oninput=renderCatalog;$('categoryFilter').onchange=renderCatalog;$('addZoneBtn').onclick=addZone;$('saveBtn').onclick=()=>save();
-$('floorUpload').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{state.background=rd.result;render();save(true)};rd.readAsDataURL(f)};
+$('floorUpload').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{state.background=rd.result;render();save(true);if(mobileMq.matches)setMobilePanel('map')};rd.readAsDataURL(f)};
 $('blankBtn').onclick=()=>{state.background='';render();toast('Blank grid ready')};$('clearBgBtn').onclick=()=>{state.background='';render();save(true)};
 $('previewBtn').onclick=()=>{document.body.classList.add('member-mode');selected=null;render()};$('exitPreview').onclick=()=>document.body.classList.remove('member-mode');
 document.querySelectorAll('[data-find]').forEach(b=>b.onclick=()=>highlight(b.dataset.find));
