@@ -94,6 +94,12 @@ for x in ('admin-frame.css?v=','admin-frame.js?v=','shared-shell.js?v='):
 admin_frame_css=(ROOT/'admin-frame.css').read_text(encoding='utf-8')
 for x in ('.admin-content-frame','.admin-content-frame.active','visibility:hidden'):
  if x not in admin_frame_css:problems.append(f'admin-frame.css: buffered frame styling missing: {x}')
+
+admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
+for x in ('viewport-fit=cover','name="theme-color" content="#f5f7fb"'):
+ if x not in admin_frame_html:problems.append(f'admin.html: iPhone full-bleed shell guard missing: {x}')
+for x in ('env(safe-area-inset-top)','env(safe-area-inset-bottom)','top:calc(env(safe-area-inset-top) + 16px)','background:#f5f7fb'):
+ if x not in admin_frame_css:problems.append(f'admin-frame.css: safe-area shell guard missing: {x}')
 admin_embed=(ROOT/'admin-embed.js').read_text(encoding='utf-8')
 for x in ('admin-embedded','parent.postMessage','hybrid-admin-nav'):
  if x not in admin_embed:problems.append(f'admin-embed.js: embedded bridge missing: {x}')
