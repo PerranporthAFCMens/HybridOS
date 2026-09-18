@@ -56,5 +56,8 @@ for x in ('own_calendar','full_access','Full access','Own calendar only'):
 account=(ROOT/'account-menu.js').read_text(encoding='utf-8')
 for x in ("storage.from('avatars')",'accountAvatarFile','staffPermissions.full_access'):
  if x not in account:problems.append(f'account-menu.js: profile/portal workflow missing: {x}')
+member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
+for x in ('requestAnimationFrame(frame)','reorderPreviewToMatch','member-layout-dragging','lostpointercapture'):
+ if x not in member_view:problems.append(f'member-view-settings.html: drag stability guard missing: {x}')
 if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
 print('Hybrid OS built-site smoke checks passed')
