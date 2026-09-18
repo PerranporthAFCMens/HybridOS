@@ -145,3 +145,7 @@ for x in ('requestAnimationFrame(frame)','reorderPreviewToMatch','member-layout-
  if x not in member_view:problems.append(f'member-view-settings.html: drag stability guard missing: {x}')
 if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
 print('Hybrid OS built-site smoke checks passed')
+
+admin_ops=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
+for x in ('ops-pane-transition','transitionOpsTab','ops-enter'):
+ if x not in admin_ops:problems.append(f'admin-operations.html: smooth internal admin transition missing: {x}')
