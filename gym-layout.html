@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script>(function(){try{if(new URLSearchParams(location.search).get('embedded')==='1')document.documentElement.classList.add('gym-layout-embedded')}catch(e){}})();</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Gym layout · Hybrid OS</title>
 <style>
@@ -12,12 +13,19 @@
 .steps{display:flex;gap:8px;overflow:auto;margin-bottom:18px}.step{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:800}.step.active{background:#e9fbf6;border-color:#9de1d1;color:#075f51}
 .layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}.panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 28px rgba(16,24,40,.06)}.tools{padding:16px;position:sticky;top:18px}.tools h3{margin:0 0 10px}.section{padding:14px 0;border-top:1px solid var(--line)}.section:first-of-type{border-top:0}.field{margin-top:9px}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:5px}.field input,.field select{width:100%;padding:10px 11px;border:1px solid #d0d5dd;border-radius:11px;font:inherit;background:#fff}.upload{display:block;border:1.5px dashed #b8c0cc;border-radius:14px;padding:14px;text-align:center;cursor:pointer;background:#fafbfc}.upload input{display:none}.tool-row{display:flex;gap:7px}.tool-row>*{flex:1}.catalog{display:grid;gap:7px;max-height:270px;overflow:auto;margin-top:8px}.catalog button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;text-align:left;cursor:pointer}.catalog button:hover{background:#f8fafc}.catalog small{display:block;color:var(--muted);margin-top:2px}
 .workspace{padding:14px}.canvas-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.canvas-wrap{position:relative;width:100%;aspect-ratio:16/10;min-height:420px;border:1px solid #d8dee8;border-radius:18px;overflow:hidden;background-color:#f8fafc;background-image:linear-gradient(#e9edf3 1px,transparent 1px),linear-gradient(90deg,#e9edf3 1px,transparent 1px);background-size:28px 28px;touch-action:none}.floor-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;opacity:.88}.zone{position:absolute;min-width:120px;min-height:70px;border:2px dashed rgba(13,121,102,.55);background:rgba(13,121,102,.10);border-radius:16px;padding:10px;cursor:grab;user-select:none}.zone strong{font-size:12px}.zone .remove,.pin .remove{position:absolute;top:-8px;right:-8px;width:23px;height:23px;border-radius:50%;border:1px solid #d0d5dd;background:#fff;display:grid;place-items:center;font-weight:900;cursor:pointer}
-.pin{position:absolute;transform:translate(-50%,-50%);width:var(--pin-w,12%);height:var(--pin-h,9%);min-width:42px;min-height:34px;background:#0b1020;color:#fff;border-radius:13px;padding:8px 9px;box-shadow:0 8px 20px rgba(11,16,32,.20);cursor:grab;user-select:none;display:flex;flex-direction:column;justify-content:center;overflow:visible}.pin .icon{font-size:18px}.pin strong{display:block;font-size:11px;line-height:1.15;margin-top:2px}.pin small{font-size:10px;color:#cbd5e1}.pin.selected{outline:3px solid #6ee7c8}.resize-handle{display:none;position:absolute;right:-10px;bottom:-10px;width:22px;height:22px;border:2px solid #0b1020;border-radius:6px;background:#6ee7c8;cursor:nwse-resize;touch-action:none;box-shadow:0 2px 7px rgba(11,16,32,.22)}.resize-handle::before{content:"";position:absolute;right:4px;bottom:4px;width:7px;height:7px;border-right:2px solid #0b1020;border-bottom:2px solid #0b1020}.pin.selected .resize-handle{display:block}body.member-mode .resize-handle{display:none!important}.size-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-top:8px}.size-row input[type=range]{width:100%}.mini-btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 10px;font-weight:850;cursor:pointer}.size-readout{font-size:12px;font-weight:800;color:var(--muted);text-align:center;margin-top:4px}
+.pin{position:absolute;transform:translate(-50%,-50%);width:var(--pin-w,12%);height:var(--pin-h,9%);min-width:42px;min-height:34px;background:#0b1020;color:#fff;border-radius:13px;padding:8px 9px;box-shadow:0 8px 20px rgba(11,16,32,.20);cursor:grab;user-select:none;display:flex;flex-direction:column;justify-content:center;overflow:visible}.pin .icon{font-size:18px}.pin strong{display:block;font-size:11px;line-height:1.15;margin-top:2px}.pin small{font-size:10px;color:#cbd5e1}.pin.selected{outline:3px solid #6ee7c8}.size-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-top:8px}.size-row input[type=range]{width:100%}.mini-btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 10px;font-weight:850;cursor:pointer}.size-readout{font-size:12px;font-weight:800;color:var(--muted);text-align:center;margin-top:4px}
 .empty-tip{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:#98a2b3;max-width:330px}.empty-tip b{color:#667085}.status{font-size:12px;font-weight:800;color:#067647}
 .member-bar{display:none;margin-bottom:12px;padding:12px 14px;border-radius:14px;background:#0b1020;color:#fff;justify-content:space-between;align-items:center;gap:12px}.member-bar span{color:#cbd5e1;font-size:13px}.member-workout{display:none;gap:8px;flex-wrap:wrap;margin:0 0 12px}.member-workout button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-weight:750;cursor:pointer}
 body.member-mode .tools,body.member-mode .steps,body.member-mode .top .actions{display:none}body.member-mode .layout{grid-template-columns:1fr}body.member-mode .member-bar{display:flex}body.member-mode .member-workout{display:flex}body.member-mode .remove{display:none}body.member-mode .pin,body.member-mode .zone{cursor:pointer}
 .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}.dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:#0b1020;margin-right:5px}.zone-dot{background:#86d9c7}
 .toast{position:fixed;right:22px;bottom:22px;background:#0b1020;color:#fff;padding:11px 14px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.18);opacity:0;transform:translateY(8px);transition:.18s;pointer-events:none;z-index:99}.toast.show{opacity:1;transform:none}
+.gym-layout-embedded .side{display:none!important}.gym-layout-embedded .shell{display:block!important;grid-template-columns:1fr!important}.gym-layout-embedded .main{min-height:100vh}
+.resize-edge{display:none;position:absolute;background:#6ee7c8;border:2px solid #0b1020;z-index:4;touch-action:none;box-shadow:0 2px 7px rgba(11,16,32,.18)}
+.resize-right{right:-6px;top:50%;transform:translateY(-50%);width:12px;height:34px;border-radius:6px;cursor:ew-resize}
+.resize-bottom{bottom:-6px;left:50%;transform:translateX(-50%);height:12px;width:34px;border-radius:6px;cursor:ns-resize}
+.resize-corner{right:-9px;bottom:-9px;width:18px;height:18px;border-radius:5px;cursor:nwse-resize}
+.pin.selected .resize-edge{display:block}
+body.member-mode .resize-edge{display:none!important}
 @media(max-width:950px){.shell{display:block}.side{display:none}.main{padding:18px 14px 40px}.layout{grid-template-columns:1fr}.tools{position:static}.canvas-wrap{min-height:360px}.top{flex-direction:column}}
 </style>
 </head>
@@ -168,45 +176,71 @@ function addEquipment(eq){const same=state.items.filter(x=>x.name===eq[0]).lengt
 function addZone(){const name=$('zoneName').value.trim();if(!name)return toast('Give the zone a name');state.zones.push({id:uid(),name,x:snap(8+((state.zones.length*8)%35),1),y:snap(8+((state.zones.length*7)%25),1),w:30,h:25});$('zoneName').value='';render();save(true)}
 function remove(type,id){if(type==='item')state.items=state.items.filter(x=>x.id!==id);else state.zones=state.zones.filter(x=>x.id!==id);selected=null;render();save(true)}
 function pct(n,min=0,max=100){return Math.max(min,Math.min(max,n))}
+const GRID_PX=28;
+function snapPx(n){return Math.round(n/GRID_PX)*GRID_PX}
 function snap(n,step=1){return Math.round(n/step)*step}
-function drag(el,obj,type,e){if(document.body.classList.contains('member-mode'))return;if(e.target.classList.contains('remove')||e.target.closest?.('.resize-handle'))return;e.preventDefault();selected={type,id:obj.id};renderSelected();const c=$('canvas'),r=c.getBoundingClientRect();const startX=e.clientX,startY=e.clientY,ox=obj.x,oy=obj.y;function move(ev){const dx=(ev.clientX-startX)/r.width*100,dy=(ev.clientY-startY)/r.height*100;obj.x=snap(pct(ox+dx,0,type==='item'?100:85),1);obj.y=snap(pct(oy+dy,0,type==='item'?100:80),1);el.style.left=obj.x+'%';el.style.top=obj.y+'%'}function up(){window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);save(true)}window.addEventListener('pointermove',move);window.addEventListener('pointerup',up)}
-function resizeEquipment(el,obj,e){
+function drag(el,obj,type,e){
+ if(document.body.classList.contains('member-mode'))return;
+ if(e.target.classList.contains('remove')||e.target.closest?.('.resize-edge'))return;
+ e.preventDefault();
+ selected={type,id:obj.id};renderSelected();
+ const r=$('canvas').getBoundingClientRect();
+ const startX=e.clientX,startY=e.clientY;
+ let leftPx,topPx,wPx=0,hPx=0;
+ if(type==='item'){
+   wPx=(obj.w||12)/100*r.width;hPx=(obj.h||9)/100*r.height;
+   leftPx=(obj.x/100*r.width)-(wPx/2);topPx=(obj.y/100*r.height)-(hPx/2);
+ }else{
+   leftPx=obj.x/100*r.width;topPx=obj.y/100*r.height;
+   wPx=(obj.w||30)/100*r.width;hPx=(obj.h||25)/100*r.height;
+ }
+ function move(ev){
+   const dx=ev.clientX-startX,dy=ev.clientY-startY;
+   const maxLeft=Math.max(0,r.width-wPx),maxTop=Math.max(0,r.height-hPx);
+   const sl=Math.max(0,Math.min(maxLeft,snapPx(leftPx+dx)));
+   const st=Math.max(0,Math.min(maxTop,snapPx(topPx+dy)));
+   if(type==='item'){
+     obj.x=((sl+wPx/2)/r.width)*100;obj.y=((st+hPx/2)/r.height)*100;
+   }else{
+     obj.x=(sl/r.width)*100;obj.y=(st/r.height)*100;
+   }
+   el.style.left=obj.x+'%';el.style.top=obj.y+'%';
+ }
+ function up(){window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);save(true)}
+ window.addEventListener('pointermove',move,{passive:false});window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
+}
+function resizeEquipment(el,obj,mode,e){
  if(document.body.classList.contains('member-mode'))return;
  e.preventDefault();e.stopPropagation();
  selected={type:'item',id:obj.id};
- const c=$('canvas'),r=c.getBoundingClientRect();
- const startX=e.clientX,startY=e.clientY,startW=obj.w||12,startH=obj.h||9;
+ const r=$('canvas').getBoundingClientRect();
+ const startW=(obj.w||12)/100*r.width,startH=(obj.h||9)/100*r.height;
+ const startCX=obj.x/100*r.width,startCY=obj.y/100*r.height;
+ const left=startCX-startW/2,top=startCY-startH/2;
+ const right=startCX+startW/2,bottom=startCY+startH/2;
  function move(ev){
-  ev.preventDefault();
-  const dw=(ev.clientX-startX)/r.width*100;
-  const dh=(ev.clientY-startY)/r.height*100;
-  obj.w=snap(Math.max(3,Math.min(60,startW+dw)),0.5);
-  obj.h=snap(Math.max(3,Math.min(50,startH+dh)),0.5);
-  el.style.setProperty('--pin-w',obj.w+'%');
-  el.style.setProperty('--pin-h',obj.h+'%');
-  const w=$('editWItem'),h=$('editHItem');
-  if(w)w.value=Math.round(obj.w*10)/10;
-  if(h)h.value=Math.round(obj.h*10)/10;
+   let newRight=right,newBottom=bottom;
+   if(mode==='right'||mode==='corner')newRight=Math.max(left+GRID_PX,Math.min(r.width,snapPx(ev.clientX-r.left)));
+   if(mode==='bottom'||mode==='corner')newBottom=Math.max(top+GRID_PX,Math.min(r.height,snapPx(ev.clientY-r.top)));
+   const newW=Math.max(GRID_PX,newRight-left),newH=Math.max(GRID_PX,newBottom-top);
+   if(mode==='right'||mode==='corner'){obj.w=newW/r.width*100;obj.x=(left+newW/2)/r.width*100}
+   if(mode==='bottom'||mode==='corner'){obj.h=newH/r.height*100;obj.y=(top+newH/2)/r.height*100}
+   el.style.left=obj.x+'%';el.style.top=obj.y+'%';
+   el.style.setProperty('--pin-w',(obj.w||12)+'%');el.style.setProperty('--pin-h',(obj.h||9)+'%');
+   const wi=$('editWItem'),hi=$('editHItem');if(wi)wi.value=(obj.w||12).toFixed(1);if(hi)hi.value=(obj.h||9).toFixed(1);
  }
- function up(){
-  window.removeEventListener('pointermove',move);
-  window.removeEventListener('pointerup',up);
-  window.removeEventListener('pointercancel',up);
-  save(true);
- }
- window.addEventListener('pointermove',move,{passive:false});
- window.addEventListener('pointerup',up);
- window.addEventListener('pointercancel',up);
+ function up(){window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);save(true)}
+ window.addEventListener('pointermove',move,{passive:false});window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
 }
 function render(){
  $('floorBg').classList.toggle('hidden',!state.background);if(state.background)$('floorBg').src=state.background;
  $('emptyTip').style.display=(state.background||state.zones.length||state.items.length)?'none':'block';
  [...$('canvas').querySelectorAll('.zone,.pin')].forEach(x=>x.remove());
  state.zones.forEach(z=>{const el=document.createElement('div');el.className='zone';el.style.left=z.x+'%';el.style.top=z.y+'%';el.style.width=z.w+'%';el.style.height=z.h+'%';el.innerHTML='<button class="remove">×</button><strong>'+escapeHtml(z.name)+'</strong>';el.querySelector('.remove').onclick=e=>{e.stopPropagation();remove('zone',z.id)};el.onpointerdown=e=>drag(el,z,'zone',e);el.onclick=()=>{selected={type:'zone',id:z.id};renderSelected()};$('canvas').appendChild(el)});
- state.items.forEach(i=>{const el=document.createElement('div');el.className='pin'+(selected?.type==='item'&&selected.id===i.id?' selected':'');el.style.left=i.x+'%';el.style.top=i.y+'%';el.style.setProperty('--pin-w',(i.w||12)+'%');el.style.setProperty('--pin-h',(i.h||9)+'%');el.innerHTML='<button class="remove">×</button><span class="icon">'+i.icon+'</span><strong>'+escapeHtml(i.label||i.name)+'</strong><small>'+(i.quantity>1?'×'+i.quantity+' · ':'')+escapeHtml(i.category)+'</small><span class="resize-handle" title="Drag to resize" aria-label="Drag to resize"></span>';el.querySelector('.remove').onclick=e=>{e.stopPropagation();remove('item',i.id)};el.querySelector('.resize-handle').onpointerdown=e=>resizeEquipment(el,i,e);el.onpointerdown=e=>drag(el,i,'item',e);el.onclick=e=>{if(e.target.closest?.('.resize-handle'))return;selected={type:'item',id:i.id};render();renderSelected()};$('canvas').appendChild(el)});
+ state.items.forEach(i=>{const el=document.createElement('div');el.className='pin'+(selected?.type==='item'&&selected.id===i.id?' selected':'');el.style.left=i.x+'%';el.style.top=i.y+'%';el.style.setProperty('--pin-w',(i.w||12)+'%');el.style.setProperty('--pin-h',(i.h||9)+'%');el.innerHTML='<button class="remove">×</button><span class="icon">'+i.icon+'</span><strong>'+escapeHtml(i.label||i.name)+'</strong><small>'+(i.quantity>1?'×'+i.quantity+' · ':'')+escapeHtml(i.category)+'</small><span class="resize-edge resize-right" title="Drag to change width" aria-label="Drag to change width"></span><span class="resize-edge resize-bottom" title="Drag to change height" aria-label="Drag to change height"></span><span class="resize-edge resize-corner" title="Drag to change width and height" aria-label="Drag to change width and height"></span>';el.querySelector('.remove').onclick=e=>{e.stopPropagation();remove('item',i.id)};el.querySelector('.resize-right').onpointerdown=e=>resizeEquipment(el,i,'right',e);el.querySelector('.resize-bottom').onpointerdown=e=>resizeEquipment(el,i,'bottom',e);el.querySelector('.resize-corner').onpointerdown=e=>resizeEquipment(el,i,'corner',e);el.onpointerdown=e=>drag(el,i,'item',e);el.onclick=e=>{if(e.target.closest?.('.resize-edge'))return;selected={type:'item',id:i.id};render();renderSelected()};$('canvas').appendChild(el)});
  renderSelected();
 }
-function renderSelected(){const host=$('selectedPanel');if(!selected){host.className='muted';host.innerHTML='Select an item on the map to edit it.';return}const arr=selected.type==='item'?state.items:state.zones,o=arr.find(x=>x.id===selected.id);if(!o){selected=null;return renderSelected()}host.className='';if(selected.type==='zone'){host.innerHTML='<div class="field"><label>Zone name</label><input id="editName" value="'+attr(o.name)+'"></div><div class="tool-row" style="margin-top:8px"><div class="field"><label>Width %</label><input id="editW" type="number" min="10" max="90" value="'+o.w+'"></div><div class="field"><label>Height %</label><input id="editH" type="number" min="8" max="90" value="'+o.h+'"></div></div>';['editName','editW','editH'].forEach(id=>$(id).oninput=()=>{o.name=$('editName').value;o.w=snap(+$('editW').value||o.w,0.5);o.h=snap(+$('editH').value||o.h,0.5);render();save(true)})}else{host.innerHTML='<div class="field"><label>Map label</label><input id="editLabel" value="'+attr(o.label||o.name)+'"></div><div class="field"><label>Quantity at this point</label><input id="editQty" type="number" min="1" max="50" value="'+o.quantity+'"></div><div class="tool-row" style="margin-top:8px"><div class="field"><label>Width %</label><input id="editWItem" type="number" min="3" max="60" step="0.5" value="'+Math.round((o.w||12)*10)/10+'"></div><div class="field"><label>Height %</label><input id="editHItem" type="number" min="3" max="50" step="0.5" value="'+Math.round((o.h||9)*10)/10+'"></div></div><div class="muted" style="font-size:12px;margin-top:7px">Or drag the green corner on the map to resize freely.</div><div class="muted" style="font-size:12px;margin-top:8px"><b>Linked exercises</b><br>'+o.exercises.map(escapeHtml).join(' · ')+'</div>';$('editLabel').onchange=()=>{o.label=$('editLabel').value.trim()||o.name;render();save(true)};$('editQty').onchange=()=>{o.quantity=Math.max(1,+$('editQty').value||1);render();save(true)};$('editWItem').onchange=()=>{o.w=snap(Math.max(3,Math.min(60,+$('editWItem').value||12)),0.5);render();save(true)};$('editHItem').onchange=()=>{o.h=snap(Math.max(3,Math.min(50,+$('editHItem').value||9)),0.5);render();save(true)}}}
+function renderSelected(){const host=$('selectedPanel');if(!selected){host.className='muted';host.innerHTML='Select an item on the map to edit it.';return}const arr=selected.type==='item'?state.items:state.zones,o=arr.find(x=>x.id===selected.id);if(!o){selected=null;return renderSelected()}host.className='';if(selected.type==='zone'){host.innerHTML='<div class="field"><label>Zone name</label><input id="editName" value="'+attr(o.name)+'"></div><div class="tool-row" style="margin-top:8px"><div class="field"><label>Width %</label><input id="editW" type="number" min="10" max="90" value="'+o.w+'"></div><div class="field"><label>Height %</label><input id="editH" type="number" min="8" max="90" value="'+o.h+'"></div></div>';['editName','editW','editH'].forEach(id=>$(id).oninput=()=>{o.name=$('editName').value;o.w=snap(+$('editW').value||o.w,0.5);o.h=snap(+$('editH').value||o.h,0.5);render();save(true)})}else{host.innerHTML='<div class="field"><label>Map label</label><input id="editLabel" value="'+attr(o.label||o.name)+'"></div><div class="field"><label>Quantity at this point</label><input id="editQty" type="number" min="1" max="50" value="'+o.quantity+'"></div><div class="tool-row" style="margin-top:8px"><div class="field"><label>Width %</label><input id="editWItem" type="number" min="3" max="60" step="0.5" value="'+Math.round((o.w||12)*10)/10+'"></div><div class="field"><label>Height %</label><input id="editHItem" type="number" min="3" max="50" step="0.5" value="'+Math.round((o.h||9)*10)/10+'"></div></div><div class="muted" style="font-size:12px;margin-top:7px">Use the green side, bottom or corner handles to resize.</div><div class="muted" style="font-size:12px;margin-top:8px"><b>Linked exercises</b><br>'+o.exercises.map(escapeHtml).join(' · ')+'</div>';$('editLabel').onchange=()=>{o.label=$('editLabel').value.trim()||o.name;render();save(true)};$('editQty').onchange=()=>{o.quantity=Math.max(1,+$('editQty').value||1);render();save(true)};$('editWItem').onchange=()=>{o.w=snap(Math.max(3,Math.min(60,+$('editWItem').value||12)),0.5);render();save(true)};$('editHItem').onchange=()=>{o.h=snap(Math.max(3,Math.min(50,+$('editHItem').value||9)),0.5);render();save(true)}}}
 function highlight(name){const item=state.items.find(x=>x.name===name||x.exercises?.includes(name));if(!item)return toast('That equipment has not been placed yet');selected={type:'item',id:item.id};render();const pin=[...document.querySelectorAll('.pin')].find(x=>x.classList.contains('selected'));pin?.scrollIntoView({behavior:'smooth',block:'center'});toast((item.label||item.name)+' highlighted')}
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function attr(s){return escapeHtml(s).replace(/"/g,'&quot;')}
