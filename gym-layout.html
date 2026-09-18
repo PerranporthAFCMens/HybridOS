@@ -26,7 +26,7 @@ body.member-mode .tools,body.member-mode .steps,body.member-mode .top .actions{d
 .resize-corner{right:-11px;bottom:-11px;width:22px;height:22px;border-radius:6px;cursor:nwse-resize}
 .resize-right::after{content:"↔";position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:900;color:#0b1020}.resize-bottom::after{content:"↕";position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:900;color:#0b1020}.resize-corner::after{content:"↘";position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:900;color:#0b1020}.pin.selected .resize-edge{display:block}
 body.member-mode .resize-edge{display:none!important}
-.draw-toolbar{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;margin-bottom:10px;scrollbar-width:none}.draw-toolbar::-webkit-scrollbar{display:none}.draw-tool{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;min-height:40px;padding:8px 11px;font-weight:850;cursor:pointer}.draw-tool.active{background:var(--dark);border-color:var(--dark);color:#fff}.draw-tool.finish{background:#e9fbf6;border-color:#9de1d1;color:#075f51}.layout-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}.layout-outline{fill:rgba(13,121,102,.035);stroke:#0d7966;stroke-width:2.5;stroke-linejoin:round}.layout-outline.draft{stroke-dasharray:6 5;fill:none}.layout-room{fill:rgba(11,16,32,.035);stroke:#667085;stroke-width:2}.layout-wall{stroke:#344054;stroke-width:5;stroke-linecap:round}.layout-door{fill:#fff;stroke:#0d7966;stroke-width:3}.layout-node{fill:#6ee7c8;stroke:#0b1020;stroke-width:1.5}.drawing-hint{font-size:12px;color:var(--muted);margin:0 0 9px}.canvas-wrap.drawing{cursor:crosshair}.canvas-wrap.drawing .empty-tip{display:none!important}.mobile-editor-tabs{display:none}
+.draw-toolbar{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;margin-bottom:10px;scrollbar-width:none}.draw-toolbar::-webkit-scrollbar{display:none}.draw-tool{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;min-height:40px;padding:8px 11px;font-weight:850;cursor:pointer}.draw-tool.active{background:var(--dark);border-color:var(--dark);color:#fff}.draw-tool.finish{background:#e9fbf6;border-color:#9de1d1;color:#075f51}.layout-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}.layout-outline{fill:rgba(13,121,102,.035);stroke:#0d7966;stroke-width:2.5;stroke-linejoin:round;vector-effect:non-scaling-stroke}.layout-outline.draft{stroke-dasharray:6 5;fill:none}.layout-room{fill:rgba(11,16,32,.035);stroke:#667085;stroke-width:2;vector-effect:non-scaling-stroke}.layout-wall{stroke:#344054;stroke-width:4;stroke-linecap:round;vector-effect:non-scaling-stroke}.layout-door{fill:#fff;stroke:#0d7966;stroke-width:2.5;vector-effect:non-scaling-stroke}.layout-node{fill:#6ee7c8;stroke:#0b1020;stroke-width:1.5;vector-effect:non-scaling-stroke}.drawing-hint{font-size:12px;color:var(--muted);margin:0 0 9px}.canvas-wrap.drawing{cursor:crosshair}.canvas-wrap.drawing .empty-tip{display:none!important}.mobile-editor-tabs{display:none}
 @media(max-width:950px){
  .shell{display:block}.side{display:none}.main{padding:14px 10px 34px}.top{flex-direction:column;gap:10px;margin-bottom:10px}.top h1{font-size:26px}.top .muted{font-size:13px;line-height:1.4}
  .actions{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.draw-toolbar{margin-left:-2px;margin-right:-2px;padding-bottom:8px}.draw-tool{min-height:44px;padding:8px 12px}.actions .btn{padding:9px 7px;font-size:12px;min-width:0}
@@ -37,7 +37,7 @@ body.member-mode .resize-edge{display:none!important}
  .layout{display:block}.tools{position:static;padding:14px;border-radius:16px}.workspace{padding:8px;border-radius:16px}
  body.mobile-panel-map .tools{display:none}body.mobile-panel-setup .workspace{display:none}
  .canvas-head{padding:4px 2px 8px;margin:0}.canvas-wrap{width:100%;height:62svh;min-height:470px;max-height:680px;aspect-ratio:auto;border-radius:14px;touch-action:pan-y;background-size:28px 28px}
- .pin,.zone,.resize-edge{touch-action:none}
+ .pin,.zone,.resize-edge{touch-action:none}.layout-wall{stroke-width:3}.layout-outline{stroke-width:2}.layout-room{stroke-width:1.5}.layout-door{stroke-width:2}
  .resize-right{right:-11px;width:24px;height:54px}.resize-bottom{bottom:-11px;height:24px;width:54px}.resize-corner{right:-14px;bottom:-14px;width:30px;height:30px}
  .resize-right::after,.resize-bottom::after,.resize-corner::after{font-size:13px}
  .pin .remove,.zone .remove{width:30px;height:30px;top:-12px;right:-12px;font-size:16px}
@@ -232,10 +232,10 @@ function renderStructure(){
  const svg=$('layoutSvg');if(!svg)return;
  const parts=[];
  if(state.outline?.length>=2){const pts=state.outline.map(p=>p.x+','+p.y).join(' ');parts.push('<polygon class="layout-outline" points="'+pts+'"></polygon>')}
- if(currentTool==='outline'&&draftPoints.length){const pts=draftPoints.map(p=>p.x+','+p.y).join(' ');parts.push('<polyline class="layout-outline draft" points="'+pts+'"></polyline>');draftPoints.forEach(p=>parts.push('<circle class="layout-node" cx="'+p.x+'" cy="'+p.y+'" r="1.2"></circle>'))}
+ if(currentTool==='outline'&&draftPoints.length){const pts=draftPoints.map(p=>p.x+','+p.y).join(' ');parts.push('<polyline class="layout-outline draft" points="'+pts+'"></polyline>');draftPoints.forEach(p=>parts.push('<circle class="layout-node" cx="'+p.x+'" cy="'+p.y+'" r="0.8"></circle>'))}
  (state.rooms||[]).forEach(o=>parts.push('<rect class="layout-room" x="'+o.x+'" y="'+o.y+'" width="'+o.w+'" height="'+o.h+'" rx="1"></rect>'));
  (state.walls||[]).forEach(o=>parts.push('<line class="layout-wall" x1="'+o.x1+'" y1="'+o.y1+'" x2="'+o.x2+'" y2="'+o.y2+'"></line>'));
- (state.doors||[]).forEach(o=>parts.push('<circle class="layout-door" cx="'+o.x+'" cy="'+o.y+'" r="1.8"></circle>'));
+ (state.doors||[]).forEach(o=>parts.push('<circle class="layout-door" cx="'+o.x+'" cy="'+o.y+'" r="1.2"></circle>'));
  svg.innerHTML=parts.join('');
  $('finishOutlineBtn').hidden=!(currentTool==='outline'&&draftPoints.length>=3);
 }
