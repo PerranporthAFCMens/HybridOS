@@ -133,7 +133,7 @@ for page_name in ('index.html','community.html','classes.html','class-setup.html
  if 'hybrid-critical-shell' not in page_text:problems.append(f'{page_name}: critical first-paint shell missing')
  if '#hybridNavigationMask' not in page_text:problems.append(f'{page_name}: navigation mask critical CSS missing')
 account=(ROOT/'account-menu.js').read_text(encoding='utf-8')
-for x in ("storage.from('avatars')",'accountAvatarFile','staffPermissions.full_access'):
+for x in ("storage.from('avatars')",'accountAvatarFile','staffPermissions.full_access','accountDateOfBirth','accountGender','date_of_birth','gender'):
  if x not in account:problems.append(f'account-menu.js: profile/portal workflow missing: {x}')
 for page_name in ('member.html','member-preview.html','staff.html','social.html'):
  shell_page=(ROOT/page_name).read_text(encoding='utf-8')
@@ -161,6 +161,8 @@ if '.member-home-tile[data-home-key="hero"]{grid-column:1/-1}' not in member_css
 admin_index=(ROOT/'index.html').read_text(encoding='utf-8')
 for x in ('memberSearch','memberSort','registered_desc','registered_asc','memberJump','renderMemberDirectory','memberFilterLetter'):
  if x not in admin_index:problems.append(f'index.html: member directory control missing: {x}')
+for x in ('Customer lifecycle','avgCustomerLifecycle','avgLiveTenure','genderLifecycleBreakdown','ageLifecycleBreakdown','renderLifecycleInsights','date_of_birth','gender'):
+ if x not in admin_index:problems.append(f'index.html: lifecycle demographic reporting missing: {x}')
 workout_builder=(ROOT/'workout-builder.html').read_text(encoding='utf-8')
 for x in ('Assign to member','Publish as WOD','workout_assignments','workout_wods','templateSnapshot'):
  if x not in workout_builder:problems.append(f'workout-builder.html: Workout V2 assignment/WOD boundary missing: {x}')
