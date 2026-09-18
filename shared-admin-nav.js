@@ -30,7 +30,6 @@
     'members-group':[
       {key:'members',label:'Members',href:'./index.html#members'},
       {key:'memberships',label:'Memberships',href:'./index.html#memberships'},
-      {key:'member-memberships',label:'Member memberships',href:'./member-memberships.html'},
       {key:'member-view',label:'Member view',href:'./member-view-settings.html'},
       {key:'access',label:'Door access',href:'./access-settings.html'}
     ]
@@ -49,7 +48,6 @@
     if(p.endsWith('/staff-permissions.html'))return'staff-access';
     if(p.endsWith('/access-settings.html'))return'access';
     if(p.endsWith('/reporting.html'))return'reporting';
-    if(p.endsWith('/member-memberships.html'))return'member-memberships';
     if(p.endsWith('/member-view-settings.html'))return'member-view';
     if(p.endsWith('/index.html')||p.endsWith('/HybridOS/')||p.endsWith('/')){
       return['memberships','members','community'].includes(h)?h:'dashboard';
@@ -62,7 +60,7 @@
     if(['classes','class-setup'].includes(key))return'classes-group';
     if(['resources','services','resource-availability'].includes(key))return'services-group';
     if(['staff','staff-access'].includes(key))return'staff-group';
-    if(['members','memberships','member-memberships','member-view','access'].includes(key))return'members-group';
+    if(['members','memberships','member-view','access'].includes(key))return'members-group';
     return key;
   }
 
