@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>Hybrid OS Admin</title>
+<link rel="stylesheet" href="./app-consistency.css">
+<link rel="stylesheet" href="./admin-frame.css">
+</head>
+<body>
+<div id="adminFrameApp" class="admin-frame-shell">
+  <aside class="side">
+    <div class="brand">HYBRID OS</div>
+    <div class="gym"><small>Current gym</small><div id="adminFrameGym">Loading…</div></div>
+    <nav id="adminFrameNav" class="nav"></nav>
+  </aside>
+  <main class="admin-frame-main">
+    <iframe id="adminContentFrame" title="Hybrid OS admin content"></iframe>
+  </main>
+</div>
+<script src="./shared-shell.js"></script>
+<script type="module" src="./admin-frame.js"></script>
+</body>
+</html>
