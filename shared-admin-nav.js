@@ -44,6 +44,36 @@
 
   const adminPages=new Set(['index.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html']);
 
+  function normaliseSidebarChrome(){
+    document.querySelectorAll('.side').forEach(side=>{
+      let brand=side.querySelector('.brand-logo,.brand,.logo');
+      if(!brand){
+        brand=document.createElement('div');
+        side.prepend(brand);
+      }
+      brand.className='logo brand-logo admin-brand-lock';
+      brand.innerHTML='<svg class="brand-mark" viewBox="0 0 54 48" aria-hidden="true"><path d="M6 42 L27 6 M12 42 L30 11 M18 42 L33 16 M48 42 L27 6 M42 42 L24 11 M36 42 L21 16"/></svg><span class="brand-word">HYBRID <b>OS</b></span>';
+
+      const gym=side.querySelector('.gym');
+      if(gym){
+        gym.classList.add('admin-gym-lock');
+        if(!gym.querySelector('.tenant-gym-logo')){
+          const legacy=gym.querySelector('img');
+          if(legacy)legacy.classList.add('tenant-gym-logo');
+          else{
+            const img=document.createElement('img');
+            img.src='./assets/hybrid-hub-logo-horizontal.svg';
+            img.alt='Hybrid Hub';
+            img.className='tenant-gym-logo';
+            gym.insertBefore(img,gym.firstChild);
+          }
+        }
+      }
+    });
+  }
+
+
+
   function currentKey(){
     const p=location.pathname,h=location.hash.replace('#','');
     if(p.endsWith('/classes.html'))return'classes';
@@ -132,7 +162,7 @@
   }
 
   function render(){
-    style();ensureMobileMenu();
+    style();normaliseSidebarChrome();ensureMobileMenu();
     const group=groupFor(currentKey());
     document.querySelectorAll('.side .nav').forEach(nav=>{
       nav.innerHTML=sidebar.map(i=>'<a class="admin-nav-link '+(i.key===group?'active':'')+'" data-admin-key="'+i.key+'" href="'+i.href+'">'+icon(i.icon)+'<span>'+i.label+'</span></a>').join('');
