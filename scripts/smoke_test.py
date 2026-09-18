@@ -23,10 +23,10 @@ for page in ROOT.glob('*.html'):
  if page.name!='member-preview.html' and ('member-preview-classes.js' in t or 'member-preview-controls.js' in t):problems.append(f'{page.name}: preview runtime leaked')
  if page.name not in ('member.html','member-preview.html') and ('member-experience.js' in t or 'member-experience.css' in t):problems.append(f'{page.name}: member runtime leaked')
  if page.name!='social.html' and 'social-enhancements.js' in t:problems.append(f'{page.name}: social runtime leaked')
-member=(ROOT/'member.html').read_text(encoding='utf-8');
+member=(ROOT/'member.html').read_text(encoding='utf-8')
 if "$('membershipShort')?.textContent=" not in member:problems.append('member.html: safe membership summary missing')
 mr=(ROOT/'member-experience.js').read_text(encoding='utf-8')
-for x in ('member_class_schedule','member_book_class','member_cancel_class','pt_appointments'):
+for x in ('member_class_schedule','member_book_class','member_cancel_class','pt_appointments','workout_sessions','personal_bests','memberProgressSnapshot','loadProgress'):
  if x not in mr:problems.append(f'member-experience.js: required workflow missing: {x}')
 pc=(ROOT/'member-preview-controls.js').read_text(encoding='utf-8')
 for x in ('openPreviewPage','wireNavigation','memberPreviewAccountMenu','previewAccountSave','hybridOS_memberPreviewAccount'):
