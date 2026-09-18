@@ -108,8 +108,8 @@ ops=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
 for x in ('showOpsTab','location.hash.replace','history.replaceState','resources','services'):
  if x not in ops:problems.append(f'admin-operations.html: grouped-nav deep link support missing: {x}')
 stability=(ROOT/'app-stability.js').read_text(encoding='utf-8')
-for x in ('hybridNavigationMask','beginNavigation','HybridNavigation'):
- if x not in stability:problems.append(f'app-stability.js: smooth navigation mask missing: {x}')
+for x in ('hybridNavigationMask','beginNavigation','HybridNavigation','adminFiles.indexOf(currentFile)','adminFiles.indexOf(targetFile)'):
+ if x not in stability:problems.append(f'app-stability.js: admin navigation transition rule missing: {x}')
 for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','staff.html','member.html','member-preview.html','social.html','groups.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  if 'hybrid-critical-shell' not in page_text:problems.append(f'{page_name}: critical first-paint shell missing')
@@ -147,5 +147,5 @@ if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(pr
 print('Hybrid OS built-site smoke checks passed')
 
 admin_ops=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
-for x in ('ops-pane-transition','transitionOpsTab','ops-enter'):
- if x not in admin_ops:problems.append(f'admin-operations.html: smooth internal admin transition missing: {x}')
+for x in ('transitionOpsTab','document.startViewTransition'):
+ if x not in admin_ops:problems.append(f'admin-operations.html: native internal admin transition missing: {x}')
