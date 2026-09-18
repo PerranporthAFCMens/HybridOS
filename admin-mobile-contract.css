@@ -69,7 +69,7 @@ html.admin-embedded .staff-mobile-backdrop{display:none!important}
   .section-title>div:first-child{min-width:0!important;flex:1 1 180px}
   .section-title>.btn,.section-title>a.btn{max-width:100%!important}
 
-  .grid,.plan-grid,.form2,.form-grid,.checkgrid,.days,.report-grid,
+  .grid,.grid2,.plan-grid,.form2,.form-grid,.checkgrid,.days,.permissions,.report-grid,
   .lifecycle-breakdowns,.report-lifecycle-grid{
     grid-template-columns:minmax(0,1fr)!important;
   }
