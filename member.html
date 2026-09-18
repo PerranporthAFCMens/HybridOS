@@ -6,14 +6,20 @@
 .mobile-menu-btn,.mobile-menu-close,.mobile-nav-backdrop{display:none}
 @media(max-width:900px){
   .bottom{display:none!important}
-  .main{padding:74px 14px 36px}
+  .main{padding:82px 14px 36px}
   .mobile-menu-btn{display:grid;place-items:center;position:fixed;top:16px;left:14px;z-index:61;width:44px;height:44px;border:1px solid var(--line);border-radius:13px;background:#fff;color:var(--ink);font-size:24px;line-height:1;box-shadow:0 8px 24px rgba(16,24,40,.12);cursor:pointer}
   .side{display:flex!important;position:fixed;left:0;top:0;bottom:0;width:min(82vw,310px);height:100vh;z-index:70;transform:translateX(-105%);transition:transform .22s ease;box-shadow:18px 0 40px rgba(0,0,0,.22);overflow-y:auto}
   body.mobile-nav-open .side{transform:translateX(0)}
   .mobile-menu-close{display:grid;place-items:center;position:absolute;top:14px;right:14px;width:38px;height:38px;border:1px solid rgba(255,255,255,.15);border-radius:11px;background:rgba(255,255,255,.08);color:#fff;font-size:24px;cursor:pointer}
   .mobile-nav-backdrop{display:block;position:fixed;inset:0;background:rgba(11,16,32,.48);z-index:65;opacity:0;pointer-events:none;transition:opacity .2s ease}
   body.mobile-nav-open .mobile-nav-backdrop{opacity:1;pointer-events:auto}
-  .top{padding-left:54px;min-height:46px}
+  .top{padding:0;margin:0 0 14px;min-height:unset;display:flex;align-items:flex-end;gap:10px}
+  .top>div:first-child{min-width:0;flex:1}
+  .top .eyebrow{font-size:10px;letter-spacing:.08em}
+  .top h1{font-size:28px;line-height:1.05;margin:3px 0 0}
+  .userchip{position:fixed;top:16px;right:14px;z-index:61;padding:2px;border-radius:50%;background:#fff}
+  .userchip .avatar{width:44px;height:44px}
+  .userchip .who{display:none!important}
 }
 </style></head><body>
 <div id="loading" style="padding:28px">Loading your Hybrid OS…</div>
