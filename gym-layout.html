@@ -26,18 +26,18 @@ body.member-mode .tools,body.member-mode .steps,body.member-mode .top .actions{d
 .resize-corner{right:-11px;bottom:-11px;width:22px;height:22px;border-radius:6px;cursor:nwse-resize}
 .resize-right::after{content:"↔";position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:900;color:#0b1020}.resize-bottom::after{content:"↕";position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:900;color:#0b1020}.resize-corner::after{content:"↘";position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:900;color:#0b1020}.pin.selected .resize-edge{display:block}
 body.member-mode .resize-edge{display:none!important}
-.draw-toolbar{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;margin-bottom:10px;scrollbar-width:none}.draw-toolbar::-webkit-scrollbar{display:none}.draw-tool{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;min-height:40px;padding:8px 11px;font-weight:850;cursor:pointer}.draw-tool.active{background:var(--dark);border-color:var(--dark);color:#fff}.draw-tool.finish{background:#e9fbf6;border-color:#9de1d1;color:#075f51}.layout-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}.layout-outline{fill:rgba(13,121,102,.035);stroke:#0d7966;stroke-width:2.5;stroke-linejoin:round;vector-effect:non-scaling-stroke}.layout-outline.draft{stroke-dasharray:6 5;fill:none}.layout-room{fill:rgba(11,16,32,.035);stroke:#667085;stroke-width:2;vector-effect:non-scaling-stroke}.layout-wall{stroke:#344054;stroke-width:4;stroke-linecap:round;vector-effect:non-scaling-stroke}.layout-door{fill:#fff;stroke:#0d7966;stroke-width:2.5;vector-effect:non-scaling-stroke}.layout-node{fill:#6ee7c8;stroke:#0b1020;stroke-width:1.5;vector-effect:non-scaling-stroke}.drawing-hint{font-size:12px;color:var(--muted);margin:0 0 9px}.canvas-wrap.drawing{cursor:crosshair}.canvas-wrap.drawing .empty-tip{display:none!important}.mobile-editor-tabs{display:none}
+.draw-toolbar{display:flex;gap:7px;overflow-x:auto;padding:0 0 10px;margin-bottom:8px;scrollbar-width:none}.draw-toolbar::-webkit-scrollbar{display:none}.draw-tool{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;min-height:40px;padding:8px 11px;font-weight:850;cursor:pointer}.draw-tool.active{background:var(--dark);border-color:var(--dark);color:#fff}.draw-hint{font-size:12px;color:var(--muted);margin:0 0 10px}.layout-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}.layout-outline{fill:rgba(13,121,102,.035);stroke:#0d7966;stroke-width:2;vector-effect:non-scaling-stroke}.layout-outline.draft{fill:none;stroke-dasharray:6 5}.layout-room{fill:rgba(11,16,32,.035);stroke:#667085;stroke-width:1.5;vector-effect:non-scaling-stroke}.layout-wall{stroke:#344054;stroke-width:3;stroke-linecap:round;vector-effect:non-scaling-stroke}.layout-door{fill:#fff;stroke:#0d7966;stroke-width:2;vector-effect:non-scaling-stroke}.layout-node{fill:#6ee7c8;stroke:#0b1020;stroke-width:1.5;vector-effect:non-scaling-stroke}.mobile-editor-tabs{display:none}
 @media(max-width:950px){
  .shell{display:block}.side{display:none}.main{padding:14px 10px 34px}.top{flex-direction:column;gap:10px;margin-bottom:10px}.top h1{font-size:26px}.top .muted{font-size:13px;line-height:1.4}
- .actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.draw-toolbar{margin-left:-2px;margin-right:-2px;padding-bottom:8px}.draw-tool{min-height:44px;padding:8px 12px}.actions .btn{padding:9px 7px;font-size:12px;min-width:0}
- .steps{margin-bottom:10px;gap:6px}.step{font-size:11px;padding:7px 9px}
+ .actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.actions .btn{padding:9px 7px;font-size:12px;min-width:0}
+ .steps{margin-bottom:10px;gap:6px}.step{font-size:11px;padding:7px 9px}.draw-toolbar{margin-left:-2px;margin-right:-2px}.draw-tool{min-height:44px}
  .mobile-editor-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;position:sticky;top:0;z-index:20;background:var(--bg);padding:7px 0 9px;margin-bottom:8px}
  .mobile-editor-tab{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;min-height:44px;font-weight:850;font-size:14px}
  .mobile-editor-tab.active{background:var(--dark);border-color:var(--dark);color:#fff}
  .layout{display:block}.tools{position:static;padding:14px;border-radius:16px}.workspace{padding:8px;border-radius:16px}
  body.mobile-panel-map .tools{display:none}body.mobile-panel-setup .workspace{display:none}
  .canvas-head{padding:4px 2px 8px;margin:0}.canvas-wrap{width:100%;height:62svh;min-height:470px;max-height:680px;aspect-ratio:auto;border-radius:14px;touch-action:pan-y;background-size:28px 28px}
- .pin,.zone,.resize-edge{touch-action:none}.layout-wall{stroke-width:3}.layout-outline{stroke-width:2}.layout-room{stroke-width:1.5}.layout-door{stroke-width:2}
+ .pin,.zone,.resize-edge{touch-action:none}
  .resize-right{right:-11px;width:24px;height:54px}.resize-bottom{bottom:-11px;height:24px;width:54px}.resize-corner{right:-14px;bottom:-14px;width:30px;height:30px}
  .resize-right::after,.resize-bottom::after,.resize-corner::after{font-size:13px}
  .pin .remove,.zone .remove{width:30px;height:30px;top:-12px;right:-12px;font-size:16px}
@@ -52,16 +52,14 @@ body.member-mode .resize-edge{display:none!important}
 <header class="top"><div><div class="eyebrow">Services & resources</div><h1>Gym layout</h1><div class="muted">Build a simple member-friendly map of your gym and show people where equipment lives.</div></div><div class="actions"><button id="undoBtn" class="btn" disabled>Undo</button><button id="resetBtn" class="btn">Clear</button><button id="previewBtn" class="btn">Preview as member</button><button id="saveBtn" class="btn good">Save draft</button></div></header>
 <div class="steps"><span class="step active">1. Draw gym</span><span class="step">2. Mark zones</span><span class="step">3. Place equipment</span><span class="step">4. Preview</span></div>
 <div class="draw-toolbar" aria-label="Gym drawing tools">
- <button type="button" class="draw-tool active" data-tool="select">Select</button>
- <button type="button" class="draw-tool" data-tool="outline">Draw outline</button>
- <button type="button" class="draw-tool" data-tool="room">Room</button>
- <button type="button" class="draw-tool" data-tool="wall">Wall</button>
- <button type="button" class="draw-tool" data-tool="door">Door</button>
- <button type="button" class="draw-tool" data-tool="zone">Zone</button>
- <button type="button" class="draw-tool" data-tool="equipment">Equipment</button>
- <button type="button" id="finishOutlineBtn" class="draw-tool finish" hidden>Finish outline</button>
+<button type="button" class="draw-tool active" data-tool="select">Select</button>
+<button type="button" class="draw-tool" data-tool="outline">Outline</button>
+<button type="button" class="draw-tool" data-tool="room">Room</button>
+<button type="button" class="draw-tool" data-tool="wall">Wall</button>
+<button type="button" class="draw-tool" data-tool="door">Door</button>
+<button type="button" class="draw-tool" id="finishOutlineBtn" hidden>Finish outline</button>
 </div>
-<div id="drawingHint" class="drawing-hint">Select and move items, or choose a drawing tool.</div>
+<div id="drawHint" class="draw-hint">Select and move equipment, or choose a drawing tool.</div>
 <div class="mobile-editor-tabs" aria-label="Gym layout mobile editor"><button type="button" class="mobile-editor-tab active" data-mobile-panel="map">Map</button><button type="button" class="mobile-editor-tab" data-mobile-panel="setup">Setup</button></div>
 <div class="member-bar"><div><b>Member map preview</b><br><span>Tap an exercise below to find its equipment.</span></div><button id="exitPreview" class="btn">Back to editor</button></div>
 <div class="member-workout"><button data-find="Squat rack">Back squat</button><button data-find="Bench">Bench press</button><button data-find="SkiErg">SkiErg intervals</button><button data-find="Cable machine">Cable row</button><button data-find="Sled">Sled push</button></div>
@@ -75,7 +73,7 @@ body.member-mode .resize-edge{display:none!important}
 </section>
 <section class="panel workspace">
 <div class="canvas-head"><div><b>Main gym floor</b><div class="muted" style="font-size:12px">Drag zones and equipment to match the real gym.</div></div><div id="status" class="status">Draft</div></div>
-<div id="canvas" class="canvas-wrap"><svg id="layoutSvg" class="layout-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg><img id="floorBg" class="floor-bg hidden" alt=""><div id="emptyTip" class="empty-tip"><b>Draw your gym outline</b><br>Choose Draw outline above and tap around the edge of the gym, or upload a reference image.</div></div>
+<div id="canvas" class="canvas-wrap"><svg id="layoutSvg" class="layout-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg><img id="floorBg" class="floor-bg hidden" alt=""><div id="emptyTip" class="empty-tip"><b>Draw your gym</b><br>Choose Outline above and tap around the edge of the gym, or upload a reference image.</div></div>
 <div class="legend"><span><i class="dot"></i>Equipment</span><span><i class="dot zone-dot"></i>Zone</span><span>Member view highlights the equipment used by an exercise.</span></div>
 </section>
 </div>
@@ -196,11 +194,11 @@ const equipment=[
  ['Body composition scanner','Mobility & recovery','◎',['Body composition assessment']]
 ]
 let state={background:'',zones:[],items:[],outline:[],rooms:[],walls:[],doors:[]},selected=null;
-let currentTool='select',draftPoints=[],drawStart=null,history=[];
+let history=[],currentTool='select',pendingPoint=null,draftOutline=[];
 function cloneState(){return JSON.parse(JSON.stringify(state))}
 function syncUndo(){const b=$('undoBtn');if(b)b.disabled=!history.length}
 function remember(){history.push(cloneState());if(history.length>40)history.shift();syncUndo()}
-function undoLast(){if(!history.length)return;state=history.pop();selected=null;draftPoints=[];drawStart=null;setTool('select');render();save(true);syncUndo();toast('Last change undone')}
+function undoLast(){if(!history.length)return;state=history.pop();selected=null;pendingPoint=null;draftOutline=[];setTool('select');render();save(true);syncUndo();toast('Last change undone')}
 const mobileMq=window.matchMedia('(max-width:950px)');
 function setMobilePanel(panel){
  if(!mobileMq.matches)return;
@@ -214,50 +212,55 @@ function save(silent=false){try{localStorage.setItem(KEY,JSON.stringify(state));
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){state=d;state.outline=state.outline||[];state.rooms=state.rooms||[];state.walls=state.walls||[];state.doors=state.doors||[];(state.items||[]).forEach(i=>{if(!i.w||!i.h){const scale=(i.size||100)/100;i.w=Math.max(4,12*scale);i.h=Math.max(4,9*scale)}})}}catch(e){}render()}
 function renderCatalog(){const q=$('search').value.trim().toLowerCase(),cat=$('categoryFilter').value;$('catalog').innerHTML=equipment.filter(x=>(!cat||x[1]===cat)&&(!q||x[0].toLowerCase().includes(q)||x[1].toLowerCase().includes(q)||x[3].some(e=>e.toLowerCase().includes(q)))).map(x=>'<button data-eq="'+equipment.indexOf(x)+'"><b>'+x[2]+' '+x[0]+'</b><small>'+x[1]+' · '+x[3].join(', ')+'</small></button>').join('')||'<div class="muted" style="padding:8px">No equipment matches that search.</div>';document.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>addEquipment(equipment[+b.dataset.eq]))}
 function setTool(tool){
- currentTool=tool;drawStart=null;
- if(tool!=='outline')draftPoints=[];
+ currentTool=tool;pendingPoint=null;
+ if(tool!=='outline')draftOutline=[];
  document.querySelectorAll('.draw-tool[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
- $('finishOutlineBtn').hidden=!(tool==='outline'&&draftPoints.length>=3);
- $('canvas').classList.toggle('drawing',tool!=='select');
- const hints={select:'Select and move items, or choose a drawing tool.',outline:'Tap around the outside edge of the gym. Use Finish outline when complete.',room:'Drag from one corner of the room to the opposite corner.',wall:'Drag from the start of the wall to the end.',door:'Tap where the door sits.',zone:'Add a named training zone from Setup.',equipment:'Choose equipment from the catalogue in Setup.'};
- $('drawingHint').textContent=hints[tool]||'';
- if(mobileMq.matches&&(tool==='zone'||tool==='equipment'))setMobilePanel('setup');
- if(tool==='zone')setTimeout(()=>$('zoneName')?.focus(),50);
- if(tool==='equipment')setTimeout(()=>$('search')?.focus(),50);
+ $('finishOutlineBtn').hidden=!(tool==='outline'&&draftOutline.length>=3);
+ const hints={select:'Select and move equipment, or choose a drawing tool.',outline:'Tap each corner of the gym, then tap Finish outline.',room:'Tap the first corner, then tap the opposite corner.',wall:'Tap the wall start, then tap the wall end.',door:'Tap once where the door sits.'};
+ $('drawHint').textContent=hints[tool]||'';
  renderStructure();
 }
 function canvasPoint(e){
  const r=$('canvas').getBoundingClientRect();
- const x=snapPx(Math.max(0,Math.min(r.width,e.clientX-r.left)))/r.width*100;
- const y=snapPx(Math.max(0,Math.min(r.height,e.clientY-r.top)))/r.height*100;
- return{x:Math.max(0,Math.min(100,x)),y:Math.max(0,Math.min(100,y))};
+ const px=Math.max(0,Math.min(r.width,e.clientX-r.left)),py=Math.max(0,Math.min(r.height,e.clientY-r.top));
+ const sx=snapPx(px),sy=snapPx(py);
+ return{x:Math.max(0,Math.min(100,sx/r.width*100)),y:Math.max(0,Math.min(100,sy/r.height*100))};
 }
 function renderStructure(){
  const svg=$('layoutSvg');if(!svg)return;
  const parts=[];
- if(state.outline?.length>=2){const pts=state.outline.map(p=>p.x+','+p.y).join(' ');parts.push('<polygon class="layout-outline" points="'+pts+'"></polygon>')}
- if(currentTool==='outline'&&draftPoints.length){const pts=draftPoints.map(p=>p.x+','+p.y).join(' ');parts.push('<polyline class="layout-outline draft" points="'+pts+'"></polyline>');draftPoints.forEach(p=>parts.push('<circle class="layout-node" cx="'+p.x+'" cy="'+p.y+'" r="0.8"></circle>'))}
- (state.rooms||[]).forEach(o=>parts.push('<rect class="layout-room" x="'+o.x+'" y="'+o.y+'" width="'+o.w+'" height="'+o.h+'" rx="1"></rect>'));
- (state.walls||[]).forEach(o=>parts.push('<line class="layout-wall" x1="'+o.x1+'" y1="'+o.y1+'" x2="'+o.x2+'" y2="'+o.y2+'"></line>'));
- (state.doors||[]).forEach(o=>parts.push('<circle class="layout-door" cx="'+o.x+'" cy="'+o.y+'" r="1.2"></circle>'));
+ if(state.outline.length>=3)parts.push('<polygon class="layout-outline" points="'+state.outline.map(p=>p.x+','+p.y).join(' ')+'"></polygon>');
+ if(currentTool==='outline'&&draftOutline.length){
+   parts.push('<polyline class="layout-outline draft" points="'+draftOutline.map(p=>p.x+','+p.y).join(' ')+'"></polyline>');
+   draftOutline.forEach(p=>parts.push('<circle class="layout-node" cx="'+p.x+'" cy="'+p.y+'" r=".8"></circle>'));
+ }
+ state.rooms.forEach(o=>parts.push('<rect class="layout-room" x="'+o.x+'" y="'+o.y+'" width="'+o.w+'" height="'+o.h+'" rx="1"></rect>'));
+ state.walls.forEach(o=>parts.push('<line class="layout-wall" x1="'+o.x1+'" y1="'+o.y1+'" x2="'+o.x2+'" y2="'+o.y2+'"></line>'));
+ state.doors.forEach(o=>parts.push('<circle class="layout-door" cx="'+o.x+'" cy="'+o.y+'" r="1.2"></circle>'));
+ if(pendingPoint)parts.push('<circle class="layout-node" cx="'+pendingPoint.x+'" cy="'+pendingPoint.y+'" r="1"></circle>');
  svg.innerHTML=parts.join('');
- $('finishOutlineBtn').hidden=!(currentTool==='outline'&&draftPoints.length>=3);
+ $('finishOutlineBtn').hidden=!(currentTool==='outline'&&draftOutline.length>=3);
 }
 function finishOutline(){
- if(draftPoints.length<3)return toast('Add at least three outline points');
- remember();state.outline=draftPoints.map(p=>({...p}));draftPoints=[];setTool('select');save(true);render();toast('Gym outline saved');
+ if(draftOutline.length<3)return toast('Add at least three corners');
+ remember();state.outline=draftOutline.map(p=>({...p}));draftOutline=[];setTool('select');save(true);render();toast('Outline saved');
 }
-function handleCanvasPointerDown(e){
- if(currentTool==='select'||['zone','equipment'].includes(currentTool))return;
+function handleCanvasTap(e){
+ if(currentTool==='select')return;
  if(e.target.closest?.('.pin,.zone,.resize-edge,.remove'))return;
  e.preventDefault();
  const p=canvasPoint(e);
- if(currentTool==='outline'){remember();draftPoints.push(p);renderStructure();return}
+ if(currentTool==='outline'){draftOutline.push(p);renderStructure();return}
  if(currentTool==='door'){remember();state.doors.push({id:uid(),x:p.x,y:p.y});renderStructure();save(true);return}
- drawStart=p;
- const move=ev=>{if(!drawStart)return;const q=canvasPoint(ev);const svg=$('layoutSvg');if(!svg)return;renderStructure();if(currentTool==='room'){const x=Math.min(drawStart.x,q.x),y=Math.min(drawStart.y,q.y),w=Math.abs(q.x-drawStart.x),h=Math.abs(q.y-drawStart.y);svg.insertAdjacentHTML('beforeend','<rect class="layout-room" x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="1"></rect>')}else if(currentTool==='wall'){svg.insertAdjacentHTML('beforeend','<line class="layout-wall" x1="'+drawStart.x+'" y1="'+drawStart.y+'" x2="'+q.x+'" y2="'+q.y+'"></line>')}};
- const up=ev=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);if(!drawStart)return;const q=canvasPoint(ev);if(currentTool==='room'){const x=Math.min(drawStart.x,q.x),y=Math.min(drawStart.y,q.y),w=Math.abs(q.x-drawStart.x),h=Math.abs(q.y-drawStart.y);if(w>1&&h>1){remember();state.rooms.push({id:uid(),x,y,w,h})}}else if(currentTool==='wall'){if(Math.hypot(q.x-drawStart.x,q.y-drawStart.y)>1){remember();state.walls.push({id:uid(),x1:drawStart.x,y1:drawStart.y,x2:q.x,y2:q.y})}}drawStart=null;renderStructure();save(true)};
- window.addEventListener('pointermove',move,{passive:false});window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
+ if(!pendingPoint){pendingPoint=p;renderStructure();toast(currentTool==='room'?'Tap opposite corner':'Tap wall end');return}
+ const a=pendingPoint;pendingPoint=null;remember();
+ if(currentTool==='room'){
+   const x=Math.min(a.x,p.x),y=Math.min(a.y,p.y),w=Math.abs(p.x-a.x),h=Math.abs(p.y-a.y);
+   if(w>1&&h>1)state.rooms.push({id:uid(),x,y,w,h});
+ }else if(currentTool==='wall'){
+   if(Math.hypot(p.x-a.x,p.y-a.y)>1)state.walls.push({id:uid(),x1:a.x,y1:a.y,x2:p.x,y2:p.y});
+ }
+ renderStructure();save(true);
 }
 function addEquipment(eq){remember();const same=state.items.filter(x=>x.name===eq[0]).length;const item={id:uid(),name:eq[0],category:eq[1],icon:eq[2],exercises:eq[3],x:48+((state.items.length*6)%35),y:48+((state.items.length*5)%30),quantity:1,w:12,h:9,label:same?eq[0]+' '+(same+1):eq[0]};state.items.push(item);selected={type:'item',id:item.id};render();save(true);if(mobileMq.matches){setMobilePanel('map');setTimeout(()=>document.querySelector('.pin.selected')?.scrollIntoView({behavior:'smooth',block:'center'}),50)}}
 function addZone(){const name=$('zoneName').value.trim();if(!name)return toast('Give the zone a name');remember();state.zones.push({id:uid(),name,x:snap(8+((state.zones.length*8)%35),1),y:snap(8+((state.zones.length*7)%25),1),w:30,h:25});$('zoneName').value='';render();save(true);if(mobileMq.matches)setMobilePanel('map')}
@@ -321,7 +324,7 @@ function resizeEquipment(el,obj,mode,e){
 }
 function render(){
  $('floorBg').classList.toggle('hidden',!state.background);if(state.background)$('floorBg').src=state.background;
- $('emptyTip').style.display=(state.background||state.zones.length||state.items.length||state.outline?.length||state.rooms?.length||state.walls?.length||state.doors?.length)?'none':'block';renderStructure();
+ $('emptyTip').style.display=(state.background||state.zones.length||state.items.length||state.outline.length||state.rooms.length||state.walls.length||state.doors.length)?'none':'block';renderStructure();
  [...$('canvas').querySelectorAll('.zone,.pin')].forEach(x=>x.remove());
  state.zones.forEach(z=>{const el=document.createElement('div');el.className='zone';el.style.left=z.x+'%';el.style.top=z.y+'%';el.style.width=z.w+'%';el.style.height=z.h+'%';el.innerHTML='<button class="remove">×</button><strong>'+escapeHtml(z.name)+'</strong>';el.querySelector('.remove').onclick=e=>{e.stopPropagation();remove('zone',z.id)};el.onpointerdown=e=>drag(el,z,'zone',e);el.onclick=()=>{selected={type:'zone',id:z.id};renderSelected()};$('canvas').appendChild(el)});
  state.items.forEach(i=>{const el=document.createElement('div');el.className='pin'+(selected?.type==='item'&&selected.id===i.id?' selected':'');el.style.left=i.x+'%';el.style.top=i.y+'%';el.style.setProperty('--pin-w',(i.w||12)+'%');el.style.setProperty('--pin-h',(i.h||9)+'%');el.innerHTML='<button class="remove">×</button><span class="icon">'+i.icon+'</span><strong>'+escapeHtml(i.label||i.name)+'</strong><small>'+(i.quantity>1?'×'+i.quantity+' · ':'')+escapeHtml(i.category)+'</small><span class="resize-edge resize-right" title="Drag to change width" aria-label="Drag to change width"></span><span class="resize-edge resize-bottom" title="Drag to change height" aria-label="Drag to change height"></span><span class="resize-edge resize-corner" title="Drag to change width and height" aria-label="Drag to change width and height"></span>';el.querySelector('.remove').onclick=e=>{e.stopPropagation();remove('item',i.id)};el.querySelector('.resize-right').onpointerdown=e=>resizeEquipment(el,i,'right',e);el.querySelector('.resize-bottom').onpointerdown=e=>resizeEquipment(el,i,'bottom',e);el.querySelector('.resize-corner').onpointerdown=e=>resizeEquipment(el,i,'corner',e);el.onpointerdown=e=>drag(el,i,'item',e);el.onclick=e=>{if(e.target.closest?.('.resize-edge'))return;selected={type:'item',id:i.id};render();renderSelected()};$('canvas').appendChild(el)});
@@ -331,13 +334,14 @@ function renderSelected(){const host=$('selectedPanel');if(!selected){host.class
 function highlight(name){const item=state.items.find(x=>x.name===name||x.exercises?.includes(name));if(!item)return toast('That equipment has not been placed yet');selected={type:'item',id:item.id};render();const pin=[...document.querySelectorAll('.pin')].find(x=>x.classList.contains('selected'));pin?.scrollIntoView({behavior:'smooth',block:'center'});toast((item.label||item.name)+' highlighted')}
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function attr(s){return escapeHtml(s).replace(/"/g,'&quot;')}
-document.querySelectorAll('.draw-tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));$('finishOutlineBtn').onclick=finishOutline;$('canvas').addEventListener('pointerdown',handleCanvasPointerDown);document.querySelectorAll('.mobile-editor-tab').forEach(b=>b.onclick=()=>setMobilePanel(b.dataset.mobilePanel));setMobilePanel('map');mobileMq.addEventListener?.('change',e=>{if(e.matches)setMobilePanel('map');else document.body.classList.remove('mobile-panel-map','mobile-panel-setup')});
+document.querySelectorAll('.draw-tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));$('finishOutlineBtn').onclick=finishOutline;$('canvas').addEventListener('click',handleCanvasTap);
+document.querySelectorAll('.mobile-editor-tab').forEach(b=>b.onclick=()=>setMobilePanel(b.dataset.mobilePanel));setMobilePanel('map');mobileMq.addEventListener?.('change',e=>{if(e.matches)setMobilePanel('map');else document.body.classList.remove('mobile-panel-map','mobile-panel-setup')});
 $('search').oninput=renderCatalog;$('categoryFilter').onchange=renderCatalog;$('addZoneBtn').onclick=addZone;$('saveBtn').onclick=()=>save();
 $('floorUpload').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{remember();state.background=rd.result;render();save(true);if(mobileMq.matches)setMobilePanel('map')};rd.readAsDataURL(f)};
 $('blankBtn').onclick=()=>{remember();state.background='';render();toast('Blank grid ready')};$('clearBgBtn').onclick=()=>{remember();state.background='';render();save(true)};
 $('previewBtn').onclick=()=>{document.body.classList.add('member-mode');selected=null;render()};$('exitPreview').onclick=()=>document.body.classList.remove('member-mode');
 document.querySelectorAll('[data-find]').forEach(b=>b.onclick=()=>highlight(b.dataset.find));
-$('undoBtn').onclick=undoLast;$('resetBtn').onclick=()=>{if(!confirm('Clear the entire gym layout? You can undo this immediately afterwards.'))return;remember();state={background:'',zones:[],items:[],outline:[],rooms:[],walls:[],doors:[]};selected=null;draftPoints=[];setTool('select');save(true);render();toast('Layout cleared')};
+$('undoBtn').onclick=undoLast;$('resetBtn').onclick=()=>{if(!confirm('Clear the entire gym layout? You can undo this immediately afterwards.'))return;remember();state={background:'',zones:[],items:[],outline:[],rooms:[],walls:[],doors:[]};selected=null;pendingPoint=null;draftOutline=[];setTool('select');save(true);render();toast('Layout cleared')};
 renderCatalog();load();syncUndo();
 </script>
 </body></html>
