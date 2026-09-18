@@ -1,5 +1,5 @@
 (function(){
-  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html']);
+  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html']);
   const sidebar=[
     {key:'dashboard',label:'Dashboard',icon:'dashboard',href:'./index.html'},
     {key:'community-group',label:'Community',icon:'community',href:'./community.html'},
@@ -23,7 +23,8 @@
     'services-group':[
       {key:'resources',label:'Rooms & equipment',href:'./admin-operations.html#resources'},
       {key:'services',label:'Service dependencies',href:'./admin-operations.html#services'},
-      {key:'resource-availability',label:'Resource availability',href:'./resource-availability.html'}
+      {key:'resource-availability',label:'Resource availability',href:'./resource-availability.html'},
+      {key:'gym-layout',label:'Gym layout',href:'./gym-layout.html'}
     ],
     'staff-group':[
       {key:'staff',label:'Staff & working hours',href:'./admin-operations.html#staff'},
@@ -47,6 +48,7 @@
     if(p.endsWith('/class-setup.html'))return'class-setup';
     if(p.endsWith('/admin-operations.html'))return['staff','resources','services'].includes(h)?h:'staff';
     if(p.endsWith('/resource-availability.html'))return'resource-availability';
+    if(p.endsWith('/gym-layout.html'))return'gym-layout';
     if(p.endsWith('/staff-permissions.html'))return'staff-access';
     if(p.endsWith('/access-settings.html'))return'access';
     if(p.endsWith('/reporting.html'))return'reporting';
@@ -60,7 +62,7 @@
   function groupFor(key){
     if(['community-social','community'].includes(key))return'community-group';
     if(['classes','class-setup'].includes(key))return'classes-group';
-    if(['resources','services','resource-availability'].includes(key))return'services-group';
+    if(['resources','services','resource-availability','gym-layout'].includes(key))return'services-group';
     if(['staff','staff-access'].includes(key))return'staff-group';
     if(['members','memberships','access'].includes(key))return'members-group';
     return key;
