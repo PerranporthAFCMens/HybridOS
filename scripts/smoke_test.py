@@ -10,9 +10,12 @@ if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
 RENDER_BASELINE={
  'app-consistency.css':'86a433a3acf6dfabd195a92bca9f22f201195e60',
  'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
- 'admin-shell.css':'2eebcf3ae71c7285975faf01131266f7ae8a8ca0',
- 'admin-frame.css':'2e1008213ece071ab870238e227c2ef1a65f2b91',
- 'admin-embed.js':'2411d258199da9db10d21d3584d5cab9eed9a8f5',
+ 'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
+ 'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
+ 'admin-embed.js':'2fdac1aef63f051d3227b525bd7dfb872d0725cb',
+ 'admin-frame.js':'b1a42b739f9837d000e4aa05ec3f6573b854833e',
+ 'app-stability.js':'2d4d2f3857521eeff81ac8ba631d29376525b397',
+ 'shared-admin-nav.js':'3024320f77c1af263fbe046bcc4d3351f5d8bd2f',
 }
 def git_blob_sha(path):
  import hashlib
@@ -108,12 +111,16 @@ for x in ('hybrid-admin-nav','embedded=1','history.pushState','adminContentFrame
  if x not in admin_frame_js:problems.append(f'admin-frame.js: persistent routing missing: {x}')
 for x in ('hybrid-admin-ready','pendingSwap','completeSwap','Fallback only'):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: embedded readiness handoff missing: {x}')
+for x in ('workout-builder.html',"{key:'workouts'","if(file==='workout-builder.html')return'workouts'"):
+ if x not in admin_frame_js:problems.append(f'admin-frame.js: admin registry/routes out of sync: {x}')
 admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
 for x in ('admin-frame.css?v=','admin-frame.js?v=','shared-shell.js?v='):
  if x not in admin_frame_html:problems.append(f'admin.html: persistent shell asset is not cache-busted: {x}')
 admin_frame_css=(ROOT/'admin-frame.css').read_text(encoding='utf-8')
 for x in ('.admin-content-frame','.admin-content-frame.active','visibility:hidden'):
  if x not in admin_frame_css:problems.append(f'admin-frame.css: buffered frame styling missing: {x}')
+for x in ('height:100dvh','env(safe-area-inset-top)','env(safe-area-inset-bottom)'):
+ if x not in admin_frame_css:problems.append(f'admin-frame.css: parent mobile viewport ownership missing: {x}')
 
 admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
 if 'viewport-fit=cover' in admin_frame_html:problems.append('admin.html: experimental full-bleed viewport returned')
@@ -154,11 +161,12 @@ app_css=(ROOT/'app-consistency.css').read_text(encoding='utf-8')
 for x in ('Centralised Hybrid OS sidebar shell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','grid-template-columns:254px'):
  if x not in app_css:problems.append(f'app-consistency.css: central shell styling missing: {x}')
 
-admin_pages=('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html')
+admin_pages=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html')
 for page_name in admin_pages:
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
- for x in ('html.admin-embedded .side{display:none!important}','html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView{display:block!important;grid-template-columns:1fr!important}','html.admin-embedded .main{min-height:100dvh!important}'):
+ for x in ('html.admin-embedded .side{display:none!important}','html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView{display:block!important;grid-template-columns:1fr!important}','html.admin-embedded .main{min-height:100%!important;background:#f5f7fb!important}'):
   if x not in page_text:problems.append(f'{page_name}: original embedded admin shell guard missing: {x}')
+ if 'html.admin-embedded .main{min-height:100dvh!important}' in page_text:problems.append(f'{page_name}: embedded child must not own 100dvh')
  if 'admin-mobile-contract.css' in page_text:problems.append(f'{page_name}: duplicate admin mobile contract returned')
  for asset in ('app-consistency.css','admin-shell.css','admin-pages.css','admin-embed.js','shared-admin-nav.js'):
   if page_text.count(asset)!=1:problems.append(f'{page_name}: expected exactly one {asset}, found {page_text.count(asset)}')
@@ -174,6 +182,8 @@ for x in ('showOpsTab','location.hash.replace','history.replaceState','resources
 stability=(ROOT/'app-stability.js').read_text(encoding='utf-8')
 for x in ('hybridNavigationMask','beginNavigation','HybridNavigation','adminFiles.indexOf(currentFile)','adminFiles.indexOf(targetFile)'):
  if x not in stability:problems.append(f'app-stability.js: admin navigation transition rule missing: {x}')
+for x in ("document.documentElement.classList.contains('admin-embedded')","'workout-builder.html'","'gym-layout.html'"):
+ if x not in stability:problems.append(f'app-stability.js: embedded admin transition isolation missing: {x}')
 for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','staff.html','member.html','member-preview.html','social.html','groups.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  if 'hybrid-critical-shell' not in page_text:problems.append(f'{page_name}: critical first-paint shell missing')
