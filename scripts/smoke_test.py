@@ -15,7 +15,7 @@ RENDER_BASELINE={
  'admin-embed.js':'2fdac1aef63f051d3227b525bd7dfb872d0725cb',
  'admin-frame.js':'2ac86893c6db1c2f1b4d3ae18a3f2fb9e0e86d58',
  'app-stability.js':'2d4d2f3857521eeff81ac8ba631d29376525b397',
- 'shared-admin-nav.js':'33646918406bad5e84a5218a3358d7223917fc70',
+ 'shared-admin-nav.js':'a6c4918dc4d68c200a421735ae09969a470134d9',
 }
 def git_blob_sha(path):
  import hashlib
@@ -137,8 +137,8 @@ for x in ("const adminPages=new Set","enterPersistentShell","shellUrlFor"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: persistent router registry missing: {x}')
 for x in ('enterPersistentShell','admin.html?view=','shellUrlFor'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: persistent shell routing missing: {x}')
-for x in ("window.top!==window.self||window.matchMedia('(max-width:900px)').matches","function markAdminHotNav(href){if(window.matchMedia('(max-width:900px)').matches)return;"):
- if x not in admin_nav:problems.append(f'shared-admin-nav.js: mobile normal-link navigation missing: {x}')
+if "window.top!==window.self||window.matchMedia('(max-width:900px)').matches" not in admin_nav:problems.append('shared-admin-nav.js: mobile must stay outside persistent shell')
+if "function markAdminHotNav(href){try{" not in admin_nav:problems.append('shared-admin-nav.js: smooth top-level admin handoff missing')
 for x in ('markAdminHotNav','hybrid-admin-hot-nav','sessionStorage.setItem'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: smooth admin hand-off missing: {x}')
 if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: duplicate Member memberships tab returned')
@@ -248,6 +248,7 @@ for page_name in ('index.html','community.html','classes.html','class-setup.html
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('hybrid-admin-hot-nav','admin-hot-nav','html.admin-hot-nav #loading'):
   if x not in page_text:problems.append(f'{page_name}: admin hot first-paint missing: {x}')
+ if 'html.admin-hot-nav #app.hidden,html.admin-hot-nav #appView.hidden{display:grid!important}' not in page_text:problems.append(f'{page_name}: smooth destination shell reveal missing')
 for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('admin-embed.js?v=','admin-embedded'):
