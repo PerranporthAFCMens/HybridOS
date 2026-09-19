@@ -1,4 +1,42 @@
-
 /* Admin navigation deliberately avoids cross-document View Transitions.
    They can leave a translucent browser snapshot over the destination page.
-   Smoothness comes from the hot-navigation loader bypass instead. */
+   Smoothness comes from the persistent shell / ready handoff. */
+
+body{
+  background:#f5f7fb;
+  min-height:100vh;
+  min-height:100dvh;
+}
+
+@media(max-width:900px){
+  html,body{
+    background:#f5f7fb!important;
+    min-height:100%;
+    min-height:100dvh;
+  }
+
+  .mobile-nav,.bottom{
+    display:none!important;
+  }
+
+  .main{
+    padding-bottom:calc(36px + env(safe-area-inset-bottom))!important;
+    min-height:100dvh;
+    background:#f5f7fb!important;
+  }
+
+  .admin-mobile-menu-btn{
+    top:calc(16px + env(safe-area-inset-top))!important;
+  }
+
+  .side{
+    height:100vh!important;
+    height:100dvh!important;
+    padding-top:calc(24px + env(safe-area-inset-top))!important;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom))!important;
+  }
+
+  .admin-mobile-menu-close{
+    top:calc(14px + env(safe-area-inset-top))!important;
+  }
+}
