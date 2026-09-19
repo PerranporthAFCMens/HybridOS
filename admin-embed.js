@@ -19,11 +19,49 @@
     return true;
   }
 
-  function signalReady(){
+  function appReady(){
+    if(window.__hybridAppReady===true)return true;
+    const loading=document.getElementById('loading');
+    const app=document.getElementById('app')||document.getElementById('appView');
+    if(!loading)return document.readyState==='complete';
+    const loadingStyle=getComputedStyle(loading);
+    const loadingVisible=loadingStyle.display!=='none'&&loadingStyle.visibility!=='hidden'&&!loading.classList.contains('hidden');
+    if(!app)return !loadingVisible;
+    const appStyle=getComputedStyle(app);
+    const appVisible=appStyle.display!=='none'&&appStyle.visibility!=='hidden'&&!app.classList.contains('hidden');
+    return !loadingVisible&&appVisible;
+  }
+
+  function postReady(){
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       parent.postMessage({type:'hybrid-admin-ready'},location.origin);
     }));
   }
+
+  function signalReady(){
+    if(appReady()){postReady();return}
+    const observer=new MutationObserver(()=>{
+      if(!appReady())return;
+      observer.disconnect();
+      postReady();
+    });
+    const loading=document.getElementById('loading');
+    const app=document.getElementById('app')||document.getElementById('appView');
+    if(loading)observer.observe(loading,{attributes:true,attributeFilter:['class','style']});
+    if(app)observer.observe(app,{attributes:true,attributeFilter:['class','style']});
+    const poll=setInterval(()=>{
+      if(!appReady())return;
+      clearInterval(poll);
+      observer.disconnect();
+      postReady();
+    },50);
+    setTimeout(()=>{
+      clearInterval(poll);
+      observer.disconnect();
+      if(appReady())postReady();
+    },5000);
+  }
+
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',signalReady,{once:true});
   else signalReady();
 
