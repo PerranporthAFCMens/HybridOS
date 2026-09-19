@@ -1,42 +1,176 @@
-/* Admin navigation deliberately avoids cross-document View Transitions.
-   They can leave a translucent browser snapshot over the destination page.
-   Smoothness comes from the persistent shell / ready handoff. */
+/* Hybrid OS Admin content shell.
+   Standalone admin pages keep the proven iPhone safe-area treatment.
+   Embedded pages are content-only: the persistent parent shell owns mobile chrome. */
 
-body{
+html,body{
+  margin:0;
+  min-height:100%;
   background:#f5f7fb;
+}
+body{
   min-height:100vh;
   min-height:100dvh;
 }
 
+#loading{
+  min-height:100vh;
+  position:relative;
+  color:transparent;
+  background:linear-gradient(90deg,#0b1020 0 255px,#f5f7fb 255px 100%);
+  overflow:hidden;
+}
+#loading::before{
+  content:"HYBRID OS";
+  position:absolute;
+  left:24px;
+  top:26px;
+  color:#fff;
+  font:900 18px/1 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  letter-spacing:.08em;
+}
+#loading::after{
+  content:"";
+  position:absolute;
+  left:285px;
+  right:30px;
+  top:30px;
+  height:190px;
+  border-radius:22px;
+  background:linear-gradient(100deg,#e9edf3 20%,#f7f8fa 36%,#e9edf3 52%);
+  background-size:220% 100%;
+  animation:adminShimmer 1.05s linear infinite;
+  box-shadow:0 220px 0 #fff,0 430px 0 #fff;
+}
+@keyframes adminShimmer{to{background-position:-220% 0}}
+
+.admin-mobile-menu-btn,.admin-mobile-menu-close,.admin-mobile-backdrop{display:none}
+
+html.admin-embedded,
+html.admin-embedded body{
+  min-height:100%!important;
+  background:#f5f7fb!important;
+}
+html.admin-embedded .main{
+  min-height:100%!important;
+  background:#f5f7fb!important;
+}
+html.admin-embedded .admin-mobile-menu-btn,
+html.admin-embedded .admin-mobile-menu-close,
+html.admin-embedded .admin-mobile-backdrop,
+html.admin-embedded .mobile-nav,
+html.admin-embedded .bottom{
+  display:none!important;
+}
+
 @media(max-width:900px){
-  html,body{
+  html:not(.admin-embedded),
+  html:not(.admin-embedded) body{
     background:#f5f7fb!important;
     min-height:100%;
     min-height:100dvh;
   }
 
-  .mobile-nav,.bottom{
+  html:not(.admin-embedded) #loading{background:#f5f7fb}
+  html:not(.admin-embedded) #loading::before{display:none}
+  html:not(.admin-embedded) #loading::after{left:14px;right:14px;top:20px;height:150px}
+
+  html:not(.admin-embedded) .mobile-nav,
+  html:not(.admin-embedded) .bottom{
     display:none!important;
   }
 
-  .main{
+  html:not(.admin-embedded) .main{
+    padding-top:74px!important;
     padding-bottom:calc(36px + env(safe-area-inset-bottom))!important;
     min-height:100dvh;
     background:#f5f7fb!important;
   }
 
-  .admin-mobile-menu-btn{
-    top:calc(16px + env(safe-area-inset-top))!important;
+  html:not(.admin-embedded) .admin-mobile-menu-btn{
+    display:grid!important;
+    place-items:center;
+    position:fixed;
+    top:calc(16px + env(safe-area-inset-top));
+    left:14px;
+    width:44px;
+    height:44px;
+    padding:0;
+    border:1px solid var(--line,#e7ebf2);
+    border-radius:13px;
+    background:#fff;
+    color:var(--ink,#101828);
+    font-size:24px;
+    line-height:1;
+    box-shadow:0 8px 24px rgba(16,24,40,.12);
+    z-index:81;
+    cursor:pointer;
   }
 
-  .side{
+  html:not(.admin-embedded) body.admin-mobile-open .admin-mobile-menu-btn{
+    opacity:0;
+    pointer-events:none;
+  }
+
+  html:not(.admin-embedded) .side{
+    display:flex!important;
+    position:fixed!important;
+    left:0!important;
+    top:0!important;
+    bottom:0!important;
+    width:min(84vw,320px)!important;
     height:100vh!important;
     height:100dvh!important;
+    box-sizing:border-box!important;
+    z-index:90!important;
+    transform:translateX(-105%);
+    transition:transform .22s ease;
+    box-shadow:18px 0 40px rgba(0,0,0,.22);
+    overflow-y:auto;
     padding-top:calc(24px + env(safe-area-inset-top))!important;
     padding-bottom:calc(24px + env(safe-area-inset-bottom))!important;
   }
 
-  .admin-mobile-menu-close{
-    top:calc(14px + env(safe-area-inset-top))!important;
+  html:not(.admin-embedded) body.admin-mobile-open .side{transform:translateX(0)}
+
+  html:not(.admin-embedded) .admin-mobile-menu-close{
+    display:grid!important;
+    place-items:center;
+    position:absolute;
+    top:calc(14px + env(safe-area-inset-top));
+    right:14px;
+    width:38px;
+    height:38px;
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:11px;
+    background:rgba(255,255,255,.08);
+    color:#fff;
+    font-size:24px;
+    line-height:1;
+    z-index:2;
+    cursor:pointer;
   }
+
+  html:not(.admin-embedded) .admin-mobile-backdrop{
+    display:block;
+    position:fixed;
+    inset:0;
+    background:rgba(11,16,32,.48);
+    z-index:85;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease;
+  }
+
+  html:not(.admin-embedded) body.admin-mobile-open .admin-mobile-backdrop{
+    opacity:1;
+    pointer-events:auto;
+  }
+
+  html:not(.admin-embedded) body.admin-mobile-open{overflow:hidden}
+  html:not(.admin-embedded) .top{padding-left:54px!important;min-height:46px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  #loading::after{animation:none}
+  .side,.admin-mobile-backdrop{transition:none!important}
 }
