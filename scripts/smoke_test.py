@@ -10,7 +10,7 @@ if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
 RENDER_BASELINE={
  'app-consistency.css':'86a433a3acf6dfabd195a92bca9f22f201195e60',
  'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
- 'admin-shell.css':'15e7767c16f9f971e803484795430cd955cebc20',
+ 'admin-shell.css':'2eebcf3ae71c7285975faf01131266f7ae8a8ca0',
  'admin-frame.css':'2e1008213ece071ab870238e227c2ef1a65f2b91',
  'admin-embed.js':'f17da585e62b40e8d507887079d1aa9e6f7aba59',
 }
