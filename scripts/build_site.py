@@ -32,7 +32,7 @@ html,body{margin:0;min-height:100%;background:#f5f7fb}
 @media(max-width:900px){#loading{background:#f5f7fb}#loading::before{display:none}#loading::after{left:14px;right:14px;top:20px;height:150px}#hybridNavigationMask{grid-template-columns:1fr}.hybrid-nav-mask-side{display:none}.hybrid-nav-mask-main{padding:20px 14px}.hybrid-nav-mask-bar{width:62%}}
 @media(prefers-reduced-motion:reduce){#loading::after,.hybrid-nav-mask-card{animation:none}#hybridNavigationMask{transition:none}}
 html.admin-hot-nav #loading{display:none!important}
-html.admin-hot-nav #app.hidden{display:grid!important}
+html.admin-hot-nav #app.hidden,html.admin-hot-nav #appView.hidden{display:grid!important}
 html.admin-embedded #loading{background:#f5f7fb!important}
 html.admin-embedded #loading::before{display:none!important}
 html.admin-embedded #loading::after{left:30px!important}
