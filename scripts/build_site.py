@@ -38,6 +38,7 @@ html.admin-embedded #loading::before{display:none!important}
 html.admin-embedded #loading::after{left:30px!important}
 html.admin-embedded .side{display:none!important}
 html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView{display:block!important;grid-template-columns:1fr!important}
+html.admin-embedded .main{min-height:100dvh!important}
 html.admin-embedded .admin-mobile-menu-btn,html.admin-embedded .admin-mobile-backdrop{display:none!important}
 @media(max-width:900px){html.admin-hot-nav #app.hidden{display:block!important}html.admin-embedded #loading::after{left:14px!important}}
 </style>'''
