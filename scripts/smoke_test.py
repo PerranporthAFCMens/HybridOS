@@ -12,7 +12,7 @@ RENDER_BASELINE={
  'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
  'admin-shell.css':'2eebcf3ae71c7285975faf01131266f7ae8a8ca0',
  'admin-frame.css':'2e1008213ece071ab870238e227c2ef1a65f2b91',
- 'admin-embed.js':'f17da585e62b40e8d507887079d1aa9e6f7aba59',
+ 'admin-embed.js':'2411d258199da9db10d21d3584d5cab9eed9a8f5',
 }
 def git_blob_sha(path):
  import hashlib
@@ -121,6 +121,8 @@ if 'top:calc(env(safe-area-inset-top)' in admin_frame_css:problems.append('admin
 admin_embed=(ROOT/'admin-embed.js').read_text(encoding='utf-8')
 for x in ('admin-embedded','parent.postMessage','hybrid-admin-nav','hybrid-admin-ready','signalReady','requestAnimationFrame'):
  if x not in admin_embed:problems.append(f'admin-embed.js: embedded bridge missing: {x}')
+for x in ('function appReady()','window.__hybridAppReady===true','!loadingVisible&&appVisible','MutationObserver','setInterval'):
+ if x not in admin_embed:problems.append(f'admin-embed.js: true app-readiness gate missing: {x}')
 admin_nav=(ROOT/'shared-admin-nav.js').read_text(encoding='utf-8')
 for x in ("const adminPages=new Set","enterPersistentShell","shellUrlFor"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: persistent router registry missing: {x}')
