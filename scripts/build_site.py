@@ -68,8 +68,13 @@ def add_admin_shell():
  for n in ADMIN_PAGES:
   s=read(n)
   s=re.sub(r'<script[^>]+src=["\']\.\/shared-admin-nav\.js(?:\?[^"\']*)?["\'][^>]*>\s*<\/script>','',s,flags=re.I)
-  s=s.replace('<head>','<head><script>(function(){try{var q=new URLSearchParams(location.search);if(q.get("embedded")==="1")document.documentElement.classList.add("admin-embedded");if(sessionStorage.getItem("hybrid-admin-hot-nav")==="1"){document.documentElement.classList.add("admin-hot-nav");sessionStorage.removeItem("hybrid-admin-hot-nav")}}catch(e){}})();</script>',1);s=inject_head(s,'admin-shell.css',f'<link rel="stylesheet" href="./admin-shell.css?v={VERSION}">')
-  s=inject_head(s,'admin-pages.css',f'<link rel="stylesheet" href="./admin-pages.css?v={VERSION}">')
+  s=s.replace('<head>','<head><script>(function(){try{var q=new URLSearchParams(location.search);if(q.get("embedded")==="1")document.documentElement.classList.add("admin-embedded");if(sessionStorage.getItem("hybrid-admin-hot-nav")==="1"){document.documentElement.classList.add("admin-hot-nav");sessionStorage.removeItem("hybrid-admin-hot-nav")}}catch(e){}})();</script>',1)
+  # Source pages have accumulated different shared stylesheet links. Rebuild the shared
+  # cascade deterministically so every admin page renders app -> shell -> page overrides.
+  for asset in ('app-consistency.css','admin-shell.css','admin-pages.css'):
+   s=re.sub(r'<link[^>]+href=["\']\.\/'+re.escape(asset)+r'(?:\?[^"\']*)?["\'][^>]*>','',s,flags=re.I)
+  shared_css=''.join(f'<link rel="stylesheet" href="./{asset}?v={VERSION}">' for asset in ('app-consistency.css','admin-shell.css','admin-pages.css'))
+  s=s.replace('</head>',shared_css+'</head>',1)
   s=inject_body(s,'admin-embed.js',f'<script src="./admin-embed.js?v={VERSION}" defer></script>');s=inject_body(s,'shared-admin-nav.js',f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>')
   if n=='index.html':s=s.replace('<section id="authView" class="auth">','<section id="authView" class="auth hidden">',1)
   write(n,s)
