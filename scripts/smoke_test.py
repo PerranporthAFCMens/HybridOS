@@ -128,6 +128,8 @@ for x in ("const adminPages=new Set","enterPersistentShell","shellUrlFor"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: persistent router registry missing: {x}')
 for x in ("window.top!==window.self||window.matchMedia('(max-width:900px)').matches","function markAdminHotNav(href){if(window.matchMedia('(max-width:900px)').matches)return;"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: mobile clean-navigation guard missing: {x}')
+for x in ('function mobileFullPageNavigate','location.assign(new URL(href,location.href).href)','if(mobileFullPageNavigate(e,a.href))return'):
+ if x not in admin_nav:problems.append(f'shared-admin-nav.js: explicit mobile navigation missing: {x}')
 for x in ('enterPersistentShell','admin.html?view=','shellUrlFor'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: persistent shell routing missing: {x}')
 for x in ('markAdminHotNav','hybrid-admin-hot-nav','sessionStorage.setItem'):
