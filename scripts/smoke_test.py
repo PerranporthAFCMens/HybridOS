@@ -228,6 +228,7 @@ for x in ('Customer pulse','pulse-head','seasonality-grid','YOY SWING','seasonal
 if 'stroke-dasharray="7 6"' in admin_index or 'yoy-grid' in admin_index:problems.append('index.html: retired customer comparison view returned')
 if 'Last 30 days ·' in admin_index:problems.append('index.html: retired rolling customer movement chart copy returned')
 workout_builder=(ROOT/'workout-builder.html').read_text(encoding='utf-8')
+if 'admin-frame.css' in workout_builder:problems.append('workout-builder.html: iframe shell stylesheet must not load in top-level Admin page')
 for x in ('Assign to member','Publish as WOD','workout_assignments','workout_wods','templateSnapshot'):
  if x not in workout_builder:problems.append(f'workout-builder.html: Workout V2 assignment/WOD boundary missing: {x}')
 member_v2=(ROOT/'member-workouts-v2.js').read_text(encoding='utf-8')
