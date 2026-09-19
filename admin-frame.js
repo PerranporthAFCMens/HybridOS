@@ -1,7 +1,6 @@
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 const shellVersion=new URL(import.meta.url).searchParams.get('v')||Date.now().toString();
-const mobileAdmin=window.matchMedia('(max-width:900px)').matches;
 const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html']);
 const routes=[
  {key:'dashboard',label:'Dashboard',icon:'dashboard',view:'index.html'},
@@ -88,8 +87,6 @@ function mobile(){
  document.body.append(b,d);
 }
 async function init(){
- const requested=cleanView(new URLSearchParams(location.search).get('view')||'index.html');
- if(mobileAdmin){location.replace('./'+requested);return}
  const{data:{session}}=await sb.auth.getSession();if(!session){location.replace('./index.html');return}
  const{data:gm}=await sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',session.user.id).eq('is_active',true).limit(1);
  if(!gm?.length){location.replace('./index.html');return}
@@ -102,7 +99,7 @@ async function init(){
  gymName.textContent=gm[0].gyms?.name||'Gym';
  window.HybridShell?.apply();
  mobile();
- const start=requested;
+ const start=cleanView(new URLSearchParams(location.search).get('view')||'index.html');
  currentView=start;drawNav();activeFrame.src=embeddedUrl(start);
 }
 window.addEventListener('message',e=>{
