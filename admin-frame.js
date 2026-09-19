@@ -89,6 +89,11 @@ function mobile(){
  document.body.append(b,d);
 }
 async function init(){
+ const requested=cleanView(new URLSearchParams(location.search).get('view')||'index.html');
+ if(window.matchMedia('(max-width:900px)').matches){
+   location.replace('./'+requested);
+   return;
+ }
  const{data:{session}}=await sb.auth.getSession();if(!session){location.replace('./index.html');return}
  const{data:gm}=await sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',session.user.id).eq('is_active',true).limit(1);
  if(!gm?.length){location.replace('./index.html');return}
@@ -101,7 +106,7 @@ async function init(){
  gymName.textContent=gm[0].gyms?.name||'Gym';
  window.HybridShell?.apply();
  mobile();
- const start=cleanView(new URLSearchParams(location.search).get('view')||'index.html');
+ const start=requested;
  currentView=start;drawNav();activeFrame.src=embeddedUrl(start);
 }
 window.addEventListener('message',e=>{
