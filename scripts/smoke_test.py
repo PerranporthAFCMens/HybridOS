@@ -13,9 +13,9 @@ RENDER_BASELINE={
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
  'admin-embed.js':'2fdac1aef63f051d3227b525bd7dfb872d0725cb',
- 'admin-frame.js':'b1a42b739f9837d000e4aa05ec3f6573b854833e',
+ 'admin-frame.js':'2ac86893c6db1c2f1b4d3ae18a3f2fb9e0e86d58',
  'app-stability.js':'2d4d2f3857521eeff81ac8ba631d29376525b397',
- 'shared-admin-nav.js':'3024320f77c1af263fbe046bcc4d3351f5d8bd2f',
+ 'shared-admin-nav.js':'33646918406bad5e84a5218a3358d7223917fc70',
 }
 def git_blob_sha(path):
  import hashlib
@@ -111,6 +111,8 @@ for x in ('hybrid-admin-nav','embedded=1','history.pushState','adminContentFrame
  if x not in admin_frame_js:problems.append(f'admin-frame.js: persistent routing missing: {x}')
 for x in ('hybrid-admin-ready','pendingSwap','completeSwap','Fallback only'):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: embedded readiness handoff missing: {x}')
+for x in ("matchMedia('(max-width:900px)').matches","location.replace('./'+requested)","const start=requested"):
+ if x not in admin_frame_js:problems.append(f'admin-frame.js: mobile top-level handoff missing: {x}')
 for x in ('workout-builder.html',"{key:'workouts'","if(file==='workout-builder.html')return'workouts'"):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: admin registry/routes out of sync: {x}')
 admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
@@ -135,6 +137,8 @@ for x in ("const adminPages=new Set","enterPersistentShell","shellUrlFor"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: persistent router registry missing: {x}')
 for x in ('enterPersistentShell','admin.html?view=','shellUrlFor'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: persistent shell routing missing: {x}')
+for x in ("window.top!==window.self||window.matchMedia('(max-width:900px)').matches","function markAdminHotNav(href){if(window.matchMedia('(max-width:900px)').matches)return;"):
+ if x not in admin_nav:problems.append(f'shared-admin-nav.js: mobile normal-link navigation missing: {x}')
 for x in ('markAdminHotNav','hybrid-admin-hot-nav','sessionStorage.setItem'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: smooth admin hand-off missing: {x}')
 if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: duplicate Member memberships tab returned')
