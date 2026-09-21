@@ -30,7 +30,7 @@ const fmtDate=d=>d?new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',
 const labelStatus=s=>s?String(s).replaceAll('_',' '):'pending';
 function setMsg(t,c=''){$('msg').textContent=t;$('msg').className='msg '+c}
 const{data:{session}}=await supabase.auth.getSession();if(!session){location.href='./';}else currentUser=session.user;
-const{data:gm,error:gmErr}=await supabase.from('gym_members').select('gym_id,role,gyms(id,name)').eq('user_id',currentUser.id).eq('is_active',true).limit(1).maybeSingle();
+const{data:gm,error:gmErr}=await supabase.from('gym_members').select('gym_id,role,gyms(id,name)').eq('user_id',currentUser.id).eq('is_active',true).eq('gym_id',sessionStorage.getItem('hybrid-gym-id')||'00000000-0000-0000-0000-000000000000').limit(1).maybeSingle();
 if(gmErr||!gm){location.href='./onboarding.html';}else{gym=gm.gyms;canManage=['owner','admin','staff'].includes(gm.role);$('gymName').textContent=gym.name;}
 const[{data:memberRows,error:membersErr},{data:planRows,error:plansErr}]=await Promise.all([supabase.from('gym_members').select('user_id,role,is_active').eq('gym_id',gym.id).eq('is_active',true).order('joined_at'),supabase.from('membership_plans').select('id,name,price_pence,billing_interval,is_active').eq('gym_id',gym.id).eq('is_active',true).order('price_pence')]);
 if(membersErr)console.error(membersErr);if(plansErr)console.error(plansErr);plans=planRows||[];$('planSelect').innerHTML=plans.length?plans.map(p=>`<option value="${p.id}">${esc(p.name)} — £${(p.price_pence/100).toFixed(2)} / ${esc(p.billing_interval)}</option>`).join(''):'<option value="">No active plans</option>';

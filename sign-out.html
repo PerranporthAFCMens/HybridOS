@@ -23,6 +23,7 @@ import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+e
 const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 const status=document.getElementById('status');
 try{
+  sessionStorage.removeItem('hybrid-gym-id');
   await supabase.auth.signOut();
   location.replace('./index.html');
 }catch(e){
