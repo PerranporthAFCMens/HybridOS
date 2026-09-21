@@ -152,14 +152,14 @@ for page_name in ('index.html','community.html','classes.html','class-setup.html
  elif '?v=' not in nav_refs[0]:problems.append(f'{page_name}: admin nav runtime is not cache-busted')
 
 admin_access=(ROOT/'admin-access.html').read_text(encoding='utf-8')
-for x in ('Owner controls','create_admin_invite','approve_admin_access','remove_admin_access','revoke_admin_invite','delete_admin_invite','Approve Admin','Delete invite'):
- if x not in admin_access:problems.append(f'admin-access.html: owner Admin access workflow missing: {x}')
+for x in ('Owner controls','create_access_invite','approve_pending_access','propose_owner_promotion','approve_ownership_action','propose_owner_removal','remove_admin_access','revoke_admin_invite','delete_admin_invite','Owner · equal ownership','Ownership decisions','Promote to Owner'):
+ if x not in admin_access:problems.append(f'admin-access.html: equal Owner/Admin access workflow missing: {x}')
 admin_invite=(ROOT/'admin-invite.html').read_text(encoding='utf-8')
-for x in ('get_admin_invite','claim_admin_invite','Create account','read-only','waiting for Owner approval'):
- if x not in admin_invite:problems.append(f'admin-invite.html: Admin invite acceptance workflow missing: {x}')
+for x in ('get_access_invite','claim_access_invite','Create account','read-only','equal Owner','required Owner approval'):
+ if x not in admin_invite:problems.append(f'admin-invite.html: Admin/Owner invite acceptance workflow missing: {x}')
 access_guard=(ROOT/'admin-access-guard.js').read_text(encoding='utf-8')
-for x in ("access_status!=='pending'","HybridAccess","readOnly:true","Waiting for the gym Owner","Read-only until the Owner approves"):
- if x not in access_guard:problems.append(f'admin-access-guard.js: pending Admin read-only guard missing: {x}')
+for x in ("['admin','owner'].includes(membership.role)","access_status!=='pending'","HybridAccess","readOnly:true","required Owner approval","Read-only until the required Owner approval"):
+ if x not in access_guard:problems.append(f'admin-access-guard.js: pending Admin/Owner read-only guard missing: {x}')
 for x in ('admin-access.html',"'admin-access'"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: Admin access navigation missing: {x}')
 for x in ('admin-access.html',):
