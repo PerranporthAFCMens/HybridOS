@@ -87,10 +87,10 @@ function renderInvites(){
   $('inviteList').innerHTML=invites.map(i=>{
     const expired=i.status==='open'&&new Date(i.expires_at)<=new Date(),status=expired?'expired':i.status;
     return '<div class="invite"><div class="person-main"><div class="person-name">'+esc(i.email)+' <span class="status '+esc(status)+'">'+esc(status)+'</span></div><div class="person-email">Created '+esc(fmt(i.created_at))+' · expires '+esc(fmt(i.expires_at))+(i.claimed_by?' · account created':'')+'</div></div><div class="actions">'+
-      (['open','claimed'].includes(i.status)?'<button class="btn danger" data-revoke="'+i.id+'">Revoke link</button>':'')+
+      (['open','claimed'].includes(i.status)?'<button class="btn danger" data-revoke="'+i.id+'">Revoke link</button>':'')+'<button class="btn secondary" data-delete-invite="'+i.id+'">Delete invite</button>'+
       '</div></div>';
   }).join('')||'<div class="muted">No Admin invites yet.</div>';
-  document.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=()=>revoke(b.dataset.revoke,b));
+  document.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=()=>revoke(b.dataset.revoke,b));document.querySelectorAll('[data-delete-invite]').forEach(b=>b.onclick=()=>deleteInvite(b.dataset.deleteInvite,b));
 }
 $('createInvite').onclick=async()=>{
   const email=$('inviteEmail').value.trim();if(!email)return setMsg('Enter the email address first.');
@@ -106,5 +106,6 @@ $('copyInvite').onclick=async()=>{try{await navigator.clipboard.writeText($('gen
 async function approve(uid,btn){if(!confirm('Approve this person as a full Hybrid Hub Admin?'))return;btn.disabled=true;try{const{error}=await supabase.rpc('approve_admin_access',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 async function removeAccess(uid,btn){if(!confirm('Remove this Admin from Hybrid Hub? Their personal Hybrid OS login will remain, but this gym access will stop immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('remove_admin_access',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 async function revoke(id,btn){if(!confirm('Revoke this invite link? It will stop working immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('revoke_admin_invite',{target_invite_id:id});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
+async function deleteInvite(id,btn){if(!confirm('Delete this invite record? The link will stop working immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('delete_admin_invite',{target_invite_id:id});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 load().catch(e=>{console.error(e);$('loading').textContent='Admin access failed to load.'});
 </script></body></html>
