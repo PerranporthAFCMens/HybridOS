@@ -155,6 +155,16 @@ admin_access=(ROOT/'admin-access.html').read_text(encoding='utf-8')
 for x in ('Owner controls','create_email_access_invite','approve_email_owner_invite','send-access-invite','Send invitation email','propose_owner_promotion','approve_ownership_action','propose_owner_removal','remove_admin_access','revoke_admin_invite','delete_admin_invite','Owner · equal ownership','Ownership decisions','Promote to Owner'):
  if x not in admin_access:problems.append(f'admin-access.html: email-first Owner/Admin access workflow missing: {x}')
 if 'Create one-time invite' in admin_access or 'generatedLink' in admin_access:problems.append('admin-access.html: legacy copy-link invite flow returned')
+index_source=(ROOT/'index.html').read_text(encoding='utf-8')
+for x in ('access_invite','invite_email','invite_gym','invite_role','Sign in to continue','Continue to invitation','inviteDestination','showInviteLanding'):
+ if x not in index_source:problems.append(f'index.html: invite sign-in landing missing: {x}')
+for template_name in ('supabase-email-invite-template.html','supabase-email-magic-link-template.html'):
+ template=(ROOT/template_name)
+ if not template.exists():problems.append(f'{template_name}: branded email template missing');continue
+ tt=template.read_text(encoding='utf-8')
+ for x in ('HYBRID','{{ .ConfirmationURL }}','{{ .Data.hybrid_gym_name }}','{{ .Data.hybrid_invited_by }}','{{ .Data.hybrid_invite_role }}','Accept invitation'):
+  if x not in tt:problems.append(f'{template_name}: professional invite email content missing: {x}')
+
 admin_invite=(ROOT/'admin-invite.html').read_text(encoding='utf-8')
 for x in ('get_access_invite','claim_access_invite','Access activated','equal Owner','Set a password for future sign-ins','supabase.auth.updateUser','Different account signed in','Sign out and continue with invited email','supabase.auth.signOut()'):
  if x not in admin_invite:problems.append(f'admin-invite.html: email-first Admin/Owner acceptance workflow missing: {x}')
