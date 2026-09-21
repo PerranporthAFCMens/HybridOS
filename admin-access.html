@@ -15,9 +15,11 @@ button,input,select{font:inherit}.hidden{display:none!important}.shell{min-heigh
   <main class="main">
     <div class="top"><div><div class="eyebrow">Owner controls</div><h1>Admin access</h1><div class="muted">Invite and manage Admins and equal Owners. Owner-level changes require explicit Owner approval.</div></div></div>
     <div id="ownerOnly" class="card hidden"><h2 style="margin-top:0">Owner-only area</h2><p class="muted">Only an active Owner can manage Admin and Owner access.</p></div>
+    <div id="contextBlocked" class="card hidden"><h2 style="margin-top:0">Gym context required</h2><p id="contextBlockedMsg" class="muted"></p></div>
     <div id="ownerPanel" class="grid hidden">
       <section class="card">
         <div class="eyebrow">New invite</div><h2 style="margin:4px 0 6px">Invite access</h2>
+        <div id="inviteContext" class="notice" style="margin-bottom:10px"><b>Inviting to:</b> <span id="inviteGymName">—</span><br><span class="muted">Signed in as <span id="signedInAccount">—</span></span></div>
         <div class="notice">We’ll email the invitation directly. <b>Admin</b> access activates when they accept. <b>Owner</b> invitations are emailed only after the required current Owner approvals are recorded.</div>
         <div class="field"><label for="inviteEmail">Email address</label><input id="inviteEmail" type="email" autocomplete="email" placeholder="name@example.com"></div>
         <div class="field"><label for="inviteRole">Access level</label><select id="inviteRole"><option value="admin" selected>Admin</option><option value="owner">Owner · equal ownership</option></select></div>
@@ -60,11 +62,19 @@ async function load(){
   const{data:{session}}=await supabase.auth.getSession();
   if(!session){location.replace('./index.html');return}
   user=session.user;
-  const{data:gms,error}=await supabase.from('gym_members').select('gym_id,role,access_status,gyms(id,name)').eq('user_id',user.id).eq('is_active',true).limit(1);
+  const{data:gms,error}=await supabase.from('gym_members').select('gym_id,role,access_status,gyms(id,name)').eq('user_id',user.id).eq('is_active',true);
   if(error||!gms?.length){location.replace('./index.html');return}
-  gym=gms[0].gyms;role=gms[0].role;accessStatus=gms[0].access_status;$('gymName').textContent=gym.name;
+  const ownerGyms=(gms||[]).filter(x=>x.role==='owner'&&x.access_status==='active');
   $('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true;
-  if(role!=='owner'||accessStatus!=='active'){$('ownerOnly').classList.remove('hidden');return}
+  if(ownerGyms.length===0){$('ownerOnly').classList.remove('hidden');return}
+  if(ownerGyms.length>1){
+    $('contextBlocked').classList.remove('hidden');
+    $('contextBlockedMsg').textContent='Signed in as '+(user.email||'this account')+', which currently has active Owner access to more than one gym. Hybrid OS will not guess which gym you mean. Sign in with the dedicated gym account before creating an invite.';
+    return;
+  }
+  const selected=ownerGyms[0];
+  gym=selected.gyms;role=selected.role;accessStatus=selected.access_status;
+  $('gymName').textContent=gym.name;$('inviteGymName').textContent=gym.name;$('signedInAccount').textContent=user.email||'';
   $('ownerPanel').classList.remove('hidden');$('ownershipCard').classList.remove('hidden');$('inviteCard').classList.remove('hidden');
   await refresh();
 }
