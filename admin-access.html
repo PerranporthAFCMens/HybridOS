@@ -66,7 +66,7 @@ async function load(){
   const{data:gms,error}=await supabase.from('gym_members').select('gym_id,role,access_status,gyms(id,name)').eq('user_id',user.id).eq('is_active',true);
   if(error||!gms?.length){location.replace('./index.html');return}
   const ownerGyms=(gms||[]).filter(x=>x.role==='owner'&&x.access_status==='active');
-  const requestedGymId=new URLSearchParams(location.search).get('gym_id');
+  const requestedGymId=new URLSearchParams(location.search).get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||'';
   $('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true;
   if(ownerGyms.length===0){$('ownerOnly').classList.remove('hidden');return}
   let selected=null;
@@ -85,7 +85,7 @@ async function load(){
     $('contextBlockedMsg').textContent='This account owns more than one gym, so Hybrid OS will not guess which one you mean. Open Admin Access from the gym you want to manage.';
     return;
   }
-  gym=selected.gyms;role=selected.role;accessStatus=selected.access_status;
+  gym=selected.gyms;role=selected.role;accessStatus=selected.access_status;sessionStorage.setItem('hybrid-gym-id',selected.gym_id);
   $('gymName').textContent=gym.name;$('inviteGymName').textContent=gym.name;$('signedInAccount').textContent=user.email||'';
   $('ownerPanel').classList.remove('hidden');$('ownershipCard').classList.remove('hidden');$('inviteCard').classList.remove('hidden');
   await refresh();
