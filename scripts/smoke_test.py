@@ -3,7 +3,7 @@ import re,subprocess,sys
 from pathlib import Path
 ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
 CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
-JS=('app-stability.js','social-nav.js','shared-admin-nav.js','admin-transition-diagnostics.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
+JS=('app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
 # Core rendering assets are intentionally locked to the last known-good mobile/admin baseline.
 # Any deliberate change to these files must update this list as part of the same reviewed change.
@@ -12,10 +12,10 @@ RENDER_BASELINE={
  'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
- 'admin-embed.js':'2fdac1aef63f051d3227b525bd7dfb872d0725cb',
- 'admin-frame.js':'2ac86893c6db1c2f1b4d3ae18a3f2fb9e0e86d58',
- 'app-stability.js':'2d4d2f3857521eeff81ac8ba631d29376525b397',
- 'shared-admin-nav.js':'a6c4918dc4d68c200a421735ae09969a470134d9',
+ 'admin-embed.js':'f314e4149eec89744a07699aca78e36f31030322',
+ 'admin-frame.js':'94939c115918fe76a4291cceb73e4c3897407240',
+ 'app-stability.js':'7b4ad88f4841402001abd1ed549626bcdf089b94',
+ 'shared-admin-nav.js':'f2e213d984fcb18b0bd701aa351d3589648f25ed',
 }
 def git_blob_sha(path):
  import hashlib
@@ -145,11 +145,25 @@ if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: dupli
 
 for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member view','Door access'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: consolidated admin navigation missing: {x}')
-for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'):
+for page_name in ('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  nav_refs=re.findall(r'<script[^>]+src=["\']\.\/shared-admin-nav\.js(?:\?[^"\']*)?["\'][^>]*>\s*<\/script>',page_text,flags=re.I)
  if len(nav_refs)!=1:problems.append(f'{page_name}: expected exactly one admin nav runtime, found {len(nav_refs)}')
  elif '?v=' not in nav_refs[0]:problems.append(f'{page_name}: admin nav runtime is not cache-busted')
+
+admin_access=(ROOT/'admin-access.html').read_text(encoding='utf-8')
+for x in ('Owner controls','create_admin_invite','approve_admin_access','remove_admin_access','revoke_admin_invite','delete_admin_invite','Approve Admin','Delete invite'):
+ if x not in admin_access:problems.append(f'admin-access.html: owner Admin access workflow missing: {x}')
+admin_invite=(ROOT/'admin-invite.html').read_text(encoding='utf-8')
+for x in ('get_admin_invite','claim_admin_invite','Create account','read-only','waiting for Owner approval'):
+ if x not in admin_invite:problems.append(f'admin-invite.html: Admin invite acceptance workflow missing: {x}')
+access_guard=(ROOT/'admin-access-guard.js').read_text(encoding='utf-8')
+for x in ("access_status!=='pending'","HybridAccess","readOnly:true","Waiting for the gym Owner","Read-only until the Owner approves"):
+ if x not in access_guard:problems.append(f'admin-access-guard.js: pending Admin read-only guard missing: {x}')
+for x in ('admin-access.html',"'admin-access'"):
+ if x not in admin_nav:problems.append(f'shared-admin-nav.js: Admin access navigation missing: {x}')
+for x in ('admin-access.html',):
+ if x not in admin_frame_js:problems.append(f'admin-frame.js: Admin access route missing: {x}')
 
 reporting=(ROOT/'reporting.html').read_text(encoding='utf-8')
 for x in ('Report library','reportSearch','XLSX.writeFile','membership_register','member_lifecycle','joins_attrition_monthly','class_sessions','attendance_log','failed_payments','drop_in_sales','workout_assignments','pt_appointments'):
@@ -165,14 +179,14 @@ app_css=(ROOT/'app-consistency.css').read_text(encoding='utf-8')
 for x in ('Centralised Hybrid OS sidebar shell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','grid-template-columns:254px'):
  if x not in app_css:problems.append(f'app-consistency.css: central shell styling missing: {x}')
 
-admin_pages=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html')
+admin_pages=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html')
 for page_name in admin_pages:
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('html.admin-embedded .side{display:none!important}','html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView{display:block!important;grid-template-columns:1fr!important}','html.admin-embedded .main{min-height:100%!important;background:#f5f7fb!important}'):
   if x not in page_text:problems.append(f'{page_name}: original embedded admin shell guard missing: {x}')
  if 'html.admin-embedded .main{min-height:100dvh!important}' in page_text:problems.append(f'{page_name}: embedded child must not own 100dvh')
  if 'admin-mobile-contract.css' in page_text:problems.append(f'{page_name}: duplicate admin mobile contract returned')
- for asset in ('app-consistency.css','admin-shell.css','admin-pages.css','admin-embed.js','shared-admin-nav.js','admin-transition-diagnostics.js'):
+ for asset in ('app-consistency.css','admin-shell.css','admin-pages.css','admin-embed.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js'):
   if page_text.count(asset)!=1:problems.append(f'{page_name}: expected exactly one {asset}, found {page_text.count(asset)}')
  css_order=[page_text.find('app-consistency.css'),page_text.find('admin-shell.css'),page_text.find('admin-pages.css')]
  if min(css_order)<0 or css_order!=sorted(css_order):problems.append(f'{page_name}: shared admin stylesheet order drifted')
