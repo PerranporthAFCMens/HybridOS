@@ -57,9 +57,10 @@ async function load(){
   const{data:{session}}=await supabase.auth.getSession();
   if(!session){location.replace('./index.html');return}
   user=session.user;
-  const{data:gms,error}=await supabase.from('gym_members').select('gym_id,role,access_status,gyms(id,name)').eq('user_id',user.id).eq('is_active',true).limit(1);
+  const{data:gms,error}=await supabase.from('gym_members').select('gym_id,role,access_status,gyms(id,name,slug)').eq('user_id',user.id).eq('is_active',true);
   if(error||!gms?.length){location.replace('./index.html');return}
-  gym=gms[0].gyms;role=gms[0].role;accessStatus=gms[0].access_status;$('gymName').textContent=gym.name;
+  const selectedMembership=await window.HybridGymContext.pick(gms);if(!selectedMembership)return;
+  gym=selectedMembership.gyms;role=selectedMembership.role;accessStatus=selectedMembership.access_status;$('gymName').textContent=gym.name;window.HybridGymContext.attachSwitcher($('gymName'),gms,selectedMembership);
   $('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true;
   if(role!=='owner'||accessStatus!=='active'){$('ownerOnly').classList.remove('hidden');return}
   $('ownerPanel').classList.remove('hidden');$('ownershipCard').classList.remove('hidden');$('inviteCard').classList.remove('hidden');
