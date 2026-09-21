@@ -66,14 +66,25 @@ async function load(){
   const{data:gms,error}=await supabase.from('gym_members').select('gym_id,role,access_status,gyms(id,name)').eq('user_id',user.id).eq('is_active',true);
   if(error||!gms?.length){location.replace('./index.html');return}
   const ownerGyms=(gms||[]).filter(x=>x.role==='owner'&&x.access_status==='active');
+  const requestedGymId=new URLSearchParams(location.search).get('gym_id');
   $('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true;
   if(ownerGyms.length===0){$('ownerOnly').classList.remove('hidden');return}
-  if(ownerGyms.length>1){
+  let selected=null;
+  if(requestedGymId){
+    selected=ownerGyms.find(x=>x.gym_id===requestedGymId)||null;
+    if(!selected){
+      $('contextBlocked').classList.remove('hidden');
+      $('contextBlockedMsg').textContent='This signed-in account does not have active Owner access to the gym in this Admin Access link.';
+      return;
+    }
+  }else if(ownerGyms.length===1){
+    selected=ownerGyms[0];
+    history.replaceState(null,'',location.pathname+'?gym_id='+encodeURIComponent(selected.gym_id));
+  }else{
     $('contextBlocked').classList.remove('hidden');
-    $('contextBlockedMsg').textContent='Signed in as '+(user.email||'this account')+', which currently has active Owner access to more than one gym. Hybrid OS will not guess which gym you mean. Sign in with the dedicated gym account before creating an invite.';
+    $('contextBlockedMsg').textContent='This account owns more than one gym, so Hybrid OS will not guess which one you mean. Open Admin Access from the gym you want to manage.';
     return;
   }
-  const selected=ownerGyms[0];
   gym=selected.gyms;role=selected.role;accessStatus=selected.access_status;
   $('gymName').textContent=gym.name;$('inviteGymName').textContent=gym.name;$('signedInAccount').textContent=user.email||'';
   $('ownerPanel').classList.remove('hidden');$('ownershipCard').classList.remove('hidden');$('inviteCard').classList.remove('hidden');
