@@ -22,7 +22,11 @@ button,input,select{font:inherit}.hidden{display:none!important}.shell{min-heigh
         <div class="field"><label for="inviteEmail">Email address</label><input id="inviteEmail" type="email" autocomplete="email" placeholder="name@example.com"></div>
         <div class="field"><label for="inviteRole">Access level</label><select id="inviteRole"><option value="admin" selected>Admin</option><option value="owner">Owner · equal ownership</option></select></div>
         <div class="field"><label for="inviteDays">Invitation expires</label><select id="inviteDays"><option value="3">3 days</option><option value="7" selected>7 days</option><option value="14">14 days</option><option value="30">30 days</option></select></div>
-        <button id="createInvite" class="btn primary">Send invitation email</button>
+        <div class="actions" style="justify-content:flex-start">
+          <button id="createInvite" class="btn primary">Send invitation email</button>
+          <button id="createLinkInvite" class="btn secondary">Generate secure invite link</button>
+        </div>
+        <div id="generated" class="generated hidden"><b>Secure invite link ready</b><div class="muted" style="font-size:12px;margin-top:3px">Send this link directly to the invited person. It is tied to their email address and expires automatically.</div><input id="generatedLink" readonly><div class="actions" style="margin-top:8px;justify-content:flex-start"><button id="copyInvite" class="btn secondary">Copy link</button></div></div>
         <div id="createMsg" class="msg"></div>
       </section>
       <section class="card">
@@ -67,7 +71,7 @@ async function load(){
 async function refresh(){
   const [{data:members,error:memberErr},{data:inviteRows,error:inviteErr},{data:actionRows,error:actionErr}]=await Promise.all([
     supabase.from('gym_members').select('user_id,role,access_status,is_active,joined_at').eq('gym_id',gym.id).eq('is_active',true).in('role',['owner','admin']).order('joined_at'),
-    supabase.from('gym_admin_invites').select('id,email,status,invite_role,claimed_by,created_at,expires_at,claimed_at,approved_at,revoked_at,email_sent_at').eq('gym_id',gym.id).order('created_at',{ascending:false}),
+    supabase.from('gym_admin_invites').select('id,email,status,invite_role,claimed_by,created_at,expires_at,claimed_at,approved_at,revoked_at,email_sent_at,delivery_method').eq('gym_id',gym.id).order('created_at',{ascending:false}),
     supabase.from('gym_ownership_actions').select('id,action_type,target_user_id,created_by,status,created_at,expires_at,executed_at').eq('gym_id',gym.id).eq('status','pending').order('created_at',{ascending:false})
   ]);
   if(memberErr)throw memberErr;if(inviteErr)throw inviteErr;if(actionErr)throw actionErr;
@@ -124,16 +128,16 @@ function renderInvites(){
     const approvalText=i.invite_role==='owner'&&['awaiting_approval','open'].includes(i.status)
       ?' · '+aps.length+' of '+required+' Owner approvals'
       :'';
-    const sentText=i.email_sent_at?' · email sent '+fmt(i.email_sent_at):'';
+    const sentText=i.email_sent_at?(i.delivery_method==='link'?' · secure link issued '+fmt(i.email_sent_at):' · email sent '+fmt(i.email_sent_at)):'';
     const acceptedText=i.claimed_by?' · accepted':'';
     let buttons='';
-    if(i.status==='awaiting_approval'&&i.invite_role==='owner'&&!mine)buttons+='<button class="btn success" data-approve-email-owner="'+i.id+'">Approve Owner invite</button>';
-    if(i.status==='open'&&!i.email_sent_at)buttons+='<button class="btn success" data-send-email="'+i.id+'">Send email</button>';
+    if(i.status==='awaiting_approval'&&i.invite_role==='owner'&&!mine)buttons+='<button class="btn success" data-approve-owner-invite="'+i.id+'" data-delivery="'+esc(i.delivery_method||'email')+'">Approve Owner invite</button>';
+    if(i.status==='open'&&!i.email_sent_at&&i.delivery_method!=='link')buttons+='<button class="btn success" data-send-email="'+i.id+'">Send email</button>';
     if(['awaiting_approval','open','claimed'].includes(i.status))buttons+='<button class="btn danger" data-revoke="'+i.id+'">Revoke invite</button>';
     if(i.status!=='approved')buttons+='<button class="btn secondary" data-delete-invite="'+i.id+'">Delete invite</button>';
     return '<div class="invite"><div class="person-main"><div class="person-name">'+esc(i.email)+' <span class="status '+esc(status)+'">'+esc(status.replaceAll('_',' '))+'</span> <span class="status active">'+esc(i.invite_role||'admin')+'</span></div><div class="person-email">Created '+esc(fmt(i.created_at))+' · expires '+esc(fmt(i.expires_at))+esc(approvalText)+esc(sentText)+esc(acceptedText)+'</div></div><div class="actions">'+buttons+'</div></div>';
   }).join('')||'<div class="muted">No access invitations yet.</div>';
-  document.querySelectorAll('[data-approve-email-owner]').forEach(b=>b.onclick=()=>approveEmailOwnerInvite(b.dataset.approveEmailOwner,b));
+  document.querySelectorAll('[data-approve-owner-invite]').forEach(b=>b.onclick=()=>approveOwnerInvite(b.dataset.approveOwnerInvite,b.dataset.delivery,b));
   document.querySelectorAll('[data-send-email]').forEach(b=>b.onclick=()=>sendInviteEmail(b.dataset.sendEmail,b));
   document.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=()=>revoke(b.dataset.revoke,b));
   document.querySelectorAll('[data-delete-invite]').forEach(b=>b.onclick=()=>deleteInvite(b.dataset.deleteInvite,b));
@@ -160,6 +164,36 @@ $('createInvite').onclick=async()=>{
     await refresh();
   }catch(e){setMsg(e.message||'Could not send invitation.')}finally{$('createInvite').disabled=false}
 };
+function showGeneratedLink(token,email,inviteRole){
+  const u=new URL('./index.html',location.href);
+  u.searchParams.set('access_invite',token);
+  u.searchParams.set('invite_email',email);
+  u.searchParams.set('invite_gym',gym.name);
+  u.searchParams.set('invite_role',inviteRole);
+  $('generatedLink').value=u.toString();$('generated').classList.remove('hidden');
+}
+$('createLinkInvite').onclick=async()=>{
+  const email=$('inviteEmail').value.trim();if(!email)return setMsg('Enter the email address first.');
+  $('createLinkInvite').disabled=true;setMsg('');$('generated').classList.add('hidden');
+  try{
+    const requestedRole=$('inviteRole').value;
+    const{data,error}=await supabase.rpc('create_shareable_access_invite',{
+      target_gym_id:gym.id,
+      invite_email:email,
+      requested_role:requestedRole,
+      expires_in_days:Number($('inviteDays').value)
+    });
+    if(error)throw error;const row=data?.[0];if(!row)throw new Error('Secure invite was not created.');
+    if(row.status==='open'&&row.token){
+      showGeneratedLink(row.token,email,requestedRole);
+      setMsg('Secure invite link created. Copy it and send it directly to '+email+'.',true);
+    }else{
+      setMsg('Owner invite created. '+row.owner_approvals+' of '+row.owner_approvals_required+' Owner approvals recorded. The secure link will be available after final approval.',true);
+    }
+    $('inviteEmail').value='';await refresh();
+  }catch(e){setMsg(e.message||'Could not create secure invite link.')}finally{$('createLinkInvite').disabled=false}
+};
+$('copyInvite').onclick=async()=>{try{await navigator.clipboard.writeText($('generatedLink').value);$('copyInvite').textContent='Copied';setTimeout(()=>$('copyInvite').textContent='Copy link',1200)}catch(_e){$('generatedLink').select();document.execCommand('copy')}};
 async function sendInviteEmail(id,btn=null,silent=false){
   if(btn)btn.disabled=true;
   try{
@@ -173,16 +207,24 @@ async function sendInviteEmail(id,btn=null,silent=false){
     alert(e.message||'Could not send invitation email.');
   }finally{if(btn)btn.disabled=false}
 }
-async function approveEmailOwnerInvite(id,btn){
+async function approveOwnerInvite(id,delivery,btn){
   btn.disabled=true;
   try{
-    const{data,error}=await supabase.rpc('approve_email_owner_invite',{target_invite_id:id});
-    if(error)throw error;const row=data?.[0];if(!row)throw new Error('Approval was not recorded.');
-    if(row.ready_to_send){
-      await sendInviteEmail(id,null,true);
-      alert('Your approval completed the Owner approval requirement. The invitation email has now been sent.');
+    if(delivery==='link'){
+      const{data,error}=await supabase.rpc('approve_shareable_owner_invite',{target_invite_id:id});
+      if(error)throw error;const row=data?.[0];if(!row)throw new Error('Approval was not recorded.');
+      if(row.ready_to_share&&row.token){
+        const inv=invites.find(x=>x.id===id);
+        showGeneratedLink(row.token,inv?.email||'',inv?.invite_role||'owner');
+        alert('Your approval completed the Owner approval requirement. The secure invite link is ready to copy.');
+      }else alert('Your Owner approval has been recorded. Waiting for the remaining Owner approval(s).');
     }else{
-      alert('Your Owner approval has been recorded. Waiting for the remaining Owner approval(s).');
+      const{data,error}=await supabase.rpc('approve_email_owner_invite',{target_invite_id:id});
+      if(error)throw error;const row=data?.[0];if(!row)throw new Error('Approval was not recorded.');
+      if(row.ready_to_send){
+        await sendInviteEmail(id,null,true);
+        alert('Your approval completed the Owner approval requirement. The invitation email has now been sent.');
+      }else alert('Your Owner approval has been recorded. Waiting for the remaining Owner approval(s).');
     }
     await refresh();
   }catch(e){alert(e.message||'Could not approve Owner invitation.')}finally{btn.disabled=false}

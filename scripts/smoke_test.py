@@ -152,7 +152,7 @@ for page_name in ('index.html','community.html','classes.html','class-setup.html
  elif '?v=' not in nav_refs[0]:problems.append(f'{page_name}: admin nav runtime is not cache-busted')
 
 admin_access=(ROOT/'admin-access.html').read_text(encoding='utf-8')
-for x in ('Owner controls','create_email_access_invite','approve_email_owner_invite','send-access-invite','Send invitation email','propose_owner_promotion','approve_ownership_action','propose_owner_removal','remove_admin_access','revoke_admin_invite','delete_admin_invite','Owner · equal ownership','Ownership decisions','Promote to Owner'):
+for x in ('Owner controls','create_email_access_invite','create_shareable_access_invite','approve_email_owner_invite','approve_shareable_owner_invite','send-access-invite','Send invitation email','Generate secure invite link','propose_owner_promotion','approve_ownership_action','propose_owner_removal','remove_admin_access','revoke_admin_invite','delete_admin_invite','Owner · equal ownership','Ownership decisions','Promote to Owner'):
  if x not in admin_access:problems.append(f'admin-access.html: email-first Owner/Admin access workflow missing: {x}')
 if 'Create one-time invite' in admin_access or 'generatedLink' in admin_access:problems.append('admin-access.html: legacy copy-link invite flow returned')
 index_source=(ROOT/'index.html').read_text(encoding='utf-8')
