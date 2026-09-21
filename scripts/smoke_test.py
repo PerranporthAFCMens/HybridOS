@@ -159,7 +159,7 @@ for page_name in ('index.html','community.html','classes.html','class-setup.html
 admin_access=(ROOT/'admin-access.html').read_text(encoding='utf-8')
 for x in ('Owner controls','create_email_access_invite','create_shareable_access_invite','approve_email_owner_invite','approve_shareable_owner_invite','send-access-invite','Send invitation email','Generate secure invite link','propose_owner_promotion','approve_ownership_action','propose_owner_removal','remove_admin_access','revoke_admin_invite','delete_admin_invite','Owner · equal ownership','Ownership decisions','Promote to Owner'):
  if x not in admin_access:problems.append(f'admin-access.html: email-first Owner/Admin access workflow missing: {x}')
-for x in ('Inviting to:','Signed in as','Gym context required','ownerGyms.length>1'):
+for x in ('Inviting to:','Signed in as','Gym context required',"new URLSearchParams(location.search).get('gym_id')",'requestedGymId','ownerGyms.find'):
  if x not in admin_access:problems.append(f'admin-access.html: explicit gym context guard missing: {x}')
 for x in ('signOutBtn','supabase.auth.signOut()'):
  if x not in admin_access:problems.append(f'admin-access.html: sign out control missing: {x}')
