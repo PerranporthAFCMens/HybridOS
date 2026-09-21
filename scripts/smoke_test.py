@@ -156,6 +156,8 @@ for x in ('Owner controls','create_email_access_invite','create_shareable_access
  if x not in admin_access:problems.append(f'admin-access.html: email-first Owner/Admin access workflow missing: {x}')
 for x in ('Inviting to:','Signed in as','Gym context required','ownerGyms.length>1'):
  if x not in admin_access:problems.append(f'admin-access.html: explicit gym context guard missing: {x}')
+for x in ('signOutBtn','supabase.auth.signOut()'):
+ if x not in admin_access:problems.append(f'admin-access.html: sign out control missing: {x}')
 if ".eq('is_active',true).limit(1)" in admin_access:problems.append('admin-access.html: ambiguous first-gym lookup returned')
 if 'Create one-time invite' in admin_access:problems.append('admin-access.html: legacy one-time invite wording returned')
 index_source=(ROOT/'index.html').read_text(encoding='utf-8')
