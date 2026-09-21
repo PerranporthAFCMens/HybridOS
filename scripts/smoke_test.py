@@ -15,7 +15,7 @@ RENDER_BASELINE={
  'admin-embed.js':'f314e4149eec89744a07699aca78e36f31030322',
  'admin-frame.js':'94939c115918fe76a4291cceb73e4c3897407240',
  'app-stability.js':'7b4ad88f4841402001abd1ed549626bcdf089b94',
- 'shared-admin-nav.js':'f2e213d984fcb18b0bd701aa351d3589648f25ed',
+ 'shared-admin-nav.js':'e8583f8453c10bc4e1019eca0714216b40de3f73',
 }
 def git_blob_sha(path):
  import hashlib
