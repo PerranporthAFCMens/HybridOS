@@ -51,7 +51,7 @@ button,input,select{font:inherit}.hidden{display:none!important}.shell{min-heigh
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 const $=id=>document.getElementById(id);
-$('signOutBtn').onclick=async()=>{const btn=$('signOutBtn');btn.disabled=true;try{await supabase.auth.signOut();location.replace('./index.html')}catch(e){btn.disabled=false;alert(e.message||'Could not sign out.')}};
+$('signOutBtn').onclick=async()=>{const btn=$('signOutBtn');btn.disabled=true;try{sessionStorage.removeItem('hybrid-gym-id');await supabase.auth.signOut();location.replace('./index.html')}catch(e){btn.disabled=false;alert(e.message||'Could not sign out.')}};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 let gym=null,user=null,role=null,accessStatus=null,profiles=new Map(),invites=[],inviteApprovals=[],ownershipActions=[],ownershipApprovals=[],activeOwnerCount=0;
 
