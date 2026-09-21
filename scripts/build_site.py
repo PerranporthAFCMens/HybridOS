@@ -75,6 +75,7 @@ def add_admin_shell():
    s=re.sub(r'<link[^>]+href=["\']\.\/'+re.escape(asset)+r'(?:\?[^"\']*)?["\'][^>]*>','',s,flags=re.I)
   shared_css=''.join(f'<link rel="stylesheet" href="./{asset}?v={VERSION}">' for asset in ('app-consistency.css','admin-shell.css','admin-pages.css'))
   s=s.replace('</head>',shared_css+'</head>',1)
+  s=inject_head(s,'gym-context.js',f'<script src="./gym-context.js?v={VERSION}"></script>')
   s=inject_body(s,'admin-embed.js',f'<script src="./admin-embed.js?v={VERSION}" defer></script>');s=inject_body(s,'shared-admin-nav.js',f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>');s=inject_body(s,'admin-access-guard.js',f'<script src="./admin-access-guard.js?v={VERSION}" defer></script>');s=inject_body(s,'admin-transition-diagnostics.js',f'<script src="./admin-transition-diagnostics.js?v={VERSION}" defer></script>')
   if n=='index.html':s=s.replace('<section id="authView" class="auth">','<section id="authView" class="auth hidden">',1)
   write(n,s)
