@@ -141,6 +141,11 @@ if "window.top!==window.self||window.matchMedia('(max-width:900px)').matches" no
 if "function markAdminHotNav(href){try{" not in admin_nav:problems.append('shared-admin-nav.js: smooth top-level admin handoff missing')
 for x in ('markAdminHotNav','hybrid-admin-hot-nav','sessionStorage.setItem'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: smooth admin hand-off missing: {x}')
+for x in ("{key:'sign-out'","href:'./sign-out.html'"):
+ if x not in admin_nav:problems.append(f'shared-admin-nav.js: global admin sign out missing: {x}')
+sign_out=(ROOT/'sign-out.html').read_text(encoding='utf-8')
+for x in ('supabase.auth.signOut()',"location.replace('./index.html')",'Signing you out'):
+ if x not in sign_out:problems.append(f'sign-out.html: reliable sign out flow missing: {x}')
 if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: duplicate Member memberships tab returned')
 
 for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member view','Door access'):
