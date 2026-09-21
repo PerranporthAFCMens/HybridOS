@@ -155,7 +155,7 @@ admin_access=(ROOT/'admin-access.html').read_text(encoding='utf-8')
 for x in ('Owner controls','create_access_invite','approve_pending_access','propose_owner_promotion','approve_ownership_action','propose_owner_removal','remove_admin_access','revoke_admin_invite','delete_admin_invite','Owner · equal ownership','Ownership decisions','Promote to Owner'):
  if x not in admin_access:problems.append(f'admin-access.html: equal Owner/Admin access workflow missing: {x}')
 admin_invite=(ROOT/'admin-invite.html').read_text(encoding='utf-8')
-for x in ('get_access_invite','claim_access_invite','Create account','read-only','equal Owner','required Owner approval'):
+for x in ('get_access_invite','claim_access_invite','Create account','read-only','equal Owner','required Owner approval','Different account signed in','Sign out and continue with invited email','supabase.auth.signOut()'):
  if x not in admin_invite:problems.append(f'admin-invite.html: Admin/Owner invite acceptance workflow missing: {x}')
 access_guard=(ROOT/'admin-access-guard.js').read_text(encoding='utf-8')
 for x in ("['admin','owner'].includes(membership.role)","access_status!=='pending'","HybridAccess","readOnly:true","required Owner approval","Read-only until the required Owner approval"):
