@@ -154,6 +154,9 @@ for page_name in ('index.html','community.html','classes.html','class-setup.html
 admin_access=(ROOT/'admin-access.html').read_text(encoding='utf-8')
 for x in ('Owner controls','create_email_access_invite','create_shareable_access_invite','approve_email_owner_invite','approve_shareable_owner_invite','send-access-invite','Send invitation email','Generate secure invite link','propose_owner_promotion','approve_ownership_action','propose_owner_removal','remove_admin_access','revoke_admin_invite','delete_admin_invite','Owner · equal ownership','Ownership decisions','Promote to Owner'):
  if x not in admin_access:problems.append(f'admin-access.html: email-first Owner/Admin access workflow missing: {x}')
+for x in ('Inviting to:','Signed in as','Gym context required','ownerGyms.length>1'):
+ if x not in admin_access:problems.append(f'admin-access.html: explicit gym context guard missing: {x}')
+if ".eq('is_active',true).limit(1)" in admin_access:problems.append('admin-access.html: ambiguous first-gym lookup returned')
 if 'Create one-time invite' in admin_access:problems.append('admin-access.html: legacy one-time invite wording returned')
 index_source=(ROOT/'index.html').read_text(encoding='utf-8')
 for x in ('access_invite','invite_email','invite_gym','invite_role','Sign in to continue','Continue to invitation','inviteDestination','showInviteLanding'):
