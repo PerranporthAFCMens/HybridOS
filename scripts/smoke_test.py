@@ -168,6 +168,23 @@ if 'Create one-time invite' in admin_access:problems.append('admin-access.html: 
 index_source=(ROOT/'index.html').read_text(encoding='utf-8')
 for x in ('access_invite','invite_email','invite_gym','invite_role','Sign in to continue','Continue to invitation','inviteDestination','showInviteLanding'):
  if x not in index_source:problems.append(f'index.html: invite sign-in landing missing: {x}')
+for x in ("sessionStorage.setItem('hybrid-gym-id'","gms.find(x=>x.gym_id===selectedGymId)"):
+ if x not in index_source:problems.append(f'index.html: login gym context missing: {x}')
+if ".eq('is_active',true).limit(1)" in index_source:problems.append('index.html: ambiguous first-gym lookup returned')
+for login_name,gym_name,gym_id in (
+ ('hybrid-hub-login.html','Hybrid Hub','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),
+ ('puffin-performance-login.html','Puffin Performance','aec16956-3793-4543-873b-4412646ca1eb')
+):
+ login=(ROOT/login_name)
+ if not login.exists():problems.append(f'{login_name}: dedicated gym login page missing');continue
+ lt=login.read_text(encoding='utf-8')
+ for x in (gym_name,gym_id,"sessionStorage.setItem('hybrid-gym-id'","signInWithPassword"):
+  if x not in lt:problems.append(f'{login_name}: gym-bound login flow missing: {x}')
+for context_page in ('community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','admin-access.html'):
+ cp=(ROOT/context_page).read_text(encoding='utf-8')
+ if 'hybrid-gym-id' not in cp:problems.append(f'{context_page}: login gym context not enforced')
+sign_out=(ROOT/'sign-out.html').read_text(encoding='utf-8')
+if "sessionStorage.removeItem('hybrid-gym-id')" not in sign_out:problems.append('sign-out.html: gym context is not cleared on sign out')
 for template_name in ('supabase-email-invite-template.html','supabase-email-magic-link-template.html'):
  template=(ROOT/template_name)
  if not template.exists():problems.append(f'{template_name}: branded email template missing');continue
