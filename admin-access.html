@@ -6,7 +6,7 @@
 <style>
 :root{--bg:#f5f7fb;--panel:#fff;--ink:#101828;--muted:#667085;--line:#e7ebf2;--dark:#0b1020;--good:#067647;--warn:#b54708;--bad:#b42318;--shadow:0 14px 34px rgba(16,24,40,.08)}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
-button,input,select{font:inherit}.hidden{display:none!important}.shell{min-height:100vh;display:grid;grid-template-columns:255px 1fr}.side{background:var(--dark);color:#fff;padding:24px 18px}.brand{font-size:18px;font-weight:900;letter-spacing:.08em}.gym{padding:13px;border-radius:16px;background:rgba(255,255,255,.07);margin:22px 0}.gym small{color:#98a2b3}.nav{display:grid;gap:6px}.main{padding:28px 30px 70px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:20px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}.top h1{margin:4px 0;font-size:32px}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(0,1.1fr);gap:16px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}.field{margin:12px 0}.field label{display:block;font-size:13px;font-weight:800;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:1px solid #d0d5dd;border-radius:12px;background:#fff}.btn{border:0;border-radius:12px;padding:10px 13px;font-weight:850;cursor:pointer}.primary{background:var(--dark);color:#fff}.secondary{background:#fff;border:1px solid var(--line);color:var(--ink)}.danger{background:#fff1f0;color:var(--bad);border:1px solid #fecdca}.success{background:#ecfdf3;color:var(--good);border:1px solid #abefc6}.btn:disabled{opacity:.5;cursor:not-allowed}.status{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}.status.active,.status.approved{background:#ecfdf3;color:var(--good)}.status.pending,.status.claimed,.status.open{background:#fffaeb;color:var(--warn)}.status.revoked,.status.expired{background:#fef3f2;color:var(--bad)}.person,.invite{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:14px 0;border-top:1px solid var(--line)}.person:first-child,.invite:first-child{border-top:0}.person-main{min-width:0}.person-name{font-weight:900}.person-email{font-size:12px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}.actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.notice{padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid var(--line);font-size:13px;line-height:1.45}.generated{margin-top:12px;padding:12px;border-radius:14px;background:#f0fdf9;border:1px solid #a6f4c5}.generated input{margin-top:8px;width:100%;padding:10px;border:1px solid #a6f4c5;border-radius:10px;background:#fff}.msg{min-height:20px;margin-top:10px;font-size:13px}.good{color:var(--good)}.bad{color:var(--bad)}@media(max-width:900px){.shell{display:block}.side{display:none}.main{padding:18px 14px 50px}.grid{grid-template-columns:1fr}.top h1{font-size:28px}.person,.invite{display:grid}.actions{justify-content:flex-start}}
+button,input,select{font:inherit}.hidden{display:none!important}.shell{min-height:100vh;display:grid;grid-template-columns:255px 1fr}.side{background:var(--dark);color:#fff;padding:24px 18px}.brand{font-size:18px;font-weight:900;letter-spacing:.08em}.gym{padding:13px;border-radius:16px;background:rgba(255,255,255,.07);margin:22px 0}.gym small{color:#98a2b3}.nav{display:grid;gap:6px}.main{padding:28px 30px 70px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:20px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}.top h1{margin:4px 0;font-size:32px}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(0,1.1fr);gap:16px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}.field{margin:12px 0}.field label{display:block;font-size:13px;font-weight:800;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:1px solid #d0d5dd;border-radius:12px;background:#fff}.btn{border:0;border-radius:12px;padding:10px 13px;font-weight:850;cursor:pointer}.primary{background:var(--dark);color:#fff}.secondary{background:#fff;border:1px solid var(--line);color:var(--ink)}.danger{background:#fff1f0;color:var(--bad);border:1px solid #fecdca}.success{background:#ecfdf3;color:var(--good);border:1px solid #abefc6}.btn:disabled{opacity:.5;cursor:not-allowed}.status{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}.status.active,.status.approved{background:#ecfdf3;color:var(--good)}.status.pending,.status.claimed,.status.open,.status.awaiting_approval{background:#fffaeb;color:var(--warn)}.status.revoked,.status.expired{background:#fef3f2;color:var(--bad)}.person,.invite{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:14px 0;border-top:1px solid var(--line)}.person:first-child,.invite:first-child{border-top:0}.person-main{min-width:0}.person-name{font-weight:900}.person-email{font-size:12px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}.actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.notice{padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid var(--line);font-size:13px;line-height:1.45}.generated{margin-top:12px;padding:12px;border-radius:14px;background:#f0fdf9;border:1px solid #a6f4c5}.generated input{margin-top:8px;width:100%;padding:10px;border:1px solid #a6f4c5;border-radius:10px;background:#fff}.msg{min-height:20px;margin-top:10px;font-size:13px}.good{color:var(--good)}.bad{color:var(--bad)}@media(max-width:900px){.shell{display:block}.side{display:none}.main{padding:18px 14px 50px}.grid{grid-template-columns:1fr}.top h1{font-size:28px}.person,.invite{display:grid}.actions{justify-content:flex-start}}
 </style>
 </head><body>
 <div id="loading" style="padding:30px">Loading admin access…</div>
@@ -18,12 +18,11 @@ button,input,select{font:inherit}.hidden{display:none!important}.shell{min-heigh
     <div id="ownerPanel" class="grid hidden">
       <section class="card">
         <div class="eyebrow">New invite</div><h2 style="margin:4px 0 6px">Invite access</h2>
-        <div class="notice">The invitee creates their own account first. Their Hybrid Hub access stays <b>read-only</b> until the required Owner approval is complete.</div>
+        <div class="notice">We’ll email the invitation directly. <b>Admin</b> access activates when they accept. <b>Owner</b> invitations are emailed only after the required current Owner approvals are recorded.</div>
         <div class="field"><label for="inviteEmail">Email address</label><input id="inviteEmail" type="email" autocomplete="email" placeholder="name@example.com"></div>
         <div class="field"><label for="inviteRole">Access level</label><select id="inviteRole"><option value="admin" selected>Admin</option><option value="owner">Owner · equal ownership</option></select></div>
-        <div class="field"><label for="inviteDays">Link expires</label><select id="inviteDays"><option value="3">3 days</option><option value="7" selected>7 days</option><option value="14">14 days</option><option value="30">30 days</option></select></div>
-        <button id="createInvite" class="btn primary">Create one-time invite</button>
-        <div id="generated" class="generated hidden"><b>Invite link created</b><div class="muted" style="font-size:12px;margin-top:3px">Copy this now. For security, the token is only shown when it is generated.</div><input id="generatedLink" readonly><div class="actions" style="margin-top:8px;justify-content:flex-start"><button id="copyInvite" class="btn secondary">Copy link</button></div></div>
+        <div class="field"><label for="inviteDays">Invitation expires</label><select id="inviteDays"><option value="3">3 days</option><option value="7" selected>7 days</option><option value="14">14 days</option><option value="30">30 days</option></select></div>
+        <button id="createInvite" class="btn primary">Send invitation email</button>
         <div id="createMsg" class="msg"></div>
       </section>
       <section class="card">
@@ -47,7 +46,7 @@ import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+e
 const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-let gym=null,user=null,role=null,accessStatus=null,profiles=new Map(),invites=[],ownershipActions=[],ownershipApprovals=[];
+let gym=null,user=null,role=null,accessStatus=null,profiles=new Map(),invites=[],inviteApprovals=[],ownershipActions=[],ownershipApprovals=[],activeOwnerCount=0;
 
 function fmt(d){return d?new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(d)):'—'}
 function setMsg(t,good=false){$('createMsg').textContent=t;$('createMsg').className='msg '+(good?'good':'bad')}
@@ -68,12 +67,16 @@ async function load(){
 async function refresh(){
   const [{data:members,error:memberErr},{data:inviteRows,error:inviteErr},{data:actionRows,error:actionErr}]=await Promise.all([
     supabase.from('gym_members').select('user_id,role,access_status,is_active,joined_at').eq('gym_id',gym.id).eq('is_active',true).in('role',['owner','admin']).order('joined_at'),
-    supabase.from('gym_admin_invites').select('id,email,status,invite_role,claimed_by,created_at,expires_at,claimed_at,approved_at,revoked_at').eq('gym_id',gym.id).order('created_at',{ascending:false}),
+    supabase.from('gym_admin_invites').select('id,email,status,invite_role,claimed_by,created_at,expires_at,claimed_at,approved_at,revoked_at,email_sent_at').eq('gym_id',gym.id).order('created_at',{ascending:false}),
     supabase.from('gym_ownership_actions').select('id,action_type,target_user_id,created_by,status,created_at,expires_at,executed_at').eq('gym_id',gym.id).eq('status','pending').order('created_at',{ascending:false})
   ]);
   if(memberErr)throw memberErr;if(inviteErr)throw inviteErr;if(actionErr)throw actionErr;
-  invites=inviteRows||[];ownershipActions=actionRows||[];
-  ownershipApprovals=[];
+  invites=inviteRows||[];ownershipActions=actionRows||[];activeOwnerCount=(members||[]).filter(x=>x.role==='owner'&&x.access_status==='active').length;
+  inviteApprovals=[];ownershipApprovals=[];
+  if(invites.length){
+    const{data:iaps,error:inviteApprovalErr}=await supabase.from('gym_access_invite_approvals').select('invite_id,owner_user_id,approved_at').in('invite_id',invites.map(x=>x.id));
+    if(inviteApprovalErr)throw inviteApprovalErr;inviteApprovals=iaps||[];
+  }
   if(ownershipActions.length){
     const{data:aps,error:approvalErr}=await supabase.from('gym_ownership_action_approvals').select('action_id,owner_user_id,approved_at').in('action_id',ownershipActions.map(x=>x.id));
     if(approvalErr)throw approvalErr;ownershipApprovals=aps||[];
@@ -115,24 +118,75 @@ function renderOwnership(rows){
 }
 function renderInvites(){
   $('inviteList').innerHTML=invites.map(i=>{
-    const expired=i.status==='open'&&new Date(i.expires_at)<=new Date(),status=expired?'expired':i.status;
-    return '<div class="invite"><div class="person-main"><div class="person-name">'+esc(i.email)+' <span class="status '+esc(status)+'">'+esc(status)+'</span> <span class="status active">'+esc(i.invite_role||'admin')+'</span></div><div class="person-email">Created '+esc(fmt(i.created_at))+' · expires '+esc(fmt(i.expires_at))+(i.claimed_by?' · account created':'')+'</div></div><div class="actions">'+
-      (['open','claimed'].includes(i.status)?'<button class="btn danger" data-revoke="'+i.id+'">Revoke link</button>':'')+'<button class="btn secondary" data-delete-invite="'+i.id+'">Delete invite</button>'+
-      '</div></div>';
-  }).join('')||'<div class="muted">No Admin invites yet.</div>';
-  document.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=()=>revoke(b.dataset.revoke,b));document.querySelectorAll('[data-delete-invite]').forEach(b=>b.onclick=()=>deleteInvite(b.dataset.deleteInvite,b));
+    const expired=['open','awaiting_approval'].includes(i.status)&&new Date(i.expires_at)<=new Date(),status=expired?'expired':i.status;
+    const aps=inviteApprovals.filter(a=>a.invite_id===i.id),mine=aps.some(a=>a.owner_user_id===user.id);
+    const required=i.invite_role==='owner'?Math.max(activeOwnerCount,1):1;
+    const approvalText=i.invite_role==='owner'&&['awaiting_approval','open'].includes(i.status)
+      ?' · '+aps.length+' of '+required+' Owner approvals'
+      :'';
+    const sentText=i.email_sent_at?' · email sent '+fmt(i.email_sent_at):'';
+    const acceptedText=i.claimed_by?' · accepted':'';
+    let buttons='';
+    if(i.status==='awaiting_approval'&&i.invite_role==='owner'&&!mine)buttons+='<button class="btn success" data-approve-email-owner="'+i.id+'">Approve Owner invite</button>';
+    if(i.status==='open'&&!i.email_sent_at)buttons+='<button class="btn success" data-send-email="'+i.id+'">Send email</button>';
+    if(['awaiting_approval','open','claimed'].includes(i.status))buttons+='<button class="btn danger" data-revoke="'+i.id+'">Revoke invite</button>';
+    if(i.status!=='approved')buttons+='<button class="btn secondary" data-delete-invite="'+i.id+'">Delete invite</button>';
+    return '<div class="invite"><div class="person-main"><div class="person-name">'+esc(i.email)+' <span class="status '+esc(status)+'">'+esc(status.replaceAll('_',' '))+'</span> <span class="status active">'+esc(i.invite_role||'admin')+'</span></div><div class="person-email">Created '+esc(fmt(i.created_at))+' · expires '+esc(fmt(i.expires_at))+esc(approvalText)+esc(sentText)+esc(acceptedText)+'</div></div><div class="actions">'+buttons+'</div></div>';
+  }).join('')||'<div class="muted">No access invitations yet.</div>';
+  document.querySelectorAll('[data-approve-email-owner]').forEach(b=>b.onclick=()=>approveEmailOwnerInvite(b.dataset.approveEmailOwner,b));
+  document.querySelectorAll('[data-send-email]').forEach(b=>b.onclick=()=>sendInviteEmail(b.dataset.sendEmail,b));
+  document.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=()=>revoke(b.dataset.revoke,b));
+  document.querySelectorAll('[data-delete-invite]').forEach(b=>b.onclick=()=>deleteInvite(b.dataset.deleteInvite,b));
 }
 $('createInvite').onclick=async()=>{
   const email=$('inviteEmail').value.trim();if(!email)return setMsg('Enter the email address first.');
   $('createInvite').disabled=true;setMsg('');
   try{
-    const requestedRole=$('inviteRole').value;const{data,error}=await supabase.rpc('create_access_invite',{target_gym_id:gym.id,invite_email:email,requested_role:requestedRole,expires_in_days:Number($('inviteDays').value)});
-    if(error)throw error;const row=data?.[0];if(!row)throw new Error('Invite was not created.');
-    const u=new URL('./admin-invite.html',location.href);u.searchParams.set('token',row.token);
-    $('generatedLink').value=u.toString();$('generated').classList.remove('hidden');$('inviteEmail').value='';setMsg((row.invite_role==='owner'?'Owner':'Admin')+' invite created. Send the link to '+email+'.',true);await refresh();
-  }catch(e){setMsg(e.message||'Could not create invite.')}finally{$('createInvite').disabled=false}
+    const requestedRole=$('inviteRole').value;
+    const{data,error}=await supabase.rpc('create_email_access_invite',{
+      target_gym_id:gym.id,
+      invite_email:email,
+      requested_role:requestedRole,
+      expires_in_days:Number($('inviteDays').value)
+    });
+    if(error)throw error;const row=data?.[0];if(!row)throw new Error('Invitation was not created.');
+    $('inviteEmail').value='';
+    if(row.status==='open'){
+      await sendInviteEmail(row.invite_id,null,true);
+      setMsg((requestedRole==='owner'?'Owner':'Admin')+' invitation emailed to '+email+'.',true);
+    }else{
+      setMsg('Owner invitation created. '+row.owner_approvals+' of '+row.owner_approvals_required+' Owner approvals recorded. The email will be sent after final approval.',true);
+    }
+    await refresh();
+  }catch(e){setMsg(e.message||'Could not send invitation.')}finally{$('createInvite').disabled=false}
 };
-$('copyInvite').onclick=async()=>{try{await navigator.clipboard.writeText($('generatedLink').value);$('copyInvite').textContent='Copied';setTimeout(()=>$('copyInvite').textContent='Copy link',1200)}catch(_e){$('generatedLink').select();document.execCommand('copy')}};
+async function sendInviteEmail(id,btn=null,silent=false){
+  if(btn)btn.disabled=true;
+  try{
+    const{data,error}=await supabase.functions.invoke('send-access-invite',{body:{invite_id:id}});
+    if(error)throw error;if(data?.error)throw new Error(data.error);
+    if(!silent)alert('Invitation email sent to '+data.email+'.');
+    await refresh();
+    return data;
+  }catch(e){
+    if(silent)throw e;
+    alert(e.message||'Could not send invitation email.');
+  }finally{if(btn)btn.disabled=false}
+}
+async function approveEmailOwnerInvite(id,btn){
+  btn.disabled=true;
+  try{
+    const{data,error}=await supabase.rpc('approve_email_owner_invite',{target_invite_id:id});
+    if(error)throw error;const row=data?.[0];if(!row)throw new Error('Approval was not recorded.');
+    if(row.ready_to_send){
+      await sendInviteEmail(id,null,true);
+      alert('Your approval completed the Owner approval requirement. The invitation email has now been sent.');
+    }else{
+      alert('Your Owner approval has been recorded. Waiting for the remaining Owner approval(s).');
+    }
+    await refresh();
+  }catch(e){alert(e.message||'Could not approve Owner invitation.')}finally{btn.disabled=false}
+}
 async function approve(uid,btn){if(!confirm('Approve this access request?'))return;btn.disabled=true;try{const{data,error}=await supabase.rpc('approve_pending_access',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;if(data?.executed===false)alert('Your Owner approval has been recorded. Waiting for the other Owner approval(s).');await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 async function promoteOwner(uid,btn){if(!confirm('Promote this Admin to an equal Owner? If there is more than one current Owner, every Owner must approve.'))return;btn.disabled=true;try{const{data,error}=await supabase.rpc('propose_owner_promotion',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;if(data?.executed===false)alert('Your approval has been recorded. Waiting for the other Owner approval(s).');await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 async function requestOwnerRemoval(uid,btn){if(!confirm('Request removal of this Owner? Every active Owner, including the Owner being removed, must approve before it can happen.'))return;btn.disabled=true;try{const{data,error}=await supabase.rpc('propose_owner_removal',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;if(data?.executed===false)alert('Removal request created. It will only complete when every active Owner approves.');await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
