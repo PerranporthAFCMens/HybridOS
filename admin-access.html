@@ -13,7 +13,7 @@ button,input,select{font:inherit}.hidden{display:none!important}.shell{min-heigh
 <div id="app" class="shell hidden">
   <aside class="side"><div class="brand">HYBRID <b>OS</b></div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:800;margin-top:4px"></div></div><nav class="nav"></nav></aside>
   <main class="main">
-    <div class="top"><div><div class="eyebrow">Owner controls</div><h1>Admin access</h1><div class="muted">Invite and manage Admins and equal Owners. Owner-level changes require explicit Owner approval.</div></div></div>
+    <div class="top"><div><div class="eyebrow">Owner controls</div><h1>Admin access</h1><div class="muted">Invite and manage Admins and equal Owners. Owner-level changes require explicit Owner approval.</div></div><button id="signOutBtn" class="btn secondary">Sign out</button></div>
     <div id="ownerOnly" class="card hidden"><h2 style="margin-top:0">Owner-only area</h2><p class="muted">Only an active Owner can manage Admin and Owner access.</p></div>
     <div id="contextBlocked" class="card hidden"><h2 style="margin-top:0">Gym context required</h2><p id="contextBlockedMsg" class="muted"></p></div>
     <div id="ownerPanel" class="grid hidden">
@@ -51,6 +51,7 @@ button,input,select{font:inherit}.hidden{display:none!important}.shell{min-heigh
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 const $=id=>document.getElementById(id);
+$('signOutBtn').onclick=async()=>{const btn=$('signOutBtn');btn.disabled=true;try{await supabase.auth.signOut();location.replace('./index.html')}catch(e){btn.disabled=false;alert(e.message||'Could not sign out.')}};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 let gym=null,user=null,role=null,accessStatus=null,profiles=new Map(),invites=[],inviteApprovals=[],ownershipActions=[],ownershipApprovals=[],activeOwnerCount=0;
 
