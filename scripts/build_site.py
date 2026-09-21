@@ -2,7 +2,7 @@ from __future__ import annotations
 import os,re,shutil
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'_site';VERSION=os.environ.get('GITHUB_SHA','dev')[:12];EXCLUDE={'.git','.github','scripts','_site'}
-APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','groups.html','onboarding.html');TENANT_PAGES=('index.html','member.html','member-preview.html','classes.html','staff.html','member-memberships.html','integrations.html','social.html','groups.html');ADMIN_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html')
+APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','groups.html','onboarding.html');TENANT_PAGES=('index.html','member.html','member-preview.html','classes.html','staff.html','member-memberships.html','integrations.html','social.html','groups.html');ADMIN_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html')
 def copy_source():
  if OUT.exists():shutil.rmtree(OUT)
  OUT.mkdir()
@@ -75,7 +75,7 @@ def add_admin_shell():
    s=re.sub(r'<link[^>]+href=["\']\.\/'+re.escape(asset)+r'(?:\?[^"\']*)?["\'][^>]*>','',s,flags=re.I)
   shared_css=''.join(f'<link rel="stylesheet" href="./{asset}?v={VERSION}">' for asset in ('app-consistency.css','admin-shell.css','admin-pages.css'))
   s=s.replace('</head>',shared_css+'</head>',1)
-  s=inject_body(s,'admin-embed.js',f'<script src="./admin-embed.js?v={VERSION}" defer></script>');s=inject_body(s,'shared-admin-nav.js',f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>');s=inject_body(s,'admin-transition-diagnostics.js',f'<script src="./admin-transition-diagnostics.js?v={VERSION}" defer></script>')
+  s=inject_body(s,'admin-embed.js',f'<script src="./admin-embed.js?v={VERSION}" defer></script>');s=inject_body(s,'shared-admin-nav.js',f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>');s=inject_body(s,'admin-access-guard.js',f'<script src="./admin-access-guard.js?v={VERSION}" defer></script>');s=inject_body(s,'admin-transition-diagnostics.js',f'<script src="./admin-transition-diagnostics.js?v={VERSION}" defer></script>')
   if n=='index.html':s=s.replace('<section id="authView" class="auth">','<section id="authView" class="auth hidden">',1)
   write(n,s)
 def add_staff_shell():
