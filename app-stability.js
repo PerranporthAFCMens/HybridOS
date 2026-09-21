@@ -73,7 +73,7 @@
       if(u.origin!==location.origin)return;
       if(u.pathname===location.pathname&&u.search===location.search)return;
       if(!/\.html$|\/$/.test(u.pathname))return;
-      var adminFiles=['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'];
+      var adminFiles=['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'];
       var currentFile=location.pathname.split('/').pop()||'index.html';
       var targetFile=u.pathname.split('/').pop()||'index.html';
       if(adminFiles.indexOf(currentFile)!==-1&&adminFiles.indexOf(targetFile)!==-1)return;

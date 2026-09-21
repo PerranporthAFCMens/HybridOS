@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1020"><title>Admin invitation · Hybrid OS</title>
+<style>
+:root{--bg:#f5f7fb;--ink:#101828;--muted:#667085;--line:#e7ebf2;--dark:#0b1020;--good:#067647;--bad:#b42318}*{box-sizing:border-box}body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px;background:var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}.wrap{width:min(520px,100%)}.brand{font-size:19px;font-weight:950;letter-spacing:.09em;margin-bottom:18px}.card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:24px;box-shadow:0 18px 46px rgba(16,24,40,.10)}.eyebrow{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}h1{margin:5px 0 8px;font-size:30px}.muted{color:var(--muted);line-height:1.5}.notice{margin:16px 0;padding:13px 14px;border-radius:14px;background:#f8fafc;border:1px solid var(--line);font-size:13px;line-height:1.45}.field{margin:13px 0}.field label{display:block;font-size:13px;font-weight:850;margin-bottom:6px}.field input{width:100%;padding:13px;border:1px solid #d0d5dd;border-radius:12px;font:inherit}.btn{width:100%;border:0;border-radius:12px;padding:13px;font:inherit;font-weight:900;cursor:pointer}.primary{background:var(--dark);color:#fff}.secondary{background:#fff;border:1px solid var(--line);color:var(--ink);margin-top:8px}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}.tabs button{padding:10px;border:1px solid var(--line);border-radius:11px;background:#fff;font-weight:850}.tabs button.active{background:var(--dark);color:#fff;border-color:var(--dark)}.msg{margin-top:12px;font-size:13px;line-height:1.45}.good{color:var(--good)}.bad{color:var(--bad)}.hidden{display:none!important}
+</style></head><body><div class="wrap"><div class="brand">HYBRID <b>OS</b></div><section class="card">
+<div id="loading">Checking invitation…</div>
+<div id="content" class="hidden"><div class="eyebrow">Admin invitation</div><h1 id="title">Join Hybrid Hub</h1><div id="sub" class="muted"></div><div id="inviteNotice" class="notice"></div>
+<div id="authBox"><div class="tabs"><button id="signupTab" class="active">Create account</button><button id="loginTab">Sign in</button></div>
+<div id="nameField" class="field"><label>Your name</label><input id="name" autocomplete="name"></div><div class="field"><label>Email</label><input id="email" type="email" readonly></div><div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password"></div><button id="authBtn" class="btn primary">Create account</button></div>
+<div id="claimBox" class="hidden"><button id="claimBtn" class="btn primary">Accept Hybrid Hub invite</button></div>
+<div id="doneBox" class="hidden"><div class="notice"><b>Account linked.</b><br>Your Hybrid Hub access is read-only until the Owner approves you.</div><a href="./index.html" style="text-decoration:none"><button class="btn primary">Open Hybrid Hub</button></a></div>
+<div id="msg" class="msg"></div></div>
+</section></div>
+<script type="module">
+import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');const $=id=>document.getElementById(id);
+const token=new URLSearchParams(location.search).get('token')||'';let invite=null,mode='signup';
+function message(t,good=false){$('msg').textContent=t;$('msg').className='msg '+(good?'good':'bad')}
+function setMode(next){mode=next;const signup=next==='signup';$('signupTab').classList.toggle('active',signup);$('loginTab').classList.toggle('active',!signup);$('nameField').classList.toggle('hidden',!signup);$('authBtn').textContent=signup?'Create account':'Sign in'}
+$('signupTab').onclick=()=>setMode('signup');$('loginTab').onclick=()=>setMode('login');
+async function inspect(){
+  if(!token)throw new Error('This invitation link is incomplete.');
+  const{data,error}=await supabase.rpc('get_admin_invite',{invite_token:token});if(error)throw error;invite=data?.[0];if(!invite)throw new Error('Invitation not found.');
+  $('loading').classList.add('hidden');$('content').classList.remove('hidden');$('title').textContent='Join '+invite.gym_name;$('email').value=invite.email;
+  const status=invite.status;
+  $('sub').textContent='This invitation is for '+invite.email+'.';
+  $('inviteNotice').innerHTML=status==='open'?'Create your own Hybrid OS account. You will enter <b>read-only</b> until the gym Owner approves you.':'Invite status: <b>'+status+'</b>.';
+  if(['revoked','expired'].includes(status)){$('authBox').classList.add('hidden');message('This invitation can no longer be used.');return}
+  const{data:{session}}=await supabase.auth.getSession();
+  if(session){$('authBox').classList.add('hidden');$('claimBox').classList.remove('hidden');if(status==='claimed'||status==='approved')await claim();}
+}
+$('authBtn').onclick=async()=>{
+  const email=$('email').value.trim(),password=$('password').value,name=$('name').value.trim();if(!password)return message('Enter a password.');
+  $('authBtn').disabled=true;message('');
+  try{
+    const r=mode==='signup'
+      ?await supabase.auth.signUp({email,password,options:{emailRedirectTo:location.href,data:{display_name:name||email.split('@')[0],full_name:name||email.split('@')[0]}}})
+      :await supabase.auth.signInWithPassword({email,password});
+    if(r.error)throw r.error;
+    if(r.data.session){$('authBox').classList.add('hidden');$('claimBox').classList.remove('hidden');await claim()}
+    else message('Account created. Confirm your email, then return to this same invitation link.',true);
+  }catch(e){message(e.message||'Could not continue.')}finally{$('authBtn').disabled=false}
+};
+$('claimBtn').onclick=()=>claim();
+async function claim(){
+  $('claimBtn').disabled=true;message('');
+  try{const{data,error}=await supabase.rpc('claim_admin_invite',{invite_token:token});if(error)throw error;$('claimBox').classList.add('hidden');$('authBox').classList.add('hidden');$('doneBox').classList.remove('hidden');message('Your access request is waiting for Owner approval.',true)}
+  catch(e){message(e.message||'Could not accept invitation.')}finally{$('claimBtn').disabled=false}
+}
+inspect().catch(e=>{$('loading').textContent=e.message||'Invitation could not be loaded.'});
+</script></body></html>

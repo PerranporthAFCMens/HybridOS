@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>Admin access · Hybrid OS</title>
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--ink:#101828;--muted:#667085;--line:#e7ebf2;--dark:#0b1020;--good:#067647;--warn:#b54708;--bad:#b42318;--shadow:0 14px 34px rgba(16,24,40,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+button,input,select{font:inherit}.hidden{display:none!important}.shell{min-height:100vh;display:grid;grid-template-columns:255px 1fr}.side{background:var(--dark);color:#fff;padding:24px 18px}.brand{font-size:18px;font-weight:900;letter-spacing:.08em}.gym{padding:13px;border-radius:16px;background:rgba(255,255,255,.07);margin:22px 0}.gym small{color:#98a2b3}.nav{display:grid;gap:6px}.main{padding:28px 30px 70px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:20px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}.top h1{margin:4px 0;font-size:32px}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(0,1.1fr);gap:16px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}.field{margin:12px 0}.field label{display:block;font-size:13px;font-weight:800;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:1px solid #d0d5dd;border-radius:12px;background:#fff}.btn{border:0;border-radius:12px;padding:10px 13px;font-weight:850;cursor:pointer}.primary{background:var(--dark);color:#fff}.secondary{background:#fff;border:1px solid var(--line);color:var(--ink)}.danger{background:#fff1f0;color:var(--bad);border:1px solid #fecdca}.success{background:#ecfdf3;color:var(--good);border:1px solid #abefc6}.btn:disabled{opacity:.5;cursor:not-allowed}.status{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}.status.active,.status.approved{background:#ecfdf3;color:var(--good)}.status.pending,.status.claimed,.status.open{background:#fffaeb;color:var(--warn)}.status.revoked,.status.expired{background:#fef3f2;color:var(--bad)}.person,.invite{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:14px 0;border-top:1px solid var(--line)}.person:first-child,.invite:first-child{border-top:0}.person-main{min-width:0}.person-name{font-weight:900}.person-email{font-size:12px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}.actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.notice{padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid var(--line);font-size:13px;line-height:1.45}.generated{margin-top:12px;padding:12px;border-radius:14px;background:#f0fdf9;border:1px solid #a6f4c5}.generated input{margin-top:8px;width:100%;padding:10px;border:1px solid #a6f4c5;border-radius:10px;background:#fff}.msg{min-height:20px;margin-top:10px;font-size:13px}.good{color:var(--good)}.bad{color:var(--bad)}@media(max-width:900px){.shell{display:block}.side{display:none}.main{padding:18px 14px 50px}.grid{grid-template-columns:1fr}.top h1{font-size:28px}.person,.invite{display:grid}.actions{justify-content:flex-start}}
+</style>
+</head><body>
+<div id="loading" style="padding:30px">Loading admin access…</div>
+<div id="app" class="shell hidden">
+  <aside class="side"><div class="brand">HYBRID <b>OS</b></div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:800;margin-top:4px"></div></div><nav class="nav"></nav></aside>
+  <main class="main">
+    <div class="top"><div><div class="eyebrow">Owner controls</div><h1>Admin access</h1><div class="muted">Invite, approve and remove administrators. Ownership remains protected.</div></div></div>
+    <div id="ownerOnly" class="card hidden"><h2 style="margin-top:0">Owner-only area</h2><p class="muted">Only the gym owner can create Admin invites, approve pending Admins or remove Admin access.</p></div>
+    <div id="ownerPanel" class="grid hidden">
+      <section class="card">
+        <div class="eyebrow">New invite</div><h2 style="margin:4px 0 6px">Invite an Admin</h2>
+        <div class="notice">The invitee creates their own account first. Their Hybrid Hub access stays <b>read-only</b> until you approve it.</div>
+        <div class="field"><label for="inviteEmail">Email address</label><input id="inviteEmail" type="email" autocomplete="email" placeholder="name@example.com"></div>
+        <div class="field"><label for="inviteDays">Link expires</label><select id="inviteDays"><option value="3">3 days</option><option value="7" selected>7 days</option><option value="14">14 days</option><option value="30">30 days</option></select></div>
+        <button id="createInvite" class="btn primary">Create one-time invite</button>
+        <div id="generated" class="generated hidden"><b>Invite link created</b><div class="muted" style="font-size:12px;margin-top:3px">Copy this now. For security, the token is only shown when it is generated.</div><input id="generatedLink" readonly><div class="actions" style="margin-top:8px;justify-content:flex-start"><button id="copyInvite" class="btn secondary">Copy link</button></div></div>
+        <div id="createMsg" class="msg"></div>
+      </section>
+      <section class="card">
+        <div class="eyebrow">Access hierarchy</div><h2 style="margin:4px 0 10px">Owner & Admins</h2>
+        <div id="peopleList"></div>
+      </section>
+    </div>
+    <section id="inviteCard" class="card hidden" style="margin-top:16px">
+      <div class="eyebrow">Invite links</div><h2 style="margin:4px 0 10px">Pending & previous invites</h2>
+      <div id="inviteList"></div>
+    </section>
+  </main>
+</div>
+<script type="module">
+import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+let gym=null,user=null,role=null,profiles=new Map(),invites=[];
+
+function fmt(d){return d?new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(d)):'—'}
+function setMsg(t,good=false){$('createMsg').textContent=t;$('createMsg').className='msg '+(good?'good':'bad')}
+function nameFor(id,fallback='Admin'){const p=profiles.get(id);return p?.display_name||[p?.first_name,p?.last_name].filter(Boolean).join(' ')||fallback}
+function latestInviteFor(uid){return invites.find(i=>i.claimed_by===uid)||null}
+async function load(){
+  const{data:{session}}=await supabase.auth.getSession();
+  if(!session){location.replace('./index.html');return}
+  user=session.user;
+  const{data:gms,error}=await supabase.from('gym_members').select('gym_id,role,access_status,gyms(id,name)').eq('user_id',user.id).eq('is_active',true).limit(1);
+  if(error||!gms?.length){location.replace('./index.html');return}
+  gym=gms[0].gyms;role=gms[0].role;$('gymName').textContent=gym.name;
+  $('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true;
+  if(role!=='owner'){$('ownerOnly').classList.remove('hidden');return}
+  $('ownerPanel').classList.remove('hidden');$('inviteCard').classList.remove('hidden');
+  await refresh();
+}
+async function refresh(){
+  const [{data:members,error:memberErr},{data:inviteRows,error:inviteErr}]=await Promise.all([
+    supabase.from('gym_members').select('user_id,role,access_status,is_active,joined_at').eq('gym_id',gym.id).in('role',['owner','admin']).order('joined_at'),
+    supabase.from('gym_admin_invites').select('id,email,status,claimed_by,created_at,expires_at,claimed_at,approved_at,revoked_at').eq('gym_id',gym.id).order('created_at',{ascending:false})
+  ]);
+  if(memberErr)throw memberErr;if(inviteErr)throw inviteErr;invites=inviteRows||[];
+  const ids=[...new Set((members||[]).map(x=>x.user_id))];
+  profiles=new Map();
+  if(ids.length){const{data:ps}=await supabase.from('profiles').select('id,display_name,first_name,last_name').in('id',ids);(ps||[]).forEach(p=>profiles.set(p.id,p))}
+  renderPeople(members||[]);renderInvites();
+}
+function renderPeople(rows){
+  $('peopleList').innerHTML=rows.map(r=>{
+    const inv=latestInviteFor(r.user_id),email=inv?.email||(r.role==='owner'?'Owner account':'');
+    const protectedOwner=r.role==='owner';
+    const status=r.access_status||'active';
+    return '<div class="person"><div class="person-main"><div class="person-name">'+esc(nameFor(r.user_id,protectedOwner?'Owner':'Admin'))+' '+(protectedOwner?'<span class="status active">Owner · Protected</span>':'<span class="status '+esc(status)+'">'+esc(status)+'</span>')+'</div><div class="person-email">'+esc(email)+'</div></div><div class="actions">'+
+      (!protectedOwner&&status==='pending'?'<button class="btn success" data-approve="'+r.user_id+'">Approve Admin</button>':'')+
+      (!protectedOwner?'<button class="btn danger" data-remove="'+r.user_id+'">Remove access</button>':'')+
+      '</div></div>';
+  }).join('')||'<div class="muted">No Admin accounts yet.</div>';
+  document.querySelectorAll('[data-approve]').forEach(b=>b.onclick=()=>approve(b.dataset.approve,b));
+  document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>removeAccess(b.dataset.remove,b));
+}
+function renderInvites(){
+  $('inviteList').innerHTML=invites.map(i=>{
+    const expired=i.status==='open'&&new Date(i.expires_at)<=new Date(),status=expired?'expired':i.status;
+    return '<div class="invite"><div class="person-main"><div class="person-name">'+esc(i.email)+' <span class="status '+esc(status)+'">'+esc(status)+'</span></div><div class="person-email">Created '+esc(fmt(i.created_at))+' · expires '+esc(fmt(i.expires_at))+(i.claimed_by?' · account created':'')+'</div></div><div class="actions">'+
+      (['open','claimed'].includes(i.status)?'<button class="btn danger" data-revoke="'+i.id+'">Revoke link</button>':'')+'<button class="btn secondary" data-delete-invite="'+i.id+'">Delete invite</button>'+
+      '</div></div>';
+  }).join('')||'<div class="muted">No Admin invites yet.</div>';
+  document.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=()=>revoke(b.dataset.revoke,b));document.querySelectorAll('[data-delete-invite]').forEach(b=>b.onclick=()=>deleteInvite(b.dataset.deleteInvite,b));
+}
+$('createInvite').onclick=async()=>{
+  const email=$('inviteEmail').value.trim();if(!email)return setMsg('Enter the email address first.');
+  $('createInvite').disabled=true;setMsg('');
+  try{
+    const{data,error}=await supabase.rpc('create_admin_invite',{target_gym_id:gym.id,invite_email:email,expires_in_days:Number($('inviteDays').value)});
+    if(error)throw error;const row=data?.[0];if(!row)throw new Error('Invite was not created.');
+    const u=new URL('./admin-invite.html',location.href);u.searchParams.set('token',row.token);
+    $('generatedLink').value=u.toString();$('generated').classList.remove('hidden');$('inviteEmail').value='';setMsg('Invite created. Send the link to '+email+'.',true);await refresh();
+  }catch(e){setMsg(e.message||'Could not create invite.')}finally{$('createInvite').disabled=false}
+};
+$('copyInvite').onclick=async()=>{try{await navigator.clipboard.writeText($('generatedLink').value);$('copyInvite').textContent='Copied';setTimeout(()=>$('copyInvite').textContent='Copy link',1200)}catch(_e){$('generatedLink').select();document.execCommand('copy')}};
+async function approve(uid,btn){if(!confirm('Approve this person as a full Hybrid Hub Admin?'))return;btn.disabled=true;try{const{error}=await supabase.rpc('approve_admin_access',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
+async function removeAccess(uid,btn){if(!confirm('Remove this Admin from Hybrid Hub? Their personal Hybrid OS login will remain, but this gym access will stop immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('remove_admin_access',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
+async function revoke(id,btn){if(!confirm('Revoke this invite link? It will stop working immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('revoke_admin_invite',{target_invite_id:id});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
+async function deleteInvite(id,btn){if(!confirm('Delete this invite record? The link will stop working immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('delete_admin_invite',{target_invite_id:id});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
+load().catch(e=>{console.error(e);$('loading').textContent='Admin access failed to load.'});
+</script></body></html>
