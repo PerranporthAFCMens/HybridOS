@@ -13,13 +13,14 @@ button,input,select{font:inherit}.hidden{display:none!important}.shell{min-heigh
 <div id="app" class="shell hidden">
   <aside class="side"><div class="brand">HYBRID <b>OS</b></div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:800;margin-top:4px"></div></div><nav class="nav"></nav></aside>
   <main class="main">
-    <div class="top"><div><div class="eyebrow">Owner controls</div><h1>Admin access</h1><div class="muted">Invite, approve and remove administrators. Ownership remains protected.</div></div></div>
-    <div id="ownerOnly" class="card hidden"><h2 style="margin-top:0">Owner-only area</h2><p class="muted">Only the gym owner can create Admin invites, approve pending Admins or remove Admin access.</p></div>
+    <div class="top"><div><div class="eyebrow">Owner controls</div><h1>Admin access</h1><div class="muted">Invite and manage Admins and equal Owners. Owner-level changes require explicit Owner approval.</div></div></div>
+    <div id="ownerOnly" class="card hidden"><h2 style="margin-top:0">Owner-only area</h2><p class="muted">Only an active Owner can manage Admin and Owner access.</p></div>
     <div id="ownerPanel" class="grid hidden">
       <section class="card">
-        <div class="eyebrow">New invite</div><h2 style="margin:4px 0 6px">Invite an Admin</h2>
-        <div class="notice">The invitee creates their own account first. Their Hybrid Hub access stays <b>read-only</b> until you approve it.</div>
+        <div class="eyebrow">New invite</div><h2 style="margin:4px 0 6px">Invite access</h2>
+        <div class="notice">The invitee creates their own account first. Their Hybrid Hub access stays <b>read-only</b> until the required Owner approval is complete.</div>
         <div class="field"><label for="inviteEmail">Email address</label><input id="inviteEmail" type="email" autocomplete="email" placeholder="name@example.com"></div>
+        <div class="field"><label for="inviteRole">Access level</label><select id="inviteRole"><option value="admin" selected>Admin</option><option value="owner">Owner · equal ownership</option></select></div>
         <div class="field"><label for="inviteDays">Link expires</label><select id="inviteDays"><option value="3">3 days</option><option value="7" selected>7 days</option><option value="14">14 days</option><option value="30">30 days</option></select></div>
         <button id="createInvite" class="btn primary">Create one-time invite</button>
         <div id="generated" class="generated hidden"><b>Invite link created</b><div class="muted" style="font-size:12px;margin-top:3px">Copy this now. For security, the token is only shown when it is generated.</div><input id="generatedLink" readonly><div class="actions" style="margin-top:8px;justify-content:flex-start"><button id="copyInvite" class="btn secondary">Copy link</button></div></div>
@@ -30,6 +31,11 @@ button,input,select{font:inherit}.hidden{display:none!important}.shell{min-heigh
         <div id="peopleList"></div>
       </section>
     </div>
+    <section id="ownershipCard" class="card hidden" style="margin-top:16px">
+      <div class="eyebrow">Equal ownership</div><h2 style="margin:4px 0 10px">Ownership decisions</h2>
+      <div class="notice" style="margin-bottom:10px">When a gym has two or more Owners, adding, promoting or removing an Owner needs approval from every active Owner. Neither Owner can remove the other unilaterally.</div>
+      <div id="ownershipList"></div>
+    </section>
     <section id="inviteCard" class="card hidden" style="margin-top:16px">
       <div class="eyebrow">Invite links</div><h2 style="margin:4px 0 10px">Pending & previous invites</h2>
       <div id="inviteList"></div>
@@ -41,7 +47,7 @@ import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+e
 const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-let gym=null,user=null,role=null,profiles=new Map(),invites=[];
+let gym=null,user=null,role=null,accessStatus=null,profiles=new Map(),invites=[],ownershipActions=[],ownershipApprovals=[];
 
 function fmt(d){return d?new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(d)):'—'}
 function setMsg(t,good=false){$('createMsg').textContent=t;$('createMsg').className='msg '+(good?'good':'bad')}
@@ -53,40 +59,64 @@ async function load(){
   user=session.user;
   const{data:gms,error}=await supabase.from('gym_members').select('gym_id,role,access_status,gyms(id,name)').eq('user_id',user.id).eq('is_active',true).limit(1);
   if(error||!gms?.length){location.replace('./index.html');return}
-  gym=gms[0].gyms;role=gms[0].role;$('gymName').textContent=gym.name;
+  gym=gms[0].gyms;role=gms[0].role;accessStatus=gms[0].access_status;$('gymName').textContent=gym.name;
   $('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true;
-  if(role!=='owner'){$('ownerOnly').classList.remove('hidden');return}
-  $('ownerPanel').classList.remove('hidden');$('inviteCard').classList.remove('hidden');
+  if(role!=='owner'||accessStatus!=='active'){$('ownerOnly').classList.remove('hidden');return}
+  $('ownerPanel').classList.remove('hidden');$('ownershipCard').classList.remove('hidden');$('inviteCard').classList.remove('hidden');
   await refresh();
 }
 async function refresh(){
-  const [{data:members,error:memberErr},{data:inviteRows,error:inviteErr}]=await Promise.all([
-    supabase.from('gym_members').select('user_id,role,access_status,is_active,joined_at').eq('gym_id',gym.id).in('role',['owner','admin']).order('joined_at'),
-    supabase.from('gym_admin_invites').select('id,email,status,claimed_by,created_at,expires_at,claimed_at,approved_at,revoked_at').eq('gym_id',gym.id).order('created_at',{ascending:false})
+  const [{data:members,error:memberErr},{data:inviteRows,error:inviteErr},{data:actionRows,error:actionErr}]=await Promise.all([
+    supabase.from('gym_members').select('user_id,role,access_status,is_active,joined_at').eq('gym_id',gym.id).eq('is_active',true).in('role',['owner','admin']).order('joined_at'),
+    supabase.from('gym_admin_invites').select('id,email,status,invite_role,claimed_by,created_at,expires_at,claimed_at,approved_at,revoked_at').eq('gym_id',gym.id).order('created_at',{ascending:false}),
+    supabase.from('gym_ownership_actions').select('id,action_type,target_user_id,created_by,status,created_at,expires_at,executed_at').eq('gym_id',gym.id).eq('status','pending').order('created_at',{ascending:false})
   ]);
-  if(memberErr)throw memberErr;if(inviteErr)throw inviteErr;invites=inviteRows||[];
-  const ids=[...new Set((members||[]).map(x=>x.user_id))];
+  if(memberErr)throw memberErr;if(inviteErr)throw inviteErr;if(actionErr)throw actionErr;
+  invites=inviteRows||[];ownershipActions=actionRows||[];
+  ownershipApprovals=[];
+  if(ownershipActions.length){
+    const{data:aps,error:approvalErr}=await supabase.from('gym_ownership_action_approvals').select('action_id,owner_user_id,approved_at').in('action_id',ownershipActions.map(x=>x.id));
+    if(approvalErr)throw approvalErr;ownershipApprovals=aps||[];
+  }
+  const ids=[...new Set([...(members||[]).map(x=>x.user_id),...ownershipActions.map(x=>x.target_user_id).filter(Boolean)])];
   profiles=new Map();
   if(ids.length){const{data:ps}=await supabase.from('profiles').select('id,display_name,first_name,last_name').in('id',ids);(ps||[]).forEach(p=>profiles.set(p.id,p))}
-  renderPeople(members||[]);renderInvites();
+  renderPeople(members||[]);renderOwnership(members||[]);renderInvites();
 }
 function renderPeople(rows){
+  const ownerCount=rows.filter(r=>r.role==='owner'&&r.access_status==='active').length;
   $('peopleList').innerHTML=rows.map(r=>{
     const inv=latestInviteFor(r.user_id),email=inv?.email||(r.role==='owner'?'Owner account':'');
-    const protectedOwner=r.role==='owner';
-    const status=r.access_status||'active';
-    return '<div class="person"><div class="person-main"><div class="person-name">'+esc(nameFor(r.user_id,protectedOwner?'Owner':'Admin'))+' '+(protectedOwner?'<span class="status active">Owner · Protected</span>':'<span class="status '+esc(status)+'">'+esc(status)+'</span>')+'</div><div class="person-email">'+esc(email)+'</div></div><div class="actions">'+
-      (!protectedOwner&&status==='pending'?'<button class="btn success" data-approve="'+r.user_id+'">Approve Admin</button>':'')+
-      (!protectedOwner?'<button class="btn danger" data-remove="'+r.user_id+'">Remove access</button>':'')+
-      '</div></div>';
-  }).join('')||'<div class="muted">No Admin accounts yet.</div>';
+    const isOwner=r.role==='owner',status=r.access_status||'active';
+    const badge=isOwner
+      ?'<span class="status '+esc(status)+'">Owner'+(status==='active'?'':' · '+esc(status))+'</span>'
+      :'<span class="status '+esc(status)+'">Admin'+(status==='active'?'':' · '+esc(status))+'</span>';
+    let buttons='';
+    if(status==='pending')buttons+='<button class="btn success" data-approve="'+r.user_id+'">Approve '+(isOwner?'Owner':'Admin')+'</button>';
+    if(!isOwner&&status==='active')buttons+='<button class="btn secondary" data-promote="'+r.user_id+'">Promote to Owner</button>';
+    if(!isOwner)buttons+='<button class="btn danger" data-remove="'+r.user_id+'">Remove access</button>';
+    if(isOwner&&status==='active'&&ownerCount>1)buttons+='<button class="btn danger" data-remove-owner="'+r.user_id+'">Request Owner removal</button>';
+    return '<div class="person"><div class="person-main"><div class="person-name">'+esc(nameFor(r.user_id,isOwner?'Owner':'Admin'))+' '+badge+'</div><div class="person-email">'+esc(email)+'</div></div><div class="actions">'+buttons+'</div></div>';
+  }).join('')||'<div class="muted">No Admin or Owner accounts yet.</div>';
   document.querySelectorAll('[data-approve]').forEach(b=>b.onclick=()=>approve(b.dataset.approve,b));
+  document.querySelectorAll('[data-promote]').forEach(b=>b.onclick=()=>promoteOwner(b.dataset.promote,b));
   document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>removeAccess(b.dataset.remove,b));
+  document.querySelectorAll('[data-remove-owner]').forEach(b=>b.onclick=()=>requestOwnerRemoval(b.dataset.removeOwner,b));
+}
+function renderOwnership(rows){
+  const activeOwners=rows.filter(r=>r.role==='owner'&&r.access_status==='active');
+  $('ownershipList').innerHTML=ownershipActions.map(x=>{
+    const aps=ownershipApprovals.filter(a=>a.action_id===x.id),mine=aps.some(a=>a.owner_user_id===user.id);
+    const label=x.action_type==='activate_owner'?'Activate Owner':x.action_type==='promote_owner'?'Promote Admin to Owner':x.action_type==='remove_owner'?'Remove Owner':'Delete gym';
+    const target=x.target_user_id?nameFor(x.target_user_id,'Owner'):'Hybrid Hub';
+    return '<div class="invite"><div class="person-main"><div class="person-name">'+esc(label)+' · '+esc(target)+'</div><div class="person-email">'+aps.length+' of '+activeOwners.length+' Owner approvals recorded</div></div><div class="actions">'+(!mine?'<button class="btn success" data-owner-approve="'+x.id+'">Approve decision</button>':'<span class="status approved">You approved</span>')+'</div></div>';
+  }).join('')||'<div class="muted">No ownership decisions are waiting for approval.</div>';
+  document.querySelectorAll('[data-owner-approve]').forEach(b=>b.onclick=()=>approveOwnershipAction(b.dataset.ownerApprove,b));
 }
 function renderInvites(){
   $('inviteList').innerHTML=invites.map(i=>{
     const expired=i.status==='open'&&new Date(i.expires_at)<=new Date(),status=expired?'expired':i.status;
-    return '<div class="invite"><div class="person-main"><div class="person-name">'+esc(i.email)+' <span class="status '+esc(status)+'">'+esc(status)+'</span></div><div class="person-email">Created '+esc(fmt(i.created_at))+' · expires '+esc(fmt(i.expires_at))+(i.claimed_by?' · account created':'')+'</div></div><div class="actions">'+
+    return '<div class="invite"><div class="person-main"><div class="person-name">'+esc(i.email)+' <span class="status '+esc(status)+'">'+esc(status)+'</span> <span class="status active">'+esc(i.invite_role||'admin')+'</span></div><div class="person-email">Created '+esc(fmt(i.created_at))+' · expires '+esc(fmt(i.expires_at))+(i.claimed_by?' · account created':'')+'</div></div><div class="actions">'+
       (['open','claimed'].includes(i.status)?'<button class="btn danger" data-revoke="'+i.id+'">Revoke link</button>':'')+'<button class="btn secondary" data-delete-invite="'+i.id+'">Delete invite</button>'+
       '</div></div>';
   }).join('')||'<div class="muted">No Admin invites yet.</div>';
@@ -96,14 +126,17 @@ $('createInvite').onclick=async()=>{
   const email=$('inviteEmail').value.trim();if(!email)return setMsg('Enter the email address first.');
   $('createInvite').disabled=true;setMsg('');
   try{
-    const{data,error}=await supabase.rpc('create_admin_invite',{target_gym_id:gym.id,invite_email:email,expires_in_days:Number($('inviteDays').value)});
+    const requestedRole=$('inviteRole').value;const{data,error}=await supabase.rpc('create_access_invite',{target_gym_id:gym.id,invite_email:email,requested_role:requestedRole,expires_in_days:Number($('inviteDays').value)});
     if(error)throw error;const row=data?.[0];if(!row)throw new Error('Invite was not created.');
     const u=new URL('./admin-invite.html',location.href);u.searchParams.set('token',row.token);
-    $('generatedLink').value=u.toString();$('generated').classList.remove('hidden');$('inviteEmail').value='';setMsg('Invite created. Send the link to '+email+'.',true);await refresh();
+    $('generatedLink').value=u.toString();$('generated').classList.remove('hidden');$('inviteEmail').value='';setMsg((row.invite_role==='owner'?'Owner':'Admin')+' invite created. Send the link to '+email+'.',true);await refresh();
   }catch(e){setMsg(e.message||'Could not create invite.')}finally{$('createInvite').disabled=false}
 };
 $('copyInvite').onclick=async()=>{try{await navigator.clipboard.writeText($('generatedLink').value);$('copyInvite').textContent='Copied';setTimeout(()=>$('copyInvite').textContent='Copy link',1200)}catch(_e){$('generatedLink').select();document.execCommand('copy')}};
-async function approve(uid,btn){if(!confirm('Approve this person as a full Hybrid Hub Admin?'))return;btn.disabled=true;try{const{error}=await supabase.rpc('approve_admin_access',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
+async function approve(uid,btn){if(!confirm('Approve this access request?'))return;btn.disabled=true;try{const{data,error}=await supabase.rpc('approve_pending_access',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;if(data?.executed===false)alert('Your Owner approval has been recorded. Waiting for the other Owner approval(s).');await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
+async function promoteOwner(uid,btn){if(!confirm('Promote this Admin to an equal Owner? If there is more than one current Owner, every Owner must approve.'))return;btn.disabled=true;try{const{data,error}=await supabase.rpc('propose_owner_promotion',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;if(data?.executed===false)alert('Your approval has been recorded. Waiting for the other Owner approval(s).');await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
+async function requestOwnerRemoval(uid,btn){if(!confirm('Request removal of this Owner? Every active Owner, including the Owner being removed, must approve before it can happen.'))return;btn.disabled=true;try{const{data,error}=await supabase.rpc('propose_owner_removal',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;if(data?.executed===false)alert('Removal request created. It will only complete when every active Owner approves.');await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
+async function approveOwnershipAction(id,btn){btn.disabled=true;try{const{data,error}=await supabase.rpc('approve_ownership_action',{target_action_id:id});if(error)throw error;if(data?.executed===false)alert('Your approval has been recorded. Waiting for the remaining Owner approval(s).');await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 async function removeAccess(uid,btn){if(!confirm('Remove this Admin from Hybrid Hub? Their personal Hybrid OS login will remain, but this gym access will stop immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('remove_admin_access',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 async function revoke(id,btn){if(!confirm('Revoke this invite link? It will stop working immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('revoke_admin_invite',{target_invite_id:id});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 async function deleteInvite(id,btn){if(!confirm('Delete this invite record? The link will stop working immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('delete_admin_invite',{target_invite_id:id});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
