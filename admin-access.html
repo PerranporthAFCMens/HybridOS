@@ -57,6 +57,19 @@ let gym=null,user=null,role=null,accessStatus=null,profiles=new Map(),invites=[]
 
 function fmt(d){return d?new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(d)):'—'}
 function setMsg(t,good=false){$('createMsg').textContent=t;$('createMsg').className='msg '+(good?'good':'bad')}
+function showToast(title,message,type='success'){
+  document.getElementById('hybridInviteToast')?.remove();
+  const toast=document.createElement('div');
+  toast.id='hybridInviteToast';
+  toast.setAttribute('role','status');
+  toast.setAttribute('aria-live','polite');
+  const success=type==='success';
+  toast.style.cssText='position:fixed;right:18px;top:18px;z-index:20000;width:min(390px,calc(100vw - 36px));background:#0b1020;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:15px 16px;box-shadow:0 18px 45px rgba(16,24,40,.28);display:flex;gap:12px;align-items:flex-start;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif';
+  toast.innerHTML='<div style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:'+(success?'#D1FADF':'#FEE4E2')+';color:'+(success?'#027A48':'#B42318')+';font-weight:900;flex:0 0 auto">'+(success?'✓':'!')+'</div><div style="min-width:0;flex:1"><div style="font-weight:900;font-size:14px;margin-bottom:3px">'+esc(title)+'</div><div style="font-size:13px;line-height:1.45;color:#D0D5DD;word-break:break-word">'+esc(message)+'</div></div><button type="button" aria-label="Close" style="border:0;background:transparent;color:#fff;font-size:20px;line-height:1;cursor:pointer;padding:0 0 0 6px">×</button>';
+  toast.querySelector('button').onclick=()=>toast.remove();
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),5000);
+}
 function nameFor(id,fallback='Admin'){const p=profiles.get(id);return p?.display_name||[p?.first_name,p?.last_name].filter(Boolean).join(' ')||fallback}
 function latestInviteFor(uid){return invites.find(i=>i.claimed_by===uid)||null}
 async function load(){
@@ -224,7 +237,7 @@ async function sendInviteEmail(id,btn=null,silent=false){
   try{
     const{data,error}=await supabase.functions.invoke('send-access-invite',{body:{invite_id:id}});
     if(error)throw error;if(data?.error)throw new Error((data.stage?data.stage+': ':'')+data.error);
-    if(!silent)alert('Invitation email sent to '+data.email+'.');
+    if(!silent)showToast('Invite sent','Invitation email sent to '+data.email+'.');
     await refresh();
     return data;
   }catch(e){
