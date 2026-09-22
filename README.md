@@ -35,12 +35,13 @@ Current intended routes:
 
 Vercel is now the intended commercial frontend host.
 
-GitHub Pages remains in the repository as a legacy/dev deployment path.
+GitHub Pages is the immediate development preview from `dev`. Vercel production follows `main` on the hourly release cadence.
 
 ## Stack
 
 - Repository: `PerranporthAFCMens/HybridOS`
-- Branch: `main`
+- Production branch: `main`
+- Development branch: `dev`
 - Frontend: static HTML/CSS/JavaScript
 - Hosting: Vercel for branded production
 - Legacy/dev hosting: GitHub Pages
@@ -180,9 +181,19 @@ Current rewrites:
 - `/puffin-performance` -> `/puffin-performance-login.html`
 - `/app` -> `/index.html`
 
-## GitHub Pages build
+## Development and release flow
 
-Legacy/dev deployment pipeline remains:
+Normal development goes to `dev`, not directly to `main`.
+
+- Every `dev` push runs the build/smoke checks and publishes GitHub Pages for immediate review.
+- Vercel Git deployment is disabled for the `dev` branch.
+- `.github/workflows/hourly-production.yml` fast-forwards `main` to the latest `dev` once per hour at minute 37, when there is anything new.
+- Vercel production therefore receives at most one normal HybridOne release per hour.
+- `workflow_dispatch` remains available for an intentional manual production release.
+
+GitHub Pages preview pipeline:
+
+
 
 **source -> `scripts/build_site.py` -> `_site` -> `scripts/smoke_test.py` -> GitHub Pages**
 
