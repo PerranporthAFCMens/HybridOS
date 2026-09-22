@@ -23,7 +23,7 @@ def inject_body(t,a,m):
 CRITICAL_SHELL_STYLE='''<style id="hybrid-critical-shell">
 html,body{margin:0;min-height:100%;background:#f5f7fb}
 #loading{position:fixed;inset:0;z-index:9998;min-height:100vh;color:transparent!important;background:linear-gradient(90deg,#0b1020 0 254px,#f5f7fb 254px 100%);overflow:hidden}
-#loading::before{content:"HYBRIDONE";position:absolute;left:24px;top:26px;color:#fff;font:900 18px/1 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.08em}
+#loading::before{content:"HybridOne";position:absolute;left:24px;top:26px;color:#fff;font:900 18px/1 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.08em}
 #loading::after{content:"";position:absolute;left:284px;right:30px;top:30px;height:190px;border-radius:22px;background:linear-gradient(100deg,#e9edf3 20%,#f7f8fa 36%,#e9edf3 52%);background-size:220% 100%;animation:hybridCriticalShimmer 1.05s linear infinite;box-shadow:0 220px 0 #fff,0 430px 0 #fff}
 #hybridNavigationMask{position:fixed;inset:0;z-index:9999;display:grid;grid-template-columns:254px minmax(0,1fr);background:#f5f7fb;opacity:0;pointer-events:none;transition:opacity .08s linear}
 #hybridNavigationMask.show{opacity:1}
