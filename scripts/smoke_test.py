@@ -233,8 +233,8 @@ for template_name in ('supabase-email-invite-template.html','supabase-email-magi
  template=(ROOT/template_name)
  if not template.exists():problems.append(f'{template_name}: branded email template missing');continue
  tt=template.read_text(encoding='utf-8')
- for x in ('HYBRID','{{ .ConfirmationURL }}','{{ .Data.hybrid_gym_name }}','{{ .Data.hybrid_invited_by }}','{{ .Data.hybrid_invite_role }}','Accept invitation'):
-  if x not in tt:problems.append(f'{template_name}: professional invite email content missing: {x}')
+ for x in ('{{ .ConfirmationURL }}','{{ .Data.hybrid_email_brand_name }}','{{ .Data.hybrid_email_heading }}','{{ .Data.hybrid_email_body }}','{{ .Data.hybrid_email_button_label }}','{{ .Data.hybrid_email_accent }}','{{ .Data.hybrid_email_footer }}'):
+  if x not in tt:problems.append(f'{template_name}: gym-configurable invite email content missing: {x}')
 
 admin_invite=(ROOT/'admin-invite.html').read_text(encoding='utf-8')
 for x in ('get_access_invite','claim_access_invite','Access activated','equal Owner','Set a password for future sign-ins','supabase.auth.updateUser','Different account signed in','Sign out and continue with invited email','supabase.auth.signOut()'):
