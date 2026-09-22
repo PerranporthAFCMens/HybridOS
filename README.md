@@ -1,128 +1,111 @@
-# Hybrid OS
+# HybridOne
 
-Hybrid OS is a reusable, multi-tenant operating system for independent gyms and hybrid training facilities.
+**HybridOne is the operating system for hybrid gyms.**
 
-It is one product with three role-specific experiences:
+It brings memberships, classes, programming, staff, community, reporting and member experience into one multi-tenant platform.
 
-- **Owner/Admin** — setup, scheduling, staff, resources, memberships, members, reporting and configuration
-- **Staff** — classes, attendance, member support, PT, rota/resources and operational delivery
-- **Member** — training, workouts, PBs, classes, PT, membership, access and community
+> **Start every new development session with [HANDOVER.md](./HANDOVER.md).** It is the authoritative continuation brief.
 
-> Start every new development session with [HANDOVER.md](./HANDOVER.md). It is the authoritative continuation brief.
+## Current product status
 
-## Current status
+The public brand is now **HybridOne**.
 
-Latest verified deployment at this README refresh:
+Latest verified source checkpoint when this README was refreshed:
 
-- GitHub Pages run: **#434**
-- Commit: `8054eec3fcb439a7a677370323fb07d8918ab374`
-- Title: **Expose Staff View in owner admin navigation**
-- Status: **completed / success**
-- Date: 18 September 2026
+- Commit: `ce098e87ea6c90fefe5e795c2e16639ef59682dc`
+- Change: **Launch HybridOne branding and marketing homepage (#18)**
+- Date: 22 September 2026
 
-Always check the latest Actions run before assuming this is still the newest production state.
+That change includes the HybridOne marketing landing page, product-wide user-facing rebrand, clean Vercel routes and branded auth email template source.
+
+Always check the latest `main` before assuming this is still the newest state.
+
+## Production direction
+
+Primary domain:
+
+- `hybridone.co.uk`
+
+Current intended routes:
+
+- `/` — HybridOne marketing/sales landing page
+- `/hybrid-hub` — Hybrid Hub login
+- `/puffin-performance` — Puffin Performance login
+- `/app` — HybridOne app entry
+
+Vercel is now the intended commercial frontend host.
+
+GitHub Pages remains in the repository as a legacy/dev deployment path.
 
 ## Stack
 
 - Repository: `PerranporthAFCMens/HybridOS`
 - Branch: `main`
 - Frontend: static HTML/CSS/JavaScript
-- Hosting: GitHub Pages
+- Hosting: Vercel for branded production
+- Legacy/dev hosting: GitHub Pages
 - Backend/Auth/Database: Supabase
 - Supabase project ref: `mzgnhmeydhhpzgxlgudh`
 - Region: London / `eu-west-2`
-- Live site: https://perranporthafcmens.github.io/HybridOS/
-- Actions: https://github.com/PerranporthAFCMens/HybridOS/actions
 
-Hybrid OS is separate from the Perranporth Football PA project. Do not modify Football PA from this repo.
+HybridOne is separate from Football PA. Do not edit Football PA from this repository unless explicitly asked.
 
-## Deployment
+## Multi-tenant login rule
 
-Deployment is:
+This is important:
 
-**source → `scripts/build_site.py` → isolated `_site` → `scripts/smoke_test.py` → GitHub Pages**
+> **The login route decides the gym. The email address does not.**
 
-Workflow:
+A single HybridOne account can legitimately belong to more than one gym.
 
-`.github/workflows/pages.yml`
+Current gym context is stored in:
 
-Development rules:
+- `sessionStorage['hybrid-gym-id']`
 
-- fetch current `main` and the current file SHA immediately before every write
-- do not parallel-write the same path
-- reconcile concurrent changes rather than overwriting them
-- preserve the smoke suite
-- follow CI failures to the exact failing source
-- only call a change live after the Pages run completes successfully
+Dedicated login pages set the correct gym context before entering the app.
 
-## Product areas
+Do not reintroduce “first active gym membership” logic as tenant selection.
+
+## Current role experiences
 
 ### Owner/Admin
 
-The Admin experience uses a persistent shell through:
-
-- `admin.html`
-- `admin-frame.js`
-- `admin-frame.css`
-- `shared-admin-nav.js`
-- `admin-embed.js`
-
-Current main navigation includes:
+Includes:
 
 - Dashboard
-- Community
-- Classes
-- Workouts
-- Services & resources
-- Staff management
-- Members
-- Member view
-- **Staff view**
-- Reporting
-
-The latest Staff View surfacing change deployed successfully in run #434. It still needs user validation in the rendered UI.
+- memberships
+- members
+- classes
+- class setup
+- workouts/WOD
+- staff management
+- resources
+- community
+- member view configuration
+- Staff View
+- reporting
+- door/access settings
+- Owner/Admin access governance
 
 ### Staff
 
-Primary files:
-
-- `staff.html`
-- `staff-shell.js`
-- `staff-operations.js`
-- `staff-operations.css`
-- `staff-permissions.html`
-
-Current operational areas include:
+Includes:
 
 - assigned classes
-- today/upcoming classes
-- rosters and attendance
-- no-show/reset
+- attendance
 - working hours / rota
-- permission-aware member lookup
+- member lookup
 - assigned resources
 - gym access
-- PT appointments and status updates
-
-Owners/admins should be able to preview Staff View and return to Owner/Admin.
+- PT appointments
+- permission-aware access
 
 ### Member
 
-Primary files:
-
-- `member.html`
-- `member-preview.html`
-- `member-experience.js`
-- `member-experience.css`
-- `member-workouts-v2.js`
-- `member-workouts-v2.css`
-- `member-coach.js`
-- `member-coach.css`
-
-Member areas include:
+Includes:
 
 - training-first Home
-- classes and bookings
+- classes/bookings
 - workouts
 - PBs
 - PT
@@ -132,131 +115,103 @@ Member areas include:
 - Social/community
 - access
 
-Recent work also surfaces Social posts and engagement on Member Home.
+## Owner/Admin access
 
-## Workouts V2
-
-A workout is a multi-exercise container, not a single exercise.
-
-Supported product direction includes:
-
-- Legs Day / Back & Chest / Arms / Cardio style workouts
-- multiple exercises or activities in one workout
-- PT/staff assignment to a member
-- optional gym WOD
-- member pickup/completion flow
-
-Preserve this model in future work.
-
-## Gym Layout
-
-Primary file:
-
-`gym-layout.html`
+HybridOne supports individual Owner/Admin accounts rather than shared passwords.
 
 Implemented concepts include:
 
-- optional floorplan upload
-- blank grid
-- outline / room / wall / door drawing
-- zones
-- equipment catalogue
-- quantity per equipment marker
-- move/resize
-- snapping
-- mobile interaction
-- Undo / Clear
-- guided 4-step wizard
-- equipment picker on the same screen as the map
+- pending / active / revoked access
+- Admin invites
+- equal Owner governance
+- Owner approval workflows
+- secure shareable invite links
+- email-first invites
+- invite revocation/deletion
+- wrong-account invite detection
+- read-only pending access
 
-Current user feedback:
+Important RPCs include:
 
-- the editor still feels too small/cramped
-- flipping between panels was too hard, so the equipment picker was moved onto the map screen
-- one marker must be able to represent multiple identical machines
-- **Gym Layout is currently parked**
+- `create_email_access_invite`
+- `approve_email_owner_invite`
+- `create_shareable_access_invite`
+- `approve_shareable_owner_invite`
+- `get_access_invite`
+- `claim_access_invite`
 
-Do not make Gym Layout the next workstream unless the user explicitly reopens it.
+## Email/auth status
 
-## Member View editor
+Branded HybridOne email template source exists in:
 
-`member-view-settings.html` lets owner/admin users configure Member Home.
+- `supabase-email-invite-template.html`
+- `supabase-email-magic-link-template.html`
 
-It supports:
+Reliable production transactional email is the next major auth task.
 
-- show/hide
-- drag reorder
-- phone preview
-- save/reset
-- Member Preview
+Current direction:
 
-Persistence:
+- Supabase Auth for authentication/session logic
+- Resend for production email delivery
+- HybridOne/Vercel URLs for confirmation, reset and invite redirects
 
-- table: `gym_member_view_settings`
-- direct table access: owner/admin only
-- members consume layout via `get_member_home_layout(p_gym_id uuid)`
+Do not assume repository email templates are already active in Supabase production.
 
-Do not weaken RLS by giving ordinary members direct access to the Admin configuration table.
+## Marketing site
 
-## Classes and scheduling
+Primary file:
 
-Important files:
+- `landing.html`
 
-- `classes.html`
-- `class-setup.html`
-- `calendar-mobile.js`
-- `calendar-views.js`
-- `scheduling-engine.js`
-- `session-manager.js`
-- `class-admin-enhancements.js`
-- `class-admin-live-refresh.js`
+The page is designed to sell/explain HybridOne and currently contains an **H1 logo placeholder**.
 
-Scheduling covers staff capability, working hours, staff clashes, resource availability, resource clashes and capacity.
+Replace the logo placeholder only when the final HybridOne logo is supplied.
 
-Use existing scheduling/RPC logic rather than creating a second conflict engine.
+## Vercel routes
 
-## Social
+Defined in:
 
-Primary files:
+- `vercel.json`
 
-- `social.html`
-- `social-enhancements.js`
-- `social-nav.js`
-- `social-notifications.js`
-- `community.html`
+Current rewrites:
 
-Core objects include:
+- `/` -> `/landing.html`
+- `/hybrid-hub` -> `/hybrid-hub-login.html`
+- `/puffin-performance` -> `/puffin-performance-login.html`
+- `/app` -> `/index.html`
 
-- `social_posts`
-- `social_comments`
-- `social_reactions`
+## GitHub Pages build
 
-Current features include posts, comments, reactions, ownership-aware edit/delete and Member Home Social summaries.
+Legacy/dev deployment pipeline remains:
 
-## Shared design system
+**source -> `scripts/build_site.py` -> `_site` -> `scripts/smoke_test.py` -> GitHub Pages**
 
-Canonical layers:
+Workflow:
 
-- `app-consistency.css`
-- `admin-pages.css`
-- `admin-shell.css`
-- `member-experience.css`
-- `staff-operations.css`
-- `shared-shell.js`
+- `.github/workflows/pages.yml`
 
-Design principles:
+The smoke suite protects:
+
+- JavaScript syntax
+- critical workflow markers
+- shared-rendering baselines
+- login gym context
+- invite flows
+- HybridOne user-facing branding
+
+Do not weaken CI to force a deployment through.
+
+## Product principles
 
 - mobile-first
-- light `#f5f7fb` background
-- dark `#0b1020` navigation
-- white cards
-- green/teal accents
-- subtle borders
-- rounded controls
-- restrained shadows
-- immediate action feedback
-
-Avoid duplicate navigation, random dividers, horizontal overflow and page-local reinvention of shared components.
+- one multi-tenant platform
+- explicit gym context
+- individual accounts, not shared logins
+- strong tenant/RLS boundaries
+- training-first member experience
+- one workout = multi-activity session
+- use existing scheduling/conflict logic
+- focused changes over broad rewrites
 
 ## Security baseline
 
@@ -264,33 +219,20 @@ Avoid duplicate navigation, random dividers, horizontal overflow and page-local 
 - frontend uses publishable credentials only
 - RLS on exposed tables
 - gym-scoped tenant data
-- server-side permission enforcement where meaningful
-- owner/admin-only configuration enforced in both UI and database
-- members must not see sensitive staff/pay data
-- social edit/delete must enforce ownership
-- prefer narrow RPCs/views rather than weakening table access
+- pending users remain restricted
+- Owner/Admin configuration protected in UI and database
+- members must not see sensitive staff/admin data
+- social ownership enforced
+- prefer narrow RPCs/views over weakening table permissions
 
-## Next pickup
+## Immediate next work
 
-Start with **Staff View validation**:
+1. Verify the latest HybridOne build is live on Vercel.
+2. Test `/hybrid-hub`, `/puffin-performance` and `/app`.
+3. Run the full multi-gym login/auth test matrix.
+4. Configure Resend / Supabase production email.
+5. Update Supabase Auth production redirect URLs for `hybridone.co.uk`.
+6. Replace the landing-page logo placeholder when the final logo is ready.
+7. Prepare for a controlled first external gym trial.
 
-1. confirm Staff view is visible in Owner/Admin
-2. confirm it opens `staff.html?view=staff`
-3. confirm the owner/admin preview banner is visible
-4. confirm Back to Owner/Admin works
-5. confirm mobile access is obvious
-6. confirm no duplicate navigation appears
-
-If Staff View is still not visible, investigate rendered shell/cache behaviour before rebuilding the Staff Portal.
-
-After that, continue:
-
-1. Staff + Member workflow depth
-2. PT workout assignment / WOD
-3. Member workout completion/progress
-4. Social/member engagement
-5. Reporting + engagement
-6. communications
-7. retention automation
-
-Payment-provider work remains parked unless explicitly reopened.
+See [HANDOVER.md](./HANDOVER.md) for the full architecture, current database/access state, known cleanup items and continuation instructions.
