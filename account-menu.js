@@ -39,7 +39,7 @@
   const modal=document.createElement('div');
   modal.className='account-modal';
   modal.innerHTML=`<div class="account-modal-card" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
-    <div class="account-modal-top"><div><div class="eyebrow">Personal account</div><h2 id="accountModalTitle">Account settings</h2><div class="muted" style="font-size:13px;margin-top:4px">Update your own Hybrid OS sign-in and profile details.</div></div><button type="button" class="account-close" id="accountCloseBtn" aria-label="Close">×</button></div>
+    <div class="account-modal-top"><div><div class="eyebrow">Personal account</div><h2 id="accountModalTitle">Account settings</h2><div class="muted" style="font-size:13px;margin-top:4px">Update your own HybridOne sign-in and profile details.</div></div><button type="button" class="account-close" id="accountCloseBtn" aria-label="Close">×</button></div>
     <div class="account-avatar-row"><div id="accountAvatarPreview" class="account-avatar-preview">H</div><div class="account-avatar-copy"><b>Profile photo</b><div class="account-help">JPEG, PNG or WebP up to 5 MB.</div><input id="accountAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></div></div>
     <div class="account-grid">
       <div class="account-field full"><label>Display name</label><input id="accountDisplayName" autocomplete="name" placeholder="Your name"></div>
