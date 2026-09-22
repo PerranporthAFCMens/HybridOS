@@ -26,7 +26,8 @@ function cleanView(raw){
 }
 function embeddedUrl(view){
  const [file,hash='']=cleanView(view).split('#');
- return './'+file+'?embedded=1&v='+encodeURIComponent(shellVersion)+(hash?'#'+hash:'');
+ const gymId=sessionStorage.getItem('hybrid-gym-id')||'';
+ return './'+file+'?embedded=1&v='+encodeURIComponent(shellVersion)+(gymId?'&gym_id='+encodeURIComponent(gymId):'')+(hash?'#'+hash:'');
 }
 function keyFor(view){
  const v=cleanView(view),[file,hash='']=v.split('#');
@@ -95,15 +96,28 @@ async function init(){
    return;
  }
  const{data:{session}}=await sb.auth.getSession();if(!session){location.replace('./index.html');return}
- const{data:gm}=await sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',session.user.id).eq('is_active',true).limit(1);
- if(!gm?.length){location.replace('./index.html');return}
- let allowed=['owner','admin'].includes(gm[0].role);
- if(!allowed&&['staff','coach'].includes(gm[0].role)){
-   const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',gm[0].gym_id).eq('user_id',session.user.id).maybeSingle();
+ const{data:gms,error:gmErr}=await sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',session.user.id).eq('is_active',true);
+ if(gmErr||!gms?.length){location.replace('./index.html');return}
+ const params=new URLSearchParams(location.search);
+ let selectedGymId=params.get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||'';
+ let membership=selectedGymId?gms.find(x=>x.gym_id===selectedGymId):null;
+ if(!membership&&gms.length===1){
+   membership=gms[0];
+   selectedGymId=membership.gym_id;
+ }
+ if(!membership){location.replace('./index.html');return}
+ sessionStorage.setItem('hybrid-gym-id',membership.gym_id);
+ if(!params.get('gym_id')){
+   params.set('gym_id',membership.gym_id);
+   history.replaceState(history.state,'',location.pathname+'?'+params.toString());
+ }
+ let allowed=['owner','admin'].includes(membership.role);
+ if(!allowed&&['staff','coach'].includes(membership.role)){
+   const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',membership.gym_id).eq('user_id',session.user.id).maybeSingle();
    allowed=sa?.permissions?.full_access===true;
  }
  if(!allowed){location.replace('./staff.html');return}
- gymName.textContent=gm[0].gyms?.name||'Gym';
+ gymName.textContent=membership.gyms?.name||'Gym';
  window.HybridShell?.apply();
  mobile();
  const start=requested;

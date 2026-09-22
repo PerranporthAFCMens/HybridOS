@@ -189,7 +189,7 @@ for x in ("sessionStorage.setItem('hybrid-gym-id'","gms.find(x=>x.gym_id===selec
 for x in ("location.pathname==='/'","location.replace('./landing.html')"):
  if x not in index_source:problems.append(f'index.html: production marketing-root fallback missing: {x}')
 if ".eq('is_active',true).limit(1)" in index_source:problems.append('index.html: ambiguous first-gym lookup returned')
-for context_file in ('staff.html','tenant-branding.js'):
+for context_file in ('staff.html','tenant-branding.js','admin-frame.js'):
  context_source=(ROOT/context_file).read_text(encoding='utf-8')
  if ".eq('is_active',true).limit(1)" in context_source:problems.append(f'{context_file}: ambiguous first-gym lookup returned')
  if "sessionStorage.getItem('hybrid-gym-id')" not in context_source:problems.append(f'{context_file}: explicit login gym context missing')
