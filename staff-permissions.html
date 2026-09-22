@@ -140,7 +140,10 @@ async function init(){
  const{data:{session}}=await sb.auth.getSession();if(!session){location.href='./index.html';return}
  const selectedGym=sessionStorage.getItem('hybrid-gym-id')||new URLSearchParams(location.search).get('gym_id')||'00000000-0000-0000-0000-000000000000';
  const{data:gm,error:gmErr}=await sb.from('gym_members').select('gym_id,role,access_status,gyms(name)').eq('user_id',session.user.id).eq('is_active',true).eq('gym_id',selectedGym).maybeSingle();
- if(gmErr||!gm||!['owner','admin'].includes(gm.role)||gm.access_status!=='active'){location.href='./index.html';return}
+ if(gmErr||!gm||gm.access_status!=='active'){location.href='./index.html';return}
+ let allowed=['owner','admin'].includes(gm.role);
+ if(!allowed&&['staff','coach'].includes(gm.role)){const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',gm.gym_id).eq('user_id',session.user.id).maybeSingle();allowed=sa?.permissions?.manage_staff===true}
+ if(!allowed){location.href='./staff.html';return}
  gymId=gm.gym_id;currentRole=gm.role;$('gymName').textContent=gm.gyms?.name||'';
  const [lr,mr,ar]=await Promise.all([
    sb.from('staff_access_levels').select('*').eq('gym_id',gymId).eq('is_active',true).order('name'),
