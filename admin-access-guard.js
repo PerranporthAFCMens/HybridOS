@@ -6,8 +6,11 @@
       const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
       const sb=mod.createClient(URL,KEY);
       const{data:{session}}=await sb.auth.getSession();if(!session)return;
-      const{data}=await sb.from('gym_members').select('gym_id,role,access_status,gyms(name)').eq('user_id',session.user.id).eq('is_active',true).in('role',['owner','admin']).limit(1);
-      const membership=data?.[0];if(!membership||!['admin','owner'].includes(membership.role)||membership.access_status!=='pending')return;
+      const requestedGymId=new URLSearchParams(location.search).get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||'';
+      if(!requestedGymId)return;
+      const{data:membership,error:membershipErr}=await sb.from('gym_members').select('gym_id,role,access_status,gyms(name)').eq('user_id',session.user.id).eq('gym_id',requestedGymId).eq('is_active',true).in('role',['owner','admin']).maybeSingle();
+      if(membershipErr)throw membershipErr;
+      if(!membership||!['admin','owner'].includes(membership.role)||membership.access_status!=='pending')return;
       window.HybridAccess={...(window.HybridAccess||{}),readOnly:true,gymId:membership.gym_id,accessStatus:'pending'};
       document.documentElement.classList.add('hybrid-admin-readonly');
       const banner=document.createElement('div');banner.id='hybridReadonlyBanner';const roleLabel=membership.role==='owner'?'Owner':'Admin';banner.innerHTML='<b>Read-only preview</b><span>Waiting for the required Owner approval for your '+roleLabel+' access.</span>';
