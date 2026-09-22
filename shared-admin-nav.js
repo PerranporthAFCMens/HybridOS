@@ -9,9 +9,9 @@
     {key:'staff-group',label:'Staff management',icon:'staff',href:'./admin-operations.html#staff'},
     {key:'members-group',label:'Members',icon:'members',href:'./index.html#members'},
     {key:'communications',label:'Communications',icon:'community',href:'./communications.html'},
+    {key:'reporting',label:'Reporting',icon:'reporting',href:'./reporting.html'},
     {key:'member-view',label:'Member view',icon:'profile',href:'./member-view-settings.html',section:'View as'},
     {key:'staff-view',label:'Staff view',icon:'staff',href:'./staff.html?view=staff'},
-    {key:'reporting',label:'Reporting',icon:'reporting',href:'./reporting.html'},
     {key:'sign-out',label:'Sign out',icon:'profile',href:'./sign-out.html',section:'Account'}
   ];
   const contextTabs={

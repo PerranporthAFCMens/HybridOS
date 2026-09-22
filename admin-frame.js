@@ -11,9 +11,9 @@ const routes=[
  {key:'staff',label:'Staff management',icon:'staff',view:'admin-operations.html#staff'},
  {key:'members',label:'Members',icon:'members',view:'index.html#members'},
  {key:'communications',label:'Communications',icon:'community',view:'communications.html'},
+ {key:'reporting',label:'Reporting',icon:'reporting',view:'reporting.html'},
  {key:'member-view',label:'Member view',icon:'profile',view:'member-view-settings.html',section:'View as'},
- {key:'staff-view',label:'Staff view',icon:'staff',href:'./staff.html?view=staff'},
- {key:'reporting',label:'Reporting',icon:'reporting',view:'reporting.html'}
+ {key:'staff-view',label:'Staff view',icon:'staff',href:'./staff.html?view=staff'}
 ];
 const frameA=document.getElementById('adminContentFrameA'),frameB=document.getElementById('adminContentFrameB'),nav=document.getElementById('adminFrameNav'),gymName=document.getElementById('adminFrameGym');
 let activeFrame=frameA,inactiveFrame=frameB,currentView='',loadSeq=0,pendingSwap=null;
