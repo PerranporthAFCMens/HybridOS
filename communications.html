@@ -19,7 +19,7 @@
 <body>
 <div id="loading" style="padding:30px">Loading communications…</div>
 <div id="app" class="shell hidden">
-<aside class="side"><div class="brand">HYBRIDONE</div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:850;margin-top:3px">Gym</div></div><nav class="nav"></nav></aside>
+<aside class="side"><div class="brand">HybridOne</div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:850;margin-top:3px">Gym</div></div><nav class="nav"></nav></aside>
 <main class="main">
 <div class="top"><div><div class="eyebrow">Gym communications</div><h1>Communications</h1><div class="muted">Control how your gym speaks to members, staff and administrators.</div></div></div>
 <div class="page-tabs"><button class="page-tab active" data-pane="transactional">Transactional</button><button class="page-tab" data-pane="marketing">Marketing</button></div>
@@ -28,16 +28,16 @@
 <div class="grid">
 <div>
 <section class="card">
-<div class="eyebrow">Email identity</div><h2>Gym sender details</h2><div class="muted">These details are used across this gym’s customer-facing emails, including invites, sign-in and password recovery.</div>
+<div class="eyebrow">Member email identity</div><h2>Gym sender details</h2><div class="muted">These details are for customer and member-facing emails. The gym remains the primary brand, with only a discreet “Powered by HybridOne” attribution.</div>
 <div class="field"><label>Email brand name</label><input id="senderName" maxlength="100"></div><div class="row2"><div class="field"><label>From email</label><input id="senderEmail" type="email" maxlength="254" placeholder="hello@yourgym.co.uk"></div><div class="field"><label>Reply-to email</label><input id="replyTo" type="email" maxlength="254" placeholder="team@yourgym.co.uk"></div></div><div id="senderStatus" class="locked">Custom sending domains must be verified before HybridOne can send from them.</div>
 <div class="row2"><div class="field"><label>Brand colour</label><input id="accent" type="color" value="#0b1020" style="height:43px;padding:5px"></div><div class="field"><label>Logo URL <span class="muted">(optional)</span></label><input id="logoUrl" type="url" placeholder="https://…"></div></div>
-<div class="field"><label>Email footer</label><input id="footerText" maxlength="240" placeholder="Sent by {{gym_name}} via HybridOne"></div>
+<div class="field"><label>Member email footer</label><input id="footerText" maxlength="240" placeholder="{{gym_name}} · Powered by HybridOne"></div>
 <div class="locked"><strong>Sender ownership:</strong> the gym chooses the From and Reply-to addresses. HybridOne will only activate a From address once its domain is verified for sending.</div>
 <div class="actions"><button id="saveIdentity" class="btn primary">Save sender details</button></div><div id="identityMsg" class="msg"></div>
 </section>
 
 <section class="card">
-<div class="eyebrow">Transactional template</div><h2>Access invitation</h2><div class="muted">Used when your gym invites an Owner, Admin, Staff member or other account into HybridOne.</div>
+<div class="eyebrow">HybridOne system access</div><h2>Access invitation</h2><div class="muted">Used when your gym gives an Owner, Admin, Staff member or Coach direct access to HybridOne. HybridOne branding is intentionally prominent on these access emails.</div>
 <div class="vars"><span class="var">{{gym_name}}</span><span class="var">{{invited_by}}</span><span class="var">{{role}}</span></div>
 <div class="field"><label>Subject</label><input id="subject" maxlength="180"></div>
 <div class="field"><label>Preheader</label><input id="preheader" maxlength="220"></div>
@@ -50,13 +50,13 @@
 
 <aside class="preview-wrap">
 <section class="card"><div class="eyebrow">Live preview</div><h3>Invitation email</h3><div class="muted" style="margin-bottom:12px">Sample recipient · Admin role</div>
-<div class="email-preview"><div class="email-card"><div id="previewHead" class="email-head">HYBRIDONE</div><div class="email-body"><div class="email-kicker">Access invitation</div><h2 id="previewHeading"></h2><p id="previewBody"></p><a id="previewButton" class="email-button" href="javascript:void(0)"></a></div><div id="previewFooter" class="email-footer"></div></div></div></section>
+<div class="email-preview"><div class="email-card"><div id="previewHead" class="email-head">HybridOne</div><div class="email-body"><div class="email-kicker">Access invitation</div><h2 id="previewHeading"></h2><p id="previewBody"></p><a id="previewButton" class="email-button" href="javascript:void(0)"></a></div><div id="previewFooter" class="email-footer"></div></div></div></section>
 </aside>
 </div>
 </section>
 
 <section id="marketing" class="pane hidden">
-<section class="card"><div class="eyebrow">Marketing</div><h2>Campaigns will live here</h2><div class="muted">Marketing will share your gym identity and reusable content blocks, but use a separate sending stream, unsubscribe handling and campaign analytics so promotional sends cannot damage critical access-email delivery.</div></section>
+<section class="card"><div class="eyebrow">Member communications</div><h2>Campaigns will live here</h2><div class="muted">Member and customer emails are gym-branded first. HybridOne appears only as a discreet linked “Powered by HybridOne” attribution. Marketing will use a separate sending stream, unsubscribe handling and campaign analytics so promotional sends cannot damage critical access-email delivery.</div></section>
 <div class="roadmap">
 <section class="card"><span class="status">Planned</span><h3>Campaign builder</h3><p class="muted">Create one-off announcements, newsletters and promotions using gym-approved templates.</p></section>
 <section class="card"><span class="status">Planned</span><h3>Audiences</h3><p class="muted">Target active members, lapsed members, membership types, class groups and custom segments.</p></section>
@@ -84,8 +84,8 @@ function updateSenderStatus(status){const el=$('senderStatus');if(!el)return;con
 function preview(){
  const accent=$('accent').value||'#0b1020';$('previewHead').style.background=accent;$('previewButton').style.background=accent;
  $('previewHeading').textContent=tokenise($('heading').value);$('previewBody').textContent=tokenise($('bodyText').value);$('previewButton').textContent=$('buttonLabel').value||'Accept invitation';
- const logo=$('logoUrl').value.trim();$('previewHead').innerHTML=logo?'<img src="'+esc(logo)+'" alt="" style="max-height:34px;max-width:220px;display:block">':'HYBRIDONE';
- $('previewFooter').textContent=tokenise($('footerText').value||'Sent by {{gym_name}} via HybridOne');
+ $('previewHead').textContent='HybridOne';
+ $('previewFooter').textContent='System access invitation · '+(gym?.name||'Your gym')+' · HybridOne';
 }
 function applyDefaults(){ $('subject').value=defaults.subject;$('preheader').value=defaults.preheader;$('heading').value=defaults.heading;$('bodyText').value=defaults.body_text;$('buttonLabel').value=defaults.button_label;preview() }
 async function init(){
@@ -99,7 +99,7 @@ async function init(){
    sb.from('gym_communication_settings').select('*').eq('gym_id',gym.id).maybeSingle(),
    sb.from('gym_email_templates').select('*').eq('gym_id',gym.id).eq('template_key','access_invite').maybeSingle()
  ]);
- $('senderName').value=settings?.sender_name||gym.name;$('senderEmail').value=settings?.sender_email||'';$('replyTo').value=settings?.reply_to_email||'';$('accent').value=settings?.accent_color||'#0b1020';$('logoUrl').value=settings?.logo_url||'';$('footerText').value=settings?.footer_text||'Sent by {{gym_name}} via HybridOne';
+ $('senderName').value=settings?.sender_name||gym.name;$('senderEmail').value=settings?.sender_email||'';$('replyTo').value=settings?.reply_to_email||'';$('accent').value=settings?.accent_color||'#0b1020';$('logoUrl').value=settings?.logo_url||'';$('footerText').value=settings?.footer_text||'{{gym_name}} · Powered by HybridOne';
  $('subject').value=template?.subject||defaults.subject;$('preheader').value=template?.preheader||defaults.preheader;$('heading').value=template?.heading||defaults.heading;$('bodyText').value=template?.body_text||defaults.body_text;$('buttonLabel').value=template?.button_label||defaults.button_label;
  updateSenderStatus(settings?.sender_domain_status||'unverified');preview();$('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true;
 }
