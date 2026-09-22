@@ -44,12 +44,14 @@ async function markRead(){
  if(error){console.warn('Could not mark Social notifications read',error);return}
  lastCount=0;renderBadge(0);document.getElementById('hybridSocialToast')?.remove();
 }
-function startPolling(){if(poll)clearInterval(poll);poll=setInterval(()=>refresh(),30000)}
+function startPolling(){if(poll)clearInterval(poll);poll=setInterval(()=>refresh(),300000)}
 async function init(){
  style();
  const {data:{session}}=await sb.auth.getSession();if(!session?.user)return;userId=session.user.id;
- const {data:gm}=await sb.from('gym_members').select('gym_id').eq('user_id',userId).eq('is_active',true).limit(1);
- gymId=gm?.[0]?.gym_id;if(!gymId)return;
+ const selectedGymId=sessionStorage.getItem('hybrid-gym-id')||'';
+ if(!selectedGymId)return;
+ const {data:gm}=await sb.from('gym_members').select('gym_id').eq('user_id',userId).eq('gym_id',selectedGymId).eq('is_active',true).maybeSingle();
+ gymId=gm?.gym_id;if(!gymId)return;
  const here=location.pathname.endsWith('/social.html')||location.pathname.endsWith('/community.html');
  if(here)await markRead();else await refresh({force:true});
  startPolling();
