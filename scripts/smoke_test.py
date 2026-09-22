@@ -14,7 +14,7 @@ RENDER_BASELINE={
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
  'admin-embed.js':'f314e4149eec89744a07699aca78e36f31030322',
  'admin-frame.js':'94939c115918fe76a4291cceb73e4c3897407240',
- 'app-stability.js':'7b4ad88f4841402001abd1ed549626bcdf089b94',
+ 'app-stability.js':'f5819ecd71e76985b7b7f410c2f25e9e7700a380',
  'shared-admin-nav.js':'e8583f8453c10bc4e1019eca0714216b40de3f73',
 }
 def git_blob_sha(path):
@@ -310,8 +310,8 @@ member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
 if 'href="./member-preview.html" target="_top"' not in member_view:problems.append('member-view-settings.html: preview must escape persistent admin frame')
 member_preview=(ROOT/'member-preview.html').read_text(encoding='utf-8')
 if './admin.html?view=member-view-settings.html' not in member_preview:problems.append('member-preview.html: Back to admin must return to persistent admin shell')
-if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
-print('Hybrid OS built-site smoke checks passed')
+if problems:raise SystemExit('HybridOne smoke checks failed:\n- '+'\n- '.join(problems))
+print('HybridOne built-site smoke checks passed')
 
 admin_css=(ROOT/'admin-shell.css').read_text(encoding='utf-8')
 if '@view-transition' in admin_css or 'view-transition-name' in admin_css:problems.append('admin-shell.css: cross-document admin view transitions must stay disabled')
