@@ -131,8 +131,8 @@ for x in ('updatePost','deletePost','updateComment','deleteComment','setPostReac
 for x in (".eq('user_id',userId)","data-mine=\"${p.user_id===userId}\"","data-mine=\"${c.user_id===userId}\""):
  if x not in social:problems.append(f'social ownership guard missing: {x}')
 staff_perms=(ROOT/'staff-permissions.html').read_text(encoding='utf-8')
-for x in ('own_calendar','full_access','Full access','Own calendar only'):
- if x not in staff_perms:problems.append(f'staff-permissions.html: access ladder missing: {x}')
+for x in ('Access levels','Staff assignments','staff_access_levels','assign_staff_access_level','manage_staff','Admin workspace','Owner controlled'):
+ if x not in staff_perms:problems.append(f'staff-permissions.html: owner-controlled access levels missing: {x}')
 admin_frame=(ROOT/'admin.html').read_text(encoding='utf-8')
 for x in ('adminContentFrameA','adminContentFrameB','adminFrameNav','admin-frame.js','admin-frame.css'):
  if x not in admin_frame:problems.append(f'admin.html: persistent shell missing: {x}')
