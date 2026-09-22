@@ -253,6 +253,9 @@ for x in ('get_access_invite','claim_access_invite','Access activated','equal Ow
 access_guard=(ROOT/'admin-access-guard.js').read_text(encoding='utf-8')
 for x in ("['admin','owner'].includes(membership.role)","access_status!=='pending'","HybridAccess","readOnly:true","required Owner approval","Read-only until the required Owner approval"):
  if x not in access_guard:problems.append(f'admin-access-guard.js: pending Admin/Owner read-only guard missing: {x}')
+for x in ("new URLSearchParams(location.search).get('gym_id')","sessionStorage.getItem('hybrid-gym-id')",".eq('gym_id',requestedGymId)",".maybeSingle()"):
+ if x not in access_guard:problems.append(f'admin-access-guard.js: explicit gym-bound pending access guard missing: {x}')
+if ".limit(1)" in access_guard:problems.append('admin-access-guard.js: ambiguous first-gym lookup returned')
 for x in ('admin-access.html',"'admin-access'"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: Admin access navigation missing: {x}')
 for x in ('admin-access.html',):
