@@ -29,6 +29,10 @@ jobs:
             echo "Production is already up to date."
             exit 0
           fi
+          if ! git merge-base --is-ancestor HEAD origin/dev; then
+            echo "main and dev have intentionally diverged; skipping hourly promotion."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git merge --ff-only origin/dev
