@@ -216,10 +216,13 @@ for x in ('./shared-shell.js','./shared-admin-nav.js'):
 for x in ("location.pathname==='/'","location.replace('./landing.html')"):
  if x not in index_source:problems.append(f'index.html: production marketing-root fallback missing: {x}')
 if ".eq('is_active',true).limit(1)" in index_source:problems.append('index.html: ambiguous first-gym lookup returned')
-for context_file in ('staff.html','tenant-branding.js','admin-frame.js'):
+for context_file in ('staff.html','tenant-branding.js','admin-frame.js','member.html','integrations.html','social.html'):
  context_source=(ROOT/context_file).read_text(encoding='utf-8')
  if ".eq('is_active',true).limit(1)" in context_source:problems.append(f'{context_file}: ambiguous first-gym lookup returned')
  if "sessionStorage.getItem('hybrid-gym-id')" not in context_source:problems.append(f'{context_file}: explicit login gym context missing')
+for context_file in ('member.html','integrations.html','social.html'):
+ context_source=(ROOT/context_file).read_text(encoding='utf-8')
+ if ".eq('gym_id',selectedGymId)" not in context_source:problems.append(f'{context_file}: current gym is not bound to the membership lookup')
 tenant_branding=(ROOT/'tenant-branding.js').read_text(encoding='utf-8')
 shared_shell=(ROOT/'shared-shell.js').read_text(encoding='utf-8')
 if "Puffin Performance" in tenant_branding:problems.append('tenant-branding.js: cross-gym name rewrite returned')
