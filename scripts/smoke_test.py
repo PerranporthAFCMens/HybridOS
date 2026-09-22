@@ -186,6 +186,8 @@ for x in ('access_invite','invite_email','invite_gym','invite_role','Sign in to 
  if x not in index_source:problems.append(f'index.html: invite sign-in landing missing: {x}')
 for x in ("sessionStorage.setItem('hybrid-gym-id'","gms.find(x=>x.gym_id===selectedGymId)"):
  if x not in index_source:problems.append(f'index.html: login gym context missing: {x}')
+for x in ('./shared-shell.js','./shared-admin-nav.js'):
+ if x not in index_source:problems.append(f'index.html: shared Owner/Admin navigation missing: {x}')
 for x in ("location.pathname==='/'","location.replace('./landing.html')"):
  if x not in index_source:problems.append(f'index.html: production marketing-root fallback missing: {x}')
 if ".eq('is_active',true).limit(1)" in index_source:problems.append('index.html: ambiguous first-gym lookup returned')
