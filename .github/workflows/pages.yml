@@ -1,8 +1,9 @@
 name: HybridOne dev preview
 
 on:
-  push:
-    branches: ["dev"]
+  workflow_run:
+    workflows: ["HybridOne smoke checks"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -16,6 +17,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success')
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
