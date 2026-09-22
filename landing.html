@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>HybridOne · The operating system for hybrid gyms</title>
+<meta name="description" content="HybridOne brings memberships, classes, workouts, staff, community and reporting together in one operating system for hybrid gyms.">
+<style>
+:root{--ink:#101828;--muted:#667085;--line:#e5e7eb;--soft:#f6f7fb;--dark:#0b1020;--accent:#6d5dfc;--good:#00c896}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:#fff}
+a{color:inherit}
+.shell{width:min(1180px,calc(100% - 40px));margin:auto}
+.header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(229,231,235,.8)}
+.header-inner{height:74px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:900;letter-spacing:-.03em;font-size:22px}
+.logo-slot{width:42px;height:42px;border-radius:13px;background:var(--dark);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900;letter-spacing:-.02em}
+.brand span b{font-weight:900}
+.nav{display:flex;align-items:center;gap:24px;font-size:14px;font-weight:700}
+.nav a{text-decoration:none;color:#475467}
+.nav .cta{background:var(--dark);color:#fff;padding:11px 16px;border-radius:11px}
+.hero{padding:92px 0 80px;background:radial-gradient(circle at 76% 22%,rgba(109,93,252,.18),transparent 28%),linear-gradient(180deg,#fff 0%,#f8f9fc 100%)}
+.hero-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:58px;align-items:center}
+.kicker{display:inline-flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid #dedff7;border-radius:999px;background:#fff;color:#4f46e5;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+.hero h1{font-size:clamp(48px,7vw,82px);line-height:.94;letter-spacing:-.055em;margin:22px 0}
+.hero h1 span{color:#5b52e8}
+.hero p{font-size:20px;line-height:1.58;color:#596273;max-width:720px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 20px;border-radius:12px;text-decoration:none;font-weight:850;border:1px solid transparent}
+.btn.primary{background:var(--dark);color:#fff}
+.btn.secondary{border-color:#d8dde7;background:#fff}
+.trust{display:flex;gap:18px;flex-wrap:wrap;margin-top:26px;color:#667085;font-size:13px;font-weight:700}
+.product-card{background:var(--dark);border-radius:30px;padding:26px;box-shadow:0 30px 70px rgba(16,24,40,.2);color:#fff}
+.product-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.product-top .mini-brand{font-size:15px;font-weight:900;letter-spacing:.06em}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--good);box-shadow:0 0 0 5px rgba(0,200,150,.13)}
+.mock-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mock{min-height:118px;padding:16px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}
+.mock.big{grid-column:1/-1;min-height:150px}
+.mock small{color:#aeb7c8;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.metric{font-size:34px;font-weight:900;margin-top:14px}
+.bars{display:flex;align-items:end;gap:7px;height:62px;margin-top:18px}
+.bars i{display:block;flex:1;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#8b80ff,#5d54de)}
+.bars i:nth-child(1){height:38%}.bars i:nth-child(2){height:62%}.bars i:nth-child(3){height:48%}.bars i:nth-child(4){height:82%}.bars i:nth-child(5){height:70%}.bars i:nth-child(6){height:92%}
+.section{padding:88px 0}
+.section.soft{background:var(--soft)}
+.section-head{max-width:760px;margin-bottom:42px}
+.eyebrow{font-size:12px;font-weight:900;letter-spacing:.11em;text-transform:uppercase;color:#6b63ec}
+.section h2{font-size:clamp(34px,5vw,54px);line-height:1.02;letter-spacing:-.045em;margin:10px 0 14px}
+.section-head p{font-size:18px;line-height:1.6;color:var(--muted)}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feature{padding:24px;border:1px solid var(--line);border-radius:20px;background:#fff}
+.feature-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#f0efff;color:#5d54de;font-weight:900;margin-bottom:18px}
+.feature h3{margin:0 0 8px;font-size:20px}
+.feature p{margin:0;color:var(--muted);line-height:1.55}
+.split{display:grid;grid-template-columns:.9fr 1.1fr;gap:60px;align-items:start}
+.points{display:grid;gap:14px}
+.point{padding:20px;border-radius:17px;background:#fff;border:1px solid var(--line);display:grid;grid-template-columns:34px 1fr;gap:14px}
+.tick{width:34px;height:34px;border-radius:10px;background:#eafaf5;color:#087f5b;display:grid;place-items:center;font-weight:900}
+.point b{display:block;margin-bottom:4px}.point span{color:var(--muted);line-height:1.5}
+.cta-band{padding:38px;border-radius:28px;background:linear-gradient(135deg,#0b1020,#1b2440);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:28px}
+.cta-band h2{margin:0 0 8px;font-size:36px}.cta-band p{margin:0;color:#c6cedb}
+.cta-band .btn{background:#fff;color:#0b1020;white-space:nowrap}
+.footer{padding:34px 0 42px;border-top:1px solid var(--line);color:#667085;font-size:13px}
+.footer-inner{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:900px){.nav a:not(.cta){display:none}.hero{padding:62px 0}.hero-grid,.split{grid-template-columns:1fr}.product-card{max-width:620px}.features{grid-template-columns:1fr 1fr}.cta-band{align-items:flex-start;flex-direction:column}}
+@media(max-width:620px){.shell{width:min(100% - 28px,1180px)}.header-inner{height:66px}.hero h1{font-size:52px}.hero p{font-size:18px}.features{grid-template-columns:1fr}.mock-grid{grid-template-columns:1fr}.mock.big{grid-column:auto}.section{padding:68px 0}.cta-band{padding:26px}.cta-band h2{font-size:30px}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="shell header-inner">
+    <a class="brand" href="/" aria-label="HybridOne home">
+      <!-- LOGO PLACEHOLDER: replace this block with the final HybridOne logo when ready. -->
+      <div class="logo-slot">H1</div>
+      <span>Hybrid<b>One</b></span>
+    </a>
+    <nav class="nav">
+      <a href="#features">Features</a>
+      <a href="#why">Why HybridOne</a>
+      <a href="#gyms">For gyms</a>
+      <a class="cta" href="mailto:hello@hybridone.co.uk?subject=HybridOne%20demo">Book a demo</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="shell hero-grid">
+    <div>
+      <div class="kicker">Built for modern hybrid gyms</div>
+      <h1>Your whole gym.<br><span>One operating system.</span></h1>
+      <p>HybridOne brings memberships, classes, programming, staff, community and reporting together in one place, so you can spend less time stitching systems together and more time running the gym.</p>
+      <div class="hero-actions">
+        <a class="btn primary" href="mailto:hello@hybridone.co.uk?subject=HybridOne%20demo">Book a demo</a>
+        <a class="btn secondary" href="#features">See what it does</a>
+      </div>
+      <div class="trust"><span>Membership management</span><span>Class bookings</span><span>Workout delivery</span><span>Reporting</span></div>
+    </div>
+    <div class="product-card" aria-label="HybridOne product preview">
+      <div class="product-top"><div class="mini-brand">HYBRIDONE</div><div class="dot"></div></div>
+      <div class="mock-grid">
+        <div class="mock"><small>Active members</small><div class="metric">428</div></div>
+        <div class="mock"><small>Classes today</small><div class="metric">14</div></div>
+        <div class="mock big"><small>Member activity</small><div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="shell">
+    <div class="section-head"><div class="eyebrow">One platform</div><h2>Everything you need to run the gym.</h2><p>HybridOne is designed around the way hybrid gyms actually operate, from the first membership enquiry to classes, coaching, workouts and retention.</p></div>
+    <div class="features">
+      <article class="feature"><div class="feature-icon">M</div><h3>Memberships</h3><p>Manage plans, member records, joining, status and the commercial side of your gym from one workspace.</p></article>
+      <article class="feature"><div class="feature-icon">C</div><h3>Classes & bookings</h3><p>Build your timetable, control capacity, manage drop-ins and give members a simple booking experience.</p></article>
+      <article class="feature"><div class="feature-icon">W</div><h3>Workouts & programming</h3><p>Create training sessions, push workouts to members and keep programming connected to the rest of the member journey.</p></article>
+      <article class="feature"><div class="feature-icon">S</div><h3>Staff & operations</h3><p>Working hours, permissions, resources and day-to-day operational tools without another disconnected system.</p></article>
+      <article class="feature"><div class="feature-icon">R</div><h3>Reporting</h3><p>See the numbers that matter, from member activity and lifecycle data to revenue and operational performance.</p></article>
+      <article class="feature"><div class="feature-icon">H</div><h3>Member hub</h3><p>Give members one home for bookings, workouts, progress, community and the information they need from your gym.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="section soft" id="why">
+  <div class="shell split">
+    <div class="section-head"><div class="eyebrow">Why HybridOne</div><h2>Stop running your gym across five different apps.</h2><p>Most gym software solves one part of the job. HybridOne is being built as the operating layer underneath the whole business.</p></div>
+    <div class="points">
+      <div class="point"><div class="tick">✓</div><div><b>One member record</b><span>Keep memberships, bookings, training and engagement connected to the same person.</span></div></div>
+      <div class="point"><div class="tick">✓</div><div><b>One staff workspace</b><span>Give owners, admins and coaches the tools they need without exposing everything to everyone.</span></div></div>
+      <div class="point"><div class="tick">✓</div><div><b>One member experience</b><span>Your gym gets its own route and branded experience while HybridOne handles the platform underneath.</span></div></div>
+      <div class="point"><div class="tick">✓</div><div><b>Built for hybrid training</b><span>Classes, open gym, strength, conditioning, HYROX-style training, PT and mixed memberships can live together.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="gyms">
+  <div class="shell">
+    <div class="cta-band">
+      <div><div class="eyebrow" style="color:#9da8ff">HybridOne</div><h2>Ready to run your gym from one place?</h2><p>We’re building HybridOne with real gyms, real workflows and real day-to-day admin in mind.</p></div>
+      <a class="btn" href="mailto:hello@hybridone.co.uk?subject=HybridOne%20demo">Talk to us</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="footer"><div class="shell footer-inner"><div>© 2026 HybridOne</div><div>The operating system for hybrid gyms.</div></div></footer>
+</body>
+</html>

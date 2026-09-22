@@ -2,7 +2,7 @@
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b1020">
-<title>Admin access · Hybrid OS</title>
+<title>Admin access · HybridOne</title>
 <style>
 :root{--bg:#f5f7fb;--panel:#fff;--ink:#101828;--muted:#667085;--line:#e7ebf2;--dark:#0b1020;--good:#067647;--warn:#b54708;--bad:#b42318;--shadow:0 14px 34px rgba(16,24,40,.08)}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
@@ -11,7 +11,7 @@ button,input,select{font:inherit}.hidden{display:none!important}.shell{min-heigh
 </head><body>
 <div id="loading" style="padding:30px">Loading admin access…</div>
 <div id="app" class="shell hidden">
-  <aside class="side"><div class="brand">HYBRID <b>OS</b></div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:800;margin-top:4px"></div></div><nav class="nav"></nav></aside>
+  <aside class="side"><div class="brand">HYBRID<b>ONE</b></div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:800;margin-top:4px"></div></div><nav class="nav"></nav></aside>
   <main class="main">
     <div class="top"><div><div class="eyebrow">Owner controls</div><h1>Admin access</h1><div class="muted">Invite and manage Admins and equal Owners. Owner-level changes require explicit Owner approval.</div></div><button id="signOutBtn" class="btn secondary">Sign out</button></div>
     <div id="ownerOnly" class="card hidden"><h2 style="margin-top:0">Owner-only area</h2><p class="muted">Only an active Owner can manage Admin and Owner access.</p></div>
@@ -82,7 +82,7 @@ async function load(){
     history.replaceState(null,'',location.pathname+'?gym_id='+encodeURIComponent(selected.gym_id));
   }else{
     $('contextBlocked').classList.remove('hidden');
-    $('contextBlockedMsg').textContent='This account owns more than one gym, so Hybrid OS will not guess which one you mean. Open Admin Access from the gym you want to manage.';
+    $('contextBlockedMsg').textContent='This account owns more than one gym, so HybridOne will not guess which one you mean. Open Admin Access from the gym you want to manage.';
     return;
   }
   gym=selected.gyms;role=selected.role;accessStatus=selected.access_status;sessionStorage.setItem('hybrid-gym-id',selected.gym_id);
@@ -255,7 +255,7 @@ async function approve(uid,btn){if(!confirm('Approve this access request?'))retu
 async function promoteOwner(uid,btn){if(!confirm('Promote this Admin to an equal Owner? If there is more than one current Owner, every Owner must approve.'))return;btn.disabled=true;try{const{data,error}=await supabase.rpc('propose_owner_promotion',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;if(data?.executed===false)alert('Your approval has been recorded. Waiting for the other Owner approval(s).');await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 async function requestOwnerRemoval(uid,btn){if(!confirm('Request removal of this Owner? Every active Owner, including the Owner being removed, must approve before it can happen.'))return;btn.disabled=true;try{const{data,error}=await supabase.rpc('propose_owner_removal',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;if(data?.executed===false)alert('Removal request created. It will only complete when every active Owner approves.');await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 async function approveOwnershipAction(id,btn){btn.disabled=true;try{const{data,error}=await supabase.rpc('approve_ownership_action',{target_action_id:id});if(error)throw error;if(data?.executed===false)alert('Your approval has been recorded. Waiting for the remaining Owner approval(s).');await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
-async function removeAccess(uid,btn){if(!confirm('Remove this Admin from Hybrid Hub? Their personal Hybrid OS login will remain, but this gym access will stop immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('remove_admin_access',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
+async function removeAccess(uid,btn){if(!confirm('Remove this Admin from Hybrid Hub? Their personal HybridOne login will remain, but this gym access will stop immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('remove_admin_access',{target_gym_id:gym.id,target_user_id:uid});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 async function revoke(id,btn){if(!confirm('Revoke this invite link? It will stop working immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('revoke_admin_invite',{target_invite_id:id});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 async function deleteInvite(id,btn){if(!confirm('Delete this invite record? The link will stop working immediately.'))return;btn.disabled=true;try{const{error}=await supabase.rpc('delete_admin_invite',{target_invite_id:id});if(error)throw error;await refresh()}catch(e){alert(e.message)}finally{btn.disabled=false}}
 load().catch(e=>{console.error(e);$('loading').textContent='Admin access failed to load.'});

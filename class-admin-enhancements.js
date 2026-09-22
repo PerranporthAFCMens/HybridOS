@@ -52,7 +52,7 @@
       $('name').value=t.name;$('desc').value=t.description||'';$('duration').value=t.duration_minutes;$('capacity').value=t.default_capacity;
       const rs=resourcesForType(t.id);
       if(!note){note=document.createElement('div');note.id='classTypeScheduleDependency';note.className='notice';select.closest('.field')?.insertAdjacentElement('afterend',note)}
-      if(note) note.textContent=rs.length?'Requires: '+rs.map(r=>r.name).join(', ')+'. Hybrid OS will check these resources when the class is scheduled.':'No room/equipment dependency.';
+      if(note) note.textContent=rs.length?'Requires: '+rs.map(r=>r.name).join(', ')+'. HybridOne will check these resources when the class is scheduled.':'No room/equipment dependency.';
     };
   }
 

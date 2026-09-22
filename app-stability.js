@@ -12,7 +12,7 @@
     navMask=document.createElement('div');
     navMask.id='hybridNavigationMask';
     navMask.setAttribute('aria-hidden','true');
-    navMask.innerHTML='<div class="hybrid-nav-mask-side"><div class="hybrid-nav-mask-brand">HYBRID <b>OS</b></div><div class="hybrid-nav-mask-gym"></div><div class="hybrid-nav-mask-lines"><i></i><i></i><i></i><i></i><i></i></div></div><div class="hybrid-nav-mask-main"><div class="hybrid-nav-mask-bar"></div><div class="hybrid-nav-mask-card"></div><div class="hybrid-nav-mask-card short"></div></div>';
+    navMask.innerHTML='<div class="hybrid-nav-mask-side"><div class="hybrid-nav-mask-brand">HYBRID<b>ONE</b></div><div class="hybrid-nav-mask-gym"></div><div class="hybrid-nav-mask-lines"><i></i><i></i><i></i><i></i><i></i></div></div><div class="hybrid-nav-mask-main"><div class="hybrid-nav-mask-bar"></div><div class="hybrid-nav-mask-card"></div><div class="hybrid-nav-mask-card short"></div></div>';
     document.body.appendChild(navMask);
     requestAnimationFrame(function(){navMask.classList.add('show')});
   }
@@ -35,7 +35,7 @@
     if(recoveryShown||!loadingStillVisible())return;
     recoveryShown=true;
     var loading=byId('loading');if(!loading)return;
-    loading.innerHTML='<div style="max-width:560px;margin:40px auto;padding:22px;border:1px solid #e7ebf2;border-radius:20px;background:#fff;box-shadow:0 14px 34px rgba(16,24,40,.08);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:#101828"><div style="font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494">Hybrid OS</div><h2 style="margin:7px 0 8px;font-size:24px">This page did not finish loading</h2><p style="margin:0;color:#667085;line-height:1.5">Please try again. Your saved data has not been changed.</p><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:16px"><button id="hybridRetryBtn" style="border:0;border-radius:12px;padding:10px 14px;background:#0b1020;color:#fff;font:inherit;font-weight:800">Try again</button><a href="./index.html" style="border:1px solid #e7ebf2;border-radius:12px;padding:10px 14px;background:#fff;color:#101828;text-decoration:none;font-weight:800">Back to Hybrid OS</a></div><details style="margin-top:14px;color:#98a2b3;font-size:12px"><summary>Technical detail</summary><div style="margin-top:7px;overflow-wrap:anywhere">'+escapeHtml(reason||'Startup timed out')+'</div></details></div>';
+    loading.innerHTML='<div style="max-width:560px;margin:40px auto;padding:22px;border:1px solid #e7ebf2;border-radius:20px;background:#fff;box-shadow:0 14px 34px rgba(16,24,40,.08);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:#101828"><div style="font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494">HybridOne</div><h2 style="margin:7px 0 8px;font-size:24px">This page did not finish loading</h2><p style="margin:0;color:#667085;line-height:1.5">Please try again. Your saved data has not been changed.</p><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:16px"><button id="hybridRetryBtn" style="border:0;border-radius:12px;padding:10px 14px;background:#0b1020;color:#fff;font:inherit;font-weight:800">Try again</button><a href="./index.html" style="border:1px solid #e7ebf2;border-radius:12px;padding:10px 14px;background:#fff;color:#101828;text-decoration:none;font-weight:800">Back to HybridOne</a></div><details style="margin-top:14px;color:#98a2b3;font-size:12px"><summary>Technical detail</summary><div style="margin-top:7px;overflow-wrap:anywhere">'+escapeHtml(reason||'Startup timed out')+'</div></details></div>';
     var b=byId('hybridRetryBtn');if(b)b.onclick=retry;
   }
   function markReady(){
@@ -57,7 +57,7 @@
     var id='hybridConnectionBanner',old=byId(id);
     if(navigator.onLine){if(old)old.remove();return}
     if(old)return;
-    var el=document.createElement('div');el.id=id;el.textContent='You appear to be offline. Some Hybrid OS features may not update until your connection returns.';
+    var el=document.createElement('div');el.id=id;el.textContent='You appear to be offline. Some HybridOne features may not update until your connection returns.';
     el.style.cssText='position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:9999;padding:10px 14px;border-radius:12px;background:#fffaeb;color:#854a0e;border:1px solid #fedf89;font:600 13px/1.4 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;box-shadow:0 10px 30px rgba(16,24,40,.14)';
     document.body.appendChild(el);
   }

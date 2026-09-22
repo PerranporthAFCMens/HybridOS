@@ -5,6 +5,22 @@ ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
 CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
 JS=('app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
+landing=ROOT/'landing.html'
+if not landing.exists():problems.append('landing.html: HybridOne marketing homepage missing')
+else:
+ lt=landing.read_text(encoding='utf-8')
+ for x in ('HybridOne','The operating system for hybrid gyms','LOGO PLACEHOLDER','Book a demo'):
+  if x not in lt:problems.append(f'landing.html: marketing content missing: {x}')
+vercel=ROOT/'vercel.json'
+if not vercel.exists():problems.append('vercel.json: HybridOne routes missing')
+else:
+ vt=vercel.read_text(encoding='utf-8')
+ for x in ('/landing.html','/hybrid-hub','/puffin-performance','/app'):
+  if x not in vt:problems.append(f'vercel.json: route missing: {x}')
+for brand_page in ROOT.glob('*.html'):
+ bt=brand_page.read_text(encoding='utf-8')
+ if re.search(r'Hybrid OS|HYBRID OS|HybridOS|HYBRIDOS',bt):
+  problems.append(f'{brand_page.name}: legacy Hybrid OS branding returned')
 # Core rendering assets are intentionally locked to the last known-good mobile/admin baseline.
 # Any deliberate change to these files must update this list as part of the same reviewed change.
 RENDER_BASELINE={
@@ -14,7 +30,7 @@ RENDER_BASELINE={
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
  'admin-embed.js':'f314e4149eec89744a07699aca78e36f31030322',
  'admin-frame.js':'94939c115918fe76a4291cceb73e4c3897407240',
- 'app-stability.js':'7b4ad88f4841402001abd1ed549626bcdf089b94',
+ 'app-stability.js':'f5819ecd71e76985b7b7f410c2f25e9e7700a380',
  'shared-admin-nav.js':'e8583f8453c10bc4e1019eca0714216b40de3f73',
 }
 def git_blob_sha(path):
@@ -310,8 +326,8 @@ member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
 if 'href="./member-preview.html" target="_top"' not in member_view:problems.append('member-view-settings.html: preview must escape persistent admin frame')
 member_preview=(ROOT/'member-preview.html').read_text(encoding='utf-8')
 if './admin.html?view=member-view-settings.html' not in member_preview:problems.append('member-preview.html: Back to admin must return to persistent admin shell')
-if problems:raise SystemExit('Hybrid OS smoke checks failed:\n- '+'\n- '.join(problems))
-print('Hybrid OS built-site smoke checks passed')
+if problems:raise SystemExit('HybridOne smoke checks failed:\n- '+'\n- '.join(problems))
+print('HybridOne built-site smoke checks passed')
 
 admin_css=(ROOT/'admin-shell.css').read_text(encoding='utf-8')
 if '@view-transition' in admin_css or 'view-transition-name' in admin_css:problems.append('admin-shell.css: cross-document admin view transitions must stay disabled')

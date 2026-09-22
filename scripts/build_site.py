@@ -93,8 +93,8 @@ def add_social_notification_runtime():
  for n in ('social.html','community.html','groups.html'):
   s=read(n);s=inject_body(s,'social-notifications.js',f'<script type="module" src="./social-notifications.js?v={VERSION}"></script>');write(n,s)
 def brand_member_preview():
- n='member-preview.html';s=read(n);s=s.replace('<title>Member Preview · Hybrid OS</title>','<title>Hybrid Hub · Member Preview</title>').replace('Puffin Performance','Hybrid Hub')
+ n='member-preview.html';s=read(n);s=s.replace('<title>Member Preview · HybridOne</title>','<title>Hybrid Hub · Member Preview</title>').replace('Puffin Performance','Hybrid Hub')
  if 'member-gym-logo' not in s:s=s.replace('<main class="main">','<main class="main"><div class="member-gym-logo"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>',1)
  write(n,s)
-def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();print(f'Built Hybrid OS site in {OUT}')
+def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();print(f'Built HybridOne site in {OUT}')
 if __name__=='__main__':build()
