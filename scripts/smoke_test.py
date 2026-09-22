@@ -184,6 +184,15 @@ for x in ('markAdminHotNav','hybrid-admin-hot-nav','sessionStorage.setItem'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: smooth admin hand-off missing: {x}')
 for x in ("{key:'sign-out'","href:'./sign-out.html'"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: global admin sign out missing: {x}')
+auth_return=(ROOT/'auth-return.html')
+if not auth_return.exists():problems.append('auth-return.html: secure gym Auth return page missing')
+else:
+ art=auth_return.read_text(encoding='utf-8')
+ for x in ("params.get('gym_id')","sessionStorage.setItem('hybrid-gym-id'","mode==='recovery'","supabase.auth.updateUser({password})",".eq('gym_id',gymId)","maybeSingle()","Powered by HybridOne"):
+  if x not in art:problems.append(f'auth-return.html: gym-bound secure return flow missing: {x}')
+join_auth=(ROOT/'join.html').read_text(encoding='utf-8')
+for x in ("redirectUrl.searchParams.set('gym_id',joinData.gym_id)","emailRedirectTo:redirect"):
+ if x not in join_auth:problems.append(f'join.html: gym context missing from signup confirmation flow: {x}')
 sign_out=(ROOT/'sign-out.html').read_text(encoding='utf-8')
 for x in ('supabase.auth.signOut()',"location.replace('./')",'Signing you out'):
  if x not in sign_out:problems.append(f'sign-out.html: reliable sign out flow missing: {x}')
@@ -236,8 +245,8 @@ for login_name,gym_name,gym_id in (
  login=(ROOT/login_name)
  if not login.exists():problems.append(f'{login_name}: dedicated gym login page missing');continue
  lt=login.read_text(encoding='utf-8')
- for x in (gym_name,gym_id,"sessionStorage.setItem('hybrid-gym-id'","signInWithPassword"):
-  if x not in lt:problems.append(f'{login_name}: gym-bound login flow missing: {x}')
+ for x in (gym_name,gym_id,"sessionStorage.setItem('hybrid-gym-id'","signInWithPassword","resetPasswordForEmail","signInWithOtp","shouldCreateUser:false","./auth-return.html"):
+  if x not in lt:problems.append(f'{login_name}: gym-bound login/auth flow missing: {x}')
 for context_page in ('community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','admin-access.html'):
  cp=(ROOT/context_page).read_text(encoding='utf-8')
  if 'hybrid-gym-id' not in cp:problems.append(f'{context_page}: login gym context not enforced')
