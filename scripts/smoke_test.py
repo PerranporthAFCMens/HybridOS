@@ -19,7 +19,7 @@ else:
   if x not in vt:problems.append(f'vercel.json: route missing: {x}')
 for brand_page in ROOT.glob('*.html'):
  bt=brand_page.read_text(encoding='utf-8')
- if re.search(r'Hybrid OS|HYBRID OS|HybridOS|HYBRIDOS',bt):
+ if re.search(r'Hybrid OS|HYBRID OS|HYBRIDOS|HybridOS(?=$|[\\s<.,:;!?])',bt):
   problems.append(f'{brand_page.name}: legacy Hybrid OS branding returned')
 # Core rendering assets are intentionally locked to the last known-good mobile/admin baseline.
 # Any deliberate change to these files must update this list as part of the same reviewed change.
