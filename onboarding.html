@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Hybrid OS · Get started</title>
+<title>HybridOne · Get started</title>
 <style>
 :root{--bg:#f5f7fb;--panel:#fff;--ink:#101828;--muted:#667085;--line:#e7ebf2;--accent:#6d5dfc;--dark:#0b1020;--good:#12b76a;--shadow:0 22px 60px rgba(16,24,40,.12)}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(circle at 15% 5%,#eeeaff,transparent 34%),var(--bg);color:var(--ink)}button,input{font:inherit}.shell{min-height:100vh;display:grid;grid-template-columns:360px 1fr}.rail{background:var(--dark);color:#fff;padding:34px;display:flex;flex-direction:column}.logo{display:flex;gap:12px;align-items:center;font-size:22px;font-weight:850}.mark{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#6d5dfc,#9d7bff);display:grid;place-items:center}.rail h1{font-size:42px;line-height:1.03;margin:72px 0 16px}.rail p{color:#aeb8c8;line-height:1.6}.steps{margin-top:44px;display:grid;gap:20px}.step{display:flex;gap:12px;color:#7f8a9d}.step.active{color:#fff}.step.done{color:#bdebdc}.circle{width:30px;height:30px;border-radius:50%;border:1px solid currentColor;display:grid;place-items:center;font-weight:800;flex:0 0 auto}.main{padding:48px;display:grid;place-items:center}.card{width:min(650px,100%);background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);padding:34px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}.card h2{font-size:34px;margin:8px 0}.muted{color:var(--muted)}.field{margin:20px 0}.field label{display:block;font-weight:800;font-size:13px;margin-bottom:7px}.field input{width:100%;padding:14px;border:1px solid #d7dce6;border-radius:13px;outline:none}.field input:focus{border-color:#9489ff;box-shadow:0 0 0 4px #efedff}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.btns{display:flex;justify-content:space-between;gap:12px;margin-top:28px}.btn{border:0;border-radius:13px;padding:13px 18px;font-weight:850;cursor:pointer}.primary{background:var(--dark);color:#fff}.secondary{background:#f2f4f7;color:#344054}.msg{min-height:20px;margin-top:15px;font-size:13px}.error{color:#b42318}.good{color:#067647}.summary{display:grid;gap:12px;margin-top:22px}.summary div{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fafbfc}.hidden{display:none!important}.success{font-size:58px;margin-bottom:8px}@media(max-width:850px){.shell{grid-template-columns:1fr}.rail{padding:24px}.rail h1{font-size:32px;margin:32px 0 10px}.steps{grid-template-columns:repeat(3,1fr);margin-top:22px}.step{font-size:12px;display:block}.circle{margin-bottom:6px}.main{padding:22px}.card{padding:24px}.row{grid-template-columns:1fr}}
@@ -15,7 +15,7 @@
 <body>
 <div class="shell">
   <aside class="rail">
-    <div class="logo brand-logo"><svg class="brand-mark" viewBox="0 0 54 48" aria-hidden="true"><path d="M6 42 L27 6 M12 42 L30 11 M18 42 L33 16 M48 42 L27 6 M42 42 L24 11 M36 42 L21 16"/></svg><span class="brand-word">HYBRID <b>OS</b></span></div>
+    <div class="logo brand-logo"><svg class="brand-mark" viewBox="0 0 54 48" aria-hidden="true"><path d="M6 42 L27 6 M12 42 L30 11 M18 42 L33 16 M48 42 L27 6 M42 42 L24 11 M36 42 L21 16"/></svg><span class="brand-word">HYBRID<b>ONE</b></span></div>
     <div><h1>Let’s build your gym.</h1><p>Set up the basics now. You can change everything later from Gym Settings.</p></div>
     <div class="steps">
       <div class="step active" id="stepDot1"><div class="circle">1</div><div><b>Your gym</b><br><span>Identity</span></div></div>
@@ -66,7 +66,7 @@ $('gymName').addEventListener('input',()=>{if(!$('gymSlug').dataset.edited)$('gy
 $('gymSlug').addEventListener('input',()=>{$('gymSlug').dataset.edited='1';$('gymSlug').value=slugify($('gymSlug').value)});
 $('toStep2').onclick=()=>{const name=$('gymName').value.trim(),slug=slugify($('gymSlug').value);if(!name||!slug)return msg('msg1','Enter a gym name first.','error');$('gymSlug').value=slug;showStep(2)};
 $('back1').onclick=()=>showStep(1);
-$('createGym').onclick=async()=>{const btn=$('createGym');btn.disabled=true;btn.textContent='Creating…';msg('msg2','Creating your Hybrid OS workspace…');try{
+$('createGym').onclick=async()=>{const btn=$('createGym');btn.disabled=true;btn.textContent='Creating…';msg('msg2','Creating your HybridOne workspace…');try{
   const gymName=$('gymName').value.trim(),gymSlug=slugify($('gymSlug').value),planName=$('planName').value.trim(),price=Math.round(Number($('planPrice').value)*100);
   if(!planName||!Number.isFinite(price)||price<0)throw new Error('Check your membership plan details.');
   const {data:gymId,error:gymError}=await supabase.rpc('create_gym_for_current_user',{gym_name:gymName,gym_slug:gymSlug});if(gymError)throw gymError;
