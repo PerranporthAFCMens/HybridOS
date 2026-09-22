@@ -1,22 +1,26 @@
 <!doctype html>
 <html>
 <body style="margin:0;padding:0;background:#f5f7fb;font-family:Arial,Helvetica,sans-serif;color:#101828">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">{{ .Data.hybrid_email_preheader }}</div>
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7fb;padding:32px 16px">
 <tr><td align="center">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border:1px solid #e7ebf2;border-radius:20px;overflow:hidden">
-<tr><td style="background:#0b1020;padding:24px 30px;color:#ffffff;font-size:19px;font-weight:800;letter-spacing:2px">HYBRID<span style="font-weight:900">ONE</span></td></tr>
+<tr><td style="background:{{ .Data.hybrid_email_accent }};padding:24px 30px;color:#ffffff;font-size:19px;font-weight:800;letter-spacing:1.5px">
+{{ if .Data.hybrid_email_logo_url }}<img src="{{ .Data.hybrid_email_logo_url }}" alt="{{ .Data.hybrid_email_brand_name }}" style="display:block;max-height:38px;max-width:240px">{{ else }}{{ .Data.hybrid_email_brand_name }}{{ end }}
+</td></tr>
 <tr><td style="padding:34px 30px 10px">
 <div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#7a8494;font-weight:700">Access invitation</div>
-<h1 style="font-size:28px;line-height:1.2;margin:8px 0 12px;color:#101828">You’ve been invited to {{ .Data.hybrid_gym_name }}</h1>
-<p style="margin:0;color:#667085;font-size:16px;line-height:1.6">{{ .Data.hybrid_invited_by }} has invited you to join <strong>{{ .Data.hybrid_gym_name }}</strong> as <strong>{{ .Data.hybrid_invite_role }}</strong> on HybridOne.</p>
+<h1 style="font-size:28px;line-height:1.2;margin:8px 0 12px;color:#101828">{{ .Data.hybrid_email_heading }}</h1>
+<p style="margin:0;color:#667085;font-size:16px;line-height:1.6">{{ .Data.hybrid_email_body }}</p>
 </td></tr>
 <tr><td style="padding:18px 30px 8px">
-<table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="background:#0b1020;border-radius:12px">
-<a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 22px;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700">Accept invitation</a>
+<table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="background:{{ .Data.hybrid_email_accent }};border-radius:12px">
+<a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 22px;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700">{{ .Data.hybrid_email_button_label }}</a>
 </td></tr></table>
 </td></tr>
 <tr><td style="padding:18px 30px 32px;color:#667085;font-size:13px;line-height:1.55">
-<p style="margin:0 0 8px">The button will take you to HybridOne where you can sign in and complete the invitation.</p>
+<p style="margin:0 0 8px">{{ .Data.hybrid_email_footer }}</p>
+{{ if .Data.hybrid_email_contact }}<p style="margin:0 0 8px">Questions? Contact <a href="mailto:{{ .Data.hybrid_email_contact }}" style="color:#475467">{{ .Data.hybrid_email_contact }}</a>.</p>{{ end }}
 <p style="margin:0">This invitation was sent to <strong>{{ .Email }}</strong>. If you weren’t expecting it, you can ignore this email.</p>
 </td></tr>
 </table>

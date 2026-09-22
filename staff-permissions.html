@@ -1,11 +1,72 @@
 <!doctype html>
-<html lang="en"><head><script src="./supabase-request-guard.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Staff access · HybridOne</title><link rel="stylesheet" href="./admin-shell.css"><style>
-:root{--bg:#f5f7fb;--panel:#fff;--ink:#101828;--muted:#667085;--line:#e7ebf2;--dark:#0b1020;--good:#067647;--bad:#b42318;--shadow:0 14px 34px rgba(16,24,40,.08)}*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}button,select,input{font:inherit}.hidden{display:none!important}.shell{min-height:100vh;display:grid;grid-template-columns:255px 1fr}.side{background:var(--dark);color:#fff;padding:24px 18px}.brand{font-size:18px;font-weight:900;letter-spacing:.08em}.gym{padding:13px;border-radius:16px;background:rgba(255,255,255,.07);margin:22px 0}.gym small{color:#98a2b3}.nav{display:grid;gap:6px}.main{padding:28px 30px 70px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:20px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}.top h1{margin:4px 0;font-size:32px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}.grid{display:grid;grid-template-columns:320px 1fr;gap:16px}.staff-list{display:grid;gap:8px}.staff-btn{border:1px solid var(--line);background:#fff;border-radius:13px;padding:12px;text-align:left;cursor:pointer}.staff-btn.active{border-color:#101828;background:#f8fafc}.muted{color:var(--muted)}.field{margin:12px 0}.field label{display:block;font-size:13px;font-weight:800;margin-bottom:6px}.field select{width:100%;padding:11px;border:1px solid #d0d5dd;border-radius:12px}.permissions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.perm{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:13px;padding:11px}.perm input{margin-top:3px}.perm b{display:block;font-size:13px}.perm span{font-size:12px;color:var(--muted)}.btn{border:0;border-radius:12px;padding:10px 13px;font-weight:800;cursor:pointer}.primary{background:var(--dark);color:#fff}.secondary{background:#fff;border:1px solid var(--line);color:var(--ink);text-decoration:none}.msg{margin-top:10px;font-size:13px}.good{color:var(--good)}.bad{color:var(--bad)}@media(max-width:850px){.shell{display:block}.side{display:none}.main{padding:18px 14px 50px}.grid{grid-template-columns:1fr}.permissions{grid-template-columns:1fr}}
-</style></head><body><div id="loading">Loading staff access…</div><div id="app" class="shell hidden"><aside class="side"><div class="brand">HYBRID<b>ONE</b></div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:800;margin-top:4px"></div></div><nav class="nav"></nav></aside><main class="main"><div class="top"><div><div class="eyebrow">Staff portal</div><h1>Staff access</h1><div class="muted">Choose exactly what each staff member can see and do.</div></div><a class="btn secondary" href="./admin-operations.html">← Staff & resources</a></div><div class="grid"><div class="card"><h3 style="margin-top:0">Team</h3><div id="staffList" class="staff-list"></div></div><div class="card"><div id="empty" class="muted">Select a staff member.</div><div id="editor" class="hidden"><div class="eyebrow">Access profile</div><h2 id="staffName" style="margin:4px 0"></h2><div class="field"><label>Access level</label><select id="preset"><option value="own_calendar">Own calendar only</option><option value="coach">Coach / PT</option><option value="reception">Reception</option><option value="manager">Manager</option><option value="full_access">Full access</option><option value="custom">Custom</option></select></div><div id="accessSummary" class="notice" style="margin:10px 0 14px">Choose an access level, then fine-tune individual permissions if needed.</div><div id="permissions" class="permissions"></div><button id="save" class="btn primary" style="width:100%;margin-top:16px">Save access</button><div id="msg" class="msg"></div></div></div></div></main></div><script type="module">
+<html lang="en"><head><script src="./supabase-request-guard.js"></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Staff access · HybridOne</title>
+<link rel="stylesheet" href="./admin-shell.css">
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--ink:#101828;--muted:#667085;--line:#e7ebf2;--dark:#0b1020;--good:#067647;--warn:#b54708;--bad:#b42318;--shadow:0 14px 34px rgba(16,24,40,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}button,select,input,textarea{font:inherit}.hidden{display:none!important}
+.shell{min-height:100vh;display:grid;grid-template-columns:255px 1fr}.side{background:var(--dark);color:#fff;padding:24px 18px}.brand{font-size:18px;font-weight:900;letter-spacing:.08em}.gym{padding:13px;border-radius:16px;background:rgba(255,255,255,.07);margin:22px 0}.gym small{color:#98a2b3}.nav{display:grid;gap:6px}.main{padding:28px 30px 70px;min-width:0}
+.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:18px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}.top h1{margin:4px 0;font-size:32px}.muted{color:var(--muted)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tab{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 14px;font-weight:850;cursor:pointer}.tab.active{background:var(--dark);border-color:var(--dark);color:#fff}
+.grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;align-items:start}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}.card h2,.card h3{margin:3px 0 8px}
+.level-list,.team-list{display:grid;gap:8px}.level-btn,.team-row{border:1px solid var(--line);background:#fff;border-radius:13px;padding:12px;text-align:left}.level-btn{cursor:pointer}.level-btn.active{border-color:#101828;background:#f8fafc}.level-head,.row-head{display:flex;justify-content:space-between;gap:10px;align-items:start}.pill{display:inline-flex;align-items:center;padding:4px 7px;border-radius:999px;background:#f2f4f7;color:#475467;font-size:10px;font-weight:850;white-space:nowrap}
+.field{margin:12px 0}.field label{display:block;font-size:13px;font-weight:800;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid #d0d5dd;border-radius:12px;background:#fff}.field textarea{min-height:80px;resize:vertical}
+.permissions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.perm{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:13px;padding:11px}.perm input{margin-top:3px}.perm b{display:block;font-size:13px}.perm span{display:block;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.35}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.btn{border:0;border-radius:12px;padding:10px 13px;font-weight:800;cursor:pointer}.primary{background:var(--dark);color:#fff}.secondary{background:#fff;border:1px solid var(--line);color:var(--ink)}.danger{background:#fff;border:1px solid #fda29b;color:var(--bad)}.btn:disabled{opacity:.5;cursor:not-allowed}.msg{margin-top:10px;font-size:13px;min-height:18px}.good{color:var(--good)}.bad{color:var(--bad)}
+.notice{padding:11px 12px;border-radius:12px;background:#f8fafc;border:1px solid var(--line);font-size:12px;color:#475467;line-height:1.45;margin:10px 0}.owner-note{background:#fffaeb;border-color:#fedf89;color:#7a2e0e}
+.assignment{display:grid;grid-template-columns:minmax(180px,1fr) minmax(220px,1fr) auto;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:13px 0}.assignment:last-child{border-bottom:0}.assignment select{width:100%;padding:10px;border:1px solid #d0d5dd;border-radius:11px;background:#fff}
+.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.toolbar-actions{display:flex;gap:7px;flex-wrap:wrap}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.permissions{grid-template-columns:1fr}.assignment{grid-template-columns:1fr}.assignment .btn{width:100%}}
+@media(max-width:780px){.shell{display:block}.side{display:none}.main{padding:18px 14px 50px}.top h1{font-size:28px}}
+</style></head>
+<body>
+<div id="loading" style="padding:30px">Loading staff access…</div>
+<div id="app" class="shell hidden">
+<aside class="side"><div class="brand">HybridOne</div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:800;margin-top:4px"></div></div><nav class="nav"></nav></aside>
+<main class="main">
+<div class="top"><div><div class="eyebrow">Staff management</div><h1>Staff access</h1><div class="muted">Create access levels once, then assign staff to the right level.</div></div></div>
+<div class="tabs"><button class="tab active" data-pane="levels">Access levels</button><button class="tab" data-pane="assignments">Staff assignments</button></div>
+
+<section id="levels" class="pane">
+<div id="adminReadOnly" class="notice owner-note hidden"><strong>Owner controlled:</strong> you can view the access levels and assign staff, but only an Owner can create, change or delete a level.</div>
+<div class="grid">
+<section class="card">
+<div class="toolbar"><div><div class="eyebrow">Levels</div><h3>Access levels</h3></div><button id="newLevel" class="btn primary">+ New level</button></div>
+<div class="muted" style="font-size:13px;margin-bottom:12px">Each level is a reusable permission set controlled by the Owner.</div>
+<div id="levelList" class="level-list"></div>
+</section>
+
+<section class="card">
+<div id="levelEmpty" class="muted">Select an access level to view its permissions.</div>
+<div id="levelEditor" class="hidden">
+<div class="eyebrow">Access level</div>
+<div class="field"><label>Level name</label><input id="levelName" maxlength="80" placeholder="e.g. Manager"></div>
+<div class="field"><label>Description <span class="muted">(optional)</span></label><textarea id="levelDescription" maxlength="280" placeholder="What is this level for?"></textarea></div>
+<div class="toolbar"><div><h3 style="margin:0">Permissions</h3><div class="muted" style="font-size:12px">Tick exactly what this level is allowed to do.</div></div><div class="toolbar-actions"><button id="selectAll" class="btn secondary">Select all</button><button id="clearAll" class="btn secondary">Clear all</button></div></div>
+<div id="permissions" class="permissions"></div>
+<div class="actions"><button id="saveLevel" class="btn primary">Save level</button><button id="deleteLevel" class="btn danger">Delete level</button></div>
+<div id="levelMsg" class="msg"></div>
+</div>
+</section>
+</div>
+</section>
+
+<section id="assignments" class="pane hidden">
+<section class="card">
+<div class="eyebrow">Team access</div><h2>Staff assignments</h2>
+<div class="muted">Assign each Staff or Coach account to one Owner-defined access level. Updating a level automatically updates everyone assigned to it.</div>
+<div id="assignmentList" style="margin-top:14px"></div>
+<div id="assignmentMsg" class="msg"></div>
+</section>
+</section>
+</main></div>
+
+<script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD'),$=id=>document.getElementById(id);let gymId=null,current=null,staff=[],access=[];
+const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD'),$=id=>document.getElementById(id);
+let gymId=null,currentRole='',levels=[],staff=[],access=[],selectedLevelId=null;
 const defs=[
-['full_access','Full owner-level access','Same operational access as the owner while remaining a Staff/Employee account.'],
+['full_access','Admin workspace','Allow this level into the full admin workspace. Individual restrictions below still apply.'],
 ['view_timetable','View full timetable','See the gym-wide class timetable.'],
 ['create_classes','Create classes','Add classes to the timetable.'],
 ['edit_timetable','Edit timetable','Change scheduled classes.'],
@@ -16,24 +77,90 @@ const defs=[
 ['manage_memberships','Manage memberships','Change membership records.'],
 ['view_reporting','View reporting','Open business and attendance reports.'],
 ['manage_resources','Manage rooms & resources','Edit rooms, areas and equipment.'],
-['manage_staff','Manage staff','Edit staff setup and access.'],
+['manage_staff','Manage staff & access','Change staff setup and staff access.'],
 ['view_own_pay','View own pay','See their own pay rate only.'],
 ['view_member_notes','View member notes','See coaching/member notes.'],
 ['moderate_community','Moderate community','Manage community content.']
 ];
-const presets={
-own_calendar:{},
-coach:{view_timetable:true,mark_attendance:true,view_member_notes:true,view_own_pay:true},
-reception:{view_timetable:true,mark_attendance:true,view_member_contact:true,view_memberships:true,view_own_pay:true},
-manager:{view_timetable:true,create_classes:true,edit_timetable:true,cancel_classes:true,mark_attendance:true,view_member_contact:true,view_memberships:true,manage_memberships:true,view_reporting:true,manage_resources:true,manage_staff:true,view_own_pay:true,view_member_notes:true,moderate_community:true},
-full_access:Object.fromEntries(defs.map(([k])=>[k,true]))
-};
-function defaults(name){const out={};defs.forEach(([k])=>out[k]=!!presets[name]?.[k]);return out}
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const owner=()=>currentRole==='owner';
 function nameOf(s){return s.name||s.email||'Staff'}
-function summary(name){return({own_calendar:'Only their own assigned calendar/classes. No behind-the-scenes gym access.',coach:'Own work plus coaching tools, attendance and member notes.',reception:'Timetable, attendance, member contact and membership visibility.',manager:'Broad operational control without owner-equivalent account access.',full_access:'Owner-level operational access. Use only for staff you fully trust.',custom:'Custom access. Individual permissions below decide what this person can use.'})[name]||''}
-function renderPerms(p){$('permissions').innerHTML=defs.map(([k,l,d])=>`<label class="perm"><input type="checkbox" data-perm="${k}" ${p[k]?'checked':''}><div><b>${l}</b><span>${d}</span></div></label>`).join('');document.querySelectorAll('[data-perm]').forEach(i=>i.onchange=()=>{$('preset').value='custom';$('accessSummary').textContent=summary('custom')})}
-function choose(uid){current=staff.find(s=>s.user_id===uid);document.querySelectorAll('.staff-btn').forEach(b=>b.classList.toggle('active',b.dataset.uid===uid));$('empty').classList.add('hidden');$('editor').classList.remove('hidden');$('staffName').textContent=nameOf(current);const row=access.find(a=>a.user_id===uid);$('preset').value=row?.preset||'own_calendar';$('accessSummary').textContent=summary($('preset').value);renderPerms({...defaults(row?.preset||'own_calendar'),...(row?.permissions||{})});$('msg').textContent=''}
-async function init(){const{data:{session}}=await sb.auth.getSession();if(!session){location.href='./index.html';return}const{data:gm}=await sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',session.user.id).eq('is_active',true).eq('gym_id',sessionStorage.getItem('hybrid-gym-id')||'00000000-0000-0000-0000-000000000000').limit(1);if(!gm?.length||!['owner','admin'].includes(gm[0].role)){location.href='./index.html';return}gymId=gm[0].gym_id;$('gymName').textContent=gm[0].gyms?.name||'';const{data:members}=await sb.from('gym_members').select('user_id,role').eq('gym_id',gymId).eq('is_active',true).in('role',['staff','coach']);const ids=(members||[]).map(x=>x.user_id);let pm=[];if(ids.length){const r=await sb.from('profiles').select('id,display_name,first_name,last_name').in('id',ids);pm=r.data||[]}const map=new Map(pm.map(p=>[p.id,p]));staff=(members||[]).map(m=>{const p=map.get(m.user_id)||{};return{...m,name:p.display_name||[p.first_name,p.last_name].filter(Boolean).join(' ')||m.role}}).sort((a,b)=>a.name.localeCompare(b.name));const ar=await sb.from('staff_access').select('user_id,preset,permissions').eq('gym_id',gymId);access=ar.data||[];$('staffList').innerHTML=staff.length?staff.map(s=>`<button class="staff-btn" data-uid="${s.user_id}"><b>${nameOf(s)}</b><div class="muted" style="font-size:12px">${s.role}</div></button>`).join(''):'<div class="muted">No staff or coaches yet.</div>';document.querySelectorAll('.staff-btn').forEach(b=>b.onclick=()=>choose(b.dataset.uid));$('preset').onchange=()=>{const value=$('preset').value;$('accessSummary').textContent=summary(value);renderPerms(value==='custom'?(access.find(a=>a.user_id===current?.user_id)?.permissions||{}):defaults(value))};$('save').onclick=save;$('loading').classList.add('hidden');$('app').classList.remove('hidden');if(staff[0])choose(staff[0].user_id)}
-async function save(){if(!current)return;const btn=$('save');btn.disabled=true;btn.textContent='Saving…';const permissions={};document.querySelectorAll('[data-perm]').forEach(i=>permissions[i.dataset.perm]=i.checked);let preset=$('preset').value;const base=defaults(preset),same=defs.every(([k])=>base[k]===permissions[k]);if(!same)preset='custom';const{error}=await sb.from('staff_access').upsert({gym_id:gymId,user_id:current.user_id,preset,permissions,updated_at:new Date().toISOString()},{onConflict:'gym_id,user_id'});btn.disabled=false;btn.textContent='Save access';$('msg').textContent=error?error.message:'Access saved.';$('msg').className='msg '+(error?'bad':'good');if(!error){const ix=access.findIndex(a=>a.user_id===current.user_id),row={user_id:current.user_id,preset,permissions};if(ix>=0)access[ix]=row;else access.push(row);$('preset').value=preset}}
-init();
-</script><script src="./shared-admin-nav.js" defer></script></body></html>
+function blankPermissions(){return Object.fromEntries(defs.map(([k])=>[k,false]))}
+function effectivePermissions(p){return{...blankPermissions(),...(p||{})}}
+function setMsg(id,text,good=false){$(id).textContent=text;$(id).className='msg '+(text?(good?'good':'bad'):'')}
+function assignmentCount(levelId){return access.filter(a=>a.access_level_id===levelId).length}
+function renderLevelList(){
+ $('levelList').innerHTML=levels.length?levels.map(l=>'<button class="level-btn '+(l.id===selectedLevelId?'active':'')+'" data-level="'+l.id+'"><div class="level-head"><div><b>'+esc(l.name)+'</b><div class="muted" style="font-size:12px;margin-top:3px">'+esc(l.description||'No description')+'</div></div><span class="pill">'+assignmentCount(l.id)+' assigned</span></div></button>').join(''):'<div class="muted">No access levels yet.</div>';
+ document.querySelectorAll('[data-level]').forEach(b=>b.onclick=()=>selectLevel(b.dataset.level));
+}
+function renderPermissions(p){
+ const permissions=effectivePermissions(p);
+ $('permissions').innerHTML=defs.map(([k,l,d])=>'<label class="perm"><input type="checkbox" data-perm="'+k+'" '+(permissions[k]?'checked':'')+' '+(!owner()?'disabled':'')+'><div><b>'+esc(l)+'</b><span>'+esc(d)+'</span></div></label>').join('');
+}
+function selectLevel(id){
+ selectedLevelId=id;renderLevelList();const l=levels.find(x=>x.id===id);if(!l)return;
+ $('levelEmpty').classList.add('hidden');$('levelEditor').classList.remove('hidden');$('levelName').value=l.name;$('levelDescription').value=l.description||'';renderPermissions(l.permissions);setMsg('levelMsg','');
+ const locked=!owner();$('levelName').disabled=locked;$('levelDescription').disabled=locked;$('saveLevel').disabled=locked;$('deleteLevel').disabled=locked;$('selectAll').disabled=locked;$('clearAll').disabled=locked;
+}
+function newLevel(){
+ if(!owner())return;selectedLevelId='new';renderLevelList();$('levelEmpty').classList.add('hidden');$('levelEditor').classList.remove('hidden');$('levelName').value='';$('levelDescription').value='';renderPermissions({});setMsg('levelMsg','');$('levelName').focus();$('deleteLevel').disabled=true;
+}
+async function saveLevel(){
+ if(!owner())return;const name=$('levelName').value.trim(),description=$('levelDescription').value.trim()||null;if(!name){setMsg('levelMsg','Give this access level a name.');return}
+ const permissions={};document.querySelectorAll('[data-perm]').forEach(i=>permissions[i.dataset.perm]=i.checked);
+ const btn=$('saveLevel');btn.disabled=true;try{
+   let error,data;
+   if(selectedLevelId==='new'){
+     const r=await sb.from('staff_access_levels').insert({gym_id:gymId,name,description,permissions,created_by:(await sb.auth.getUser()).data.user?.id||null}).select('*').single();error=r.error;data=r.data;
+   }else{
+     const r=await sb.from('staff_access_levels').update({name,description,permissions,updated_at:new Date().toISOString()}).eq('id',selectedLevelId).eq('gym_id',gymId).select('*').single();error=r.error;data=r.data;
+   }
+   if(error)throw error;
+   if(selectedLevelId==='new'){levels.push(data);selectedLevelId=data.id}else{const i=levels.findIndex(x=>x.id===selectedLevelId);if(i>=0)levels[i]=data}
+   await reloadAccess();renderLevelList();renderAssignments();selectLevel(selectedLevelId);setMsg('levelMsg','Access level saved. Everyone assigned to it now uses these permissions.',true);
+ }catch(e){setMsg('levelMsg',e.message||'Could not save access level.')}finally{$('saveLevel').disabled=!owner()}
+}
+async function deleteLevel(){
+ if(!owner()||selectedLevelId==='new')return;const l=levels.find(x=>x.id===selectedLevelId);if(!l)return;const used=assignmentCount(l.id);if(used){setMsg('levelMsg','Move '+used+' staff member'+(used===1?'':'s')+' to another level before deleting this one.');return}
+ if(!confirm('Delete the access level "'+l.name+'"?'))return;
+ const btn=$('deleteLevel');btn.disabled=true;try{const{error}=await sb.from('staff_access_levels').delete().eq('id',l.id).eq('gym_id',gymId);if(error)throw error;levels=levels.filter(x=>x.id!==l.id);selectedLevelId=null;$('levelEditor').classList.add('hidden');$('levelEmpty').classList.remove('hidden');renderLevelList();renderAssignments()}catch(e){setMsg('levelMsg',e.message||'Could not delete access level.')}finally{btn.disabled=false}
+}
+async function reloadAccess(){const r=await sb.from('staff_access').select('user_id,access_level_id,permissions').eq('gym_id',gymId);if(r.error)throw r.error;access=r.data||[]}
+function renderAssignments(){
+ const options='<option value="">Choose access level</option>'+levels.filter(l=>l.is_active!==false).map(l=>'<option value="'+l.id+'">'+esc(l.name)+'</option>').join('');
+ $('assignmentList').innerHTML=staff.length?staff.map(s=>{const row=access.find(a=>a.user_id===s.user_id),level=levels.find(l=>l.id===row?.access_level_id);return'<div class="assignment"><div><b>'+esc(nameOf(s))+'</b><div class="muted" style="font-size:12px">'+esc(s.role==='coach'?'Coach / PT':'Staff')+'</div></div><select data-assign-select="'+s.user_id+'">'+options+'</select><button class="btn primary" data-assign-save="'+s.user_id+'">Save level</button></div>'}).join(''):'<div class="muted">No active Staff or Coach accounts yet.</div>';
+ staff.forEach(s=>{const row=access.find(a=>a.user_id===s.user_id),sel=document.querySelector('[data-assign-select="'+s.user_id+'"]');if(sel)sel.value=row?.access_level_id||''});
+ document.querySelectorAll('[data-assign-save]').forEach(b=>b.onclick=()=>assignLevel(b.dataset.assignSave,b));
+}
+async function assignLevel(userId,btn){
+ const select=document.querySelector('[data-assign-select="'+userId+'"]'),levelId=select?.value;if(!levelId){setMsg('assignmentMsg','Choose an access level first.');return}
+ btn.disabled=true;try{const{error}=await sb.rpc('assign_staff_access_level',{target_gym_id:gymId,target_user_id:userId,target_level_id:levelId});if(error)throw error;await reloadAccess();renderLevelList();renderAssignments();setMsg('assignmentMsg','Access level assigned.',true)}catch(e){setMsg('assignmentMsg',e.message||'Could not assign access level.')}finally{btn.disabled=false}
+}
+async function init(){
+ const{data:{session}}=await sb.auth.getSession();if(!session){location.href='./index.html';return}
+ const selectedGym=sessionStorage.getItem('hybrid-gym-id')||new URLSearchParams(location.search).get('gym_id')||'00000000-0000-0000-0000-000000000000';
+ const{data:gm,error:gmErr}=await sb.from('gym_members').select('gym_id,role,access_status,gyms(name)').eq('user_id',session.user.id).eq('is_active',true).eq('gym_id',selectedGym).maybeSingle();
+ if(gmErr||!gm||gm.access_status!=='active'){location.href='./index.html';return}
+ let allowed=['owner','admin'].includes(gm.role);
+ if(!allowed&&['staff','coach'].includes(gm.role)){const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',gm.gym_id).eq('user_id',session.user.id).maybeSingle();allowed=sa?.permissions?.manage_staff===true}
+ if(!allowed){location.href='./staff.html';return}
+ gymId=gm.gym_id;currentRole=gm.role;$('gymName').textContent=gm.gyms?.name||'';
+ const [lr,mr,ar]=await Promise.all([
+   sb.from('staff_access_levels').select('*').eq('gym_id',gymId).eq('is_active',true).order('name'),
+   sb.from('gym_members').select('user_id,role').eq('gym_id',gymId).eq('is_active',true).in('role',['staff','coach']),
+   sb.from('staff_access').select('user_id,access_level_id,permissions').eq('gym_id',gymId)
+ ]);
+ if(lr.error)throw lr.error;if(mr.error)throw mr.error;if(ar.error)throw ar.error;levels=lr.data||[];access=ar.data||[];
+ const ids=(mr.data||[]).map(x=>x.user_id);let profiles=[];if(ids.length){const pr=await sb.from('profiles').select('id,display_name,first_name,last_name').in('id',ids);profiles=pr.data||[]}
+ const pm=new Map(profiles.map(p=>[p.id,p]));staff=(mr.data||[]).map(m=>{const p=pm.get(m.user_id)||{};return{...m,name:p.display_name||[p.first_name,p.last_name].filter(Boolean).join(' ')||m.role}}).sort((a,b)=>nameOf(a).localeCompare(nameOf(b)));
+ if(!owner()){$('adminReadOnly').classList.remove('hidden');$('newLevel').disabled=true}
+ renderLevelList();renderAssignments();$('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true;if(levels[0])selectLevel(levels[0].id);
+}
+$('newLevel').onclick=newLevel;$('saveLevel').onclick=saveLevel;$('deleteLevel').onclick=deleteLevel;
+$('selectAll').onclick=()=>document.querySelectorAll('[data-perm]').forEach(i=>i.checked=true);$('clearAll').onclick=()=>document.querySelectorAll('[data-perm]').forEach(i=>i.checked=false);
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.id!==b.dataset.pane))});
+init().catch(e=>{console.error(e);$('loading').textContent='Could not load staff access: '+(e.message||e)});
+</script>
+<script src="./shared-shell.js" defer></script>
+<script src="./shared-admin-nav.js" defer></script>
+</body></html>

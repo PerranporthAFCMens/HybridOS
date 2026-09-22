@@ -11,7 +11,7 @@ button,input,select{font:inherit}.hidden{display:none!important}.shell{min-heigh
 </head><body>
 <div id="loading" style="padding:30px">Loading admin access…</div>
 <div id="app" class="shell hidden">
-  <aside class="side"><div class="brand">HYBRID<b>ONE</b></div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:800;margin-top:4px"></div></div><nav class="nav"></nav></aside>
+  <aside class="side"><div class="brand">Hybrid<b>One</b></div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:800;margin-top:4px"></div></div><nav class="nav"></nav></aside>
   <main class="main">
     <div class="top"><div><div class="eyebrow">Owner controls</div><h1>Admin access</h1><div class="muted">Invite and manage Admins and equal Owners. Owner-level changes require explicit Owner approval.</div></div><button id="signOutBtn" class="btn secondary">Sign out</button></div>
     <div id="ownerOnly" class="card hidden"><h2 style="margin-top:0">Owner-only area</h2><p class="muted">Only an active Owner can manage Admin and Owner access.</p></div>
@@ -242,7 +242,7 @@ async function sendInviteEmail(id,btn=null,silent=false){
     return data;
   }catch(e){
     if(silent)throw e;
-    alert(e.message||'Could not send invitation email.');
+    setMsg(e.message||'Could not send invitation email.');
   }finally{if(btn)btn.disabled=false}
 }
 async function approveOwnerInvite(id,delivery,btn){

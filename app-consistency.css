@@ -84,7 +84,7 @@ input.staff-member-search{width:100%;min-height:44px;padding:11px 12px!important
 
 /* Shared desktop shell/sidebar language. */
 .shell{display:grid;grid-template-columns:245px 1fr}
-.side{background:var(--hybrid-dark)!important;color:#fff;padding:24px 18px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh}
+.side{background:var(--hybrid-dark)!important;color:#fff;padding:24px 18px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100dvh;max-height:100dvh;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
 .side .gym{padding:13px!important;border-radius:16px!important;background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.08)!important}
 .side .gym small{color:#98a2b3!important}
 .side .nav{display:grid;gap:6px}
@@ -233,6 +233,32 @@ input.staff-member-search{width:100%;min-height:44px;padding:11px 12px!important
   opacity:.92;
 }
 .side .nav .active .hybrid-nav-icon{opacity:1}
+
+@media(min-width:901px) and (max-height:900px){
+  .side{padding-top:18px!important;padding-bottom:18px!important}
+  .side .hybrid-shell-brand{min-height:34px!important;margin-bottom:14px!important}
+  .side .hybrid-shell-brand .brand-mark{width:32px!important;height:29px!important;flex-basis:32px!important}
+  .side .hybrid-shell-gym{min-height:108px!important;margin-bottom:11px!important;padding:11px 12px!important}
+  .side .hybrid-shell-gym .tenant-gym-logo{max-height:42px!important;margin-bottom:8px!important}
+  .side .nav{gap:3px!important}
+  .side .nav a,.side .nav button{min-height:38px!important;padding:8px 10px!important;font-size:13px!important}
+  .admin-nav-section{margin:6px 10px 1px!important}
+}
+
+@media(min-width:901px) and (max-height:800px){
+  .side{padding-top:14px!important;padding-bottom:14px!important}
+  .side .hybrid-shell-brand{min-height:30px!important;margin-bottom:10px!important}
+  .side .hybrid-shell-brand .brand-mark{width:29px!important;height:26px!important;flex-basis:29px!important}
+  .side .hybrid-shell-brand .brand-word{font-size:16px!important}
+  .side .hybrid-shell-gym{min-height:88px!important;margin-bottom:8px!important;padding:9px 11px!important}
+  .side .hybrid-shell-gym .tenant-gym-logo{max-height:34px!important;margin-bottom:6px!important}
+  .side .hybrid-shell-gym small{font-size:11px!important;margin-bottom:2px!important}
+  .side .hybrid-shell-gym > div{font-size:14px!important}
+  .side .nav{gap:2px!important}
+  .side .nav a,.side .nav button{min-height:34px!important;padding:7px 9px!important;font-size:12.5px!important}
+  .hybrid-nav-icon{width:16px!important;height:16px!important;flex-basis:16px!important}
+  .admin-nav-section{margin:4px 9px 0!important;font-size:9px!important}
+}
 
 @media(max-width:900px){
   .side{

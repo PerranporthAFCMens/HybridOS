@@ -2,11 +2,16 @@ from __future__ import annotations
 import re,subprocess,sys
 from pathlib import Path
 ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
+# HybridOne is a CamelCase brand. Never ship the all-caps text variant in customer-facing source.
+for brand_file in list(ROOT.glob('*.html'))+list(ROOT.glob('*.js'))+list((ROOT/'scripts').glob('*.py')):
+ try: brand_text=brand_file.read_text(encoding='utf-8')
+ except Exception: continue
+ if 'HYBRIDONE' in brand_text: problems.append(f'{brand_file.name}: uppercase HybridOne branding found; use HybridOne')
 CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
 JS=('supabase-request-guard.js','app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
 
-GUARDED_APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','groups.html','onboarding.html','admin.html')
+GUARDED_APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','groups.html','onboarding.html','admin.html','communications.html')
 for n in GUARDED_APP_PAGES:
  p=ROOT/n
  if not p.exists():problems.append(f'{n}: guarded app page missing');continue
@@ -38,14 +43,14 @@ for brand_page in ROOT.glob('*.html'):
 # Core rendering assets are intentionally locked to the last known-good mobile/admin baseline.
 # Any deliberate change to these files must update this list as part of the same reviewed change.
 RENDER_BASELINE={
- 'app-consistency.css':'86a433a3acf6dfabd195a92bca9f22f201195e60',
+ 'app-consistency.css':'3142106974312bf247de3e5373d68368c1da881d',
  'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
- 'admin-embed.js':'f314e4149eec89744a07699aca78e36f31030322',
- 'admin-frame.js':'4d10d715aa0bca3ab8f728c570211ccfd91d95cf',
+ 'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
+ 'admin-frame.js':'99fb9a62284e541a04a67813ef71b2075c2b271f',
  'app-stability.js':'f5819ecd71e76985b7b7f410c2f25e9e7700a380',
- 'shared-admin-nav.js':'e8583f8453c10bc4e1019eca0714216b40de3f73',
+ 'shared-admin-nav.js':'a2ac28614fb89a3d25ce1accd65e17d4c55c8215',
 }
 def git_blob_sha(path):
  import hashlib
@@ -131,8 +136,8 @@ for x in ('updatePost','deletePost','updateComment','deleteComment','setPostReac
 for x in (".eq('user_id',userId)","data-mine=\"${p.user_id===userId}\"","data-mine=\"${c.user_id===userId}\""):
  if x not in social:problems.append(f'social ownership guard missing: {x}')
 staff_perms=(ROOT/'staff-permissions.html').read_text(encoding='utf-8')
-for x in ('own_calendar','full_access','Full access','Own calendar only'):
- if x not in staff_perms:problems.append(f'staff-permissions.html: access ladder missing: {x}')
+for x in ('Access levels','Staff assignments','staff_access_levels','assign_staff_access_level','manage_staff','Admin workspace','Owner controlled'):
+ if x not in staff_perms:problems.append(f'staff-permissions.html: owner-controlled access levels missing: {x}')
 admin_frame=(ROOT/'admin.html').read_text(encoding='utf-8')
 for x in ('adminContentFrameA','adminContentFrameB','adminFrameNav','admin-frame.js','admin-frame.css'):
  if x not in admin_frame:problems.append(f'admin.html: persistent shell missing: {x}')
@@ -233,8 +238,8 @@ for template_name in ('supabase-email-invite-template.html','supabase-email-magi
  template=(ROOT/template_name)
  if not template.exists():problems.append(f'{template_name}: branded email template missing');continue
  tt=template.read_text(encoding='utf-8')
- for x in ('HYBRID','{{ .ConfirmationURL }}','{{ .Data.hybrid_gym_name }}','{{ .Data.hybrid_invited_by }}','{{ .Data.hybrid_invite_role }}','Accept invitation'):
-  if x not in tt:problems.append(f'{template_name}: professional invite email content missing: {x}')
+ for x in ('{{ .ConfirmationURL }}','{{ .Data.hybrid_email_brand_name }}','{{ .Data.hybrid_email_heading }}','{{ .Data.hybrid_email_body }}','{{ .Data.hybrid_email_button_label }}','{{ .Data.hybrid_email_accent }}','{{ .Data.hybrid_email_footer }}'):
+  if x not in tt:problems.append(f'{template_name}: gym-configurable invite email content missing: {x}')
 
 admin_invite=(ROOT/'admin-invite.html').read_text(encoding='utf-8')
 for x in ('get_access_invite','claim_access_invite','Access activated','equal Owner','Set a password for future sign-ins','supabase.auth.updateUser','Different account signed in','Sign out and continue with invited email','supabase.auth.signOut()'):
@@ -272,6 +277,13 @@ for page_name in admin_pages:
   if page_text.count(asset)!=1:problems.append(f'{page_name}: expected exactly one {asset}, found {page_text.count(asset)}')
  css_order=[page_text.find('app-consistency.css'),page_text.find('admin-shell.css'),page_text.find('admin-pages.css')]
  if min(css_order)<0 or css_order!=sorted(css_order):problems.append(f'{page_name}: shared admin stylesheet order drifted')
+communications=(ROOT/'communications.html').read_text(encoding='utf-8')
+for x in ('Communications','Transactional','Marketing','gym_communication_settings','gym_email_templates','access_invite','{{gym_name}}','{{invited_by}}','{{role}}','Live preview'):
+ if x not in communications:problems.append(f'communications.html: communications editor missing: {x}')
+for x in ("{key:'communications'","href:'./communications.html'","if(p.endsWith('/communications.html'))return'communications'"):
+ if x not in admin_nav:problems.append(f'shared-admin-nav.js: communications route missing: {x}')
+for x in ("{key:'communications'","view:'communications.html'","if(file==='communications.html')return'communications'"):
+ if x not in admin_frame_js:problems.append(f'admin-frame.js: communications route missing: {x}')
 community=(ROOT/'community.html').read_text(encoding='utf-8')
 for x in ('Member community','social_posts','social_comments','social_reactions','Post to community','sendComment','reply-comment','parent_comment_id','Add a comment'):
  if x not in community:problems.append(f'community.html: admin social feed missing: {x}')
@@ -341,7 +353,7 @@ admin_ops=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
 for x in ('showOpsTab','history.replaceState'):
  if x not in admin_ops:problems.append(f'admin-operations.html: direct internal admin switch missing: {x}')
 
-for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html'):
+for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','communications.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('hybrid-admin-hot-nav','admin-hot-nav','html.admin-hot-nav #loading'):
   if x not in page_text:problems.append(f'{page_name}: admin hot first-paint missing: {x}')
