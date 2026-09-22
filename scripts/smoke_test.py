@@ -3,8 +3,22 @@ import re,subprocess,sys
 from pathlib import Path
 ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
 CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
-JS=('app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
+JS=('supabase-request-guard.js','app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
+
+GUARDED_APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','groups.html','onboarding.html','admin.html')
+for n in GUARDED_APP_PAGES:
+ p=ROOT/n
+ if not p.exists():problems.append(f'{n}: guarded app page missing');continue
+ t=p.read_text(encoding='utf-8')
+ if 'supabase-request-guard.js' not in t:problems.append(f'{n}: Supabase request guard missing')
+
+guard=(ROOT/'supabase-request-guard.js').read_text(encoding='utf-8')
+for x in ('maxRequests=100','windowMs=10000','cooldownMs=60000',"url.pathname.startsWith('/rest/v1/')","url.pathname.startsWith('/functions/v1/')"):
+ if x not in guard:problems.append(f'supabase-request-guard.js: circuit-breaker contract missing: {x}')
+social_notice=(ROOT/'social-notifications.js').read_text(encoding='utf-8')
+for x in ('300000',"sessionStorage.getItem('hybrid-gym-id')",".eq('gym_id',selectedGymId)"):
+ if x not in social_notice:problems.append(f'social-notifications.js: low-egress gym-bound polling missing: {x}')
 landing=ROOT/'landing.html'
 if not landing.exists():problems.append('landing.html: HybridOne marketing homepage missing')
 else:
