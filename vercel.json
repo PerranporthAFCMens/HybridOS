@@ -1,14 +1,28 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "python3 scripts/build_site.py",
+  "outputDirectory": "_site",
   "git": {
     "deploymentEnabled": {
       "dev": false
     }
   },
   "rewrites": [
-    { "source": "/", "destination": "/landing.html" },
-    { "source": "/hybrid-hub", "destination": "/hybrid-hub-login.html" },
-    { "source": "/puffin-performance", "destination": "/puffin-performance-login.html" },
-    { "source": "/app", "destination": "/index.html" }
+    {
+      "source": "/",
+      "destination": "/landing.html"
+    },
+    {
+      "source": "/hybrid-hub",
+      "destination": "/hybrid-hub-login.html"
+    },
+    {
+      "source": "/puffin-performance",
+      "destination": "/puffin-performance-login.html"
+    },
+    {
+      "source": "/app",
+      "destination": "/index.html"
+    }
   ]
 }
