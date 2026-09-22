@@ -5,6 +5,22 @@ ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
 CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
 JS=('app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
+landing=ROOT/'landing.html'
+if not landing.exists():problems.append('landing.html: HybridOne marketing homepage missing')
+else:
+ lt=landing.read_text(encoding='utf-8')
+ for x in ('HybridOne','The operating system for hybrid gyms','LOGO PLACEHOLDER','Book a demo'):
+  if x not in lt:problems.append(f'landing.html: marketing content missing: {x}')
+vercel=ROOT/'vercel.json'
+if not vercel.exists():problems.append('vercel.json: HybridOne routes missing')
+else:
+ vt=vercel.read_text(encoding='utf-8')
+ for x in ('/landing.html','/hybrid-hub','/puffin-performance','/app'):
+  if x not in vt:problems.append(f'vercel.json: route missing: {x}')
+for brand_page in ROOT.glob('*.html'):
+ bt=brand_page.read_text(encoding='utf-8')
+ if re.search(r'Hybrid OS|HYBRID OS|HybridOS|HYBRIDOS',bt):
+  problems.append(f'{brand_page.name}: legacy Hybrid OS branding returned')
 # Core rendering assets are intentionally locked to the last known-good mobile/admin baseline.
 # Any deliberate change to these files must update this list as part of the same reviewed change.
 RENDER_BASELINE={
