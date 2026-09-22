@@ -2,6 +2,12 @@ from __future__ import annotations
 import re,subprocess,sys
 from pathlib import Path
 ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
+for login_name in ('hybrid-hub-login.html','puffin-performance-login.html'):
+ login_text=(ROOT/login_name).read_text(encoding='utf-8')
+ if "location.replace('./admin.html?gym_id='" not in login_text:problems.append(f'{login_name}: gym login must enter admin shell')
+ if "location.replace('./index.html?gym_id='" in login_text:problems.append(f'{login_name}: legacy direct dashboard redirect still present')
+invite_text=(ROOT/'admin-invite.html').read_text(encoding='utf-8')
+if 'href="./admin.html"' not in invite_text:problems.append('admin-invite.html: accepted staff invite must open admin shell')
 # HybridOne is a CamelCase brand. Never ship the all-caps text variant in customer-facing source.
 for brand_file in list(ROOT.glob('*.html'))+list(ROOT.glob('*.js'))+list((ROOT/'scripts').glob('*.py')):
  try: brand_text=brand_file.read_text(encoding='utf-8')

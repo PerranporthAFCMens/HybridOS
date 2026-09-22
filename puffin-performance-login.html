@@ -27,7 +27,7 @@ import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+e
 const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 const gymId='aec16956-3793-4543-873b-4412646ca1eb',btn=document.getElementById('signIn'),msg=document.getElementById('msg');
 sessionStorage.setItem('hybrid-gym-id',gymId);
-btn.onclick=async()=>{msg.textContent='';const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value;if(!email||!password){msg.textContent='Enter your email and password.';return}btn.disabled=true;try{const{error}=await supabase.auth.signInWithPassword({email,password});if(error)throw error;sessionStorage.setItem('hybrid-gym-id',gymId);location.replace('./index.html?gym_id='+encodeURIComponent(gymId))}catch(e){msg.textContent=e.message||'Could not sign in.';btn.disabled=false}};
+btn.onclick=async()=>{msg.textContent='';const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value;if(!email||!password){msg.textContent='Enter your email and password.';return}btn.disabled=true;try{const{error}=await supabase.auth.signInWithPassword({email,password});if(error)throw error;sessionStorage.setItem('hybrid-gym-id',gymId);location.replace('./admin.html?gym_id='+encodeURIComponent(gymId))}catch(e){msg.textContent=e.message||'Could not sign in.';btn.disabled=false}};
 document.getElementById('password').addEventListener('keydown',e=>{if(e.key==='Enter')btn.click()});
 </script>
 </body>
