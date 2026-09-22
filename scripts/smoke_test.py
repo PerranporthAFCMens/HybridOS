@@ -6,7 +6,7 @@ CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membe
 JS=('supabase-request-guard.js','app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
 
-GUARDED_APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','groups.html','onboarding.html','admin.html')
+GUARDED_APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','groups.html','onboarding.html','admin.html','communications.html')
 for n in GUARDED_APP_PAGES:
  p=ROOT/n
  if not p.exists():problems.append(f'{n}: guarded app page missing');continue
@@ -42,10 +42,10 @@ RENDER_BASELINE={
  'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
- 'admin-embed.js':'f314e4149eec89744a07699aca78e36f31030322',
- 'admin-frame.js':'4d10d715aa0bca3ab8f728c570211ccfd91d95cf',
+ 'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
+ 'admin-frame.js':'c8bc04640d1bc242ed5cfd968852ca9964dd723f',
  'app-stability.js':'f5819ecd71e76985b7b7f410c2f25e9e7700a380',
- 'shared-admin-nav.js':'e8583f8453c10bc4e1019eca0714216b40de3f73',
+ 'shared-admin-nav.js':'7ad82731ae811d99b45085d636ab7b30fe569c80',
 }
 def git_blob_sha(path):
  import hashlib
@@ -272,6 +272,13 @@ for page_name in admin_pages:
   if page_text.count(asset)!=1:problems.append(f'{page_name}: expected exactly one {asset}, found {page_text.count(asset)}')
  css_order=[page_text.find('app-consistency.css'),page_text.find('admin-shell.css'),page_text.find('admin-pages.css')]
  if min(css_order)<0 or css_order!=sorted(css_order):problems.append(f'{page_name}: shared admin stylesheet order drifted')
+communications=(ROOT/'communications.html').read_text(encoding='utf-8')
+for x in ('Communications','Transactional','Marketing','gym_communication_settings','gym_email_templates','access_invite','{{gym_name}}','{{invited_by}}','{{role}}','Live preview'):
+ if x not in communications:problems.append(f'communications.html: communications editor missing: {x}')
+for x in ("{key:'communications'","href:'./communications.html'","if(p.endsWith('/communications.html'))return'communications'"):
+ if x not in admin_nav:problems.append(f'shared-admin-nav.js: communications route missing: {x}')
+for x in ("{key:'communications'","view:'communications.html'","if(file==='communications.html')return'communications'"):
+ if x not in admin_frame_js:problems.append(f'admin-frame.js: communications route missing: {x}')
 community=(ROOT/'community.html').read_text(encoding='utf-8')
 for x in ('Member community','social_posts','social_comments','social_reactions','Post to community','sendComment','reply-comment','parent_comment_id','Add a comment'):
  if x not in community:problems.append(f'community.html: admin social feed missing: {x}')
@@ -341,7 +348,7 @@ admin_ops=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
 for x in ('showOpsTab','history.replaceState'):
  if x not in admin_ops:problems.append(f'admin-operations.html: direct internal admin switch missing: {x}')
 
-for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html'):
+for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','communications.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('hybrid-admin-hot-nav','admin-hot-nav','html.admin-hot-nav #loading'):
   if x not in page_text:problems.append(f'{page_name}: admin hot first-paint missing: {x}')

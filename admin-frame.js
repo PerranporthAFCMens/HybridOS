@@ -1,7 +1,7 @@
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 const shellVersion=new URL(import.meta.url).searchParams.get('v')||Date.now().toString();
-const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html']);
+const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html']);
 const routes=[
  {key:'dashboard',label:'Dashboard',icon:'dashboard',view:'index.html'},
  {key:'community',label:'Community',icon:'community',view:'community.html'},
@@ -10,6 +10,7 @@ const routes=[
  {key:'services',label:'Services & resources',icon:'services',view:'admin-operations.html#resources'},
  {key:'staff',label:'Staff management',icon:'staff',view:'admin-operations.html#staff'},
  {key:'members',label:'Members',icon:'members',view:'index.html#members'},
+ {key:'communications',label:'Communications',icon:'community',view:'communications.html'},
  {key:'member-view',label:'Member view',icon:'profile',view:'member-view-settings.html',section:'View as'},
  {key:'staff-view',label:'Staff view',icon:'staff',href:'./staff.html?view=staff'},
  {key:'reporting',label:'Reporting',icon:'reporting',view:'reporting.html'}
@@ -38,6 +39,7 @@ function keyFor(view){
  if(file==='staff-permissions.html'||file==='admin-access.html')return'staff';
  if(file==='resource-availability.html'||file==='gym-layout.html')return'services';
  if(file==='reporting.html')return'reporting';
+ if(file==='communications.html')return'communications';
  if(file==='member-view-settings.html')return'member-view';
  if(file==='index.html'&&hash==='members')return'members';
  if(file==='index.html')return'dashboard';

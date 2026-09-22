@@ -2,7 +2,7 @@
   const qs=new URLSearchParams(location.search);
   if(qs.get('embedded')!=='1')return;
   document.documentElement.classList.add('admin-embedded');
-  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html']);
+  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html']);
 
   function viewFromUrl(href){
     try{
