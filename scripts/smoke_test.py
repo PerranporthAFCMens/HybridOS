@@ -189,6 +189,10 @@ for x in ("sessionStorage.setItem('hybrid-gym-id'","gms.find(x=>x.gym_id===selec
 for x in ("location.pathname==='/'","location.replace('./landing.html')"):
  if x not in index_source:problems.append(f'index.html: production marketing-root fallback missing: {x}')
 if ".eq('is_active',true).limit(1)" in index_source:problems.append('index.html: ambiguous first-gym lookup returned')
+for context_file in ('staff.html','tenant-branding.js'):
+ context_source=(ROOT/context_file).read_text(encoding='utf-8')
+ if ".eq('is_active',true).limit(1)" in context_source:problems.append(f'{context_file}: ambiguous first-gym lookup returned')
+ if "sessionStorage.getItem('hybrid-gym-id')" not in context_source:problems.append(f'{context_file}: explicit login gym context missing')
 for login_name,gym_name,gym_id in (
  ('hybrid-hub-login.html','Hybrid Hub','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),
  ('puffin-performance-login.html','Puffin Performance','aec16956-3793-4543-873b-4412646ca1eb')

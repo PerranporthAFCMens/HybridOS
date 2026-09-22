@@ -43,9 +43,12 @@
       const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
       const {data:{session}}=await sb.auth.getSession();
       if(!session) return;
-      const {data:gm}=await sb.from('gym_members').select('gym_id').eq('user_id',session.user.id).eq('is_active',true).limit(1);
+      const {data:gm}=await sb.from('gym_members').select('gym_id').eq('user_id',session.user.id).eq('is_active',true);
       if(!gm?.length) return;
-      const {data:settings}=await sb.from('gym_access_settings').select('access_enabled,access_code,member_label,member_note').eq('gym_id',gm[0].gym_id).maybeSingle();
+      let selectedGymId=sessionStorage.getItem('hybrid-gym-id')||'',membership=selectedGymId?gm.find(x=>x.gym_id===selectedGymId):null;
+      if(!membership&&gm.length===1){membership=gm[0];selectedGymId=membership.gym_id;sessionStorage.setItem('hybrid-gym-id',selectedGymId)}
+      if(!membership) return;
+      const {data:settings}=await sb.from('gym_access_settings').select('access_enabled,access_code,member_label,member_note').eq('gym_id',membership.gym_id).maybeSingle();
       if(!settings?.access_enabled||!settings.access_code) return;
 
       const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
