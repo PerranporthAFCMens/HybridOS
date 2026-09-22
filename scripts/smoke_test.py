@@ -56,7 +56,7 @@ RENDER_BASELINE={
  'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
  'admin-frame.js':'99fb9a62284e541a04a67813ef71b2075c2b271f',
  'app-stability.js':'f5819ecd71e76985b7b7f410c2f25e9e7700a380',
- 'shared-admin-nav.js':'a2ac28614fb89a3d25ce1accd65e17d4c55c8215',
+ 'shared-admin-nav.js':'ad4fbc29cd9b85ffe42d33ae5b918a3903f30761',
 }
 def git_blob_sha(path):
  import hashlib
@@ -182,6 +182,8 @@ if "window.top!==window.self||window.matchMedia('(max-width:900px)').matches" no
 if "function markAdminHotNav(href){try{" not in admin_nav:problems.append('shared-admin-nav.js: smooth top-level admin handoff missing')
 for x in ('markAdminHotNav','hybrid-admin-hot-nav','sessionStorage.setItem'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: smooth admin hand-off missing: {x}')
+for x in ("window.matchMedia('(max-width:900px)').matches","e.preventDefault();const href=a.href;closeMobile();requestAnimationFrame(()=>location.assign(href))"):
+ if x not in admin_nav:problems.append(f'shared-admin-nav.js: explicit mobile drawer navigation missing: {x}')
 for x in ("{key:'sign-out'","href:'./sign-out.html'"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: global admin sign out missing: {x}')
 auth_return=(ROOT/'auth-return.html')
