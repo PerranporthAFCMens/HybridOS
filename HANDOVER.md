@@ -1013,7 +1013,50 @@ Do not reopen production/dev visual parity unless there is new evidence of a mis
 
 ---
 
-## 27. Fast handover summary
+## 27. 22 September continuation checkpoint
+
+Work completed after the original documentation refresh:
+
+- `admin-access-guard.js` now binds pending Owner/Admin lookup to the explicit query/session gym context instead of first active membership selection.
+- `member.html`, `integrations.html` and `social.html` no longer select the first active gym membership. Each requires `sessionStorage['hybrid-gym-id']` and queries that exact `gym_id`.
+- smoke protection now fails if those ambiguous tenant selectors return.
+- both dedicated gym login pages now support gym-bound password reset and passwordless magic-link requests.
+- new `auth-return.html` handles secure Auth return/recovery, preserves the explicit gym context, and routes only after checking that user's membership in that exact gym.
+- public member signup confirmation now includes the actual `gym_id` returned by `get_public_gym_join_options`.
+- new version-controlled Send Email Hook source exists at `supabase/functions/send-auth-email/index.ts`.
+- the hook resolves gym branding from secure access-invite context, exact `user_id + gym_id` membership, or validated public-join signup context. It never derives gym from the recipient email.
+- the hook loads `gym_communication_settings` and `gym_email_templates`, falls back to `noreply@hybridone.co.uk`, uses Resend with idempotency keys, and verifies Supabase Standard Webhook signatures.
+- `scripts/email_hook_smoke.py` is now part of CI and protects the hook's tenant/security contracts.
+- Resend `hybridone.co.uk` was rechecked: verified, sending enabled, EU West, open/click tracking disabled.
+- the GitHub Pages dev deployment built successfully and its deployed artifact was inspected to confirm the new login/reset/magic/signup context code is present.
+
+Current branch state at this checkpoint:
+
+- `main` remains on the previous production/documentation checkpoint.
+- `dev` is ahead with the tenant hardening and Auth-email groundwork.
+- do not merge/promote these changes to `main` until the Auth flows have been exercised in the browser test matrix.
+
+Important activation boundary:
+
+- the `send-auth-email` source is **not yet active as the Supabase Auth Send Email Hook**.
+- an attempted deployment through the connected tooling was blocked before changing Supabase.
+- do not enable the Auth hook until both `RESEND_API_KEY` and `SEND_EMAIL_HOOK_SECRET` are securely present in the Edge Function environment and the function has been compiled/deployed.
+- activating the hook without those secrets would break Auth email delivery.
+- the existing project-wide SMTP path therefore remains the live Auth-email sender for now.
+
+Next concrete Auth steps:
+
+1. securely provision the Edge Function Resend API key and Send Email Hook signing secret
+2. deploy `send-auth-email` with JWT verification disabled only because the function validates the Standard Webhook signature itself
+3. configure Supabase Auth Send Email Hook to that endpoint
+4. run reset, magic link, member confirmation and Admin/Owner invite tests for Hybrid Hub
+5. repeat the same tests through Puffin Performance to prove the same email account can remain tenant-correct
+6. verify wrong-account, expired/revoked invite and multi-Owner approval cases
+7. only then promote reviewed `dev` to `main`
+
+---
+
+## 28. Fast handover summary
 
 If you only read one section, read this:
 
