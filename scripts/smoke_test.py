@@ -29,7 +29,7 @@ RENDER_BASELINE={
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
  'admin-embed.js':'f314e4149eec89744a07699aca78e36f31030322',
- 'admin-frame.js':'94939c115918fe76a4291cceb73e4c3897407240',
+ 'admin-frame.js':'4d10d715aa0bca3ab8f728c570211ccfd91d95cf',
  'app-stability.js':'f5819ecd71e76985b7b7f410c2f25e9e7700a380',
  'shared-admin-nav.js':'e8583f8453c10bc4e1019eca0714216b40de3f73',
 }
