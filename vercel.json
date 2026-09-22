@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/", "destination": "/landing.html" },
+    { "source": "/hybrid-hub", "destination": "/hybrid-hub-login.html" },
+    { "source": "/puffin-performance", "destination": "/puffin-performance-login.html" },
+    { "source": "/app", "destination": "/index.html" }
+  ]
+}
