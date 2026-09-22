@@ -160,7 +160,7 @@ for x in ('markAdminHotNav','hybrid-admin-hot-nav','sessionStorage.setItem'):
 for x in ("{key:'sign-out'","href:'./sign-out.html'"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: global admin sign out missing: {x}')
 sign_out=(ROOT/'sign-out.html').read_text(encoding='utf-8')
-for x in ('supabase.auth.signOut()',"location.replace('./index.html')",'Signing you out'):
+for x in ('supabase.auth.signOut()',"location.replace('./')",'Signing you out'):
  if x not in sign_out:problems.append(f'sign-out.html: reliable sign out flow missing: {x}')
 if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: duplicate Member memberships tab returned')
 
@@ -186,6 +186,8 @@ for x in ('access_invite','invite_email','invite_gym','invite_role','Sign in to 
  if x not in index_source:problems.append(f'index.html: invite sign-in landing missing: {x}')
 for x in ("sessionStorage.setItem('hybrid-gym-id'","gms.find(x=>x.gym_id===selectedGymId)"):
  if x not in index_source:problems.append(f'index.html: login gym context missing: {x}')
+for x in ("location.pathname==='/'","location.replace('./landing.html')"):
+ if x not in index_source:problems.append(f'index.html: production marketing-root fallback missing: {x}')
 if ".eq('is_active',true).limit(1)" in index_source:problems.append('index.html: ambiguous first-gym lookup returned')
 for login_name,gym_name,gym_id in (
  ('hybrid-hub-login.html','Hybrid Hub','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),
