@@ -1,4 +1,9 @@
 (function(){
+  const HYBRID_HUB_ID='242f57c2-6e37-4977-b3c5-1c87de7d0b98';
+  const TENANT_BRANDS={
+    [HYBRID_HUB_ID]:{name:'Hybrid Hub',logo:'./assets/hybrid-hub-logo-horizontal.svg'}
+  };
+  const activeTenant=()=>TENANT_BRANDS[sessionStorage.getItem('hybrid-gym-id')||'']||null;
   const ICONS={
     dashboard:'<rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect>',
     home:'<path d="M3 11.5 12 4l9 7.5"></path><path d="M5 10.5V20h5v-5h4v5h5v-9.5"></path>',
@@ -33,17 +38,23 @@
     const gym=side.querySelector('.gym');
     if(gym){
       gym.classList.add('hybrid-shell-gym');
+      const tenant=activeTenant();
       let logo=gym.querySelector('.tenant-gym-logo');
-      if(!logo){
-        logo=gym.querySelector('img');
-        if(logo)logo.classList.add('tenant-gym-logo');
-        else{
-          logo=document.createElement('img');
-          logo.src='./assets/hybrid-hub-logo-horizontal.svg';
-          logo.alt='Hybrid Hub';
-          logo.className='tenant-gym-logo';
-          gym.insertBefore(logo,gym.firstChild);
+      if(tenant){
+        if(!logo){
+          logo=gym.querySelector('img');
+          if(logo)logo.classList.add('tenant-gym-logo');
+          else{
+            logo=document.createElement('img');
+            logo.className='tenant-gym-logo';
+            gym.insertBefore(logo,gym.firstChild);
+          }
         }
+        logo.src=tenant.logo;
+        logo.alt=tenant.name;
+        logo.dataset.hybridTenantLogo='1';
+      }else if(logo&&/hybrid-hub-logo-horizontal\.svg(?:$|[?#])/.test(logo.getAttribute('src')||'')){
+        logo.remove();
       }
     }
   }

@@ -1,36 +1,42 @@
 (function(){
-  const logo='./assets/hybrid-hub-logo-horizontal.svg';
-  const gymName='Hybrid Hub';
+  const HYBRID_HUB_ID='242f57c2-6e37-4977-b3c5-1c87de7d0b98';
+  const TENANT_BRANDS={
+    [HYBRID_HUB_ID]:{name:'Hybrid Hub',logo:'./assets/hybrid-hub-logo-horizontal.svg'}
+  };
+  const activeTenant=()=>TENANT_BRANDS[sessionStorage.getItem('hybrid-gym-id')||'']||null;
 
   function addLogoToGymCards(){
+    const tenant=activeTenant();
     document.querySelectorAll('.gym').forEach(function(card){
-      if(card.querySelector('.tenant-gym-logo')) return;
-      const img=document.createElement('img');
-      img.src=logo;
-      img.alt=gymName;
+      const existing=card.querySelector('.tenant-gym-logo');
+      if(!tenant){
+        if(existing&&/hybrid-hub-logo-horizontal\.svg(?:$|[?#])/.test(existing.getAttribute('src')||'')) existing.remove();
+        return;
+      }
+      const img=existing||document.createElement('img');
+      img.src=tenant.logo;
+      img.alt=tenant.name;
       img.className='tenant-gym-logo';
-      card.insertBefore(img,card.firstChild);
+      img.dataset.hybridTenantLogo='1';
+      if(!existing) card.insertBefore(img,card.firstChild);
     });
   }
 
   function addTopBrand(){
     const path=location.pathname;
     if(!(path.endsWith('/member.html')||path.endsWith('/member-preview.html'))) return;
+    const tenant=activeTenant();
+    if(!tenant){document.querySelector('.tenant-top-brand')?.remove();return}
     const main=document.querySelector('.main');
     const top=document.querySelector('.main .top');
     if(!main||!top||document.querySelector('.tenant-top-brand')||document.querySelector('.member-gym-logo')) return;
     const wrap=document.createElement('div');
     wrap.className='tenant-top-brand';
-    wrap.innerHTML='<img src="'+logo+'" alt="'+gymName+'">';
+    const img=document.createElement('img');
+    img.src=tenant.logo;
+    img.alt=tenant.name;
+    wrap.appendChild(img);
     main.insertBefore(wrap,top);
-  }
-
-  function ensureGymName(){
-    document.querySelectorAll('.gym').forEach(function(card){
-      [...card.querySelectorAll('div')].forEach(function(node){
-        if((node.textContent||'').trim()==='Puffin Performance') node.textContent=gymName;
-      });
-    });
   }
 
   async function addDoorAccessCard(){
@@ -72,7 +78,6 @@
   function init(){
     addLogoToGymCards();
     addTopBrand();
-    ensureGymName();
     addDoorAccessCard();
   }
 

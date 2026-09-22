@@ -193,6 +193,12 @@ for context_file in ('staff.html','tenant-branding.js','admin-frame.js'):
  context_source=(ROOT/context_file).read_text(encoding='utf-8')
  if ".eq('is_active',true).limit(1)" in context_source:problems.append(f'{context_file}: ambiguous first-gym lookup returned')
  if "sessionStorage.getItem('hybrid-gym-id')" not in context_source:problems.append(f'{context_file}: explicit login gym context missing')
+tenant_branding=(ROOT/'tenant-branding.js').read_text(encoding='utf-8')
+shared_shell=(ROOT/'shared-shell.js').read_text(encoding='utf-8')
+if "Puffin Performance" in tenant_branding:problems.append('tenant-branding.js: cross-gym name rewrite returned')
+for x in ("HYBRID_HUB_ID","sessionStorage.getItem('hybrid-gym-id')"):
+ if x not in tenant_branding:problems.append(f'tenant-branding.js: tenant-aware branding missing: {x}')
+ if x not in shared_shell:problems.append(f'shared-shell.js: tenant-aware branding missing: {x}')
 for login_name,gym_name,gym_id in (
  ('hybrid-hub-login.html','Hybrid Hub','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),
  ('puffin-performance-login.html','Puffin Performance','aec16956-3793-4543-873b-4412646ca1eb')
