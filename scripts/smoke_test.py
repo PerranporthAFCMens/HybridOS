@@ -292,6 +292,14 @@ for x in ("{key:'communications'","href:'./communications.html'","if(p.endsWith(
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: communications route missing: {x}')
 for x in ("{key:'communications'","view:'communications.html'","if(file==='communications.html')return'communications'"):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: communications route missing: {x}')
+ops_source=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
+if 'class="operations-page"' not in ops_source:problems.append('admin-operations.html: operations page scope class missing')
+ops_css=(ROOT/'admin-operations.css')
+if not ops_css.exists():problems.append('admin-operations.css: page-scoped mobile stylesheet missing')
+else:
+ ops_css_text=ops_css.read_text(encoding='utf-8')
+ for x in ('.operations-page .toolbar','.operations-page .rowtop','overflow-wrap:anywhere','@media(max-width:700px)'):
+  if x not in ops_css_text:problems.append(f'admin-operations.css: operations mobile contract missing: {x}')
 community=(ROOT/'community.html').read_text(encoding='utf-8')
 for x in ('Member community','social_posts','social_comments','social_reactions','Post to community','sendComment','reply-comment','parent_comment_id','Add a comment'):
  if x not in community:problems.append(f'community.html: admin social feed missing: {x}')
