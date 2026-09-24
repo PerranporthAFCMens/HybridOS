@@ -2,9 +2,19 @@
 
 **Updated: 24 September 2026**
 
-This is the authoritative continuation brief for HybridOne / Hybrid Hub.
+This file is architectural and historical background for HybridOne / Hybrid Hub.
 
-Read this before changing code, database policy, Auth, email, deployment, routing, navigation or permissions.
+**Do not use volatile branch heads, deployment versions, live Edge Function versions or release status in this file as operational truth.**
+
+Before changing code, database policy, Auth, email, deployment, routing, navigation or permissions, read:
+
+1. [PROJECT_STATE.json](./PROJECT_STATE.json)
+2. [PROJECT_CONTROL.md](./PROJECT_CONTROL.md)
+3. [ENVIRONMENT.md](./ENVIRONMENT.md)
+4. [STATUS.md](./STATUS.md)
+5. [AUTH_TEST_MATRIX.md](./AUTH_TEST_MATRIX.md) when relevant
+
+The control layer overrides any older checkpoint text below.
 
 ---
 

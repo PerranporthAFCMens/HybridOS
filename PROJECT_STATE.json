@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "verified_at_utc": "2026-09-24T22:08:16Z",
+  "repository": "PerranporthAFCMens/HybridOS",
+  "branches": {
+    "production_source": "main",
+    "development_source": "dev",
+    "production_main_sha": "424bfb9ec7f0fcf36b7b276e16a0385bb0b3a961",
+    "verified_dev_application_sha": "82c0978b48b58ba70bd2840e70ff04b25bc05ae9",
+    "relationship": "diverged",
+    "dev_ahead_by": 42,
+    "dev_behind_by": 1,
+    "merge_base_sha": "b7d83243e9248a64978677efec91c4f9d83c1052"
+  },
+  "release_gate": {
+    "production_hold": true,
+    "production_promotion_allowed": false,
+    "reason": "Auth and invite browser matrix is not complete"
+  },
+  "production": {
+    "public_origin": "https://www.hybridone.co.uk",
+    "hybrid_hub_login": "https://www.hybridone.co.uk/hybrid-hub",
+    "puffin_performance_login": "https://www.hybridone.co.uk/puffin-performance",
+    "vercel_project_id": "prj_9DRBM2eBpXpXngPTCawtIwYID6rc",
+    "vercel_team_id": "team_p7v1ius4XrtikQ0awFGWP4sF",
+    "deployed_source_sha": "424bfb9ec7f0fcf36b7b276e16a0385bb0b3a961",
+    "deployment_state": "READY"
+  },
+  "development": {
+    "pages_origin": "https://perranporthafcmens.github.io/HybridOS/",
+    "hybrid_hub_login": "https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98",
+    "puffin_performance_login": "https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=aec16956-3793-4543-873b-4412646ca1eb",
+    "latest_verified_pages_run_id": 36065671940,
+    "latest_verified_pages_checkout_sha": "82c0978b48b58ba70bd2840e70ff04b25bc05ae9",
+    "latest_verified_smoke_run_id": 36065655123,
+    "latest_verified_smoke_result": "success",
+    "dedicated_login_aliases": {
+      "hybrid_hub_source": "hybrid-hub-login.html",
+      "puffin_source": "puffin-performance-login.html",
+      "user_facing_status": "do_not_recommend_until_browser_reverified"
+    }
+  },
+  "supabase": {
+    "project_id": "mzgnhmeydhhpzgxlgudh",
+    "hybrid_hub_gym_id": "242f57c2-6e37-4977-b3c5-1c87de7d0b98",
+    "puffin_performance_gym_id": "aec16956-3793-4543-873b-4412646ca1eb",
+    "tenant_rule": "login_route_decides_gym",
+    "auth_email_hook": {
+      "enabled": true,
+      "endpoint": "https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/send-auth-email",
+      "edge_function_version": 5,
+      "verify_jwt": false,
+      "resend_api_key_present": true,
+      "send_email_hook_secret_present": true
+    },
+    "access_invite_sender": {
+      "edge_function_version": 11,
+      "verify_jwt": true
+    }
+  },
+  "current_auth_status": {
+    "hybrid_hub_password_reset_email": "pass_delivery_branding_return_url",
+    "puffin_magic_link_email": "pass_delivery_branding_return_url",
+    "cross_gym_login_isolation": "pass_browser",
+    "admin_invite_email": "partial_placeholder_fix_deployed_resend_pending",
+    "corrected_admin_invite_acceptance": "not_tested"
+  },
+  "current_open_test_invite": {
+    "purpose": "Admin invite acceptance verification",
+    "status": "open",
+    "corrected_resend_verified": false,
+    "acceptance_verified": false
+  }
+}

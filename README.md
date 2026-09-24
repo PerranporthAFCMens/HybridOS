@@ -4,9 +4,17 @@
 
 HybridOne is a multi-tenant gym-management SaaS covering memberships, members, classes, programming, staff, community, reporting, communications and member/staff experiences.
 
-> **Start with [HANDOVER.md](./HANDOVER.md).** It is the authoritative continuation brief.
+> **Before changing HybridOne, read the project control layer in this order:**
 >
-> Deployment details live in **[VERCEL.md](./VERCEL.md)**.
+> 1. [PROJECT_STATE.json](./PROJECT_STATE.json)
+> 2. [PROJECT_CONTROL.md](./PROJECT_CONTROL.md)
+> 3. [ENVIRONMENT.md](./ENVIRONMENT.md)
+> 4. [STATUS.md](./STATUS.md)
+> 5. [AUTH_TEST_MATRIX.md](./AUTH_TEST_MATRIX.md) for Auth/routing/invite work
+>
+> [HANDOVER.md](./HANDOVER.md) is architectural/background context. Live operational state comes from the control layer above.
+>
+> Deployment details also live in **[VERCEL.md](./VERCEL.md)**.
 
 ## Product status
 
