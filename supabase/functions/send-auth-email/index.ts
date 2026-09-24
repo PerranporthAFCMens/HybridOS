@@ -70,30 +70,22 @@ function parseRedirect(value?: string) {
   try { return value ? new URL(value) : null } catch { return null }
 }
 
-async function loadGym(gymId: string, invitedBy?: string | null, inviteRole?: string | null, accessInvite = false): Promise<GymContext | null> {
-  const [{ data: gym, error: gymError }, { data: settings, error: settingsError }] = await Promise.all([
-    admin.from('gyms').select('id,name,slug').eq('id', gymId).maybeSingle(),
-    admin.from('gym_communication_settings').select('sender_name,sender_email,reply_to_email,sender_domain_status,accent_color,logo_url,footer_text').eq('gym_id', gymId).maybeSingle(),
-  ])
-  if (gymError) throw gymError
-  if (settingsError) throw settingsError
-  if (!gym) return null
-
-  const configuredFrom = String(settings?.sender_email || '').trim().toLowerCase()
-  const senderEmail = settings?.sender_domain_status === 'verified' && configuredFrom ? configuredFrom : DEFAULT_FROM
+function contextFromRow(row: any): GymContext {
+  const configuredFrom = String(row?.sender_email || '').trim().toLowerCase()
+  const senderEmail = row?.sender_domain_status === 'verified' && configuredFrom ? configuredFrom : DEFAULT_FROM
   return {
-    id: gym.id,
-    name: gym.name,
-    slug: gym.slug,
-    senderName: String(settings?.sender_name || gym.name),
+    id: String(row.gym_id),
+    name: String(row.gym_name),
+    slug: row.gym_slug || null,
+    senderName: String(row.sender_name || row.gym_name),
     senderEmail,
-    replyTo: settings?.reply_to_email || null,
-    accent: safeAccent(settings?.accent_color),
-    logoUrl: safeHttpsUrl(settings?.logo_url),
-    footer: String(settings?.footer_text || `Sent by ${gym.name} via HybridOne`),
-    invitedBy,
-    inviteRole,
-    accessInvite,
+    replyTo: row.reply_to_email || null,
+    accent: safeAccent(row.accent_color),
+    logoUrl: safeHttpsUrl(row.logo_url),
+    footer: String(row.footer_text || `Sent by ${row.gym_name} via HybridOne`),
+    invitedBy: row.invited_by || null,
+    inviteRole: row.invite_role || null,
+    accessInvite: row.access_invite === true,
   }
 }
 
@@ -102,50 +94,27 @@ async function resolveGymContext(user: HookUser, emailData: EmailData): Promise<
   if (!redirect) return null
 
   const accessToken = redirect.searchParams.get('access_invite') || ''
-  if (accessToken) {
-    const { data: rows, error } = await admin.rpc('get_access_invite', { invite_token: accessToken })
-    if (error) throw error
-    const invite = rows?.[0]
-    const targetEmail = String(user.email || '').toLowerCase()
-    if (!invite || String(invite.email || '').toLowerCase() !== targetEmail) return null
-    const { data: inviteRow, error: inviteError } = await admin
-      .from('gym_admin_invites')
-      .select('gym_id,invite_role,created_by')
-      .eq('id', invite.invite_id)
-      .maybeSingle()
-    if (inviteError) throw inviteError
-    if (!inviteRow) return null
-    const { data: profile } = await admin.from('profiles').select('display_name,first_name,last_name').eq('id', inviteRow.created_by).maybeSingle()
-    const invitedBy = profile?.display_name || [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'A gym Owner'
-    return await loadGym(inviteRow.gym_id, invitedBy, inviteRow.invite_role, true)
-  }
-
   const gymId = redirect.searchParams.get('gym_id') || ''
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(gymId)) return null
+  let signupSlug: string | null = null
 
   if (emailData.email_action_type === 'signup') {
-    const slug = redirect.searchParams.get('gym') || ''
+    signupSlug = redirect.searchParams.get('gym') || ''
     const pathLooksLikeJoin = /(?:^|\/)join(?:\.html)?$/i.test(redirect.pathname)
-    if (!slug || !pathLooksLikeJoin) return null
-    const { data: gym, error } = await admin.from('gyms').select('id,slug').eq('id', gymId).eq('slug', slug).maybeSingle()
-    if (error) throw error
-    if (!gym) return null
-    const { count, error: planError } = await admin.from('membership_plans').select('id', { head: true, count: 'exact' }).eq('gym_id', gymId).eq('is_active', true).eq('is_public', true)
-    if (planError) throw planError
-    if (!count) return null
-    return await loadGym(gymId)
+    if (!signupSlug || !pathLooksLikeJoin) return null
   }
 
-  const { data: membership, error } = await admin
-    .from('gym_members')
-    .select('gym_id')
-    .eq('user_id', user.id)
-    .eq('gym_id', gymId)
-    .eq('is_active', true)
-    .maybeSingle()
+  if (!accessToken && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(gymId)) return null
+
+  const { data: rows, error } = await admin.rpc('get_auth_email_context', {
+    p_user_id: user.id || null,
+    p_email: String(user.email || ''),
+    p_gym_id: gymId || null,
+    p_access_invite: accessToken || null,
+    p_signup_slug: signupSlug || null,
+  })
   if (error) throw error
-  if (!membership) return null
-  return await loadGym(gymId)
+  const row = rows?.[0]
+  return row ? contextFromRow(row) : null
 }
 
 function actionDefaults(action: string, gymName: string, accessInvite: boolean) {
@@ -175,8 +144,12 @@ async function loadTemplate(context: GymContext | null, action: string) {
   const gymName = context?.name || 'HybridOne'
   const defaults = actionDefaults(action, gymName, context?.accessInvite === true)
   if (!context) return defaults
-  const { data, error } = await admin.from('gym_email_templates').select('subject,preheader,heading,body_text,button_label,enabled').eq('gym_id', context.id).eq('template_key', defaults.key).maybeSingle()
+  const { data: rows, error } = await admin.rpc('get_auth_email_template', {
+    p_gym_id: context.id,
+    p_template_key: defaults.key,
+  })
   if (error) throw error
+  const data = rows?.[0]
   if (!data || data.enabled === false) return defaults
   const vars = {
     gym_name: context.name,
