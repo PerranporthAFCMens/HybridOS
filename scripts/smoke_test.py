@@ -234,6 +234,9 @@ for context_file in ('staff.html','tenant-branding.js','admin-frame.js','member.
 admin_access=(ROOT/'admin-access.html').read_text(encoding='utf-8')
 if "i.status==='open'&&i.delivery_method!=='link'" not in admin_access:problems.append('admin-access.html: open email invites must remain resendable')
 if "i.email_sent_at?'Resend email':'Send / retry email'" not in admin_access:problems.append('admin-access.html: resend label contract missing')
+hub_login=(ROOT/'hybrid-hub-login.html').read_text(encoding='utf-8')
+if "const gymId='242f57c2-6e37-4977-b3c5-1c87de7d0b98'" not in hub_login:problems.append('hybrid-hub-login.html: Hybrid Hub gym binding missing')
+if "location.replace('./index.html?gym_id='+encodeURIComponent(gymId))" not in hub_login:problems.append('hybrid-hub-login.html: explicit Hybrid Hub fallback missing')
 admin_frame_context=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
 for x in ("const explicitGymId=params.get('gym_id')||''","const storedGymId=sessionStorage.getItem('hybrid-gym-id')||''","!membership&&!explicitGymId&&!storedGymId&&gms.length===1"):
  if x not in admin_frame_context:problems.append(f'admin-frame.js: explicit gym context may fall back across tenants: {x}')

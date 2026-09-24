@@ -26,6 +26,10 @@
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 const gymId='242f57c2-6e37-4977-b3c5-1c87de7d0b98',btn=document.getElementById('signIn'),msg=document.getElementById('msg');
+const expectedGymParam=new URLSearchParams(location.search).get('gym_id');
+if(expectedGymParam&&expectedGymParam!==gymId){
+  location.replace('./index.html?gym_id='+encodeURIComponent(gymId));
+}
 sessionStorage.setItem('hybrid-gym-id',gymId);
 function emailValue(){return document.getElementById('email').value.trim().toLowerCase()}
 function authReturn(mode){const url=new URL('./auth-return.html',location.href);url.searchParams.set('gym_id',gymId);url.searchParams.set('mode',mode);return url.toString()}
