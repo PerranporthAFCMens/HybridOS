@@ -1,0 +1,60 @@
+name: HybridOne invite browser acceptance
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/invite-browser-test.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  invite-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Accept exact Hybrid Hub Admin invite in browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-invite-browser-test" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          curl --fail-with-body -sS             -H "Authorization: Bearer $OIDC"             -H "Content-Type: application/json"             --data '{}'             https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-invite-browser-link             -o /tmp/invite-link.json
+          MAGIC_URL="$(python3 -c 'import json; d=json.load(open("/tmp/invite-link.json")); assert d.get("ok") is True, d; print(d["url"])')"
+          echo "::add-mask::$MAGIC_URL"
+          export MAGIC_URL
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const assert = require('node:assert/strict');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+            const page = await context.newPage();
+            try {
+              await page.goto(process.env.MAGIC_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+              await page.locator('#continueInviteBtn').waitFor({ state: 'visible', timeout: 20000 });
+              const msg = (await page.locator('#authMsg').innerText()).toLowerCase();
+              assert.match(msg, /signed in as/);
+              await page.locator('#continueInviteBtn').click();
+              await page.waitForURL(/admin-invite\.html\?token=/, { timeout: 20000 });
+              await page.locator('#doneNotice').waitFor({ state: 'visible', timeout: 20000 });
+              const done = await page.locator('#doneNotice').innerText();
+              assert.match(done, /Access activated/i);
+              assert.match(done, /Admin access/i);
+              console.log('Hybrid Hub Admin invite accepted and activated in browser');
+            } finally {
+              await browser.close();
+            }
+          })().catch(err => { console.error(err.message); process.exit(1); });
+          JS
