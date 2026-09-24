@@ -63,3 +63,12 @@ else:
     for marker in ("admin.from('gym_admin_invites')","admin.from('gym_members')","admin.from('profiles')","admin.from('gym_communication_settings')","admin.from('gym_email_templates')"):
         if marker in invite_text:
             problems.append(f'send-access-invite: direct service-role table read returned: {marker}')
+
+
+if problems:
+    print('EMAIL HOOK SMOKE FAILED')
+    for problem in problems:
+        print('-', problem)
+    raise SystemExit(1)
+
+print('Access invite email smoke passed')
