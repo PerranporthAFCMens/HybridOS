@@ -28,6 +28,10 @@ jobs:
         with:
           ref: dev
 
+      - name: Record checked-out dev SHA
+        shell: bash
+        run: echo "HYBRID_BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
       - name: Build isolated site
         run: python3 scripts/build_site.py
 
@@ -45,3 +49,8 @@ jobs:
       - name: Deploy dev preview
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify public dev runtime
+        env:
+          PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+        run: python3 scripts/runtime_pages_check.py

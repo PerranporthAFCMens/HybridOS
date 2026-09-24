@@ -25,7 +25,7 @@ Fetch:
 - latest production Vercel deployment for production-sensitive work
 - relevant live Supabase Edge Function version for Auth/email work
 
-For GitHub Pages, verify the exact checked-out dev SHA from job logs. Workflow metadata alone is not proof.
+For GitHub Pages, require the post-deploy public runtime check to pass. It verifies the exact checked-out dev SHA through `deployment.json` and checks the public tenant-login routes. Workflow metadata alone is not proof.
 
 ## Definition of "fixed"
 
@@ -46,7 +46,7 @@ If step 6 is missing, say **deployed, runtime verification pending**, not **fixe
 
 Never give a HybridOne login/dev URL from memory.
 
-Use `ENVIRONMENT.md`, then verify the deployed route if the user is about to rely on it.
+Use `ENVIRONMENT.md`, then require a green public runtime route check before giving a dev route to the user.
 
 If source and deployed behaviour disagree, deployed behaviour wins for diagnosis.
 

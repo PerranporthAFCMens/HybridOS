@@ -1,7 +1,7 @@
 from __future__ import annotations
-import os,re,shutil
+import json,os,re,shutil
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'_site';VERSION=(os.environ.get('VERCEL_GIT_COMMIT_SHA') or os.environ.get('GITHUB_SHA') or 'dev')[:12];EXCLUDE={'.git','.github','scripts','_site'}
+ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'_site';BUILD_SHA=(os.environ.get('HYBRID_BUILD_SHA') or os.environ.get('VERCEL_GIT_COMMIT_SHA') or os.environ.get('GITHUB_SHA') or 'dev');VERSION=BUILD_SHA[:12];EXCLUDE={'.git','.github','scripts','_site'}
 APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','groups.html','onboarding.html','communications.html');TENANT_PAGES=('index.html','member.html','member-preview.html','classes.html','staff.html','member-memberships.html','integrations.html','social.html','groups.html');ADMIN_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html')
 def copy_source():
  if OUT.exists():shutil.rmtree(OUT)
@@ -97,5 +97,7 @@ def brand_member_preview():
  n='member-preview.html';s=read(n);s=s.replace('<title>Member Preview · HybridOne</title>','<title>Hybrid Hub · Member Preview</title>').replace('Puffin Performance','Hybrid Hub')
  if 'member-gym-logo' not in s:s=s.replace('<main class="main">','<main class="main"><div class="member-gym-logo"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>',1)
  write(n,s)
-def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();print(f'Built HybridOne site in {OUT}')
+def write_deployment_manifest():
+ (OUT/'deployment.json').write_text(json.dumps({'build_sha':BUILD_SHA,'build_version':VERSION},indent=2)+'\n',encoding='utf-8')
+def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
 if __name__=='__main__':build()

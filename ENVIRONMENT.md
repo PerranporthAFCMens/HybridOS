@@ -114,3 +114,22 @@ source
 ```
 
 Never diagnose a deployed UI only from raw source. Inspect the generated site and then the deployed runtime.
+
+
+## Automatic public runtime verification
+
+Every successful dev Pages deployment now performs a post-deploy check against the **public GitHub Pages site**.
+
+It verifies:
+
+- `deployment.json` reports the exact checked-out `dev` SHA
+- the public Hybrid Hub login file serves Hybrid Hub content, not the generic platform login
+- the public Puffin Performance login file serves Puffin content
+- the query-bound generic login still contains the explicit `gym_id` context contract
+
+Files:
+
+- `scripts/runtime_pages_check.py`
+- `.github/workflows/pages.yml`
+
+A green Pages workflow is therefore runtime evidence, not just build evidence.

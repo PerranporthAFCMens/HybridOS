@@ -113,3 +113,17 @@ Leaked-password protection was previously reported disabled and remains a separa
 Resume at [AUTH_TEST_MATRIX.md](./AUTH_TEST_MATRIX.md), starting with the corrected Admin invite resend and acceptance flow.
 
 Production must remain held until the release-gate rows are complete and browser-verified.
+
+
+## Public Pages runtime verification
+
+A post-deployment public-runtime check is being added at this checkpoint.
+
+The Pages workflow will not complete green unless the public deployment:
+
+1. exposes a `deployment.json` manifest matching the exact checked-out `dev` SHA
+2. serves the Hybrid Hub-specific login content at `hybrid-hub-login.html`
+3. serves the Puffin Performance-specific login content at `puffin-performance-login.html`
+4. retains the explicit query-bound gym-context contract on `index.html?gym_id=...`
+
+Until the first green run completes, this capability is **pending verification**.

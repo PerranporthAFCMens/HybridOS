@@ -38,6 +38,19 @@
       "hybrid_hub_source": "hybrid-hub-login.html",
       "puffin_source": "puffin-performance-login.html",
       "user_facing_status": "do_not_recommend_until_browser_reverified"
+    },
+    "runtime_verification": {
+      "enabled": true,
+      "workflow": ".github/workflows/pages.yml",
+      "manifest": "deployment.json",
+      "script": "scripts/runtime_pages_check.py",
+      "verifies": [
+        "exact deployed dev SHA",
+        "Hybrid Hub public login route content",
+        "Puffin Performance public login route content",
+        "query-bound gym context contract"
+      ],
+      "status": "pending_first_green_run"
     }
   },
   "supabase": {
