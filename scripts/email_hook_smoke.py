@@ -50,3 +50,16 @@ if problems:
     raise SystemExit(1)
 
 print('Email hook smoke passed')
+
+
+ACCESS_INVITE = ROOT / 'supabase' / 'functions' / 'send-access-invite' / 'index.ts'
+if not ACCESS_INVITE.exists():
+    problems.append('send-access-invite Edge Function source is missing')
+else:
+    invite_text = ACCESS_INVITE.read_text(encoding='utf-8')
+    for marker in ("admin.rpc('get_email_invite_send_context'","admin.rpc('prepare_email_invite_token'","admin.rpc('mark_email_invite_sent'","https://www.hybridone.co.uk/app?"):
+        if marker not in invite_text:
+            problems.append(f'send-access-invite: required contract missing: {marker}')
+    for marker in ("admin.from('gym_admin_invites')","admin.from('gym_members')","admin.from('profiles')","admin.from('gym_communication_settings')","admin.from('gym_email_templates')"):
+        if marker in invite_text:
+            problems.append(f'send-access-invite: direct service-role table read returned: {marker}')
