@@ -1,0 +1,25 @@
+name: HybridOne resend one invite
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/resend-one-invite.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  resend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Resend exact open Hybrid Hub invite
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-resend-one-invite" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          curl --fail-with-body -sS             -H "Authorization: Bearer $OIDC"             -H "Content-Type: application/json"             --data '{}'             https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-resend-one-invite             -o /tmp/result.json
+          python3 -c "import json; d=json.load(open('/tmp/result.json')); assert d.get('ok') is True, d; print('Exact invite resent successfully')"
