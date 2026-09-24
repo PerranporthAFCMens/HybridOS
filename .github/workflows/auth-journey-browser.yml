@@ -155,3 +155,43 @@ jobs:
           echo "::add-mask::$OIDC"
           curl --fail-with-body -sS             -H "Authorization: Bearer $OIDC"             -H "Content-Type: application/json"             --data '{}'             https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-auth-journey-cleanup             -o /tmp/cleanup.json
           python3 -c "import json; d=json.load(open('/tmp/cleanup.json')); assert d.get('ok') is True and d.get('cleaned') is True, d; print('Disposable Auth journey account removed')"
+
+      - name: Classify live member signup confirmation mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          PASS="$(python3 -c 'import secrets; print("S1!"+secrets.token_urlsafe(24))')"
+          echo "::add-mask::$PASS"
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-auth-journey" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          BODY="$(PASS="$PASS" python3 -c 'import json,os; print(json.dumps({"password":os.environ["PASS"]}))')"
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer $OIDC" \
+            -H "Content-Type: application/json" \
+            --data "$BODY" \
+            https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-signup-confirm-probe \
+            -o /tmp/signup-probe.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/signup-probe.json'))
+          assert d.get('ok') is True,d
+          print("Signup returned active session:",bool(d.get('has_session')))
+          print("Signup email confirmed at creation:",bool(d.get('email_confirmed_at')))
+          PY
+          sleep 5
+
+      - name: Clean up signup probe account
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-auth-journey" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer $OIDC" \
+            -H "Content-Type: application/json" \
+            --data '{}' \
+            https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-signup-confirm-cleanup \
+            -o /tmp/signup-cleanup.json
+          python3 -c "import json; d=json.load(open('/tmp/signup-cleanup.json')); assert d.get('ok') is True and d.get('cleaned') is True, d"
+
