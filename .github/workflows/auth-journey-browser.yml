@@ -1,0 +1,132 @@
+name: HybridOne Auth journey browser
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/auth-journey-browser.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  auth-journeys:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Create disposable two-gym Auth account
+        shell: bash
+        run: |
+          set -euo pipefail
+          INITIAL_PASS="$(python3 -c 'import secrets; print("H1!"+secrets.token_urlsafe(24))')"
+          echo "::add-mask::$INITIAL_PASS"
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-auth-journey" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          BODY="$(INITIAL_PASS="$INITIAL_PASS" python3 -c 'import json,os; print(json.dumps({"password":os.environ["INITIAL_PASS"]}))')"
+          curl --fail-with-body -sS             -H "Authorization: Bearer $OIDC"             -H "Content-Type: application/json"             --data "$BODY"             https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-auth-journey-setup             -o /tmp/setup.json
+          python3 -c "import json; d=json.load(open('/tmp/setup.json')); assert d.get('ok') is True, d; print('Disposable Auth journey account created')"
+
+      - name: Verify reset and magic-link journeys in production browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-auth-journey" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+
+          get_link() {
+            local endpoint="$1"
+            curl --fail-with-body -sS               -H "Authorization: Bearer $OIDC"               -H "Content-Type: application/json"               --data '{}'               "https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/$endpoint"               -o /tmp/link.json
+            ACTION_URL="$(python3 -c 'import json; d=json.load(open("/tmp/link.json")); assert d.get("ok") is True, d; print(d["url"])')"
+            echo "::add-mask::$ACTION_URL"
+            export ACTION_URL
+          }
+
+          run_browser() {
+            export MODE="$1"
+            export EXPECTED_GYM="$2"
+            export EXPECTED_NAME="$3"
+            export LOGIN_PATH="$4"
+            export NEW_PASSWORD="$5"
+            node <<'JS'
+          const { chromium } = require('playwright');
+          const assert = require('node:assert/strict');
+          const EMAIL='delivered@resend.dev';
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            try{
+              let context=await browser.newContext({viewport:{width:390,height:844}});
+              let page=await context.newPage();
+              await page.goto(process.env.ACTION_URL,{waitUntil:'domcontentloaded',timeout:30000});
+              if(process.env.MODE==='recovery'){
+                await page.waitForFunction(()=>document.querySelector('#heading')?.textContent?.includes('Choose a new password'),null,{timeout:20000});
+                assert.equal((await page.locator('#gymBrand').innerText()).trim(),process.env.EXPECTED_NAME);
+                await page.locator('#password').fill(process.env.NEW_PASSWORD);
+                await page.locator('#confirmPassword').fill(process.env.NEW_PASSWORD);
+                await page.locator('#savePassword').click();
+                await page.waitForFunction(()=>document.querySelector('#heading')?.textContent?.includes('Password updated'),null,{timeout:20000});
+                const href=await page.locator('#continueBtn').getAttribute('href');
+                assert.ok(href && href.includes('admin.html?gym_id='+process.env.EXPECTED_GYM));
+                await page.locator('#continueBtn').click();
+                await page.waitForURL(new RegExp('admin\\.html\\?gym_id='+process.env.EXPECTED_GYM),{timeout:20000});
+                await context.close();
+
+                context=await browser.newContext({viewport:{width:390,height:844}});
+                page=await context.newPage();
+                await page.goto('https://www.hybridone.co.uk/'+process.env.LOGIN_PATH,{waitUntil:'domcontentloaded',timeout:30000});
+                await page.locator('#email').fill(EMAIL);
+                await page.locator('#password').fill(process.env.NEW_PASSWORD);
+                await page.locator('#signIn').click();
+                await page.waitForURL(new RegExp('admin\\.html\\?gym_id='+process.env.EXPECTED_GYM),{timeout:20000});
+                console.log(process.env.EXPECTED_NAME+' password reset and new-password login passed');
+              }else{
+                await page.waitForFunction(()=>document.querySelector('#heading')?.textContent?.includes('Secure link verified'),null,{timeout:20000});
+                assert.equal((await page.locator('#gymBrand').innerText()).trim(),process.env.EXPECTED_NAME);
+                const href=await page.locator('#continueBtn').getAttribute('href');
+                assert.ok(href && href.includes('admin.html?gym_id='+process.env.EXPECTED_GYM));
+                await page.locator('#continueBtn').click();
+                await page.waitForURL(new RegExp('admin\\.html\\?gym_id='+process.env.EXPECTED_GYM),{timeout:20000});
+                console.log(process.env.EXPECTED_NAME+' magic-link sign-in passed');
+              }
+            }finally{
+              await browser.close();
+            }
+          })().catch(err=>{console.error(err.message);process.exit(1)});
+          JS
+          }
+
+          HUB_PASS="$(python3 -c 'import secrets; print("Hub!"+secrets.token_urlsafe(24))')"
+          PUFFIN_PASS="$(python3 -c 'import secrets; print("Puf!"+secrets.token_urlsafe(24))')"
+          echo "::add-mask::$HUB_PASS"
+          echo "::add-mask::$PUFFIN_PASS"
+
+          get_link hybridone-link-hub-recovery
+          run_browser recovery 242f57c2-6e37-4977-b3c5-1c87de7d0b98 "Hybrid Hub" hybrid-hub "$HUB_PASS"
+
+          get_link hybridone-link-puffin-recovery
+          run_browser recovery aec16956-3793-4543-873b-4412646ca1eb "Puffin Performance" puffin-performance "$PUFFIN_PASS"
+
+          get_link hybridone-link-hub-magic
+          run_browser magic 242f57c2-6e37-4977-b3c5-1c87de7d0b98 "Hybrid Hub" hybrid-hub unused
+
+          get_link hybridone-link-puffin-magic
+          run_browser magic aec16956-3793-4543-873b-4412646ca1eb "Puffin Performance" puffin-performance unused
+
+      - name: Clean up disposable Auth account
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-auth-journey" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          curl --fail-with-body -sS             -H "Authorization: Bearer $OIDC"             -H "Content-Type: application/json"             --data '{}'             https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-auth-journey-cleanup             -o /tmp/cleanup.json
+          python3 -c "import json; d=json.load(open('/tmp/cleanup.json')); assert d.get('ok') is True and d.get('cleaned') is True, d; print('Disposable Auth journey account removed')"
