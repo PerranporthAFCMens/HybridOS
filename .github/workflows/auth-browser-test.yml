@@ -58,15 +58,21 @@ jobs:
           echo "HUB_PASSWORD=$HUB_PASS" >> "$GITHUB_ENV"
 
       - name: Serve built site
+        shell: bash
         run: |
+          set -euo pipefail
           python3 -m http.server 4173 --directory _site >/tmp/hybridone-http.log 2>&1 &
           echo $! > /tmp/hybridone-http.pid
-          python3 -c "import time,urllib.request; ok=False
-          for _ in range(40):
-            try:
-              urllib.request.urlopen('http://127.0.0.1:4173/hybrid-hub-login.html',timeout=1).read(64); ok=True; break
-            except Exception: time.sleep(.25)
-          assert ok, 'local built site did not start'"
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/hybrid-hub-login.html >/dev/null; then
+              exit 0
+            fi
+            if [ "$i" -eq 40 ]; then
+              cat /tmp/hybridone-http.log
+              exit 1
+            fi
+            sleep 0.25
+          done
 
       - name: Run Auth browser matrix
         env:
