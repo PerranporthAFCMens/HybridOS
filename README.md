@@ -2,19 +2,23 @@
 
 **HybridOne is the operating system for hybrid gyms.**
 
-HybridOne is a multi-tenant gym-management platform covering memberships, members, classes, programming, staff, community, reporting, communications and the member/staff experience.
+HybridOne is a multi-tenant gym-management SaaS covering memberships, members, classes, programming, staff, community, reporting, communications and member/staff experiences.
 
-> **Read [HANDOVER.md](./HANDOVER.md) before starting development.** It is the authoritative continuation brief.
+> **Start with [HANDOVER.md](./HANDOVER.md).** It is the authoritative continuation brief.
+>
+> Deployment details live in **[VERCEL.md](./VERCEL.md)**.
 
-## Current state
+## Product status
 
-Hybrid Hub is the main pilot/demo tenant and is not yet a live operating customer gym.
+**Hybrid Hub** is the primary pilot/demo tenant. It is **not yet a live operating customer gym**, so reviewed work can still be promoted more freely than it could after customer launch.
+
+HybridOne is completely separate from Football PA.
 
 Production:
 
-- `https://www.hybridone.co.uk`
-- `https://www.hybridone.co.uk/hybrid-hub`
-- `https://www.hybridone.co.uk/puffin-performance`
+- https://www.hybridone.co.uk
+- https://www.hybridone.co.uk/hybrid-hub
+- https://www.hybridone.co.uk/puffin-performance
 
 Repository:
 
@@ -22,49 +26,64 @@ Repository:
 
 Stack:
 
-- frontend: static HTML/CSS/JavaScript
-- production: Vercel
-- dev preview: GitHub Pages
-- backend/Auth/database: Supabase
-- email transport: Resend + Supabase Auth SMTP
+- static HTML/CSS/JavaScript frontend
+- Vercel production
+- GitHub Pages dev preview
+- Supabase database/Auth/backend
+- Resend email transport
 - Supabase project: `mzgnhmeydhhpzgxlgudh`
 
-HybridOne is completely separate from Football PA.
+## 24 September 2026 checkpoint
 
-## Branch status
+Functional code heads immediately before this documentation-only refresh:
 
-Functional heads immediately before the 23 September 2026 documentation refresh:
+- **main:** `784bac0c253479265728381f34fab816baf4507c` — **Fix Staff and Resources mobile layout**
+- **dev:** `e82bf5106093624709bed85deb40540f071340f6` — **Fix Staff and Resources mobile layout**
 
-- `main`: `d6acf67eee9099227fe059a73939f5fee02e5da1` - production iPhone mobile-nav fix
-- `dev`: `e20d5985a39c37403a82e89bdfab98f787de443b` - tenant/Auth hardening
+Verification:
 
-The branches currently diverge. Dev contains Auth-email groundwork that is not yet live; main contains a production mobile-nav fix that must be preserved.
+- main smoke checks: **success**
+- main Vercel deployment: **success**
+- dev smoke checks: **success**
+- latest hourly production workflow: **success but intentionally skipped promotion because main/dev diverge**
 
-Do not blindly replace one branch with the other.
+The branches are **not safe to blindly fast-forward or overwrite**.
 
-## Deployment architecture
+Current merge base:
 
-Both environments must use the built site:
+- `97c3c3390f7c1fb510315ecbc33ec379956e3654`
+
+Current relationship before docs refresh:
+
+- dev is ahead of main by 13 commits
+- dev is behind main by 4 commits
+
+Main contains production mobile fixes. Dev contains additional tenant/Auth-email hardening.
+
+## Critical deployment rule
+
+Both production and dev preview must serve the **built site**, not raw source files:
 
 ```
-scripts/build_site.py
+source
+-> python3 scripts/build_site.py
 -> _site
 ```
 
-Vercel production must keep:
+Vercel must keep:
 
 ```json
 "buildCommand": "python3 scripts/build_site.py",
 "outputDirectory": "_site"
 ```
 
-This fixed the previous production/dev visual mismatch.
+This fixed the historic production/dev visual mismatch.
+
+**Never debug production appearance by comparing raw source alone. Compare the generated `_site` output.**
 
 ## Tenant rule
 
 > **The login route decides the gym. The email address does not.**
-
-The same Auth account may belong to multiple gyms.
 
 Gym context is stored in:
 
@@ -72,9 +91,12 @@ Gym context is stored in:
 sessionStorage['hybrid-gym-id']
 ```
 
-Dedicated gym login routes set the tenant context.
+Known tenants:
 
-Never reintroduce first-active-gym selection or `.limit(1)` tenant selection.
+- Hybrid Hub: `242f57c2-6e37-4977-b3c5-1c87de7d0b98`
+- Puffin Performance: `aec16956-3793-4543-873b-4412646ca1eb`
+
+Do not reintroduce first-active-gym selection, `.limit(1)` tenant inference, email-to-gym inference or a generic gym picker as the main flow.
 
 ## Branding
 
@@ -88,39 +110,38 @@ Brand hierarchy:
 
 ## Staff Access Levels
 
-Staff/Coach permissions use Owner-controlled Access Levels.
-
-Owners can create, name, configure and save reusable levels, then assign staff to them.
+Staff/Coach permissions use **Owner-controlled Access Levels**.
 
 Rules:
 
-- every active Staff/Coach must have one level
+- Owner creates/names/configures/saves levels
+- every active Staff/Coach must have exactly one level
 - only Owners redefine level definitions
-- eligible admins/staff may assign existing levels
-- changing a level propagates its permissions to assigned users
+- eligible Admin/staff may assign existing levels
+- changing a level propagates permissions to assigned users
 
-Current Hybrid Hub example levels:
+Hybrid Hub examples:
 
 - Coach / PT
 - Reception
 - Manager
 - Manager 2
 
-A granular permission-enforcement sweep across every admin action is still required.
+A granular enforcement sweep is still required across every page/action/server operation.
 
 ## Communications
 
-`communications.html` is the standalone Communications area.
+`communications.html` is the standalone Communications workspace.
 
-Transactional settings include:
+It supports gym-owned:
 
 - email brand name
 - From email preference
 - optional Reply-to
+- brand colour
 - logo
-- colour
 - footer
-- subject/preheader/heading/body/button copy
+- transactional template copy
 
 Default managed sender:
 
@@ -130,79 +151,77 @@ noreply@hybridone.co.uk
 
 Custom From domains require verification.
 
-The Marketing tab is currently a foundation/roadmap only.
+The Marketing tab is currently foundation/roadmap only.
 
-## Auth email status
+## Auth email state
 
-The product rule is that Auth journeys are gym-driven when they start from a gym login.
+Product rule:
 
-Dev contains:
+> **The gym owns the customer relationship. HybridOne is the engine underneath.**
+
+Gym-specific login context should drive password reset, magic-link, confirmation, invite and onboarding branding.
+
+Dev contains tenant-aware Auth groundwork including:
 
 - gym-bound password reset
 - gym-bound magic links
 - `auth-return.html`
-- tenant-aware `send-auth-email` Edge Function source
-- Auth email hook smoke tests
+- `supabase/functions/send-auth-email/index.ts`
+- `scripts/email_hook_smoke.py`
 
-But **`send-auth-email` is not deployed/active in Supabase yet**.
+But **`send-auth-email` is not deployed or active in Supabase yet**.
 
-Live Auth email still uses the existing project-wide SMTP path.
+Live Auth email still uses the existing project-wide Supabase/Resend SMTP route.
 
-Do not enable the Send Email Hook until the required Resend API key and webhook signing secret are provisioned and the full Auth test matrix is ready.
+Current relevant live Edge Functions include:
 
-## Owner/Admin invites
+- `send-access-invite` v8 ACTIVE
+- `admin-create-staff-with-level` v1 ACTIVE
 
-Current live invite function:
-
-- `send-access-invite`
-- ACTIVE
-- version 8
-
-Use production Hybrid Hub when inviting trusted reviewers who should see the real app rather than the dev preview.
+Do not enable the Supabase Send Email Hook until secrets are provisioned and the full Auth test matrix is ready.
 
 ## Egress protection
 
-A historic request storm caused excessive Supabase egress. Protection now includes:
+Historic excessive Supabase egress was caused by a request storm, not normal product usage.
+
+Protection includes:
 
 - `supabase-request-guard.js`
-- browser-side request circuit breaker
+- browser circuit breaker
 - reduced social polling
 - exact gym-context lookup
 - smoke protection
 
-Longer-term scaling still needs shared data/context, request deduplication and observability.
+Longer-term scale hardening still needs shared client/context, request deduplication/cache and observability.
 
 ## Development flow
 
-Normal work happens on `dev`.
+Normal development is on `dev`.
 
 Dev preview:
 
 ```
 dev push
--> smoke
+-> HybridOne smoke checks
 -> build_site.py
 -> smoke_test.py _site
 -> GitHub Pages
 ```
 
-Production follows `main`; the hourly production release workflow is active.
+Vercel Git deployment for `dev` is disabled.
 
-Before promoting dev:
+Production is sourced from `main`.
 
-1. reconcile main's mobile fix
-2. run smoke tests
-3. test Auth flows in real browsers/incognito
-4. verify Vercel
-5. verify the actual production UI
+The hourly production workflow only fast-forwards main when main is an ancestor of dev. **Because the branches currently diverge, the workflow safely skips promotion.** A green hourly workflow does not necessarily mean dev was promoted.
 
-## Immediate priorities
+## Before changing anything
 
-1. reconcile current `main` and `dev` without losing either side's fixes
-2. finish and safely activate gym-owned Auth email delivery
-3. run the multi-gym Auth test matrix
-4. finish granular Access Level enforcement
-5. add shared data/request deduplication and observability
-6. harden for first external trials
+1. Read `HANDOVER.md`.
+2. Fetch current `main` and `dev`.
+3. Compare them before merging or promoting.
+4. Keep Vercel building `_site`.
+5. Run built-site smoke tests.
+6. Verify actual browser behaviour before saying something is fixed.
+7. Inspect live Supabase Edge Functions before claiming an email/Auth function is active.
 
-For full details, read **[HANDOVER.md](./HANDOVER.md)**.
+For the full continuation brief, see **[HANDOVER.md](./HANDOVER.md)**.
