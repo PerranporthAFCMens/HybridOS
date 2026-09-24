@@ -1,0 +1,54 @@
+name: HybridOne email Auth URL retest
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/email-auth-url-retest.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  email-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Send Hub reset and Puffin magic link
+        shell: bash
+        run: |
+          set -euo pipefail
+          PASS="$(python3 -c 'import secrets; print("H1!"+secrets.token_urlsafe(24))')"
+          echo "::add-mask::$PASS"
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-email-auth-url-retest" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          call() {
+            curl --fail-with-body -sS \
+              -H "Authorization: Bearer $OIDC" \
+              -H "Content-Type: application/json" \
+              --data "$1" \
+              https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-email-auth-url-retest-harness
+          }
+          call "$(PASS="$PASS" python3 -c 'import json,os; print(json.dumps({"action":"create","password":os.environ["PASS"]}))')" >/tmp/create.json
+          python3 -c "import json; d=json.load(open('/tmp/create.json')); assert d.get('ok') is True, d"
+          call '{"action":"send_recovery_hub"}' >/tmp/recovery.json
+          python3 -c "import json; d=json.load(open('/tmp/recovery.json')); assert d.get('ok') is True, d"
+          sleep 2
+          call '{"action":"send_magic_puffin"}' >/tmp/magic.json
+          python3 -c "import json; d=json.load(open('/tmp/magic.json')); assert d.get('ok') is True, d; print('Hub recovery and Puffin magic-link requests accepted')"
+
+      - name: Clean up disposable user
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-email-auth-url-retest" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer $OIDC" \
+            -H "Content-Type: application/json" \
+            --data '{"action":"cleanup"}' \
+            https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-email-auth-url-retest-harness \
+            -o /tmp/cleanup.json
+          python3 -c "import json; d=json.load(open('/tmp/cleanup.json')); assert d.get('ok') is True and d.get('cleaned') is True, d"
