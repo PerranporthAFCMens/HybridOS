@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "verified_at_utc": "2026-09-24T22:08:16Z",
+  "verified_at_utc": "2026-09-24T22:21:58Z",
   "repository": "PerranporthAFCMens/HybridOS",
   "branches": {
     "production_source": "main",
@@ -30,14 +30,14 @@
     "pages_origin": "https://perranporthafcmens.github.io/HybridOS/",
     "hybrid_hub_login": "https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98",
     "puffin_performance_login": "https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=aec16956-3793-4543-873b-4412646ca1eb",
-    "latest_verified_pages_run_id": 36065671940,
-    "latest_verified_pages_checkout_sha": "82c0978b48b58ba70bd2840e70ff04b25bc05ae9",
-    "latest_verified_smoke_run_id": 36065655123,
+    "latest_verified_pages_run_id": 36066980204,
+    "latest_verified_pages_checkout_sha": "b60aea0ace4195d1f236f8d2d2bc7988870c5683",
+    "latest_verified_smoke_run_id": 36066957809,
     "latest_verified_smoke_result": "success",
     "dedicated_login_aliases": {
       "hybrid_hub_source": "hybrid-hub-login.html",
       "puffin_source": "puffin-performance-login.html",
-      "user_facing_status": "do_not_recommend_until_browser_reverified"
+      "user_facing_status": "public_server_runtime_verified"
     },
     "runtime_verification": {
       "enabled": true,
@@ -52,7 +52,10 @@
         "Puffin Performance public login route content",
         "query-bound gym context contract"
       ],
-      "status": "pending_first_green_run"
+      "status": "pass",
+      "first_green_run_id": 36066958023,
+      "first_green_commit": "b60aea0ace4195d1f236f8d2d2bc7988870c5683",
+      "first_green_at_utc": "2026-09-24T22:21:58Z"
     }
   },
   "supabase": {

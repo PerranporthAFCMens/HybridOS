@@ -142,3 +142,21 @@ While `main` remains on the production hold, the authoritative public-dev verifi
 `.github/workflows/dev-runtime.yml`
 
 This is intentionally separate from the Pages `workflow_run` definition, because GitHub loads `workflow_run` workflow definitions from the default branch. The dev-runtime workflow can therefore evolve on `dev` without touching production.
+
+
+### Verified public dev routes
+
+The independent runtime workflow has now verified the public Pages deployment.
+
+Verified at SHA:
+
+`b60aea0ace4195d1f236f8d2d2bc7988870c5683`
+
+Server-runtime verified routes:
+
+- `https://perranporthafcmens.github.io/HybridOS/hybrid-hub-login.html`
+- `https://perranporthafcmens.github.io/HybridOS/puffin-performance-login.html`
+- `https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98`
+- `https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=aec16956-3793-4543-873b-4412646ca1eb`
+
+This is public server-runtime verification. Full authenticated browser journeys remain tracked separately in `AUTH_TEST_MATRIX.md`.

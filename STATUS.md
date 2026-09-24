@@ -138,3 +138,20 @@ To keep production frozen while still verifying dev correctly, runtime verificat
 `.github/workflows/dev-runtime.yml`
 
 On every `dev` push it waits for the public Pages site to expose the matching `deployment.json` SHA, then checks the Hybrid Hub and Puffin login pages. A green runtime-verification workflow is the authoritative proof that the public dev site matches the dev commit.
+
+
+## Public dev runtime verification result
+
+**PASS** on 24 September 2026.
+
+Evidence:
+
+- dev runtime run: `36066958023`
+- verified deployed SHA: `b60aea0ace4195d1f236f8d2d2bc7988870c5683`
+- Pages deployment run: `36066980204`
+- public `deployment.json` matched the exact dev SHA
+- public `hybrid-hub-login.html` served Hybrid Hub-specific content
+- public `puffin-performance-login.html` served Puffin Performance-specific content
+- both query-bound `index.html?gym_id=...` routes retained the explicit gym-context contract
+
+The previous limitation around independently proving the public GitHub Pages deployment is therefore resolved through GitHub Actions.
