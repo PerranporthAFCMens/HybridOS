@@ -1,0 +1,30 @@
+name: HybridOne dev runtime verification
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hybridone-dev-runtime
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v6
+
+      - name: Record exact dev SHA
+        shell: bash
+        run: echo "HYBRID_BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Verify deployed public Pages runtime
+        env:
+          PAGES_URL: https://perranporthafcmens.github.io/HybridOS/
+        run: python3 scripts/runtime_pages_check.py

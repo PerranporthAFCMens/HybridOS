@@ -41,9 +41,11 @@
     },
     "runtime_verification": {
       "enabled": true,
-      "workflow": ".github/workflows/pages.yml",
+      "workflow": ".github/workflows/dev-runtime.yml",
       "manifest": "deployment.json",
       "script": "scripts/runtime_pages_check.py",
+      "trigger": "every dev push",
+      "max_wait_seconds": 240,
       "verifies": [
         "exact deployed dev SHA",
         "Hybrid Hub public login route content",

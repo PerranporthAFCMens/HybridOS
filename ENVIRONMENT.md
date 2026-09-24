@@ -133,3 +133,12 @@ Files:
 - `.github/workflows/pages.yml`
 
 A green Pages workflow is therefore runtime evidence, not just build evidence.
+
+
+### Dev runtime workflow authority
+
+While `main` remains on the production hold, the authoritative public-dev verification workflow is:
+
+`.github/workflows/dev-runtime.yml`
+
+This is intentionally separate from the Pages `workflow_run` definition, because GitHub loads `workflow_run` workflow definitions from the default branch. The dev-runtime workflow can therefore evolve on `dev` without touching production.

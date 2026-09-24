@@ -11,6 +11,8 @@ required_files=[
     'ENVIRONMENT.md',
     'STATUS.md',
     'AUTH_TEST_MATRIX.md',
+    '.github/workflows/dev-runtime.yml',
+    'scripts/runtime_pages_check.py',
     'HANDOVER.md',
     'README.md',
 ]
@@ -59,6 +61,13 @@ if not problems:
             problems.append(f'AUTH_TEST_MATRIX.md missing scenario {n}')
     if 'Do **not** remove the production hold' not in matrix:
         problems.append('AUTH_TEST_MATRIX.md missing production release gate')
+
+    runtime_workflow=(ROOT/'.github/workflows/dev-runtime.yml').read_text(encoding='utf-8')
+    runtime_script=(ROOT/'scripts/runtime_pages_check.py').read_text(encoding='utf-8')
+    if 'HybridOne dev runtime verification' not in runtime_workflow:
+        problems.append('dev runtime workflow name/contract missing')
+    if 'deployment.json' not in runtime_script or 'hybrid-hub-login.html' not in runtime_script or 'puffin-performance-login.html' not in runtime_script:
+        problems.append('runtime Pages verification contract incomplete')
 
     control=(ROOT/'PROJECT_CONTROL.md').read_text(encoding='utf-8')
     for marker in ('Definition of "fixed"','Mandatory read order','URL rule','State-update rule'):

@@ -25,7 +25,7 @@ Fetch:
 - latest production Vercel deployment for production-sensitive work
 - relevant live Supabase Edge Function version for Auth/email work
 
-For GitHub Pages, require the post-deploy public runtime check to pass. It verifies the exact checked-out dev SHA through `deployment.json` and checks the public tenant-login routes. Workflow metadata alone is not proof.
+For GitHub Pages, require `HybridOne dev runtime verification` to pass. It waits for `deployment.json` to match the exact dev SHA and checks the public tenant-login routes. Workflow metadata alone is not proof.
 
 ## Definition of "fixed"
 

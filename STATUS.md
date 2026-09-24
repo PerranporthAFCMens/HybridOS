@@ -127,3 +127,14 @@ The Pages workflow will not complete green unless the public deployment:
 4. retains the explicit query-bound gym-context contract on `index.html?gym_id=...`
 
 Until the first green run completes, this capability is **pending verification**.
+
+
+## Dev runtime verification workflow
+
+Because the Pages deployment workflow is triggered by `workflow_run`, GitHub currently loads that workflow definition from the default branch. Changes to `.github/workflows/pages.yml` on `dev` therefore do not change the running Pages workflow until they reach `main`.
+
+To keep production frozen while still verifying dev correctly, runtime verification now runs independently from:
+
+`.github/workflows/dev-runtime.yml`
+
+On every `dev` push it waits for the public Pages site to expose the matching `deployment.json` SHA, then checks the Hybrid Hub and Puffin login pages. A green runtime-verification workflow is the authoritative proof that the public dev site matches the dev commit.

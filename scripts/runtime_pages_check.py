@@ -23,7 +23,7 @@ def fetch(path: str):
         return res.status,res.geturl(),body
 
 last_error=None
-for attempt in range(1,13):
+for attempt in range(1,49):
     try:
         status,final_url,body=fetch('deployment.json')
         manifest=json.loads(body)
@@ -34,7 +34,7 @@ for attempt in range(1,13):
         last_error=f'deployment manifest mismatch: status={status} build_sha={manifest.get("build_sha")!r}'
     except Exception as exc:
         last_error=str(exc)
-    if attempt<12:
+    if attempt<48:
         time.sleep(5)
 else:
     raise SystemExit('Public Pages deployment did not reach expected revision: '+str(last_error))
