@@ -127,6 +127,7 @@ jobs:
           set -euo pipefail
           OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-auth-journey" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
           echo "::add-mask::$OIDC"
+          sleep 65
           curl --fail-with-body -sS \
             -H "Authorization: Bearer $OIDC" \
             -H "Content-Type: application/json" \
