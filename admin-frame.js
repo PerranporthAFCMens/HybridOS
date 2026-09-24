@@ -101,9 +101,11 @@ async function init(){
  const{data:gms,error:gmErr}=await sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',session.user.id).eq('is_active',true);
  if(gmErr||!gms?.length){location.replace('./index.html');return}
  const params=new URLSearchParams(location.search);
- let selectedGymId=params.get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||'';
+ const explicitGymId=params.get('gym_id')||'';
+ const storedGymId=sessionStorage.getItem('hybrid-gym-id')||'';
+ let selectedGymId=explicitGymId||storedGymId||'';
  let membership=selectedGymId?gms.find(x=>x.gym_id===selectedGymId):null;
- if(!membership&&gms.length===1){
+ if(!membership&&!explicitGymId&&!storedGymId&&gms.length===1){
    membership=gms[0];
    selectedGymId=membership.gym_id;
  }

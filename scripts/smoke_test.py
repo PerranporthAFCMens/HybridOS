@@ -54,7 +54,7 @@ RENDER_BASELINE={
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
  'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
- 'admin-frame.js':'99fb9a62284e541a04a67813ef71b2075c2b271f',
+ 'admin-frame.js':'d1dbb0df416d9745b9cedc14a35d3b6620ec89c7',
  'app-stability.js':'f5819ecd71e76985b7b7f410c2f25e9e7700a380',
  'shared-admin-nav.js':'ad4fbc29cd9b85ffe42d33ae5b918a3903f30761',
 }
@@ -231,6 +231,10 @@ for context_file in ('staff.html','tenant-branding.js','admin-frame.js','member.
  context_source=(ROOT/context_file).read_text(encoding='utf-8')
  if ".eq('is_active',true).limit(1)" in context_source:problems.append(f'{context_file}: ambiguous first-gym lookup returned')
  if "sessionStorage.getItem('hybrid-gym-id')" not in context_source:problems.append(f'{context_file}: explicit login gym context missing')
+admin_frame_context=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
+for x in ("const explicitGymId=params.get('gym_id')||''","const storedGymId=sessionStorage.getItem('hybrid-gym-id')||''","!membership&&!explicitGymId&&!storedGymId&&gms.length===1"):
+ if x not in admin_frame_context:problems.append(f'admin-frame.js: explicit gym context may fall back across tenants: {x}')
+if "if(!membership&&gms.length===1)" in admin_frame_context:problems.append('admin-frame.js: unsafe single-membership cross-gym fallback returned')
 for context_file in ('member.html','integrations.html','social.html'):
  context_source=(ROOT/context_file).read_text(encoding='utf-8')
  if ".eq('gym_id',selectedGymId)" not in context_source:problems.append(f'{context_file}: current gym is not bound to the membership lookup')
