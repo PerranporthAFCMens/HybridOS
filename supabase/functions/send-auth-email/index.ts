@@ -143,26 +143,34 @@ function actionDefaults(action: string, gymName: string, accessInvite: boolean) 
 async function loadTemplate(context: GymContext | null, action: string) {
   const gymName = context?.name || 'HybridOne'
   const defaults = actionDefaults(action, gymName, context?.accessInvite === true)
-  if (!context) return defaults
+  const vars = {
+    gym_name: gymName,
+    invited_by: context?.invitedBy || 'A gym Owner',
+    role: context?.inviteRole || 'staff',
+  }
+  const resolvedDefaults = {
+    ...defaults,
+    subject: fill(defaults.subject, defaults.subject, vars),
+    preheader: fill(defaults.preheader, defaults.preheader, vars),
+    heading: fill(defaults.heading, defaults.heading, vars),
+    body: fill(defaults.body, defaults.body, vars),
+    button: fill(defaults.button, defaults.button, vars),
+  }
+  if (!context) return resolvedDefaults
   const { data: rows, error } = await admin.rpc('get_auth_email_template', {
     p_gym_id: context.id,
     p_template_key: defaults.key,
   })
   if (error) throw error
   const data = rows?.[0]
-  if (!data || data.enabled === false) return defaults
-  const vars = {
-    gym_name: context.name,
-    invited_by: context.invitedBy || 'A gym Owner',
-    role: context.inviteRole || 'staff',
-  }
+  if (!data || data.enabled === false) return resolvedDefaults
   return {
-    ...defaults,
-    subject: fill(data.subject, defaults.subject, vars),
-    preheader: fill(data.preheader, defaults.preheader, vars),
-    heading: fill(data.heading, defaults.heading, vars),
-    body: fill(data.body_text, defaults.body, vars),
-    button: fill(data.button_label, defaults.button, vars),
+    ...resolvedDefaults,
+    subject: fill(data.subject, resolvedDefaults.subject, vars),
+    preheader: fill(data.preheader, resolvedDefaults.preheader, vars),
+    heading: fill(data.heading, resolvedDefaults.heading, vars),
+    body: fill(data.body_text, resolvedDefaults.body, vars),
+    button: fill(data.button_label, resolvedDefaults.button, vars),
   }
 }
 
