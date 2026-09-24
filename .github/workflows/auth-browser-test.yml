@@ -1,0 +1,109 @@
+name: HybridOne auth browser test
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/auth-browser-test.yml'
+      - 'scripts/auth_browser_test.mjs'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  auth-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build isolated site
+        run: python3 scripts/build_site.py
+
+      - name: Smoke test built site
+        run: python3 scripts/smoke_test.py _site
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install browser test dependency
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Create disposable Auth users
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHARED_PASS="$(python3 -c 'import secrets; print("H1!"+secrets.token_urlsafe(24))')"
+          HUB_PASS="$(python3 -c 'import secrets; print("H1!"+secrets.token_urlsafe(24))')"
+          echo "::add-mask::$SHARED_PASS"
+          echo "::add-mask::$HUB_PASS"
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-auth-test" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          BODY="$(SHARED_PASS="$SHARED_PASS" HUB_PASS="$HUB_PASS" python3 - <<'PY'
+import json,os
+print(json.dumps({"action":"create","shared_password":os.environ["SHARED_PASS"],"hub_password":os.environ["HUB_PASS"]}))
+PY
+)"
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer $OIDC" \
+            -H "apikey: sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD" \
+            -H "Content-Type: application/json" \
+            --data "$BODY" \
+            https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-auth-test-harness \
+            -o /tmp/hybrid-auth-create.json
+          python3 - <<'PY'
+import json
+d=json.load(open('/tmp/hybrid-auth-create.json'))
+assert d.get('ok') is True, d
+print('Disposable HybridOne Auth users created for run', d.get('run_id'))
+PY
+          echo "SHARED_EMAIL=hybridone-ci-${GITHUB_RUN_ID}-shared@example.com" >> "$GITHUB_ENV"
+          echo "HUB_EMAIL=hybridone-ci-${GITHUB_RUN_ID}-hub@example.com" >> "$GITHUB_ENV"
+          echo "SHARED_PASSWORD=$SHARED_PASS" >> "$GITHUB_ENV"
+          echo "HUB_PASSWORD=$HUB_PASS" >> "$GITHUB_ENV"
+
+      - name: Serve built site
+        run: |
+          python3 -m http.server 4173 --directory _site >/tmp/hybridone-http.log 2>&1 &
+          echo $! > /tmp/hybridone-http.pid
+          python3 - <<'PY'
+import time,urllib.request
+for _ in range(40):
+    try:
+        urllib.request.urlopen('http://127.0.0.1:4173/hybrid-hub-login.html',timeout=1).read(64)
+        break
+    except Exception:
+        time.sleep(.25)
+else:
+    raise SystemExit('local built site did not start')
+PY
+
+      - name: Run Auth browser matrix
+        env:
+          TEST_BASE_URL: http://127.0.0.1:4173
+        run: node scripts/auth_browser_test.mjs
+
+      - name: Clean up disposable Auth users
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-auth-test" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer $OIDC" \
+            -H "apikey: sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD" \
+            -H "Content-Type: application/json" \
+            --data '{"action":"cleanup"}' \
+            https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-auth-test-harness \
+            -o /tmp/hybrid-auth-cleanup.json
+          python3 - <<'PY'
+import json
+d=json.load(open('/tmp/hybrid-auth-cleanup.json'))
+assert d.get('ok') is True and d.get('cleaned') is True, d
+print('Disposable HybridOne Auth users removed')
+PY
