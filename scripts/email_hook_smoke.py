@@ -18,6 +18,7 @@ else:
         "emailData.email_action_type === 'signup'",
         "admin.rpc('get_auth_email_context'",
         "admin.rpc('get_auth_email_template'",
+        "resolvedDefaults = {",
         'https://api.resend.com/emails',
         "'Idempotency-Key'",
         "DEFAULT_FROM = 'noreply@hybridone.co.uk'",
