@@ -382,6 +382,10 @@ member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
 if 'href="./member-preview.html" target="_top"' not in member_view:problems.append('member-view-settings.html: preview must escape persistent admin frame')
 member_preview=(ROOT/'member-preview.html').read_text(encoding='utf-8')
 if './admin.html?view=member-view-settings.html' not in member_preview:problems.append('member-preview.html: Back to admin must return to persistent admin shell')
+
+auth_return=(ROOT/'auth-return.html').read_text(encoding='utf-8')
+for x in ("params.get('gym_id')","params.get('mode')","Choose a new password","supabase.auth.updateUser({password})","destinationFor(session)"):
+ if x not in auth_return:problems.append(f'auth-return.html: Auth return contract missing: {x}')
 if problems:raise SystemExit('HybridOne smoke checks failed:\n- '+'\n- '.join(problems))
 print('HybridOne built-site smoke checks passed')
 
