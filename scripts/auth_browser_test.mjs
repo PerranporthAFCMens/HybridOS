@@ -8,41 +8,52 @@ const sharedEmail=process.env.SHARED_EMAIL;
 const sharedPassword=process.env.SHARED_PASSWORD;
 const hubEmail=process.env.HUB_EMAIL;
 const hubPassword=process.env.HUB_PASSWORD;
-for(const [k,v] of Object.entries({sharedEmail,sharedPassword,hubEmail,hubPassword})) assert.ok(v, k+' missing');
+for(const [k,v] of Object.entries({sharedEmail,sharedPassword,hubEmail,hubPassword})) assert.ok(v,k+' missing');
 
 const browser=await chromium.launch({headless:true});
 
-async function loginAndAssert({file,email,password,gymId,gymName,viewport}){
-  const context=await browser.newContext({viewport:viewport||{width:1280,height:900}});
-  const page=await context.newPage();
-  const errors=[];
-  page.on('pageerror',e=>errors.push(String(e)));
+async function signIn(page,{file,email,password,gymId}){
   await page.goto(BASE+'/'+file,{waitUntil:'domcontentloaded'});
   assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),gymId,file+' did not set route gym');
   await page.locator('#email').fill(email);
   await page.locator('#password').fill(password);
   await page.locator('#signIn').click();
+}
+
+async function loginDesktopAndAssert({file,email,password,gymId,gymName}){
+  const context=await browser.newContext({viewport:{width:1280,height:900}});
+  const page=await context.newPage();
+  const errors=[];
+  page.on('pageerror',e=>errors.push(String(e)));
+  await signIn(page,{file,email,password,gymId});
   await page.waitForURL(u=>u.pathname.endsWith('/admin.html')&&u.searchParams.get('gym_id')===gymId,{timeout:30000});
   await page.locator('#adminFrameGym').filter({hasText:gymName}).waitFor({state:'visible',timeout:30000});
-  assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),gymId,'admin shell changed gym context');
-  if(viewport){
-    const menu=page.locator('.admin-frame-mobile');
-    await menu.waitFor({state:'visible',timeout:10000});
-    await menu.click();
-    assert.equal(await page.evaluate(()=>document.body.classList.contains('admin-frame-menu-open')),true,'mobile admin menu did not open');
-  }
-  assert.deepEqual(errors,[],file+' page errors: '+errors.join(' | '));
+  assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),gymId,'desktop admin shell changed gym context');
+  assert.deepEqual(errors,[],file+' desktop page errors: '+errors.join(' | '));
+  await context.close();
+}
+
+async function loginMobileAndAssert(){
+  const context=await browser.newContext({viewport:{width:390,height:844}});
+  const page=await context.newPage();
+  const errors=[];
+  page.on('pageerror',e=>errors.push(String(e)));
+  await signIn(page,{file:'hybrid-hub-login.html',email:sharedEmail,password:sharedPassword,gymId:HUB});
+  await page.waitForURL(u=>u.pathname.endsWith('/index.html'),{timeout:30000});
+  await page.locator('#sideGym').filter({hasText:'Hybrid Hub'}).waitFor({state:'visible',timeout:30000});
+  assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),HUB,'mobile handoff changed gym context');
+  const menu=page.locator('.admin-mobile-menu-btn');
+  await menu.waitFor({state:'visible',timeout:10000});
+  await menu.click();
+  assert.equal(await page.evaluate(()=>document.body.classList.contains('admin-mobile-open')),true,'mobile admin menu did not open');
+  assert.deepEqual(errors,[],'Hybrid Hub mobile page errors: '+errors.join(' | '));
   await context.close();
 }
 
 async function rejectCrossGym(){
   const context=await browser.newContext({viewport:{width:1280,height:900}});
   const page=await context.newPage();
-  await page.goto(BASE+'/puffin-performance-login.html',{waitUntil:'domcontentloaded'});
-  assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),PUFFIN,'Puffin route context missing');
-  await page.locator('#email').fill(hubEmail);
-  await page.locator('#password').fill(hubPassword);
-  await page.locator('#signIn').click();
+  await signIn(page,{file:'puffin-performance-login.html',email:hubEmail,password:hubPassword,gymId:PUFFIN});
   await page.waitForURL(u=>u.pathname.endsWith('/index.html'),{timeout:30000});
   await page.waitForTimeout(1200);
   assert.ok(!page.url().includes('/admin.html'),'Hub-only user was admitted to an admin shell through Puffin route');
@@ -53,8 +64,9 @@ async function rejectCrossGym(){
 }
 
 try{
-  await loginAndAssert({file:'hybrid-hub-login.html',email:sharedEmail,password:sharedPassword,gymId:HUB,gymName:'Hybrid Hub',viewport:{width:390,height:844}});
-  await loginAndAssert({file:'puffin-performance-login.html',email:sharedEmail,password:sharedPassword,gymId:PUFFIN,gymName:'Puffin Performance'});
+  await loginDesktopAndAssert({file:'hybrid-hub-login.html',email:sharedEmail,password:sharedPassword,gymId:HUB,gymName:'Hybrid Hub'});
+  await loginDesktopAndAssert({file:'puffin-performance-login.html',email:sharedEmail,password:sharedPassword,gymId:PUFFIN,gymName:'Puffin Performance'});
+  await loginMobileAndAssert();
   await rejectCrossGym();
   console.log('HybridOne auth browser checks passed');
 } finally {
