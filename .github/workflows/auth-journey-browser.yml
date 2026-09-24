@@ -121,6 +121,30 @@ jobs:
           get_link hybridone-link-puffin-magic
           run_browser magic aec16956-3793-4543-873b-4412646ca1eb "Puffin Performance" puffin-performance unused
 
+      - name: Send remaining live Auth email combinations
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-auth-journey" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer $OIDC" \
+            -H "Content-Type: application/json" \
+            --data '{}' \
+            https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-send-hub-magic \
+            -o /tmp/hub-mail.json
+          python3 -c "import json; d=json.load(open('/tmp/hub-mail.json')); assert d.get('ok') is True, d"
+          echo "Hybrid Hub magic-link email request accepted"
+          sleep 65
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer $OIDC" \
+            -H "Content-Type: application/json" \
+            --data '{}' \
+            https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-send-puffin-recovery \
+            -o /tmp/puffin-mail.json
+          python3 -c "import json; d=json.load(open('/tmp/puffin-mail.json')); assert d.get('ok') is True, d"
+          echo "Puffin Performance recovery email request accepted"
+
       - name: Clean up disposable Auth account
         if: always()
         shell: bash
