@@ -1,0 +1,212 @@
+name: HybridOne invite edge matrix
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/invite-edge-matrix.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  invite-edge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Create isolated invite test gym
+        shell: bash
+        run: |
+          set -euo pipefail
+          PASS="$(python3 -c 'import secrets; print("E1!"+secrets.token_urlsafe(24))')"
+          echo "::add-mask::$PASS"
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-invite-edge" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          BODY="$(PASS="$PASS" python3 -c 'import json,os; print(json.dumps({"password":os.environ["PASS"]}))')"
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer $OIDC" \
+            -H "Content-Type: application/json" \
+            --data "$BODY" \
+            https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-invite-edge-setup \
+            -o /tmp/setup.json
+          python3 -c "import json; d=json.load(open('/tmp/setup.json')); assert d.get('ok') is True, d"
+          echo "EDGE_PASSWORD=$PASS" >> "$GITHUB_ENV"
+          echo "EDGE_OIDC=$OIDC" >> "$GITHUB_ENV"
+          python3 - <<'PY' >> "$GITHUB_ENV"
+          import json
+          d=json.load(open('/tmp/setup.json'))
+          print("EDGE_GYM_ID="+d["gym_id"])
+          for k,v in d["emails"].items():
+              print("EDGE_"+k.upper()+"_EMAIL="+v)
+          print("EDGE_NEW_EMAIL=hybridone-edge-"+d["run_id"]+"-new@example.com")
+          print("EDGE_WRONGTARGET_EMAIL=hybridone-edge-"+d["run_id"]+"-wrongtarget@example.com")
+          PY
+
+      - name: Run invite access edge matrix
+        shell: bash
+        env:
+          SUPABASE_URL: https://mzgnhmeydhhpzgxlgudh.supabase.co
+          SUPABASE_KEY: sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD
+        run: |
+          set -euo pipefail
+          node <<'JS'
+          const assert=require('node:assert/strict');
+          const BASE=process.env.SUPABASE_URL;
+          const KEY=process.env.SUPABASE_KEY;
+          const PASS=process.env.EDGE_PASSWORD;
+          const GYM=process.env.EDGE_GYM_ID;
+          const OIDC=process.env.EDGE_OIDC;
+
+          async function login(email){
+            const r=await fetch(BASE+'/auth/v1/token?grant_type=password',{
+              method:'POST',
+              headers:{apikey:KEY,'content-type':'application/json'},
+              body:JSON.stringify({email,password:PASS})
+            });
+            const j=await r.json();
+            assert.equal(r.ok,true,JSON.stringify(j));
+            return {token:j.access_token,user:j.user};
+          }
+          async function rpc(name,args,token,expectOk=true){
+            const r=await fetch(BASE+'/rest/v1/rpc/'+name,{
+              method:'POST',
+              headers:{apikey:KEY,Authorization:'Bearer '+token,'content-type':'application/json'},
+              body:JSON.stringify(args)
+            });
+            const text=await r.text();
+            let data; try{data=text?JSON.parse(text):null}catch{data=text}
+            if(expectOk) assert.equal(r.ok,true,JSON.stringify(data));
+            else assert.equal(r.ok,false,'Expected '+name+' to fail but it succeeded');
+            return {ok:r.ok,status:r.status,data};
+          }
+          async function edge(endpoint,body){
+            const r=await fetch(BASE+'/functions/v1/'+endpoint,{
+              method:'POST',
+              headers:{Authorization:'Bearer '+OIDC,'content-type':'application/json'},
+              body:JSON.stringify(body||{})
+            });
+            const j=await r.json();
+            assert.equal(r.ok,true,JSON.stringify(j));
+            assert.equal(j.ok,true,JSON.stringify(j));
+            return j;
+          }
+          function first(x){return Array.isArray(x)?x[0]:x}
+
+          (async()=>{
+            const owner1=await login(process.env.EDGE_OWNER1_EMAIL);
+
+            // New account: invite exists before Auth account is created.
+            let r=await rpc('create_shareable_access_invite',{
+              target_gym_id:GYM,invite_email:process.env.EDGE_NEW_EMAIL,requested_role:'admin',expires_in_days:7
+            },owner1.token);
+            const newInvite=first(r.data);
+            assert.equal(newInvite.status,'open');
+            assert.ok(newInvite.token);
+            await edge('hybridone-invite-edge-create-new',{password:PASS});
+            const newUser=await login(process.env.EDGE_NEW_EMAIL);
+            r=await rpc('claim_access_invite',{invite_token:newInvite.token},newUser.token);
+            const newClaim=first(r.data);
+            assert.equal(newClaim.access_status,'active');
+            assert.equal(newClaim.role,'admin');
+            console.log('New-account Admin invite claim passed');
+
+            // Wrong signed-in account.
+            r=await rpc('create_shareable_access_invite',{
+              target_gym_id:GYM,invite_email:process.env.EDGE_WRONGTARGET_EMAIL,requested_role:'admin',expires_in_days:7
+            },owner1.token);
+            const wrongInvite=first(r.data);
+            const wrong=await login(process.env.EDGE_WRONG_EMAIL);
+            const wrongClaim=await rpc('claim_access_invite',{invite_token:wrongInvite.token},wrong.token,false);
+            assert.match(JSON.stringify(wrongClaim.data),/different email address/i);
+            console.log('Wrong-account invite rejection passed');
+
+            // Revoked invite.
+            r=await rpc('create_shareable_access_invite',{
+              target_gym_id:GYM,invite_email:process.env.EDGE_REVOKED_EMAIL,requested_role:'admin',expires_in_days:7
+            },owner1.token);
+            const revokedInvite=first(r.data);
+            await rpc('revoke_admin_invite',{target_invite_id:revokedInvite.invite_id},owner1.token);
+            const revoked=await login(process.env.EDGE_REVOKED_EMAIL);
+            const revokedClaim=await rpc('claim_access_invite',{invite_token:revokedInvite.token},revoked.token,false);
+            assert.match(JSON.stringify(revokedClaim.data),/not ready to accept/i);
+            console.log('Revoked invite rejection passed');
+
+            // Expired invite.
+            r=await rpc('create_shareable_access_invite',{
+              target_gym_id:GYM,invite_email:process.env.EDGE_EXPIRED_EMAIL,requested_role:'admin',expires_in_days:7
+            },owner1.token);
+            const expiredInvite=first(r.data);
+            await edge('hybridone-invite-edge-admin',{action:'expire_invite',gym_id:GYM,invite_id:expiredInvite.invite_id});
+            const expired=await login(process.env.EDGE_EXPIRED_EMAIL);
+            const expiredClaim=await rpc('claim_access_invite',{invite_token:expiredInvite.token},expired.token,false);
+            assert.match(JSON.stringify(expiredClaim.data),/expired/i);
+            console.log('Expired invite rejection passed');
+
+            // One active Owner: creator approval is sufficient.
+            r=await rpc('create_shareable_access_invite',{
+              target_gym_id:GYM,invite_email:process.env.EDGE_ONEOWNERRECIPIENT_EMAIL,requested_role:'owner',expires_in_days:7
+            },owner1.token);
+            const oneOwnerInvite=first(r.data);
+            assert.equal(oneOwnerInvite.status,'open');
+            assert.equal(oneOwnerInvite.owner_approvals,1);
+            assert.equal(oneOwnerInvite.owner_approvals_required,1);
+            assert.ok(oneOwnerInvite.token);
+            const oneRecipient=await login(process.env.EDGE_ONEOWNERRECIPIENT_EMAIL);
+            r=await rpc('claim_access_invite',{invite_token:oneOwnerInvite.token},oneRecipient.token);
+            const oneClaim=first(r.data);
+            assert.equal(oneClaim.access_status,'active');
+            assert.equal(oneClaim.role,'owner');
+            console.log('Single-Owner approval and acceptance passed');
+
+            // Restore one-owner baseline, then add second active Owner.
+            await edge('hybridone-invite-edge-admin',{action:'remove_membership',gym_id:GYM,user_id:oneRecipient.user.id});
+            const owner2=await login(process.env.EDGE_OWNER2_EMAIL);
+            await edge('hybridone-invite-edge-admin',{action:'add_owner',gym_id:GYM,user_id:owner2.user.id});
+
+            // Two active Owners: both approvals required.
+            r=await rpc('create_shareable_access_invite',{
+              target_gym_id:GYM,invite_email:process.env.EDGE_OWNERRECIPIENT_EMAIL,requested_role:'owner',expires_in_days:7
+            },owner1.token);
+            const multi=first(r.data);
+            assert.equal(multi.status,'awaiting_approval');
+            assert.equal(multi.owner_approvals,1);
+            assert.equal(multi.owner_approvals_required,2);
+            assert.equal(multi.token,null);
+            r=await rpc('approve_shareable_owner_invite',{target_invite_id:multi.invite_id},owner2.token);
+            const approved=first(r.data);
+            assert.equal(approved.status,'open');
+            assert.equal(approved.owner_approvals,2);
+            assert.equal(approved.owner_approvals_required,2);
+            assert.equal(approved.ready_to_share,true);
+            assert.ok(approved.token);
+            const ownerRecipient=await login(process.env.EDGE_OWNERRECIPIENT_EMAIL);
+            r=await rpc('claim_access_invite',{invite_token:approved.token},ownerRecipient.token);
+            const ownerClaim=first(r.data);
+            assert.equal(ownerClaim.access_status,'active');
+            assert.equal(ownerClaim.role,'owner');
+            console.log('Multi-Owner approval and acceptance passed');
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+
+      - name: Clean up isolated invite test gym
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="${EDGE_OIDC:-}"
+          if [ -z "$OIDC" ]; then
+            OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-invite-edge" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          fi
+          echo "::add-mask::$OIDC"
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer $OIDC" \
+            -H "Content-Type: application/json" \
+            --data '{}' \
+            https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-invite-edge-cleanup \
+            -o /tmp/cleanup.json
+          python3 -c "import json; d=json.load(open('/tmp/cleanup.json')); assert d.get('ok') is True and d.get('cleaned') is True, d; print('Isolated invite test data removed')"
