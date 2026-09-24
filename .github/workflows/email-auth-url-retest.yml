@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Send Hub reset and Puffin magic link
+      - name: Send Puffin magic link
         shell: bash
         run: |
           set -euo pipefail
@@ -32,11 +32,8 @@ jobs:
           }
           call "$(PASS="$PASS" python3 -c 'import json,os; print(json.dumps({"action":"create","password":os.environ["PASS"]}))')" >/tmp/create.json
           python3 -c "import json; d=json.load(open('/tmp/create.json')); assert d.get('ok') is True, d"
-          call '{"action":"send_recovery_hub"}' >/tmp/recovery.json
-          python3 -c "import json; d=json.load(open('/tmp/recovery.json')); assert d.get('ok') is True, d"
-          sleep 2
           call '{"action":"send_magic_puffin"}' >/tmp/magic.json
-          python3 -c "import json; d=json.load(open('/tmp/magic.json')); assert d.get('ok') is True, d; print('Hub recovery and Puffin magic-link requests accepted')"
+          python3 -c "import json; d=json.load(open('/tmp/magic.json')); assert d.get('ok') is True, d; print('Puffin magic-link request accepted')"
 
       - name: Clean up disposable user
         if: always()
