@@ -235,6 +235,14 @@ admin_frame_context=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
 for x in ("const explicitGymId=params.get('gym_id')||''","const storedGymId=sessionStorage.getItem('hybrid-gym-id')||''","!membership&&!explicitGymId&&!storedGymId&&gms.length===1"):
  if x not in admin_frame_context:problems.append(f'admin-frame.js: explicit gym context may fall back across tenants: {x}')
 if "if(!membership&&gms.length===1)" in admin_frame_context:problems.append('admin-frame.js: unsafe single-membership cross-gym fallback returned')
+for context_file,required,unsafe in (
+ ('index.html',"!selected&&!queryGymId&&!storedGymId&&gms.length===1","if(!selected&&gms.length===1)"),
+ ('staff.html',"!membership&&!storedGymId&&gm.data.length===1","if(!membership&&gm.data.length===1)"),
+ ('tenant-branding.js',"!membership&&!storedGymId&&gm.length===1","if(!membership&&gm.length===1)")
+):
+ context_source=(ROOT/context_file).read_text(encoding='utf-8')
+ if required not in context_source:problems.append(f'{context_file}: single-membership fallback is not limited to empty gym context')
+ if unsafe in context_source:problems.append(f'{context_file}: unsafe cross-gym single-membership fallback returned')
 for context_file in ('member.html','integrations.html','social.html'):
  context_source=(ROOT/context_file).read_text(encoding='utf-8')
  if ".eq('gym_id',selectedGymId)" not in context_source:problems.append(f'{context_file}: current gym is not bound to the membership lookup')
