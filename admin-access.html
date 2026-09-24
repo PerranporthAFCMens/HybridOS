@@ -167,7 +167,7 @@ function renderInvites(){
     const acceptedText=i.claimed_by?' · accepted':'';
     let buttons='';
     if(i.status==='awaiting_approval'&&i.invite_role==='owner'&&!mine)buttons+='<button class="btn success" data-approve-owner-invite="'+i.id+'" data-delivery="'+esc(i.delivery_method||'email')+'">Approve Owner invite</button>';
-    if(i.status==='open'&&!i.email_sent_at&&i.delivery_method!=='link')buttons+='<button class="btn success" data-send-email="'+i.id+'">Send / retry email</button>';
+    if(i.status==='open'&&i.delivery_method!=='link')buttons+='<button class="btn success" data-send-email="'+i.id+'">'+(i.email_sent_at?'Resend email':'Send / retry email')+'</button>';
     if(['awaiting_approval','open','claimed'].includes(i.status))buttons+='<button class="btn danger" data-revoke="'+i.id+'">Revoke invite</button>';
     if(i.status!=='approved')buttons+='<button class="btn secondary" data-delete-invite="'+i.id+'">Delete invite</button>';
     return '<div class="invite"><div class="person-main"><div class="person-name">'+esc(i.email)+' <span class="status '+esc(status)+'">'+esc(status.replaceAll('_',' '))+'</span> <span class="status active">'+esc(i.invite_role||'admin')+'</span></div><div class="person-email">Created '+esc(fmt(i.created_at))+' · expires '+esc(fmt(i.expires_at))+esc(approvalText)+esc(sentText)+esc(acceptedText)+'</div></div><div class="actions">'+buttons+'</div></div>';
