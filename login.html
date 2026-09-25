@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>Sign in · HybridOne</title>
+<style>
+:root{--ink:#101828;--muted:#667085;--line:#dfe4ec;--dark:#0b1020;--bad:#b42318;--good:#067647}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#f5f7fb;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}.brand{background:var(--dark);color:#fff;padding:8vw;display:flex;flex-direction:column;justify-content:center}.brand-mark{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:850;letter-spacing:.04em}.brand-mark svg{width:38px;height:34px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.brand small{font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#aeb8ca;margin-top:28px}.brand h1{font-size:clamp(42px,6vw,72px);line-height:1;margin:12px 0}.brand p{color:#cbd3df;font-size:18px;line-height:1.5;max-width:560px}.panel{padding:8vw 6vw;display:flex;align-items:center;background:#fff}.box{width:100%;max-width:440px;margin:auto}.eyebrow{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#7a8494}.box h2{font-size:36px;margin:8px 0}.muted{color:var(--muted);line-height:1.5}.hint{display:none;margin:18px 0 0;padding:12px 14px;border:1px solid #dfe4ec;border-radius:13px;background:#f8fafc;font-size:13px}.hint.show{display:block}.hint b{display:block;margin-bottom:2px}label{display:block;font-size:13px;font-weight:800;margin:18px 0 7px}input{width:100%;padding:14px;border:1px solid var(--line);border-radius:13px;font:inherit;outline:none}input:focus{border-color:#8d82ff;box-shadow:0 0 0 3px #eeecff}button{width:100%;margin-top:18px;padding:14px;border:0;border-radius:13px;background:var(--dark);color:#fff;font:inherit;font-weight:900;cursor:pointer}button:disabled{opacity:.55}.auth-links{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.auth-link{margin:0;padding:10px 8px;background:#fff;color:#344054;border:1px solid var(--line);font-size:13px}.msg{min-height:22px;margin-top:14px;font-size:14px;color:var(--bad)}.msg.good{color:var(--good)}.sales-link{display:inline-block;margin-top:20px;color:#667085;font-size:13px;text-decoration:none}
+@media(max-width:760px){.wrap{display:block}.brand{min-height:220px;padding:38px 26px}.brand small{margin-top:22px}.brand h1{font-size:40px}.brand p{font-size:16px}.panel{padding:34px 24px}.box h2{font-size:32px}}@media(max-width:460px){.auth-links{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section class="brand">
+  <div class="brand-mark"><svg viewBox="0 0 54 48" aria-hidden="true"><path d="M6 42 L27 6 M12 42 L30 11 M18 42 L33 16 M48 42 L27 6 M42 42 L24 11 M36 42 L21 16"/></svg><span>Hybrid<b>One</b></span></div>
+  <small>One account</small><h1>Your gyms.<br>One login.</h1><p>Sign in once. If your account has access to more than one gym, choose where you want to go next.</p>
+</section>
+<section class="panel"><div class="box">
+  <div class="eyebrow">HybridOne</div><h2>Sign in</h2><div class="muted">Use the email address and password linked to your HybridOne account.</div>
+  <div id="gymHint" class="hint"><b id="gymHintTitle"></b><span id="gymHintText"></span></div>
+  <label for="email">Email</label><input id="email" type="email" autocomplete="email">
+  <label for="password">Password</label><input id="password" type="password" autocomplete="current-password">
+  <button id="signIn">Sign in</button>
+  <div class="auth-links"><button class="auth-link" id="forgotPassword" type="button">Forgot password?</button><button class="auth-link" id="magicLink" type="button">Email me a sign-in link</button></div>
+  <div id="msg" class="msg"></div><a class="sales-link" href="./">← Back to HybridOne</a>
+</div></section>
+</div>
+<script src="./gym-context.js"></script>
+<script type="module">
+import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
+const ctx=window.HybridGymContext,$=id=>document.getElementById(id),params=new URLSearchParams(location.search),hintGymId=params.get('gym_id')||'',returnTo=params.get('return_to')||'';
+const btn=$('signIn'),msg=$('msg');
+const KNOWN={'242f57c2-6e37-4977-b3c5-1c87de7d0b98':'Hybrid Hub','aec16956-3793-4543-873b-4412646ca1eb':'Puffin Performance'};
+if(hintGymId){$('gymHint').classList.add('show');$('gymHintTitle').textContent=KNOWN[hintGymId]||'Gym link';$('gymHintText').textContent='This link will open that gym if your account has access.'}
+function emailValue(){return $('email').value.trim().toLowerCase()}
+function show(text,good=false){msg.textContent=text;msg.className='msg'+(good?' good':'')}
+async function memberships(userId){const{data,error}=await supabase.from('gym_members').select('gym_id,role,access_status,gyms(id,name,slug,logo_url)').eq('user_id',userId).eq('is_active',true).eq('access_status','active').order('created_at');if(error)throw error;return data||[]}
+function chooserUrl(){const u=new URL('./choose-gym.html',location.href);if(returnTo)u.searchParams.set('return_to',returnTo);return u.toString()}
+function selectedDestination(m){ctx.setGym(m.gym_id);if(returnTo){const safe=ctx.safeReturn(returnTo,m.gym_id);if(safe)return safe}return ctx.destination(m)}
+async function continueSession(session){
+  if(!session)return false;
+  const rows=await memberships(session.user.id);
+  if(!rows.length){ctx.clearGym();show('This account does not currently have active access to a gym.');return false}
+  if(hintGymId){const hinted=rows.find(x=>x.gym_id===hintGymId);if(hinted){location.replace(selectedDestination(hinted));return true}show('This account does not have access to the gym in this link.');return false}
+  if(rows.length===1){location.replace(selectedDestination(rows[0]));return true}
+  ctx.clearGym();location.replace(chooserUrl());return true
+}
+btn.onclick=async()=>{show('');const email=emailValue(),password=$('password').value;if(!email||!password){show('Enter your email and password.');return}btn.disabled=true;try{const{data,error}=await supabase.auth.signInWithPassword({email,password});if(error)throw error;await continueSession(data.session)}catch(e){console.error(e);show('Email or password not recognised.')}finally{btn.disabled=false}};
+function authReturn(mode){const u=new URL('./auth-return.html',location.href);u.searchParams.set('mode',mode);return u.toString()}
+$('forgotPassword').onclick=async()=>{const email=emailValue();if(!email){show('Enter your email address first.');return}const b=$('forgotPassword');b.disabled=true;try{const{error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:authReturn('recovery')});if(error)throw error;show('Check your email for a password reset link.',true)}catch(e){console.error(e);show('Could not send a reset link.')}finally{b.disabled=false}};
+$('magicLink').onclick=async()=>{const email=emailValue();if(!email){show('Enter your email address first.');return}const b=$('magicLink');b.disabled=true;try{const{error}=await supabase.auth.signInWithOtp({email,options:{emailRedirectTo:authReturn('magic'),shouldCreateUser:false}});if(error)throw error;show('Check your email for a secure sign-in link.',true)}catch(e){console.error(e);show('Could not send a sign-in link.')}finally{b.disabled=false}};
+$('password').addEventListener('keydown',e=>{if(e.key==='Enter')btn.click()});
+const{data:{session}}=await supabase.auth.getSession();if(session)await continueSession(session);
+</script>
+</body></html>

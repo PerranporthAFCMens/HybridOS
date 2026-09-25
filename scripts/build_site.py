@@ -53,7 +53,7 @@ def add_shared_runtime():
   if not(OUT/n).exists():continue
   s=read(n)
   if 'hybrid-critical-shell' not in s:s=s.replace('</head>',CRITICAL_SHELL_STYLE+'</head>',1)
-  s=inject_head(s,'app-consistency.css',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}">');s=inject_head(s,'app-stability.js',f'<script src="./app-stability.js?v={VERSION}"></script>');s=inject_body(s,'shared-shell.js',f'<script src="./shared-shell.js?v={VERSION}" defer></script>');write(n,inject_body(s,'account-menu.js',f'<script src="./account-menu.js?v={VERSION}" defer></script>'))
+  s=inject_head(s,'gym-context.js',f'<script src="./gym-context.js?v={VERSION}"></script>');s=inject_head(s,'app-consistency.css',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}">');s=inject_head(s,'app-stability.js',f'<script src="./app-stability.js?v={VERSION}"></script>');s=inject_body(s,'shared-shell.js',f'<script src="./shared-shell.js?v={VERSION}" defer></script>');write(n,inject_body(s,'account-menu.js',f'<script src="./account-menu.js?v={VERSION}" defer></script>'))
 def add_tenant_runtime():
  for n in TENANT_PAGES:
   if not(OUT/n).exists():continue

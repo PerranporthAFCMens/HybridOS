@@ -33,7 +33,7 @@
 
   const pop=document.createElement('div');
   pop.className='account-popover';
-  pop.innerHTML=`<div class="account-popover-head"><b id="accountMenuName">My account</b><span id="accountMenuEmail"></span></div><div id="accountPortalContext" class="account-menu-context hidden"></div><div id="accountPortalActions"></div><div id="accountPortalDivider" class="account-menu-divider hidden"></div><button type="button" class="account-menu-action" id="accountEditBtn"><span>Account settings</span><span>›</span></button><button type="button" class="account-menu-action danger" id="accountSignOutBtn"><span>Sign out</span><span>↗</span></button>`;
+  pop.innerHTML=`<div class="account-popover-head"><b id="accountMenuName">My account</b><span id="accountMenuEmail"></span></div><div id="accountGymContext" class="account-menu-context hidden"></div><div id="accountGymActions"></div><div id="accountGymDivider" class="account-menu-divider hidden"></div><div id="accountPortalContext" class="account-menu-context hidden"></div><div id="accountPortalActions"></div><div id="accountPortalDivider" class="account-menu-divider hidden"></div><button type="button" class="account-menu-action" id="accountEditBtn"><span>Account settings</span><span>›</span></button><button type="button" class="account-menu-action danger" id="accountSignOutBtn"><span>Sign out</span><span>↗</span></button>`;
   chip.appendChild(pop);
 
   const modal=document.createElement('div');
@@ -64,7 +64,7 @@
   const menuName=q('#accountMenuName'),menuEmail=q('#accountMenuEmail');
   const displayInput=q('#accountDisplayName'),firstInput=q('#accountFirstName'),lastInput=q('#accountLastName'),dobInput=q('#accountDateOfBirth'),genderInput=q('#accountGender'),emailInput=q('#accountEmail');
   const passwordInput=q('#accountPassword'),password2Input=q('#accountPassword2'),msg=q('#accountMsg'),saveBtn=q('#accountSaveBtn'),avatarFile=q('#accountAvatarFile'),avatarPreview=q('#accountAvatarPreview');
-  let user=null,profile=null,membershipRole=null,staffPermissions={};
+  let user=null,profile=null,membershipRole=null,staffPermissions={},allMemberships=[];
 
   function currentPortal(){
     if(location.pathname.endsWith('/member.html'))return 'member';
@@ -73,9 +73,19 @@
   }
   function portalLabel(p){return p==='owner'?'Owner':'Staff/Employee'}
   function portalHref(p){
-    if(p==='owner')return './admin.html?view=index.html';
-    if(p==='staff')return ['owner','admin'].includes(membershipRole?.role)?'./staff.html?view=staff':'./staff.html';
-    return membershipRole?.role==='member'?'./member.html':'./member.html?view=member';
+    const gymId=sessionStorage.getItem('hybrid-gym-id')||'';
+    const raw=p==='owner'?'./admin.html?view=index.html':p==='staff'?(['owner','admin'].includes(membershipRole?.role)?'./staff.html?view=staff':'./staff.html'):(membershipRole?.role==='member'?'./member.html':'./member.html?view=member');
+    const u=new URL(raw,location.href);if(gymId)u.searchParams.set('gym_id',gymId);return u.toString();
+  }
+  function renderGymActions(){
+    const context=q('#accountGymContext'),wrap=q('#accountGymActions'),divider=q('#accountGymDivider');
+    if(!context||!wrap||!divider)return;
+    const currentId=sessionStorage.getItem('hybrid-gym-id')||'',current=allMemberships.find(x=>x.gym_id===currentId)||null;
+    context.textContent=current?.gyms?.name?'Current gym · '+current.gyms.name:'Gym access';
+    context.classList.toggle('hidden',allMemberships.length===0);
+    wrap.innerHTML=allMemberships.length>1?'<button type="button" class="account-menu-action" id="accountSwitchGymBtn"><span>Switch gym</span><span>↗</span></button>':'';
+    divider.classList.toggle('hidden',allMemberships.length<2);
+    const b=q('#accountSwitchGymBtn');if(b)b.onclick=e=>{e.stopPropagation();location.href='./choose-gym.html?switch=1'};
   }
   function renderPortalActions(){
     const wrap=q('#accountPortalActions'),context=q('#accountPortalContext'),divider=q('#accountPortalDivider');
@@ -96,17 +106,18 @@
     const {data:{user:u},error}=await sb.auth.getUser();
     if(error||!u) return false;
     user=u;
-    const [{data:p},{data:gm}]=await Promise.all([
+    const [{data:p},{data:gms}]=await Promise.all([
       sb.from('profiles').select('display_name,first_name,last_name,avatar_url,date_of_birth,gender').eq('id',u.id).maybeSingle(),
-      sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',u.id).eq('is_active',true).limit(1)
+      sb.from('gym_members').select('gym_id,role,access_status,gyms(id,name,slug)').eq('user_id',u.id).eq('is_active',true).eq('access_status','active').order('created_at')
     ]);
-    profile=p||{};membershipRole=gm?.[0]||null;staffPermissions={};
+    profile=p||{};allMemberships=gms||[];const activeGymId=sessionStorage.getItem('hybrid-gym-id')||'';membershipRole=allMemberships.find(x=>x.gym_id===activeGymId)||(allMemberships.length===1?allMemberships[0]:null);staffPermissions={};
     if(membershipRole&&['staff','coach'].includes(membershipRole.role)){const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',membershipRole.gym_id).eq('user_id',u.id).maybeSingle();staffPermissions=sa?.permissions||{}}
     const display=profile.display_name||[profile.first_name,profile.last_name].filter(Boolean).join(' ')||u.user_metadata?.display_name||u.user_metadata?.full_name||u.email?.split('@')[0]||'Account';
     menuName.textContent=display; menuEmail.textContent=u.email||'';
     displayInput.value=display; firstInput.value=profile.first_name||''; lastInput.value=profile.last_name||''; dobInput.value=profile.date_of_birth||''; genderInput.value=profile.gender||''; emailInput.value=u.email||'';
     avatarPreview.innerHTML=profile.avatar_url?'<img src="'+profile.avatar_url+'" alt="">':display.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H';
     avatarFile.value='';
+    renderGymActions();
     renderPortalActions();
     return true;
   }
@@ -123,7 +134,7 @@
   avatarFile.onchange=()=>{const file=avatarFile.files?.[0];if(!file)return;if(file.size>5242880){msg.textContent='Profile photo must be 5 MB or smaller.';msg.className='account-msg error';avatarFile.value='';return}const url=URL.createObjectURL(file);avatarPreview.innerHTML='<img src="'+url+'" alt="New profile photo preview">'};
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();if(modal.classList.contains('open'))closeModal()}});
-  q('#accountSignOutBtn').onclick=async()=>{q('#accountSignOutBtn').disabled=true;await sb.auth.signOut();location.href='./index.html'};
+  q('#accountSignOutBtn').onclick=async()=>{q('#accountSignOutBtn').disabled=true;sessionStorage.removeItem('hybrid-gym-id');await sb.auth.signOut();location.href='./login.html'};
 
   saveBtn.onclick=async()=>{
     msg.textContent='';msg.className='account-msg';
