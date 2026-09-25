@@ -34,13 +34,13 @@ function nameOf(id){const p=profiles.get(id)||{};return p.display_name||[p.first
 function avatar(id){const p=profiles.get(id)||{};return '<div class="avatar">'+(p.avatar_url?'<img src="'+esc(p.avatar_url)+'" alt="">':esc(initials(nameOf(id))))+'</div>'}
 function when(v){try{return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(v))}catch{return''}}
 async function init(){
- const{data:{session}}=await sb.auth.getSession();if(!session){location.href='./index.html';return}userId=session.user.id;
+ const{data:{session}}=await sb.auth.getSession();if(!session){location.href=window.HybridGymContext.loginUrl({gymId:new URLSearchParams(location.search).get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||'',returnTo:location.href});return}userId=session.user.id;
  const{data:gm}=await sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',userId).eq('is_active',true).eq('gym_id',sessionStorage.getItem('hybrid-gym-id')||'00000000-0000-0000-0000-000000000000').limit(1);
- if(!gm?.length){location.href='./index.html';return}
+ if(!gm?.length){location.href=window.HybridGymContext.chooserUrl({returnTo:location.href});return}
  let allowed=['owner','admin'].includes(gm[0].role);
  if(!allowed&&['staff','coach'].includes(gm[0].role)){const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',gm[0].gym_id).eq('user_id',userId).maybeSingle();allowed=sa?.permissions?.full_access===true}
  if(!allowed){location.href='./staff.html';return}
- gymId=gm[0].gym_id;$('gymName').textContent=gm[0].gyms?.name||'Gym';
+ gymId=gm[0].gym_id;window.HybridGymContext.setGym(gymId);$('gymName').textContent=gm[0].gyms?.name||'Gym';
  const{data:pf}=await sb.from('profiles').select('id,display_name,first_name,last_name,avatar_url');(pf||[]).forEach(p=>profiles.set(p.id,p));
  $('loading').classList.add('hidden');$('app').classList.remove('hidden');await loadFeed()
 }
