@@ -14,6 +14,9 @@
     .userchip:after{content:"";width:7px;height:7px;border-right:1.8px solid #667085;border-bottom:1.8px solid #667085;transform:rotate(45deg) translateY(-2px);margin-left:3px}
     .account-popover{position:absolute;right:0;top:calc(100% + 10px);width:min(300px,calc(100vw - 28px));background:#fff;border:1px solid #e7ebf2;border-radius:18px;box-shadow:0 22px 60px rgba(16,24,40,.17);padding:8px;z-index:120;display:none}
     .account-popover.open{display:block}
+    .userchip.account-menu-open{z-index:2147483000!important}
+    .userchip.account-menu-open>.who,.userchip.account-menu-open>.avatar{pointer-events:none}
+    .userchip.account-menu-open>.account-popover{z-index:2147483001!important;pointer-events:auto}
     .account-popover-head{padding:10px 11px 12px;border-bottom:1px solid #eef1f5;margin-bottom:6px}
     .account-popover-head b{display:block;font-size:14px;color:#101828}.account-popover-head span{display:block;font-size:12px;color:#667085;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .account-menu-action{width:100%;border:0;background:transparent;border-radius:12px;padding:11px 12px;text-align:left;color:#344054;font-weight:750;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -122,10 +125,10 @@
     return true;
   }
 
-  function closeMenu(){pop.classList.remove('open')}
+  function closeMenu(){pop.classList.remove('open');chip.classList.remove('account-menu-open');chip.setAttribute('aria-expanded','false')}
   function closeModal(){modal.classList.remove('open');passwordInput.value='';password2Input.value='';msg.textContent='';msg.className='account-msg'}
   chip.setAttribute('role','button');chip.setAttribute('tabindex','0');chip.setAttribute('aria-haspopup','menu');chip.setAttribute('aria-expanded','false');
-  function toggleMenu(e){e?.stopPropagation();const open=!pop.classList.contains('open');pop.classList.toggle('open',open);chip.setAttribute('aria-expanded',String(open))}
+  function toggleMenu(e){e?.stopPropagation();const open=!pop.classList.contains('open');pop.classList.toggle('open',open);chip.classList.toggle('account-menu-open',open);chip.setAttribute('aria-expanded',String(open))}
   chip.addEventListener('click',e=>{if(e.target.closest('.account-popover'))return;toggleMenu(e)});
   chip.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleMenu(e)}});
   document.addEventListener('click',e=>{if(!chip.contains(e.target))closeMenu()});
