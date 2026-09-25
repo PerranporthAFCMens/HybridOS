@@ -52,7 +52,7 @@ for brand_page in ROOT.glob('*.html'):
 # Core rendering assets are intentionally locked to the last known-good mobile/admin baseline.
 # Any deliberate change to these files must update this list as part of the same reviewed change.
 RENDER_BASELINE={
- 'app-consistency.css':'3142106974312bf247de3e5373d68368c1da881d',
+ 'app-consistency.css':'585b974a4dade9c5c16ae0bb9dbc6f7d500d80dd',
  'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
@@ -323,8 +323,8 @@ for page_name in admin_pages:
  if 'admin-mobile-contract.css' in page_text:problems.append(f'{page_name}: duplicate admin mobile contract returned')
  for asset in ('app-consistency.css','admin-shell.css','admin-pages.css','admin-embed.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js'):
   if page_text.count(asset)!=1:problems.append(f'{page_name}: expected exactly one {asset}, found {page_text.count(asset)}')
- css_order=[page_text.find('app-consistency.css'),page_text.find('admin-shell.css'),page_text.find('admin-pages.css')]
- if min(css_order)<0 or css_order!=sorted(css_order):problems.append(f'{page_name}: shared admin stylesheet order drifted')
+ css_pos=page_text.find('app-consistency.css');shell_pos=page_text.find('admin-shell.css');pages_pos=page_text.find('admin-pages.css')
+ if min(css_pos,shell_pos,pages_pos)<0 or not(shell_pos<pages_pos<css_pos):problems.append(f'{page_name}: canonical UI stylesheet must load after admin layout styles')
 communications=(ROOT/'communications.html').read_text(encoding='utf-8')
 for x in ('Communications','Transactional','Marketing','gym_communication_settings','gym_email_templates','access_invite','{{gym_name}}','{{invited_by}}','{{role}}','Live preview'):
  if x not in communications:problems.append(f'communications.html: communications editor missing: {x}')

@@ -101,7 +101,17 @@ def brand_member_preview():
  n='member-preview.html';s=read(n);s=s.replace('<title>Member Preview · HybridOne</title>','<title>Hybrid Hub · Member Preview</title>').replace('Puffin Performance','Hybrid Hub')
  if 'member-gym-logo' not in s:s=s.replace('<main class="main">','<main class="main"><div class="member-gym-logo"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>',1)
  write(n,s)
+def finalise_ui_contract():
+ # Canonical visual primitives must be the final stylesheet on every product
+ # surface. Page/specialist CSS owns feature geometry; app-consistency owns
+ # the shared HybridOne look and feel.
+ for n in tuple(dict.fromkeys(APP_PAGES+('admin.html',))):
+  if not (OUT/n).exists():continue
+  s=read(n)
+  s=re.sub(r'<link[^>]+href=["\']\.\/app-consistency\.css(?:\?[^"\']*)?["\'][^>]*>','',s,flags=re.I)
+  s=s.replace('</head>',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}"></head>',1)
+  write(n,s)
 def write_deployment_manifest():
  (OUT/'deployment.json').write_text(json.dumps({'build_sha':BUILD_SHA,'build_version':VERSION},indent=2)+'\n',encoding='utf-8')
-def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
+def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
 if __name__=='__main__':build()

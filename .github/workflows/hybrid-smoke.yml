@@ -17,6 +17,9 @@ jobs:
       - name: Smoke test built site
         run: python3 scripts/smoke_test.py _site
 
+      - name: Validate UI consistency contract
+        run: python3 scripts/ui_consistency_check.py _site
+
       - name: Smoke test Auth email hook
         run: python3 scripts/email_hook_smoke.py
 

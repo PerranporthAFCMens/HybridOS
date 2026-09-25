@@ -20,6 +20,32 @@
   --hybrid-page-x:30px;
   --hybrid-page-y:28px;
   --hybrid-gap:16px;
+  --hybrid-surface-soft:#f8fafc;
+  --hybrid-line-strong:#d0d5dd;
+  --hybrid-radius-sm:12px;
+  --hybrid-radius-md:16px;
+  --hybrid-radius-lg:20px;
+  --hybrid-space-1:4px;
+  --hybrid-space-2:8px;
+  --hybrid-space-3:12px;
+  --hybrid-space-4:16px;
+  --hybrid-space-5:20px;
+  --hybrid-space-6:24px;
+
+  /* Legacy aliases. Page-specific CSS still uses these names in places.
+     The canonical stylesheet is loaded last so every screen resolves them
+     to the same HybridOne design tokens. */
+  --bg:var(--hybrid-bg)!important;
+  --panel:var(--hybrid-panel)!important;
+  --ink:var(--hybrid-ink)!important;
+  --muted:var(--hybrid-muted)!important;
+  --line:var(--hybrid-line)!important;
+  --dark:var(--hybrid-dark)!important;
+  --accent:var(--hybrid-accent-dark)!important;
+  --good:var(--hybrid-good)!important;
+  --warn:var(--hybrid-warn)!important;
+  --bad:var(--hybrid-bad)!important;
+  --shadow:var(--hybrid-shadow)!important;
 }
 
 html{min-height:100%;background:var(--hybrid-bg)!important;color-scheme:light;-webkit-text-size-adjust:100%}
@@ -268,3 +294,193 @@ input.staff-member-search{width:100%;min-height:44px;padding:11px 12px!important
   .side .hybrid-shell-brand{margin:0 4px 20px!important}
   .side .hybrid-shell-gym{margin:0 0 16px!important}
 }
+
+/* -------------------------------------------------------------------------
+   HybridOne final UI contract
+   This block is intentionally generic and the build places this stylesheet
+   after page/specialist CSS. Feature layouts may choose their grid/geometry,
+   but these visual primitives stay consistent throughout the product.
+   ------------------------------------------------------------------------- */
+
+/* Page-heading rhythm */
+.top,.groups-top{
+  align-items:flex-start!important;
+  flex-wrap:wrap;
+  gap:16px!important;
+  margin-bottom:18px!important;
+}
+.top h1,.groups-top h1{
+  margin:4px 0 5px!important;
+  font-size:30px!important;
+  line-height:1.12!important;
+  letter-spacing:-.02em!important;
+}
+.top .muted,.groups-top .muted{line-height:1.45}
+
+/* Primary and secondary surfaces */
+.card,.panel{
+  border:1px solid var(--hybrid-line)!important;
+  border-radius:var(--hybrid-radius-lg)!important;
+  background:var(--hybrid-panel)!important;
+  box-shadow:var(--hybrid-shadow)!important;
+}
+.report-card,.group-card,.member-card,.challenge-card,
+.staff-member-result,.staff-pt-row,.staff-access-code{
+  border:1px solid var(--hybrid-line)!important;
+  border-radius:var(--hybrid-radius-md)!important;
+  background:var(--hybrid-panel)!important;
+}
+.row,.member-schedule-item,.member-activity-item,.staff-rota-row,.staff-resource-row{
+  border-color:var(--hybrid-line)!important;
+}
+
+/* One control language. Feature-specific controls may keep their geometry,
+   but ordinary action buttons use the same radius, weight and interaction. */
+.btn,.staff-ops-btn,.roster-btn,.export,.mini-btn,.report-actions button{
+  min-height:40px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border-radius:var(--hybrid-control-radius)!important;
+  padding:10px 13px!important;
+  font-weight:800!important;
+  line-height:1.2!important;
+  cursor:pointer;
+  text-decoration:none;
+}
+.btn.primary,.btn.dark,.staff-ops-btn.primary,.report-actions button.view{
+  background:var(--hybrid-dark)!important;
+  border-color:var(--hybrid-dark)!important;
+  color:#fff!important;
+}
+.btn.secondary,.staff-ops-btn.secondary{
+  background:#fff!important;
+  border:1px solid var(--hybrid-line)!important;
+  color:var(--hybrid-ink)!important;
+}
+.btn.success,.btn.good{
+  background:#ecfdf3!important;
+  border:1px solid #abefc6!important;
+  color:var(--hybrid-good)!important;
+}
+.btn.danger{
+  background:#fef3f2!important;
+  border:1px solid #fecdca!important;
+  color:var(--hybrid-bad)!important;
+}
+.btn:hover:not(:disabled),.staff-ops-btn:hover:not(:disabled),
+.roster-btn:hover:not(:disabled),.export:hover:not(:disabled),
+.mini-btn:hover:not(:disabled),.report-actions button:hover:not(:disabled){
+  filter:brightness(.985);
+}
+.btn:active:not(:disabled),.staff-ops-btn:active:not(:disabled),
+.roster-btn:active:not(:disabled),.export:active:not(:disabled),
+.mini-btn:active:not(:disabled),.report-actions button:active:not(:disabled){
+  transform:translateY(1px);
+}
+
+/* Repeated action groups */
+.actions,.toolbar-actions,.report-actions,.group-actions,
+.plan-actions,.member-actions,.membership-actions,.staff-pt-actions{
+  gap:8px!important;
+}
+
+/* Forms */
+.field label,.staff-pt-form label{
+  color:#344054;
+  font-size:12px!important;
+  font-weight:800!important;
+}
+.field input,.field select,.field textarea,
+.staff-member-search,.staff-pt-form input,.staff-pt-form select,.staff-pt-form textarea,
+.report-toolbar input,.invite-box input,.submit-row input{
+  border:1px solid var(--hybrid-line-strong)!important;
+  border-radius:var(--hybrid-control-radius)!important;
+  background:#fff!important;
+  color:var(--hybrid-ink)!important;
+  outline:none;
+}
+.field input:focus,.field select:focus,.field textarea:focus,
+.staff-member-search:focus,.staff-pt-form input:focus,.staff-pt-form select:focus,
+.staff-pt-form textarea:focus,.report-toolbar input:focus,
+.invite-box input:focus,.submit-row input:focus{
+  border-color:#8d82ff!important;
+  box-shadow:0 0 0 3px #eeecff!important;
+}
+
+/* Tabs and segmented navigation */
+.tabs,.page-tabs,.admin-context-tabs{gap:8px!important}
+.tab,.page-tab,.admin-context-tab{
+  min-height:40px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--hybrid-line)!important;
+  border-radius:var(--hybrid-control-radius)!important;
+  background:#fff!important;
+  color:var(--hybrid-ink)!important;
+  padding:9px 13px!important;
+  font-weight:800!important;
+  text-decoration:none;
+}
+.tab.active,.page-tab.active,.admin-context-tab.active{
+  background:var(--hybrid-dark)!important;
+  border-color:var(--hybrid-dark)!important;
+  color:#fff!important;
+  box-shadow:none!important;
+}
+.step,.member-filter{
+  border-color:var(--hybrid-line)!important;
+  background:#fff!important;
+}
+.step.active,.member-filter.active{
+  background:var(--hybrid-dark)!important;
+  border-color:var(--hybrid-dark)!important;
+  color:#fff!important;
+}
+
+/* Tables and dense data */
+.table-wrap{
+  border:1px solid var(--hybrid-line);
+  border-radius:var(--hybrid-radius-md);
+  background:#fff;
+  overflow:auto;
+}
+.table th,.table td{border-bottom-color:var(--hybrid-line)!important}
+.table th{
+  color:var(--hybrid-muted)!important;
+  font-size:11px!important;
+  font-weight:850!important;
+  letter-spacing:.06em;
+}
+
+/* Empty, notice and status treatments */
+.empty,.staff-ops-empty{
+  border-color:#d0d5dd!important;
+  border-radius:14px!important;
+  background:#fafbfc!important;
+  color:var(--hybrid-muted)!important;
+}
+.notice{
+  border-radius:14px!important;
+  line-height:1.45;
+}
+.status,.tag{
+  line-height:1.2;
+}
+
+/* Specialist shells should still use the same page background. */
+.groups-main,.operations-page,.admin-frame-main{
+  background:var(--hybrid-bg)!important;
+}
+
+@media(max-width:900px){
+  .top,.groups-top{gap:10px!important;margin-bottom:16px!important}
+  .top h1,.groups-top h1{font-size:28px!important}
+  .card,.panel{border-radius:18px!important}
+  .btn,.staff-ops-btn,.roster-btn,.export,.mini-btn,.report-actions button{
+    min-height:44px;
+  }
+}
+
