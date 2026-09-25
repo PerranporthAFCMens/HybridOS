@@ -12,6 +12,7 @@ required_files=[
     'STATUS.md',
     'AUTH_TEST_MATRIX.md',
     '.github/workflows/dev-runtime.yml',
+    '.github/workflows/protected-routing-browser.yml',
     'scripts/runtime_pages_check.py',
     'HANDOVER.md',
     'README.md',
@@ -64,10 +65,14 @@ if not problems:
 
     runtime_workflow=(ROOT/'.github/workflows/dev-runtime.yml').read_text(encoding='utf-8')
     runtime_script=(ROOT/'scripts/runtime_pages_check.py').read_text(encoding='utf-8')
+    protected_routing_workflow=(ROOT/'.github/workflows/protected-routing-browser.yml').read_text(encoding='utf-8')
     if 'HybridOne dev runtime verification' not in runtime_workflow:
         problems.append('dev runtime workflow name/contract missing')
     if 'deployment.json' not in runtime_script or 'hybrid-hub-login.html' not in runtime_script or 'puffin-performance-login.html' not in runtime_script:
         problems.append('runtime Pages verification contract incomplete')
+    for marker in ('HybridOne protected routing browser','return_to','admin-access.html','hybrid-hub-login.html','puffin-performance-login.html'):
+        if marker not in protected_routing_workflow:
+            problems.append(f'protected routing browser contract missing: {marker}')
 
     control=(ROOT/'PROJECT_CONTROL.md').read_text(encoding='utf-8')
     for marker in ('Definition of "fixed"','Mandatory read order','URL rule','State-update rule'):

@@ -173,3 +173,31 @@ Evidence:
 - resent email used the corrected template with resolved inviter and role placeholders
 
 The fresh test invite is intentionally left open so the same button remains visible for manual inspection. Temporary probe permissions were removed and the probe Edge Function was made inert after the test.
+
+
+## Protected login routing fix
+
+**PASS** on 25 September 2026.
+
+The previous bug was that protected admin/staff pages redirected unauthenticated users to bare `./index.html`, which discarded the requested `gym_id` and produced the generic HybridOne login warning.
+
+The dev routing contract now:
+
+- sends Hybrid Hub protected pages to `hybrid-hub-login.html`
+- sends Puffin Performance protected pages to `puffin-performance-login.html`
+- carries the exact requested page in a safe `return_to` value
+- preserves `gym_id`
+- returns the user to the originally requested protected page after password sign-in
+- preserves gym context through the mobile admin-shell handoff
+- keeps sign-out gym-specific rather than returning to the generic platform login
+
+Evidence:
+
+- source routing fix: `8ad9d2087dc0b51977c562e1999f6ec4cbdf22b7`
+- reviewed smoke baseline update: `f8bbade97815b5b19e923d63248b5c7b9cfd391e`
+- protected-routing browser workflow added at `71b8c7f3162c133ea5909a379d43c2fc892019f9`
+- public Pages deployment: PASS
+- dev runtime verification: PASS
+- protected routing browser run `36125403099`: PASS
+
+The browser test used a fresh mobile Chromium context against the public GitHub Pages deployment, so this is runtime evidence rather than source-only evidence.

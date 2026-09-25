@@ -160,3 +160,25 @@ Server-runtime verified routes:
 - `https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=aec16956-3793-4543-873b-4412646ca1eb`
 
 This is public server-runtime verification. Full authenticated browser journeys remain tracked separately in `AUTH_TEST_MATRIX.md`.
+
+
+## Protected-page login routing
+
+Protected admin/staff pages must never redirect an unauthenticated user to bare `index.html`.
+
+Current contract:
+
+- Hybrid Hub gym ID -> `hybrid-hub-login.html`
+- Puffin Performance gym ID -> `puffin-performance-login.html`
+- unknown gym -> `index.html?gym_id=<id>`
+- protected-page redirects include a same-origin `return_to` value
+- dedicated login pages validate `return_to` and restore the exact protected page after sign-in
+
+Permanent browser regression workflow:
+
+`.github/workflows/protected-routing-browser.yml`
+
+Latest public mobile-browser PASS:
+
+- run `36125403099`
+- source SHA `71b8c7f3162c133ea5909a379d43c2fc892019f9`

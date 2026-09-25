@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "verified_at_utc": "2026-09-25T09:39:28Z",
+  "verified_at_utc": "2026-09-25T10:43:00Z",
   "repository": "PerranporthAFCMens/HybridOS",
   "branches": {
     "production_source": "main",
@@ -56,6 +56,20 @@
       "first_green_run_id": 36066958023,
       "first_green_commit": "b60aea0ace4195d1f236f8d2d2bc7988870c5683",
       "first_green_at_utc": "2026-09-24T22:21:58Z"
+    },
+    "protected_routing_browser": {
+      "enabled": true,
+      "workflow": ".github/workflows/protected-routing-browser.yml",
+      "last_pass_run_id": 36125403099,
+      "last_pass_source_sha": "71b8c7f3162c133ea5909a379d43c2fc892019f9",
+      "verifies": [
+        "unauthenticated Hybrid Hub Admin access redirects to Hybrid Hub login",
+        "gym_id preserved through redirect",
+        "return_to preserved back to requested protected page",
+        "mobile admin-shell handoff preserves gym context",
+        "Puffin protected route selects Puffin login"
+      ],
+      "status": "pass"
     }
   },
   "supabase": {
@@ -81,7 +95,8 @@
     "puffin_magic_link_email": "pass_delivery_branding_return_url",
     "cross_gym_login_isolation": "pass_browser",
     "admin_invite_email": "pass_corrected_template_delivery_and_dev_resend_ui",
-    "corrected_admin_invite_acceptance": "not_tested"
+    "corrected_admin_invite_acceptance": "not_tested",
+    "protected_login_routing": "pass_public_mobile_browser"
   },
   "current_open_test_invite": {
     "purpose": "Resend email UI verification",
