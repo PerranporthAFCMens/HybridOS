@@ -9,7 +9,7 @@ const routes=[
 ['memberships','member-memberships.html'],['door-access','access-settings.html'],
 ['reporting','reporting.html'],['communications','communications.html'],
 ['member-view-settings','member-view-settings.html'],['resource-availability','resource-availability.html'],
-['gym-layout','gym-layout.html'],['staff-view','staff.html'],['member-view','member.html'],
+['gym-layout','gym-layout.html'],['staff-view','staff.html'],['member-preview','member-preview.html'],
 ['social','social.html'],['groups','groups.html'],['integrations','integrations.html']
 ];
 async function runViewport(browser,label,viewport){

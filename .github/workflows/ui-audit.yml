@@ -5,6 +5,14 @@ on:
     branches: [dev]
     paths:
       - '.github/workflows/ui-audit.yml'
+      - 'scripts/ui_audit.js'
+      - 'app-consistency.css'
+      - 'resource-availability.html'
+      - 'groups.html'
+      - 'groups.css'
+      - 'groups.js'
+      - 'integrations.html'
+      - 'reporting.html'
   workflow_dispatch:
 
 permissions:
