@@ -41,24 +41,24 @@ else:
 
 checks=[
     (
+        'login.html',
+        ('<title>Sign in · HybridOne</title>','Your gyms.<br>One login.','choose-gym.html',"eq('access_status','active')"),
+        ('Use the login page for the gym you want to open.',)
+    ),
+    (
+        'choose-gym.html',
+        ('<title>Choose a gym · HybridOne</title>','Choose a gym',"params.get('switch')==='1'",'hybrid-last-gym-id'),
+        ()
+    ),
+    (
         'hybrid-hub-login.html',
-        ('<title>Hybrid Hub · HybridOne</title>','Opening: Hybrid Hub','Sign in to Hybrid Hub'),
-        ('Welcome to HybridOne','Use the login page for the gym you want to open.')
+        ("./login.html","u.searchParams.set('gym_id','242f57c2-6e37-4977-b3c5-1c87de7d0b98')"),
+        ('Sign in to Hybrid Hub',)
     ),
     (
         'puffin-performance-login.html',
-        ('<title>Puffin Performance · HybridOne</title>','Opening: Puffin Performance','Sign in to Puffin Performance'),
-        ('Welcome to HybridOne','Use the login page for the gym you want to open.')
-    ),
-    (
-        'index.html?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98',
-        ("const queryGymId=inviteParams.get('gym_id')||''","sessionStorage.setItem('hybrid-gym-id',queryGymId)"),
-        ()
-    ),
-    (
-        'index.html?gym_id=aec16956-3793-4543-873b-4412646ca1eb',
-        ("const queryGymId=inviteParams.get('gym_id')||''","sessionStorage.setItem('hybrid-gym-id',queryGymId)"),
-        ()
+        ("./login.html","u.searchParams.set('gym_id','aec16956-3793-4543-873b-4412646ca1eb')"),
+        ('Sign in to Puffin Performance',)
     ),
 ]
 

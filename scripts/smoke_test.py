@@ -2,11 +2,19 @@ from __future__ import annotations
 import re,subprocess,sys
 from pathlib import Path
 ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
-for login_name in ('hybrid-hub-login.html','puffin-performance-login.html'):
- login_text=(ROOT/login_name).read_text(encoding='utf-8')
- for marker in ("function safeReturn()","return_to","location.replace(safeReturn())"):
-  if marker not in login_text:problems.append(f'{login_name}: protected-page return routing missing: {marker}')
- if "location.replace('./index.html?gym_id='" in login_text:problems.append(f'{login_name}: legacy direct dashboard redirect still present')
+login_text=(ROOT/'login.html').read_text(encoding='utf-8')
+for marker in ('Your gyms.<br>One login.','choose-gym.html',"eq('access_status','active')",'gym-context.js'):
+ if marker not in login_text:problems.append(f'login.html: universal login contract missing: {marker}')
+chooser_text=(ROOT/'choose-gym.html').read_text(encoding='utf-8')
+for marker in ('Choose a gym',"params.get('switch')==='1'",'data-gym','hybrid-last-gym-id'):
+ if marker not in chooser_text:problems.append(f'choose-gym.html: multi-gym chooser contract missing: {marker}')
+account_menu=(ROOT/'account-menu.js').read_text(encoding='utf-8')
+for marker in ('Switch gym','allMemberships',"eq('access_status','active')",'choose-gym.html?switch=1'):
+ if marker not in account_menu:problems.append(f'account-menu.js: multi-gym switch contract missing: {marker}')
+if '.limit(1)' in account_menu:problems.append('account-menu.js: first-gym assumption returned')
+for login_name,gym_id in (('hybrid-hub-login.html','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),('puffin-performance-login.html','aec16956-3793-4543-873b-4412646ca1eb')):
+ alias=(ROOT/login_name).read_text(encoding='utf-8')
+ if './login.html' not in alias or gym_id not in alias:problems.append(f'{login_name}: gym shortcut does not use universal login')
 invite_text=(ROOT/'admin-invite.html').read_text(encoding='utf-8')
 if 'href="./admin.html"' not in invite_text:problems.append('admin-invite.html: accepted staff invite must open admin shell')
 # HybridOne is a CamelCase brand. Never ship the all-caps text variant in customer-facing source.
@@ -15,7 +23,7 @@ for brand_file in list(ROOT.glob('*.html'))+list(ROOT.glob('*.js'))+list((ROOT/'
  except Exception: continue
  if 'HYBRIDONE' in brand_text: problems.append(f'{brand_file.name}: uppercase HybridOne branding found; use HybridOne')
 CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
-JS=('supabase-request-guard.js','app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
+JS=('supabase-request-guard.js','app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','gym-context.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
 
 GUARDED_APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','groups.html','onboarding.html','admin.html','communications.html')
@@ -24,6 +32,8 @@ for n in GUARDED_APP_PAGES:
  if not p.exists():problems.append(f'{n}: guarded app page missing');continue
  t=p.read_text(encoding='utf-8')
  if 'supabase-request-guard.js' not in t:problems.append(f'{n}: Supabase request guard missing')
+ if n not in ('index.html','onboarding.html') and ("location.href='./index.html'" in t or "location.replace('./index.html')" in t):
+  problems.append(f'{n}: legacy generic index auth redirect remains')
 
 guard=(ROOT/'supabase-request-guard.js').read_text(encoding='utf-8')
 for x in ('maxRequests=100','windowMs=10000','cooldownMs=60000',"url.pathname.startsWith('/rest/v1/')","url.pathname.startsWith('/functions/v1/')"):

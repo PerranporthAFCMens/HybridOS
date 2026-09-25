@@ -9,8 +9,8 @@ on:
       - 'admin-operations.html'
       - 'staff-permissions.html'
       - 'staff.html'
-      - 'hybrid-hub-login.html'
-      - 'puffin-performance-login.html'
+      - 'login.html'
+      - 'choose-gym.html'
       - '.github/workflows/protected-routing-browser.yml'
   workflow_dispatch:
 
@@ -58,22 +58,23 @@ jobs:
           const puffin=process.env.PUFFIN_GYM_ID;
           const sha=process.env.HYBRID_BUILD_SHA;
 
-          async function checkProtected(browser,path,gymId,loginFile,expectedTitle,returnFile){
+          async function checkProtected(browser,path,gymId,returnFile){
             const context=await browser.newContext({viewport:{width:390,height:844}});
             const page=await context.newPage();
             try{
               const join=path.includes('?')?'&':'?';
               await page.goto(base+path+join+'routing_probe='+encodeURIComponent(sha),{waitUntil:'domcontentloaded',timeout:30000});
-              await page.waitForURL(url=>url.pathname.endsWith('/'+loginFile),{timeout:20000});
+              await page.waitForURL(url=>url.pathname.endsWith('/login.html'),{timeout:20000});
               const final=new URL(page.url());
-              assert.equal(final.pathname.endsWith('/'+loginFile),true,'wrong login route: '+final.href);
-              assert.match(await page.title(),new RegExp(expectedTitle,'i'));
+              assert.equal(final.pathname.endsWith('/login.html'),true,'wrong login route: '+final.href);
+              assert.equal(final.searchParams.get('gym_id'),gymId,'gym hint missing from universal login: '+final.href);
+              assert.match(await page.title(),/Sign in .* HybridOne/i);
               const ret=final.searchParams.get('return_to');
               assert.ok(ret,'return_to missing from '+final.href);
               const retUrl=new URL(ret);
               assert.ok(retUrl.pathname.endsWith('/'+returnFile),'wrong return path: '+ret);
               assert.equal(retUrl.searchParams.get('gym_id'),gymId,'gym_id lost from return path');
-              console.log('Protected route passed:',path,'->',loginFile,'->',returnFile);
+              console.log('Protected route passed:',path,'-> universal login ->',returnFile);
             }finally{
               await context.close();
             }
@@ -82,10 +83,10 @@ jobs:
           (async()=>{
             const browser=await chromium.launch({headless:true});
             try{
-              await checkProtected(browser,'admin-access.html?gym_id='+hub,hub,'hybrid-hub-login.html','Hybrid Hub','admin-access.html');
-              await checkProtected(browser,'admin.html?view=admin-access.html&gym_id='+hub,hub,'hybrid-hub-login.html','Hybrid Hub','admin-access.html');
-              await checkProtected(browser,'staff-permissions.html?gym_id='+hub,hub,'hybrid-hub-login.html','Hybrid Hub','staff-permissions.html');
-              await checkProtected(browser,'admin-access.html?gym_id='+puffin,puffin,'puffin-performance-login.html','Puffin Performance','admin-access.html');
+              await checkProtected(browser,'admin-access.html?gym_id='+hub,hub,'admin-access.html');
+              await checkProtected(browser,'admin.html?view=admin-access.html&gym_id='+hub,hub,'admin-access.html');
+              await checkProtected(browser,'staff-permissions.html?gym_id='+hub,hub,'staff-permissions.html');
+              await checkProtected(browser,'admin-access.html?gym_id='+puffin,puffin,'admin-access.html');
               console.log('Protected routing browser verification passed');
             }finally{
               await browser.close();
