@@ -1,0 +1,67 @@
+name: HybridOne production routing
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'vercel.json'
+      - 'hybrid-hub-login.html'
+      - 'puffin-performance-login.html'
+      - 'index.html'
+      - '.github/workflows/production-routing.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hybridone-production-routing
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Verify production canonical routes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_route() {
+            local url="$1"
+            local expected_path="$2"
+            local marker="$3"
+            local tmp
+            tmp="$(mktemp)"
+            local meta
+            meta="$(curl -sS -L --max-time 20 -H 'Cache-Control: no-cache' -o "$tmp" -w '%{http_code}|%{url_effective}' "$url?route_probe=$GITHUB_SHA")" || return 1
+            local status
+            status="$(printf '%s' "$meta" | cut -d'|' -f1)"
+            local effective
+            effective="$(printf '%s' "$meta" | cut -d'|' -f2-)"
+            [ "$status" = "200" ] || return 1
+            grep -Fq "$marker" "$tmp" || return 1
+            python3 - "$effective" "$expected_path" <<'PY'
+          import sys
+          from urllib.parse import urlparse
+          actual=urlparse(sys.argv[1]).path
+          expected=sys.argv[2]
+          if actual != expected:
+              raise SystemExit(f"Expected final path {expected}, got {actual}")
+          PY
+          }
+
+          for attempt in $(seq 1 36); do
+            if               check_route "https://www.hybridone.co.uk/hybrid-hub" "/hybrid-hub" "<title>Hybrid Hub · HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/hybrid-hub/" "/hybrid-hub" "<title>Hybrid Hub · HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/puffin-performance" "/puffin-performance" "<title>Puffin Performance · HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/puffin-performance/" "/puffin-performance" "<title>Puffin Performance · HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/app" "/app" "<title>HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/app/" "/app" "<title>HybridOne</title>"; then
+              echo "Production route verification passed"
+              exit 0
+            fi
+            echo "Production routes not ready yet (attempt $attempt/36)"
+            sleep 10
+          done
+
+          echo "Production route verification failed"
+          exit 1
