@@ -67,7 +67,7 @@ RENDER_BASELINE={
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
  'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
- 'admin-frame.js':'629dc0ab868ad6847b196028c8d870db48b129b2',
+ 'admin-frame.js':'bc003259220aaf80973be7f646321a69f637d4dd',
  'app-stability.js':'f5819ecd71e76985b7b7f410c2f25e9e7700a380',
  'shared-admin-nav.js':'ad4fbc29cd9b85ffe42d33ae5b918a3903f30761',
 }
@@ -200,16 +200,16 @@ for x in ("window.matchMedia('(max-width:900px)').matches","e.preventDefault();c
 for x in ("{key:'sign-out'","href:'./sign-out.html'"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: global admin sign out missing: {x}')
 auth_return=(ROOT/'auth-return.html')
-if not auth_return.exists():problems.append('auth-return.html: secure gym Auth return page missing')
+if not auth_return.exists():problems.append('auth-return.html: secure Auth return page missing')
 else:
  art=auth_return.read_text(encoding='utf-8')
- for x in ("params.get('gym_id')","sessionStorage.setItem('hybrid-gym-id'","mode==='recovery'","supabase.auth.updateUser({password})",".eq('gym_id',gymId)","maybeSingle()","Powered by HybridOne"):
-  if x not in art:problems.append(f'auth-return.html: gym-bound secure return flow missing: {x}')
+ for x in ("params.get('gym_id')","mode==='recovery'","supabase.auth.updateUser({password})","eq('access_status','active')","data.length===1","ctx.chooserUrl()","Powered by HybridOne"):
+  if x not in art:problems.append(f'auth-return.html: universal Auth return flow missing: {x}')
 join_auth=(ROOT/'join.html').read_text(encoding='utf-8')
 for x in ("redirectUrl.searchParams.set('gym_id',joinData.gym_id)","emailRedirectTo:redirect"):
  if x not in join_auth:problems.append(f'join.html: gym context missing from signup confirmation flow: {x}')
 sign_out=(ROOT/'sign-out.html').read_text(encoding='utf-8')
-for x in ('supabase.auth.signOut()',"location.replace('./')",'Signing you out'):
+for x in ('supabase.auth.signOut()',"location.replace('./login.html')",'Signing you out'):
  if x not in sign_out:problems.append(f'sign-out.html: reliable sign out flow missing: {x}')
 if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: duplicate Member memberships tab returned')
 
@@ -249,11 +249,13 @@ if "i.status==='open'&&i.delivery_method!=='link'" not in admin_access:problems.
 if "i.email_sent_at?'Resend email':'Send / retry email'" not in admin_access:problems.append('admin-access.html: resend label contract missing')
 for protected_name in ('admin-access.html','admin-operations.html','staff-permissions.html','staff.html'):
  protected_text=(ROOT/protected_name).read_text(encoding='utf-8')
- for marker in ('hybrid-hub-login.html','puffin-performance-login.html','return_to'):
-  if marker not in protected_text:problems.append(f'{protected_name}: gym-bound login redirect missing: {marker}')
+ for marker in ('./login.html','./choose-gym.html','return_to'):
+  if marker not in protected_text:problems.append(f'{protected_name}: universal login/chooser redirect missing: {marker}')
+ if 'hybrid-hub-login.html' in protected_text or 'puffin-performance-login.html' in protected_text:
+  problems.append(f'{protected_name}: dedicated login implementation reference returned')
 if "location.replace('./'+requested);" in admin_frame_js:problems.append('admin-frame.js: mobile handoff drops gym context')
-for marker in ('hybrid-hub-login.html','puffin-performance-login.html','return_to',"target.searchParams.set('gym_id',gymId)"):
- if marker not in admin_frame_js:problems.append(f'admin-frame.js: gym-bound protected routing missing: {marker}')
+for marker in ('./login.html','./choose-gym.html','return_to',"target.searchParams.set('gym_id',gymId)"):
+ if marker not in admin_frame_js:problems.append(f'admin-frame.js: universal protected routing missing: {marker}')
 admin_frame_context=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
 for x in ("const explicitGymId=params.get('gym_id')||''","const storedGymId=sessionStorage.getItem('hybrid-gym-id')||''","!membership&&!explicitGymId&&!storedGymId&&gms.length===1"):
  if x not in admin_frame_context:problems.append(f'admin-frame.js: explicit gym context may fall back across tenants: {x}')
@@ -280,10 +282,12 @@ for login_name,gym_name,gym_id in (
  ('puffin-performance-login.html','Puffin Performance','aec16956-3793-4543-873b-4412646ca1eb')
 ):
  login=(ROOT/login_name)
- if not login.exists():problems.append(f'{login_name}: dedicated gym login page missing');continue
+ if not login.exists():problems.append(f'{login_name}: gym login shortcut missing');continue
  lt=login.read_text(encoding='utf-8')
- for x in (gym_name,gym_id,"sessionStorage.setItem('hybrid-gym-id'","signInWithPassword","resetPasswordForEmail","signInWithOtp","shouldCreateUser:false","./auth-return.html"):
-  if x not in lt:problems.append(f'{login_name}: gym-bound login/auth flow missing: {x}')
+ for x in (gym_name,gym_id,'./login.html',"u.searchParams.set('gym_id'"):
+  if x not in lt:problems.append(f'{login_name}: universal login shortcut missing: {x}')
+ for forbidden in ('signInWithPassword','resetPasswordForEmail','signInWithOtp'):
+  if forbidden in lt:problems.append(f'{login_name}: separate auth implementation returned: {forbidden}')
 for context_page in ('community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','admin-access.html'):
  cp=(ROOT/context_page).read_text(encoding='utf-8')
  if 'hybrid-gym-id' not in cp:problems.append(f'{context_page}: login gym context not enforced')
