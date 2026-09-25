@@ -90,12 +90,12 @@ function preview(){
 }
 function applyDefaults(){ $('subject').value=defaults.subject;$('preheader').value=defaults.preheader;$('heading').value=defaults.heading;$('bodyText').value=defaults.body_text;$('buttonLabel').value=defaults.button_label;preview() }
 async function init(){
- const{data:{session}}=await sb.auth.getSession();if(!session){location.replace('./index.html');return}
+ const{data:{session}}=await sb.auth.getSession();if(!session){location.replace(window.HybridGymContext.loginUrl({gymId:new URLSearchParams(location.search).get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||'',returnTo:location.href}));return}
  const params=new URLSearchParams(location.search),gymId=params.get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||'';
- if(!gymId){location.replace('./index.html');return}
+ if(!gymId){location.replace(window.HybridGymContext.chooserUrl({returnTo:location.href}));return}
  const{data:gm,error}=await sb.from('gym_members').select('gym_id,role,access_status,gyms(id,name)').eq('user_id',session.user.id).eq('gym_id',gymId).eq('is_active',true).maybeSingle();
- if(error||!gm||!['owner','admin'].includes(gm.role)||gm.access_status!=='active'){location.replace('./index.html');return}
- gym=gm.gyms;sessionStorage.setItem('hybrid-gym-id',gym.id);$('gymName').textContent=gym.name;
+ if(error||!gm||gm.access_status!=='active'){location.replace(window.HybridGymContext.chooserUrl({returnTo:location.href}));return}if(!['owner','admin'].includes(gm.role)){location.replace(window.HybridGymContext.destination(gm));return}
+ gym=gm.gyms;window.HybridGymContext.setGym(gm.gym_id);$('gymName').textContent=gym.name;
  const[{data:settings},{data:template}]=await Promise.all([
    sb.from('gym_communication_settings').select('*').eq('gym_id',gym.id).maybeSingle(),
    sb.from('gym_email_templates').select('*').eq('gym_id',gym.id).eq('template_key','access_invite').maybeSingle()
