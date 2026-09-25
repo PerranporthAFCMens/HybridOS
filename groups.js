@@ -3,6 +3,8 @@ import {createClient} from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2
 const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 let user=null,gymId=null,groups=[],activeGroup=null;
+function closeMemberMenu(){document.body.classList.remove('mobile-nav-open');$('mobileMenuBtn')?.setAttribute('aria-expanded','false')}
+function initMemberMenu(){const open=$('mobileMenuBtn'),close=$('mobileMenuClose'),backdrop=$('mobileNavBackdrop');if(!open||open.dataset.ready==='1')return;open.dataset.ready='1';open.onclick=()=>{const on=!document.body.classList.contains('mobile-nav-open');document.body.classList.toggle('mobile-nav-open',on);open.setAttribute('aria-expanded',on?'true':'false')};if(close)close.onclick=closeMemberMenu;if(backdrop)backdrop.onclick=closeMemberMenu;document.querySelectorAll('.side a,.side button').forEach(el=>{if(el!==close)el.addEventListener('click',()=>setTimeout(closeMemberMenu,0))});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMemberMenu()})}
 const fmt=d=>d?new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'';
 function inviteUrl(code){return location.origin+location.pathname.replace(/groups\.html$/,'group-join.html')+'?code='+encodeURIComponent(code)}
 function metricUnit(c){return c.unit||({weight:'kg',reps:'reps',time:'sec',distance:'m',calories:'kcal'}[c.metric_type]||'')}
@@ -46,7 +48,10 @@ $('createChallenge').onclick=async()=>{const btn=$('createChallenge'),name=$('ch
 async function loadGroups(){const {data,error}=await sb.rpc('get_my_training_groups',{p_gym_id:gymId});groups=error?[]:(data||[]);renderGroups()}
 async function init(){
  const {data:{session}}=await sb.auth.getSession();if(!session?.user){location.href='./index.html';return}user=session.user;
- const {data:m,error}=await sb.from('gym_members').select('gym_id').eq('user_id',user.id).eq('is_active',true).limit(1);if(error||!m?.length){location.href='./member.html';return}gymId=m[0].gym_id;
- $('loading').classList.add('hidden');$('app').classList.remove('hidden');await loadGroups();const wanted=new URLSearchParams(location.search).get('group');if(wanted&&groups.some(g=>g.id===wanted))await openGroup(wanted);
+ const params=new URLSearchParams(location.search),explicitGymId=params.get('gym_id')||'',storedGymId=sessionStorage.getItem('hybrid-gym-id')||'',requestedGymId=explicitGymId||storedGymId;let membership=null;
+ if(requestedGymId){const {data,error}=await sb.from('gym_members').select('gym_id,gyms(name)').eq('user_id',user.id).eq('gym_id',requestedGymId).eq('is_active',true).maybeSingle();if(error||!data){location.href='./member.html';return}membership=data}
+ else{const {data,error}=await sb.from('gym_members').select('gym_id,gyms(name)').eq('user_id',user.id).eq('is_active',true);if(error||!data||data.length!==1){location.href='./member.html';return}membership=data[0]}
+ gymId=membership.gym_id;sessionStorage.setItem('hybrid-gym-id',gymId);$('gymName').textContent=membership.gyms?.name||'My gym';initMemberMenu();
+ $('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true;await loadGroups();const wanted=params.get('group');if(wanted&&groups.some(g=>g.id===wanted))await openGroup(wanted);
 }
 init();
