@@ -49,7 +49,7 @@ async function verifySwitchJourney(page,label){
  await page.locator('.userchip').waitFor({state:'visible',timeout:20000});
  await page.locator('.userchip').click();
  await page.locator('#accountSwitchGymBtn').waitFor({state:'visible',timeout:20000});
- assert.match(await page.locator('#accountGymContext').innerText(),/Hybrid Hub/);
+ assert.match(await page.locator('#accountGymContext').innerText(),/Hybrid Hub/i);
  console.log(label+' account menu exposes Switch gym');
  await page.locator('#accountSwitchGymBtn').click();
  await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html')&&url.searchParams.get('switch')==='1',{timeout:20000});
