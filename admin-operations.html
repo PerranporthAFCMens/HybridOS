@@ -18,13 +18,25 @@
 <script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
-const $=id=>document.getElementById(id);let gym,staff=[],caps=[],hours=[],staffCaps=[],resources=[],services=[],reqs=[],accessLevels=[],staffAccess=[];const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const $=id=>document.getElementById(id);
+const HUB_GYM_ID='242f57c2-6e37-4977-b3c5-1c87de7d0b98',PUFFIN_GYM_ID='aec16956-3793-4543-873b-4412646ca1eb';
+function routeGymId(){return new URLSearchParams(location.search).get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||''}
+function gymEntryUrl(gymId=routeGymId()){const u=new URL('./index.html',location.href);if(gymId)u.searchParams.set('gym_id',gymId);return u.toString()}
+function gymLoginUrl(returnHere=true){
+  const gymId=routeGymId();
+  const page=gymId===HUB_GYM_ID?'./hybrid-hub-login.html':gymId===PUFFIN_GYM_ID?'./puffin-performance-login.html':'./index.html';
+  const u=new URL(page,location.href);
+  if(page==='./index.html'&&gymId)u.searchParams.set('gym_id',gymId);
+  if(returnHere){const ret=new URL(location.href);if(gymId)ret.searchParams.set('gym_id',gymId);u.searchParams.set('return_to',ret.toString())}
+  return u.toString();
+}
+let gym,staff=[],caps=[],hours=[],staffCaps=[],resources=[],services=[],reqs=[],accessLevels=[],staffAccess=[];const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 function open(id){$(id).classList.remove('hidden')}function close(id){$(id).classList.add('hidden')}document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>close(b.dataset.close));
 function showOpsTab(tab,{replaceHash=false}={}){if(!['staff','resources','services'].includes(tab))tab='staff';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.id!==tab));if(replaceHash&&location.hash!=='#'+tab)history.replaceState(null,'','#'+tab)}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showOpsTab(b.dataset.tab,{replaceHash:true}));
 showOpsTab(location.hash.replace('#','')||'staff');window.addEventListener('hashchange',()=>showOpsTab(location.hash.replace('#','')||'staff'));
-async function init(){const{data:{session}}=await sb.auth.getSession();if(!session){location.href='./index.html';return}const{data:gm}=await sb.from('gym_members').select('gym_id,role,gyms(id,name)').eq('user_id',session.user.id).eq('is_active',true).eq('gym_id',sessionStorage.getItem('hybrid-gym-id')||'00000000-0000-0000-0000-000000000000').limit(1);if(!gm?.length||!['owner','admin'].includes(gm[0].role)){location.href='./index.html';return}gym=gm[0].gyms;$('gymName').textContent=gym.name;$('loading').classList.add('hidden');$('app').classList.remove('hidden');await loadAll()}
+async function init(){const{data:{session}}=await sb.auth.getSession();if(!session){location.href=gymLoginUrl(true);return}const{data:gm}=await sb.from('gym_members').select('gym_id,role,gyms(id,name)').eq('user_id',session.user.id).eq('is_active',true).eq('gym_id',routeGymId()||'00000000-0000-0000-0000-000000000000').limit(1);if(!gm?.length||!['owner','admin'].includes(gm[0].role)){location.href=gymEntryUrl();return}gym=gm[0].gyms;$('gymName').textContent=gym.name;$('loading').classList.add('hidden');$('app').classList.remove('hidden');await loadAll()}
 async function loadAll(){const [gm,pf,sp,wh,cp,sc,rs,ct,sr,al,sa]=await Promise.all([
  sb.rpc('get_gym_team_accounts',{target_gym_id:gym.id}),
  sb.from('profiles').select('id,display_name,first_name,last_name'),

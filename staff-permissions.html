@@ -64,6 +64,17 @@
 <script type="module">
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD'),$=id=>document.getElementById(id);
+const HUB_GYM_ID='242f57c2-6e37-4977-b3c5-1c87de7d0b98',PUFFIN_GYM_ID='aec16956-3793-4543-873b-4412646ca1eb';
+function routeGymId(){return new URLSearchParams(location.search).get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||''}
+function gymEntryUrl(gymId=routeGymId()){const u=new URL('./index.html',location.href);if(gymId)u.searchParams.set('gym_id',gymId);return u.toString()}
+function gymLoginUrl(returnHere=true){
+  const gymId=routeGymId();
+  const page=gymId===HUB_GYM_ID?'./hybrid-hub-login.html':gymId===PUFFIN_GYM_ID?'./puffin-performance-login.html':'./index.html';
+  const u=new URL(page,location.href);
+  if(page==='./index.html'&&gymId)u.searchParams.set('gym_id',gymId);
+  if(returnHere){const ret=new URL(location.href);if(gymId)ret.searchParams.set('gym_id',gymId);u.searchParams.set('return_to',ret.toString())}
+  return u.toString();
+}
 let gymId=null,currentRole='',levels=[],staff=[],access=[],selectedLevelId=null;
 const defs=[
 ['full_access','Admin workspace','Allow this level into the full admin workspace. Individual restrictions below still apply.'],
@@ -137,10 +148,10 @@ async function assignLevel(userId,btn){
  btn.disabled=true;try{const{error}=await sb.rpc('assign_staff_access_level',{target_gym_id:gymId,target_user_id:userId,target_level_id:levelId});if(error)throw error;await reloadAccess();renderLevelList();renderAssignments();setMsg('assignmentMsg','Access level assigned.',true)}catch(e){setMsg('assignmentMsg',e.message||'Could not assign access level.')}finally{btn.disabled=false}
 }
 async function init(){
- const{data:{session}}=await sb.auth.getSession();if(!session){location.href='./index.html';return}
- const selectedGym=sessionStorage.getItem('hybrid-gym-id')||new URLSearchParams(location.search).get('gym_id')||'00000000-0000-0000-0000-000000000000';
+ const{data:{session}}=await sb.auth.getSession();if(!session){location.href=gymLoginUrl(true);return}
+ const selectedGym=routeGymId()||'00000000-0000-0000-0000-000000000000';
  const{data:gm,error:gmErr}=await sb.from('gym_members').select('gym_id,role,access_status,gyms(name)').eq('user_id',session.user.id).eq('is_active',true).eq('gym_id',selectedGym).maybeSingle();
- if(gmErr||!gm||gm.access_status!=='active'){location.href='./index.html';return}
+ if(gmErr||!gm||gm.access_status!=='active'){location.href=gymEntryUrl();return}
  let allowed=['owner','admin'].includes(gm.role);
  if(!allowed&&['staff','coach'].includes(gm.role)){const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',gm.gym_id).eq('user_id',session.user.id).maybeSingle();allowed=sa?.permissions?.manage_staff===true}
  if(!allowed){location.href='./staff.html';return}

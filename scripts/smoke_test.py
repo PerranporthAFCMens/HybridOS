@@ -4,7 +4,8 @@ from pathlib import Path
 ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
 for login_name in ('hybrid-hub-login.html','puffin-performance-login.html'):
  login_text=(ROOT/login_name).read_text(encoding='utf-8')
- if "location.replace('./admin.html?gym_id='" not in login_text:problems.append(f'{login_name}: gym login must enter admin shell')
+ for marker in ("function safeReturn()","return_to","location.replace(safeReturn())"):
+  if marker not in login_text:problems.append(f'{login_name}: protected-page return routing missing: {marker}')
  if "location.replace('./index.html?gym_id='" in login_text:problems.append(f'{login_name}: legacy direct dashboard redirect still present')
 invite_text=(ROOT/'admin-invite.html').read_text(encoding='utf-8')
 if 'href="./admin.html"' not in invite_text:problems.append('admin-invite.html: accepted staff invite must open admin shell')
@@ -234,6 +235,13 @@ for context_file in ('staff.html','tenant-branding.js','admin-frame.js','member.
 admin_access=(ROOT/'admin-access.html').read_text(encoding='utf-8')
 if "i.status==='open'&&i.delivery_method!=='link'" not in admin_access:problems.append('admin-access.html: open email invites must remain resendable')
 if "i.email_sent_at?'Resend email':'Send / retry email'" not in admin_access:problems.append('admin-access.html: resend label contract missing')
+for protected_name in ('admin-access.html','admin-operations.html','staff-permissions.html','staff.html'):
+ protected_text=(ROOT/protected_name).read_text(encoding='utf-8')
+ for marker in ('hybrid-hub-login.html','puffin-performance-login.html','return_to'):
+  if marker not in protected_text:problems.append(f'{protected_name}: gym-bound login redirect missing: {marker}')
+if "location.replace('./'+requested);" in admin_frame_js:problems.append('admin-frame.js: mobile handoff drops gym context')
+for marker in ('hybrid-hub-login.html','puffin-performance-login.html','return_to',"target.searchParams.set('gym_id',gymId)"):
+ if marker not in admin_frame_js:problems.append(f'admin-frame.js: gym-bound protected routing missing: {marker}')
 admin_frame_context=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
 for x in ("const explicitGymId=params.get('gym_id')||''","const storedGymId=sessionStorage.getItem('hybrid-gym-id')||''","!membership&&!explicitGymId&&!storedGymId&&gms.length===1"):
  if x not in admin_frame_context:problems.append(f'admin-frame.js: explicit gym context may fall back across tenants: {x}')

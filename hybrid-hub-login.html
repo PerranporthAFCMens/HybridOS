@@ -28,9 +28,21 @@ const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publi
 const gymId='242f57c2-6e37-4977-b3c5-1c87de7d0b98',btn=document.getElementById('signIn'),msg=document.getElementById('msg');
 sessionStorage.setItem('hybrid-gym-id',gymId);
 function emailValue(){return document.getElementById('email').value.trim().toLowerCase()}
+function safeReturn(){
+  const fallback=new URL('./admin.html',location.href);fallback.searchParams.set('gym_id',gymId);
+  const raw=new URLSearchParams(location.search).get('return_to')||'';
+  if(!raw)return fallback.toString();
+  try{
+    const target=new URL(raw,location.href);
+    const appRoot=location.pathname.includes('/HybridOS/')?'/HybridOS/':'/';
+    if(target.origin!==location.origin||!target.pathname.startsWith(appRoot))return fallback.toString();
+    target.searchParams.set('gym_id',gymId);
+    return target.toString();
+  }catch{return fallback.toString()}
+}
 function authReturn(mode){const url=new URL('./auth-return.html',location.href);url.searchParams.set('gym_id',gymId);url.searchParams.set('mode',mode);return url.toString()}
 function showAuthMessage(text,good=false){msg.textContent=text;msg.className='msg'+(good?' good':'')}
-btn.onclick=async()=>{msg.textContent='';const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value;if(!email||!password){msg.textContent='Enter your email and password.';return}btn.disabled=true;try{const{error}=await supabase.auth.signInWithPassword({email,password});if(error)throw error;sessionStorage.setItem('hybrid-gym-id',gymId);location.replace('./admin.html?gym_id='+encodeURIComponent(gymId))}catch(e){msg.textContent=e.message||'Could not sign in.';btn.disabled=false}};
+btn.onclick=async()=>{msg.textContent='';const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value;if(!email||!password){msg.textContent='Enter your email and password.';return}btn.disabled=true;try{const{error}=await supabase.auth.signInWithPassword({email,password});if(error)throw error;sessionStorage.setItem('hybrid-gym-id',gymId);location.replace(safeReturn())}catch(e){msg.textContent=e.message||'Could not sign in.';btn.disabled=false}};
 document.getElementById('forgotPassword').onclick=async()=>{const email=emailValue();if(!email){showAuthMessage('Enter your email address first.');return}const button=document.getElementById('forgotPassword');button.disabled=true;try{const{error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:authReturn('recovery')});if(error)throw error;showAuthMessage('Check your email for a password reset link.',true)}catch(e){showAuthMessage(e.message||'Could not send a reset link.')}finally{button.disabled=false}};
 document.getElementById('magicLink').onclick=async()=>{const email=emailValue();if(!email){showAuthMessage('Enter your email address first.');return}const button=document.getElementById('magicLink');button.disabled=true;try{const{error}=await supabase.auth.signInWithOtp({email,options:{emailRedirectTo:authReturn('magic'),shouldCreateUser:false}});if(error)throw error;showAuthMessage('Check your email for a secure sign-in link.',true)}catch(e){showAuthMessage(e.message||'Could not send a sign-in link.')}finally{button.disabled=false}};
 document.getElementById('password').addEventListener('keydown',e=>{if(e.key==='Enter')btn.click()});

@@ -1,6 +1,17 @@
 import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD');
 const shellVersion=new URL(import.meta.url).searchParams.get('v')||Date.now().toString();
+const HUB_GYM_ID='242f57c2-6e37-4977-b3c5-1c87de7d0b98',PUFFIN_GYM_ID='aec16956-3793-4543-873b-4412646ca1eb';
+function routeGymId(){return new URLSearchParams(location.search).get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||''}
+function gymEntryUrl(gymId=routeGymId()){const u=new URL('./index.html',location.href);if(gymId)u.searchParams.set('gym_id',gymId);return u.toString()}
+function gymLoginUrl(returnHere=true){
+  const gymId=routeGymId();
+  const page=gymId===HUB_GYM_ID?'./hybrid-hub-login.html':gymId===PUFFIN_GYM_ID?'./puffin-performance-login.html':'./index.html';
+  const u=new URL(page,location.href);
+  if(page==='./index.html'&&gymId)u.searchParams.set('gym_id',gymId);
+  if(returnHere){const ret=new URL(location.href);if(gymId)ret.searchParams.set('gym_id',gymId);u.searchParams.set('return_to',ret.toString())}
+  return u.toString();
+}
 const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html']);
 const routes=[
  {key:'dashboard',label:'Dashboard',icon:'dashboard',view:'index.html'},
@@ -94,12 +105,14 @@ function mobile(){
 async function init(){
  const requested=cleanView(new URLSearchParams(location.search).get('view')||'index.html');
  if(window.matchMedia('(max-width:900px)').matches){
-   location.replace('./'+requested);
+   const target=new URL('./'+requested,location.href),gymId=routeGymId();
+   if(gymId)target.searchParams.set('gym_id',gymId);
+   location.replace(target.toString());
    return;
  }
- const{data:{session}}=await sb.auth.getSession();if(!session){location.replace('./index.html');return}
+ const{data:{session}}=await sb.auth.getSession();if(!session){location.replace(gymLoginUrl(true));return}
  const{data:gms,error:gmErr}=await sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',session.user.id).eq('is_active',true);
- if(gmErr||!gms?.length){location.replace('./index.html');return}
+ if(gmErr||!gms?.length){location.replace(gymEntryUrl());return}
  const params=new URLSearchParams(location.search);
  const explicitGymId=params.get('gym_id')||'';
  const storedGymId=sessionStorage.getItem('hybrid-gym-id')||'';
@@ -109,7 +122,7 @@ async function init(){
    membership=gms[0];
    selectedGymId=membership.gym_id;
  }
- if(!membership){location.replace('./index.html');return}
+ if(!membership){location.replace(gymEntryUrl(selectedGymId));return}
  sessionStorage.setItem('hybrid-gym-id',membership.gym_id);
  if(!params.get('gym_id')){
    params.set('gym_id',membership.gym_id);
