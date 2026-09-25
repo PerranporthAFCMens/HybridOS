@@ -58,16 +58,23 @@ async function verifySwitchJourney(page,label){
  await waitForGymContext(page,puffin);
  console.log(label+' switched from Hybrid Hub to Puffin Performance');
 
- // The global sidebar/current-gym control must also take a multi-gym user back to the chooser.
- await page.goto(base+'index.html?gym_id='+encodeURIComponent(puffin)+'&switch_probe=2',{waitUntil:'domcontentloaded',timeout:30000});
- await page.locator('.hybrid-gym-switchable').waitFor({state:'visible',timeout:20000});
- await page.locator('.hybrid-gym-switchable').click();
- await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html')&&url.searchParams.get('switch')==='1',{timeout:20000});
- console.log(label+' sidebar gym control opens the chooser');
-
- await clickGym(page,'Hybrid Hub');
- await waitForGymContext(page,hub);
- console.log(label+' switched back to Hybrid Hub');
+ // Desktop also exposes the current gym in the visible sidebar. On mobile the
+ // sidebar is intentionally hidden, so the account menu above is the switch path.
+ if(label==='desktop'){
+  await page.goto(base+'index.html?gym_id='+encodeURIComponent(puffin)+'&switch_probe=2',{waitUntil:'domcontentloaded',timeout:30000});
+  await page.locator('.hybrid-gym-switchable').waitFor({state:'visible',timeout:20000});
+  await page.locator('.hybrid-gym-switchable').click();
+  await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html')&&url.searchParams.get('switch')==='1',{timeout:20000});
+  console.log(label+' sidebar gym control opens the chooser');
+  await clickGym(page,'Hybrid Hub');
+  await waitForGymContext(page,hub);
+  console.log(label+' switched back to Hybrid Hub');
+ }else{
+  await page.goto(base+'choose-gym.html?switch=1&ui_audit='+encodeURIComponent(process.env.HYBRID_BUILD_SHA),{waitUntil:'domcontentloaded',timeout:30000});
+  await clickGym(page,'Hybrid Hub');
+  await waitForGymContext(page,hub);
+  console.log(label+' account-menu chooser switched back to Hybrid Hub');
+ }
 }
 
 async function runViewport(browser,label,viewport){
