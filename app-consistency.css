@@ -483,4 +483,23 @@ input.staff-member-search{width:100%;min-height:44px;padding:11px 12px!important
     min-height:44px;
   }
 }
+/* Reporting uses dense content, but its chrome still uses HybridOne controls. */
+body:has(#reportSearch) .controls select,
+body:has(#reportSearch) .controls button{
+  min-height:40px!important;
+  border:1px solid var(--hybrid-line)!important;
+  border-radius:var(--hybrid-control-radius)!important;
+  background:#fff!important;
+  color:var(--hybrid-ink)!important;
+  padding:10px 12px!important;
+  font-weight:800!important;
+}
+body:has(#reportSearch) .report-card{
+  border-radius:var(--hybrid-radius-md)!important;
+  border-color:var(--hybrid-line)!important;
+}
+@media(max-width:900px){
+  body:has(#reportSearch) .controls select,
+  body:has(#reportSearch) .controls button{min-height:44px!important}
+}
 

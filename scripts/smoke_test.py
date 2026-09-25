@@ -52,7 +52,7 @@ for brand_page in ROOT.glob('*.html'):
 # Core rendering assets are intentionally locked to the last known-good mobile/admin baseline.
 # Any deliberate change to these files must update this list as part of the same reviewed change.
 RENDER_BASELINE={
- 'app-consistency.css':'585b974a4dade9c5c16ae0bb9dbc6f7d500d80dd',
+ 'app-consistency.css':'0fa7c92c9e2b482c694f451e47a612ce3222d962',
  'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
@@ -366,6 +366,17 @@ for page_name in ('member.html','member-preview.html','staff.html','social.html'
 groups_js=(ROOT/'groups.js').read_text(encoding='utf-8')
 for x in ('create_training_group','get_training_group_dashboard','create_training_group_challenge','submit_training_group_challenge_result','Copy invite link'):
  if x not in groups_js:problems.append(f'groups.js: training groups workflow missing: {x}')
+groups_source=(ROOT/'groups.html').read_text(encoding='utf-8')
+for x in ('mobileMenuBtn','mobileMenuClose','mobileNavBackdrop','id="gymName"'):
+ if x not in groups_source:problems.append(f'groups.html: shared Member mobile shell missing: {x}')
+for x in ("params.get('gym_id')","sessionStorage.getItem('hybrid-gym-id')",".eq('gym_id',requestedGymId)","data.length!==1","initMemberMenu"):
+ if x not in groups_js:problems.append(f'groups.js: tenant-bound Member shell contract missing: {x}')
+integrations_source=(ROOT/'integrations.html').read_text(encoding='utf-8')
+for x in ('class="shell"','class="side"','mobileMenuBtn','mobileMenuClose','mobileNavBackdrop','id="gymName"','data-shell-icon="integrations"'):
+ if x not in integrations_source:problems.append(f'integrations.html: shared Member shell missing: {x}')
+resource_source=(ROOT/'resource-availability.html').read_text(encoding='utf-8')
+for x in ('grid-template-columns:minmax(0,1fr) auto','input[type="time"]{grid-column:auto;min-width:0;width:100%','overflow-x:hidden'):
+ if x not in resource_source:problems.append(f'resource-availability.html: mobile width containment missing: {x}')
 staff_page=(ROOT/'staff.html').read_text(encoding='utf-8')
 for x in ("$('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true","Assigned classes failed","Staff portal failed to initialise"):
  if x not in staff_page:problems.append(f'staff.html: non-blocking startup guard missing: {x}')
