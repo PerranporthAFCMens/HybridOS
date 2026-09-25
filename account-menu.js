@@ -12,7 +12,7 @@
     .userchip:hover{border-color:#d0d5dd;box-shadow:0 8px 24px rgba(16,24,40,.07)}
     .userchip:active{transform:scale(.99)}
     .userchip:after{content:"";width:7px;height:7px;border-right:1.8px solid #667085;border-bottom:1.8px solid #667085;transform:rotate(45deg) translateY(-2px);margin-left:3px}
-    .account-popover{position:absolute;right:0;top:calc(100% + 10px);width:min(300px,calc(100vw - 28px));background:#fff;border:1px solid #e7ebf2;border-radius:18px;box-shadow:0 22px 60px rgba(16,24,40,.17);padding:8px;z-index:120;display:none}
+    .account-popover{position:fixed;right:14px;top:72px;width:min(300px,calc(100vw - 28px));background:#fff;border:1px solid #e7ebf2;border-radius:18px;box-shadow:0 22px 60px rgba(16,24,40,.17);padding:8px;z-index:2147483001;display:none}
     .account-popover.open{display:block}
     .userchip.account-menu-open{z-index:2147483000!important}
     .userchip.account-menu-open>.who,.userchip.account-menu-open>.avatar{pointer-events:none}
@@ -30,14 +30,14 @@
     .account-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.account-field{margin:11px 0}.account-field.full{grid-column:1/-1}.account-field label{display:block;font-size:12px;font-weight:850;color:#344054;margin:0 0 6px}.account-field input,.account-field select{width:100%;padding:12px 13px;border:1px solid #d9dee7;border-radius:13px;background:#fff;color:#101828;outline:none}.account-field input:focus,.account-field select:focus{border-color:#a9a1ff;box-shadow:0 0 0 3px rgba(109,93,252,.09)}
     .account-divider{height:1px;background:#eef1f5;margin:15px 0}.account-help{font-size:12px;color:#667085;line-height:1.45;margin-top:5px}.account-msg{font-size:13px;min-height:20px;margin:10px 0}.account-msg.good{color:#067647}.account-msg.error{color:#b42318}.account-save{width:100%;border:0;background:#0b1020;color:#fff;border-radius:13px;padding:13px 15px;font-weight:850;cursor:pointer}.account-save:disabled{opacity:.55;cursor:not-allowed}
     .account-avatar-row{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid #e7ebf2;border-radius:16px;background:#fafbfc}.account-avatar-preview{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:#e9e7ff;font-weight:900;font-size:20px;overflow:hidden;flex:0 0 64px}.account-avatar-preview img{width:100%;height:100%;object-fit:cover}.account-avatar-copy{min-width:0;flex:1}.account-avatar-copy b{display:block}.account-avatar-copy input{margin-top:8px;width:100%;font-size:12px}
-    @media(max-width:900px){.userchip .who{display:block!important}.userchip{padding:6px 8px}.userchip #userEmail{display:none}.userchip:after{display:none}.account-popover{position:fixed;right:14px;top:72px}.account-modal-card{padding:18px;border-radius:20px}.account-grid{grid-template-columns:1fr}.account-field.full{grid-column:auto}}
+    @media(max-width:900px){.userchip .who{display:block!important}.userchip{padding:6px 8px}.userchip #userEmail{display:none}.userchip:after{display:none}.account-popover{.account-modal-card{padding:18px;border-radius:20px}.account-grid{grid-template-columns:1fr}.account-field.full{grid-column:auto}}
   `;
   document.head.appendChild(style);
 
   const pop=document.createElement('div');
   pop.className='account-popover';
   pop.innerHTML=`<div class="account-popover-head"><b id="accountMenuName">My account</b><span id="accountMenuEmail"></span></div><div id="accountGymContext" class="account-menu-context hidden"></div><div id="accountGymActions"></div><div id="accountGymDivider" class="account-menu-divider hidden"></div><div id="accountPortalContext" class="account-menu-context hidden"></div><div id="accountPortalActions"></div><div id="accountPortalDivider" class="account-menu-divider hidden"></div><button type="button" class="account-menu-action" id="accountEditBtn"><span>Account settings</span><span>›</span></button><button type="button" class="account-menu-action danger" id="accountSignOutBtn"><span>Sign out</span><span>↗</span></button>`;
-  chip.appendChild(pop);
+  document.body.appendChild(pop);
 
   const modal=document.createElement('div');
   modal.className='account-modal';
@@ -126,12 +126,25 @@
   }
 
   function closeMenu(){pop.classList.remove('open');chip.classList.remove('account-menu-open');chip.setAttribute('aria-expanded','false')}
+  function positionMenu(){
+    const r=chip.getBoundingClientRect(),gap=10,pad=14;
+    const right=Math.max(pad,window.innerWidth-r.right);
+    let top=r.bottom+gap;
+    pop.style.right=right+'px';
+    pop.style.top=top+'px';
+    requestAnimationFrame(()=>{
+      const h=pop.getBoundingClientRect().height||0;
+      if(h&&top+h>window.innerHeight-pad)pop.style.top=Math.max(pad,r.top-gap-h)+'px';
+    });
+  }
   function closeModal(){modal.classList.remove('open');passwordInput.value='';password2Input.value='';msg.textContent='';msg.className='account-msg'}
   chip.setAttribute('role','button');chip.setAttribute('tabindex','0');chip.setAttribute('aria-haspopup','menu');chip.setAttribute('aria-expanded','false');
-  function toggleMenu(e){e?.stopPropagation();const open=!pop.classList.contains('open');pop.classList.toggle('open',open);chip.classList.toggle('account-menu-open',open);chip.setAttribute('aria-expanded',String(open))}
+  function toggleMenu(e){e?.stopPropagation();const open=!pop.classList.contains('open');if(open)positionMenu();pop.classList.toggle('open',open);chip.classList.toggle('account-menu-open',open);chip.setAttribute('aria-expanded',String(open))}
   chip.addEventListener('click',e=>{if(e.target.closest('.account-popover'))return;toggleMenu(e)});
   chip.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleMenu(e)}});
-  document.addEventListener('click',e=>{if(!chip.contains(e.target))closeMenu()});
+  document.addEventListener('click',e=>{if(!chip.contains(e.target)&&!pop.contains(e.target))closeMenu()});
+  window.addEventListener('resize',()=>{if(pop.classList.contains('open'))positionMenu()});
+  window.addEventListener('scroll',()=>{if(pop.classList.contains('open'))positionMenu()},{passive:true});
   q('#accountEditBtn').onclick=async()=>{closeMenu();await loadAccount();modal.classList.add('open');setTimeout(()=>displayInput.focus(),20)};
   q('#accountCloseBtn').onclick=closeModal;
   avatarFile.onchange=()=>{const file=avatarFile.files?.[0];if(!file)return;if(file.size>5242880){msg.textContent='Profile photo must be 5 MB or smaller.';msg.className='account-msg error';avatarFile.value='';return}const url=URL.createObjectURL(file);avatarPreview.innerHTML='<img src="'+url+'" alt="New profile photo preview">'};
