@@ -234,3 +234,24 @@ Production routing run `36149543418` passed after deployment and verified:
 - `/app/` -> canonical `/app`
 
 The general Auth production hold remains in place for dev-to-main promotion. This was a narrow production routing hotfix, not a full dev promotion.
+
+
+## Public DNS/TLS diagnostic
+
+**PASS** on 25 September 2026.
+
+An external GitHub-hosted runner checked the public DNS and TLS state after a Windows Chrome client reported `ERR_SSL_VERSION_OR_CIPHER_MISMATCH`.
+
+Results:
+
+- apex A: `hybridone.co.uk -> 216.198.79.1`
+- `www.hybridone.co.uk` CNAME: `hybridone.co.uk`
+- Google Public DNS and Cloudflare DNS returned the same records
+- no public AAAA record exists for apex or www
+- IPv4 TLS negotiation succeeded with TLS 1.3
+- `www.hybridone.co.uk` certificate is valid and matches the hostname
+- certificate issuer: Let's Encrypt
+- certificate validity: 22 Sep 2026 to 21 Dec 2026
+- HTTPS returned `200` from Vercel with HSTS enabled
+
+Therefore the observed browser error was not reproducible from the public internet and is consistent with client/network DNS cache, SSL state, HTTPS interception or another local path issue rather than current Vercel DNS/TLS configuration.
