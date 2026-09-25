@@ -19,7 +19,7 @@ Status meanings:
 | 6 | Password reset from Puffin Performance | NOT TESTED | Run full Puffin reset journey. |
 | 7 | Magic-link sign-in from each gym | PARTIAL | Puffin email branding/return URL passed. Hybrid Hub magic link and actual link consumption still need browser verification. |
 | 8 | Member signup confirmation | NOT TESTED | Test confirmation email, gym branding, return route and membership result. |
-| 9 | Admin invite in fresh incognito | PARTIAL | Hybrid Hub email delivered and link created. First email exposed placeholder bug; fix is deployed. Corrected resend and incognito acceptance still required. |
+| 9 | Admin invite in fresh incognito | PARTIAL | Corrected invite and resend delivery passed, and resend UI passed in a live dev Owner browser. Fresh incognito acceptance is still required. |
 | 10 | Existing account accepting invite | NOT TESTED | Test invited existing Auth account through acceptance to active Admin membership. |
 | 11 | New account accepting invite | NOT TESTED | Test invited new account through password/setup and active Admin membership. |
 | 12 | Wrong account already signed in | NOT TESTED | UI contains mismatch handling, but runtime behaviour still needs verification. |
@@ -37,8 +37,8 @@ Status meanings:
 | Hybrid Hub-only user cannot silently fall back into another gym | PASS | Automated wrong-gym browser test rejected access and did not substitute a membership. |
 | Hybrid Hub reset email branding | PASS | Sender `Hybrid Hub <noreply@hybridone.co.uk>`, gym-specific subject and correct `gym_id` return URL verified in Resend. |
 | Puffin magic-link branding | PASS | Sender `Puffin Performance <noreply@hybridone.co.uk>`, gym-specific subject and correct `gym_id` return URL verified in Resend. |
-| Admin invite placeholder resolution | PARTIAL | Fix deployed to live hook; corrected resend has not yet been inspected. |
-| Open email invite can be resent from dev UI | PARTIAL | Dev code + smoke passed. User-facing runtime still needs verification. |
+| Admin invite placeholder resolution | PASS | Corrected resent invite was inspected in Resend; inviter and role placeholders resolved correctly. |
+| Open email invite can be resent from dev UI | PASS | Authenticated dev browser test showed **Resend email**, clicked it successfully, and verified delivery. Run `36119425104`. |
 
 ## Release gate
 

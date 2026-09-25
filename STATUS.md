@@ -1,6 +1,6 @@
 # HybridOne live status
 
-**Updated: 24 September 2026**
+**Updated: 25 September 2026**
 
 This file records the latest verified operational checkpoint. For machine-readable state see [PROJECT_STATE.json](./PROJECT_STATE.json).
 
@@ -76,8 +76,8 @@ Fix status:
 
 - placeholder-resolution fix deployed to `send-auth-email` v5
 - smoke checks passed
-- corrected invite email has **not yet been resent and verified**
-- invite acceptance has **not yet been tested**
+- corrected invite email has been resent and verified successfully
+- the open-invite **Resend email** UI and resend action have now passed a live dev browser test; invite acceptance remains tracked separately
 
 Dev UI now contains a **Resend email** action for an already-sent open email invite.
 
@@ -155,3 +155,21 @@ Evidence:
 - both query-bound `index.html?gym_id=...` routes retained the explicit gym-context contract
 
 The previous limitation around independently proving the public GitHub Pages deployment is therefore resolved through GitHub Actions.
+
+
+## Resend email UI verification
+
+**PASS** on 25 September 2026.
+
+Evidence:
+
+- GitHub browser run: `36119425104`, second attempt successful
+- fresh Hybrid Hub Admin email invite created and sent
+- public dev Admin access opened in an authenticated Hybrid Hub Owner browser session
+- the open invite row displayed **Resend email**
+- clicking **Resend email** completed successfully and showed the invite-sent confirmation
+- database row remained `open` and `email_sent_at` updated after the resend
+- both initial send and resend were delivered by Resend
+- resent email used the corrected template with resolved inviter and role placeholders
+
+The fresh test invite is intentionally left open so the same button remains visible for manual inspection. Temporary probe permissions were removed and the probe Edge Function was made inert after the test.

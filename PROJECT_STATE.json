@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "verified_at_utc": "2026-09-24T22:21:58Z",
+  "verified_at_utc": "2026-09-25T09:39:28Z",
   "repository": "PerranporthAFCMens/HybridOS",
   "branches": {
     "production_source": "main",
@@ -80,13 +80,14 @@
     "hybrid_hub_password_reset_email": "pass_delivery_branding_return_url",
     "puffin_magic_link_email": "pass_delivery_branding_return_url",
     "cross_gym_login_isolation": "pass_browser",
-    "admin_invite_email": "partial_placeholder_fix_deployed_resend_pending",
+    "admin_invite_email": "pass_corrected_template_delivery_and_dev_resend_ui",
     "corrected_admin_invite_acceptance": "not_tested"
   },
   "current_open_test_invite": {
-    "purpose": "Admin invite acceptance verification",
+    "purpose": "Resend email UI verification",
     "status": "open",
-    "corrected_resend_verified": false,
-    "acceptance_verified": false
+    "corrected_resend_verified": true,
+    "acceptance_verified": false,
+    "browser_run_id": 36119425104
   }
 }
