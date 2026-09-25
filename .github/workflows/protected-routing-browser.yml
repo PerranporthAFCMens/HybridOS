@@ -1,0 +1,94 @@
+name: HybridOne protected routing browser
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'admin-access.html'
+      - 'admin-frame.js'
+      - 'admin-operations.html'
+      - 'staff-permissions.html'
+      - 'staff.html'
+      - 'hybrid-hub-login.html'
+      - 'puffin-performance-login.html'
+      - '.github/workflows/protected-routing-browser.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hybridone-protected-routing-browser
+  cancel-in-progress: true
+
+jobs:
+  routing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v6
+
+      - name: Record exact dev SHA
+        shell: bash
+        run: echo "HYBRID_BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Wait for exact public Pages revision
+        env:
+          PAGES_URL: https://perranporthafcmens.github.io/HybridOS/
+        run: python3 scripts/runtime_pages_check.py
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Verify protected routes keep gym context
+        env:
+          BASE_URL: https://perranporthafcmens.github.io/HybridOS/
+          HUB_GYM_ID: 242f57c2-6e37-4977-b3c5-1c87de7d0b98
+          PUFFIN_GYM_ID: aec16956-3793-4543-873b-4412646ca1eb
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const assert = require('node:assert/strict');
+
+          const base=process.env.BASE_URL;
+          const hub=process.env.HUB_GYM_ID;
+          const puffin=process.env.PUFFIN_GYM_ID;
+          const sha=process.env.HYBRID_BUILD_SHA;
+
+          async function checkProtected(browser,path,gymId,loginFile,expectedTitle,returnFile){
+            const context=await browser.newContext({viewport:{width:390,height:844}});
+            const page=await context.newPage();
+            try{
+              const join=path.includes('?')?'&':'?';
+              await page.goto(base+path+join+'routing_probe='+encodeURIComponent(sha),{waitUntil:'domcontentloaded',timeout:30000});
+              await page.waitForURL(url=>url.pathname.endsWith('/'+loginFile),{timeout:20000});
+              const final=new URL(page.url());
+              assert.equal(final.pathname.endsWith('/'+loginFile),true,'wrong login route: '+final.href);
+              assert.match(await page.title(),new RegExp(expectedTitle,'i'));
+              const ret=final.searchParams.get('return_to');
+              assert.ok(ret,'return_to missing from '+final.href);
+              const retUrl=new URL(ret);
+              assert.ok(retUrl.pathname.endsWith('/'+returnFile),'wrong return path: '+ret);
+              assert.equal(retUrl.searchParams.get('gym_id'),gymId,'gym_id lost from return path');
+              console.log('Protected route passed:',path,'->',loginFile,'->',returnFile);
+            }finally{
+              await context.close();
+            }
+          }
+
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            try{
+              await checkProtected(browser,'admin-access.html?gym_id='+hub,hub,'hybrid-hub-login.html','Hybrid Hub','admin-access.html');
+              await checkProtected(browser,'admin.html?view=admin-access.html&gym_id='+hub,hub,'hybrid-hub-login.html','Hybrid Hub','admin-access.html');
+              await checkProtected(browser,'staff-permissions.html?gym_id='+hub,hub,'hybrid-hub-login.html','Hybrid Hub','staff-permissions.html');
+              await checkProtected(browser,'admin-access.html?gym_id='+puffin,puffin,'puffin-performance-login.html','Puffin Performance','admin-access.html');
+              console.log('Protected routing browser verification passed');
+            }finally{
+              await browser.close();
+            }
+          })().catch(err=>{console.error(err);process.exit(1)});
+          JS
