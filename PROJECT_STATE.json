@@ -1,119 +1,121 @@
 {
-  "schema_version": 1,
-  "verified_at_utc": "2026-09-25T15:38:30Z",
+  "schema_version": 2,
+  "verified_at_utc": "2026-09-25T23:12:30Z",
   "repository": "PerranporthAFCMens/HybridOS",
   "branches": {
     "production_source": "main",
     "development_source": "dev",
     "production_main_sha": "dbe7528b83687df73a2ef2b289ae44390205ed11",
-    "verified_dev_application_sha": "82c0978b48b58ba70bd2840e70ff04b25bc05ae9",
+    "verified_dev_application_sha": "6a14cfed829f01eace2ad094dd14e1dd08b27120",
     "relationship": "diverged",
-    "dev_ahead_by": 60,
+    "dev_ahead_by": 89,
     "dev_behind_by": 4,
-    "merge_base_sha": "b7d83243e9248a64978677efec91c4f9d83c1052"
+    "merge_base_sha": "b7d83243e9248a64978677efec91c4f9d83c1052",
+    "note": "Counts are the verified application checkpoint before the documentation/cleanup commit."
   },
   "release_gate": {
     "production_hold": true,
     "production_promotion_allowed": false,
-    "reason": "General dev-to-main Auth promotion remains held; production routing hotfix applied independently."
+    "reason": "Universal login and multi-gym switching are verified on dev, but the remaining invite/access-grant Auth matrix is not complete."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
     "hybrid_hub_login": "https://www.hybridone.co.uk/hybrid-hub",
     "puffin_performance_login": "https://www.hybridone.co.uk/puffin-performance",
-    "vercel_project_id": "prj_9DRBM2eBpXpXngPTCawtIwYID6rc",
-    "vercel_team_id": "team_p7v1ius4XrtikQ0awFGWP4sF",
     "deployed_source_sha": "dbe7528b83687df73a2ef2b289ae44390205ed11",
     "deployment_state": "READY",
+    "auth_model": "legacy gym-specific production entry points until the universal-login candidate is released",
     "canonical_routes": {
       "trailing_slash": false,
       "routing_workflow": ".github/workflows/production-routing.yml",
-      "last_pass_run_id": 36149543418,
-      "last_passed_at_utc": "2026-09-25T14:45:20Z",
-      "verified": [
-        "/hybrid-hub",
-        "/hybrid-hub/",
-        "/puffin-performance",
-        "/puffin-performance/",
-        "/app",
-        "/app/"
-      ]
+      "last_pass_run_id": 36149543418
     }
   },
   "development": {
     "pages_origin": "https://perranporthafcmens.github.io/HybridOS/",
-    "hybrid_hub_login": "https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98",
-    "puffin_performance_login": "https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=aec16956-3793-4543-873b-4412646ca1eb",
-    "latest_verified_pages_run_id": 36066980204,
-    "latest_verified_pages_checkout_sha": "b60aea0ace4195d1f236f8d2d2bc7988870c5683",
-    "latest_verified_smoke_run_id": 36066957809,
-    "latest_verified_smoke_result": "success",
-    "dedicated_login_aliases": {
-      "hybrid_hub_source": "hybrid-hub-login.html",
-      "puffin_source": "puffin-performance-login.html",
-      "user_facing_status": "public_server_runtime_verified"
-    },
+    "universal_login": "https://perranporthafcmens.github.io/HybridOS/login.html",
+    "gym_chooser": "https://perranporthafcmens.github.io/HybridOS/choose-gym.html",
+    "hybrid_hub_login": "https://perranporthafcmens.github.io/HybridOS/login.html?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98",
+    "puffin_performance_login": "https://perranporthafcmens.github.io/HybridOS/login.html?gym_id=aec16956-3793-4543-873b-4412646ca1eb",
+    "auth_context_model": "authenticate_person_then_select_active_gym_context",
     "runtime_verification": {
-      "enabled": true,
+      "status": "pass",
       "workflow": ".github/workflows/dev-runtime.yml",
-      "manifest": "deployment.json",
-      "script": "scripts/runtime_pages_check.py",
-      "trigger": "every dev push",
-      "max_wait_seconds": 240,
+      "run_id": 36199919264,
+      "source_sha": "6a14cfed829f01eace2ad094dd14e1dd08b27120",
       "verifies": [
         "exact deployed dev SHA",
-        "Hybrid Hub public login route content",
-        "Puffin Performance public login route content",
-        "query-bound gym context contract"
-      ],
+        "universal login",
+        "gym chooser",
+        "gym-specific compatibility shortcuts"
+      ]
+    },
+    "smoke": {
       "status": "pass",
-      "first_green_run_id": 36066958023,
-      "first_green_commit": "b60aea0ace4195d1f236f8d2d2bc7988870c5683",
-      "first_green_at_utc": "2026-09-24T22:21:58Z"
+      "run_id": 36199919218,
+      "source_sha": "6a14cfed829f01eace2ad094dd14e1dd08b27120"
     },
     "protected_routing_browser": {
-      "enabled": true,
+      "status": "pass",
       "workflow": ".github/workflows/protected-routing-browser.yml",
-      "last_pass_run_id": 36125403099,
-      "last_pass_source_sha": "71b8c7f3162c133ea5909a379d43c2fc892019f9",
+      "run_id": 36199700825,
+      "source_sha": "bab2e24c9f73f5debdf469f9e7c3d4f3b929a27b",
       "verifies": [
-        "unauthenticated Hybrid Hub Admin access redirects to Hybrid Hub login",
-        "gym_id preserved through redirect",
-        "return_to preserved back to requested protected page",
-        "mobile admin-shell handoff preserves gym context",
-        "Puffin protected route selects Puffin login"
+        "universal login redirect",
+        "gym hint preservation",
+        "safe return_to preservation"
+      ]
+    },
+    "multi_gym_browser_audit": {
+      "status": "pass",
+      "run_id": 36199919230,
+      "source_sha": "6a14cfed829f01eace2ad094dd14e1dd08b27120",
+      "viewports": [
+        "1440x1000",
+        "390x844"
       ],
-      "status": "pass"
+      "verifies": [
+        "one universal account login",
+        "two-gym chooser",
+        "Hybrid Hub to Puffin Performance switch",
+        "Puffin Performance to Hybrid Hub switch",
+        "desktop sidebar switch control",
+        "mobile account-menu switch control",
+        "21 authenticated product surfaces on desktop",
+        "21 authenticated product surfaces on mobile",
+        "no horizontal overflow on audited surfaces"
+      ]
     },
     "ui_consistency": {
-      "status": "pass_static_and_public_runtime",
-      "source_sha": "0362fec3e341b07a413ecc4232e1316ff9f0211a",
-      "smoke_run_id": 36155401480,
-      "pages_run_id": 36155437880,
-      "runtime_run_id": 36155401478,
+      "status": "pass_static_and_authenticated_browser",
       "contract": "UI_CONSISTENCY.md",
       "static_check": "scripts/ui_consistency_check.py",
-      "product_surfaces_checked": 23,
-      "rules": [
-        "app-consistency.css is the final stylesheet on every product surface",
-        "legacy page tokens resolve to canonical HybridOne tokens",
-        "shared typography, cards, buttons, forms, tabs, tables and status treatments are canonical",
-        "feature CSS may own layout but not a separate visual system"
-      ]
+      "product_surfaces_static": 23,
+      "authenticated_surfaces_per_viewport": 21,
+      "browser_run_id": 36199919230
+    },
+    "temporary_ui_audit": {
+      "workflow_removed": true,
+      "script_removed": true,
+      "edge_function": "hybridone-ui-audit-harness",
+      "edge_function_version": 2,
+      "edge_function_verify_jwt": true,
+      "edge_function_state": "inert_410",
+      "disposable_user_cleaned": true
     }
   },
   "supabase": {
     "project_id": "mzgnhmeydhhpzgxlgudh",
     "hybrid_hub_gym_id": "242f57c2-6e37-4977-b3c5-1c87de7d0b98",
     "puffin_performance_gym_id": "aec16956-3793-4543-873b-4412646ca1eb",
-    "tenant_rule": "login_route_decides_gym",
+    "tenant_rule": "authenticate_person_then_select_active_gym_context",
+    "browser_context_key": "hybrid-gym-id",
+    "last_gym_hint_key": "hybrid-last-gym-id",
     "auth_email_hook": {
       "enabled": true,
       "endpoint": "https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/send-auth-email",
       "edge_function_version": 5,
-      "verify_jwt": false,
-      "resend_api_key_present": true,
-      "send_email_hook_secret_present": true
+      "verify_jwt": false
     },
     "access_invite_sender": {
       "edge_function_version": 11,
@@ -121,18 +123,22 @@
     }
   },
   "current_auth_status": {
-    "hybrid_hub_password_reset_email": "pass_delivery_branding_return_url",
-    "puffin_magic_link_email": "pass_delivery_branding_return_url",
-    "cross_gym_login_isolation": "pass_browser",
+    "universal_login_multi_gym_switch": "pass_browser_desktop_mobile",
+    "hybrid_hub_password_reset": "pass_full_browser",
+    "puffin_password_reset": "pass_full_browser",
+    "hybrid_hub_magic_link": "pass_full_browser",
+    "puffin_magic_link": "pass_full_browser",
+    "member_signup_mode": "immediate_confirmation_observed",
     "admin_invite_email": "pass_corrected_template_delivery_and_dev_resend_ui",
-    "corrected_admin_invite_acceptance": "not_tested",
-    "protected_login_routing": "pass_public_mobile_browser"
+    "fresh_new_account_invite_acceptance": "partial",
+    "protected_login_routing": "pass_universal_login_browser"
   },
   "current_open_test_invite": {
-    "purpose": "Resend email UI verification",
-    "status": "open",
+    "purpose": "Fresh Admin invite acceptance follow-up",
+    "email": "a.j.turner+hybridtest1@hotmail.com",
+    "status": "open_at_last_verified_checkpoint",
     "corrected_resend_verified": true,
     "acceptance_verified": false,
-    "browser_run_id": 36119425104
+    "resend_browser_run_id": 36119425104
   }
 }

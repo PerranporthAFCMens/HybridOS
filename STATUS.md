@@ -1,282 +1,105 @@
 # HybridOne live status
 
-**Updated: 25 September 2026**
+**Updated: 26 September 2026**
 
-This file records the latest verified operational checkpoint. For machine-readable state see [PROJECT_STATE.json](./PROJECT_STATE.json).
+Machine-readable state: [PROJECT_STATE.json](./PROJECT_STATE.json)
 
-## Release status
+## Release state
 
 **PRODUCTION_HOLD: ACTIVE**
 
-**Production promotion allowed: NO**
+Production promotion allowed: **NO**
 
-Reason: the Auth and invite browser matrix is not complete.
+Reason: the new universal login and multi-gym context model is verified on dev, but the remaining invite/access-grant Auth scenarios are not all complete.
 
-Do not merge/promote dev to main just because smoke checks are green.
+## Production
 
-## Verified branch/deployment checkpoint
+- main: `dbe7528b83687df73a2ef2b289ae44390205ed11`
+- Vercel: READY
+- production remains on the existing gym-specific entry implementation
+- canonical trailing-slash routing hotfix remains live
+- production routing workflow last known pass: `36149543418`
 
-Production:
+## Verified dev candidate
 
-- `main`: `424bfb9ec7f0fcf36b7b276e16a0385bb0b3a961`
-- Vercel production source SHA: `424bfb9ec7f0fcf36b7b276e16a0385bb0b3a961`
-- Vercel state: READY
-- Production remains on the deliberate Auth hold
+Application checkpoint:
 
-Latest verified dev application checkpoint before this control-layer documentation commit:
+`6a14cfed829f01eace2ad094dd14e1dd08b27120`
 
-- `82c0978b48b58ba70bd2840e70ff04b25bc05ae9`
-- Smoke run: `36065655123` -> success
-- Pages run: `36065671940` -> success
-- Pages checkout log confirmed exact dev SHA: `82c0978b48b58ba70bd2840e70ff04b25bc05ae9`
+Verification:
 
-Branch relationship at this checkpoint:
+- smoke / UI contract: `36199919218` -> PASS
+- exact public Pages runtime: `36199919264` -> PASS
+- protected universal-login routing: `36199700825` -> PASS
+- authenticated multi-gym + whole-app audit: `36199919230` -> PASS
 
-- diverged
-- dev ahead of main: 42 commits
-- dev behind main: 1 commit
-- merge base: `b7d83243e9248a64978677efec91c4f9d83c1052`
+### Universal login
 
-Never blindly fast-forward or overwrite one branch with the other.
+Verified behaviour:
+
+1. email/password authenticates the person
+2. active memberships are loaded
+3. one gym enters directly
+4. multiple gyms show **Choose a gym**
+5. selected gym becomes current context
+6. role is resolved for that gym
+7. multi-gym users can **Switch gym**
+8. desktop and mobile both passed Hub -> Puffin -> Hub
+
+The old `.limit(1)` account-menu assumption is removed.
+
+### Whole-app visual sweep
+
+The authenticated audit captured 21 product surfaces on desktop and 21 on mobile.
+
+All audited surfaces reported no horizontal overflow.
+
+The shared visual contract remains enforced by:
+
+- `app-consistency.css`
+- `scripts/ui_consistency_check.py`
+- [UI_CONSISTENCY.md](./UI_CONSISTENCY.md)
 
 ## Auth/email status
 
-Live:
+Browser-verified:
 
-- Supabase Send Email Hook is enabled
-- `send-auth-email` v5 ACTIVE
-- `send-access-invite` v11 ACTIVE
-- Hybrid Hub password-reset email delivered with correct Hybrid Hub sender, subject and production return URL
-- Puffin Performance magic-link email delivered with correct Puffin sender, subject and production return URL
-- browser matrix passed cross-gym login isolation
-- browser matrix passed Hybrid Hub and Puffin logins using the same Auth account
-- browser matrix passed iPhone-style admin navigation
+- Hybrid Hub password reset, including link consumption and new-password login
+- Puffin Performance password reset
+- Hybrid Hub magic-link sign-in
+- Puffin Performance magic-link sign-in
+- same Auth identity across multiple gyms
+- universal chooser and switching
+- corrected Admin invite email template
+- open-invite **Resend email** UI and delivery
 
-Not yet complete:
+Still release-gating:
 
-- final password-reset link consumption/browser password update
-- Puffin password-reset flow
-- Hybrid Hub magic-link flow
-- member signup confirmation
-- full invite acceptance matrix
+- fresh new-account invite acceptance
 - wrong-account invite runtime
 - expired/revoked invite runtime
-- single-Owner invite runtime
-- multi-Owner invite runtime
-- refresh/back mobile
-- final Staff & Resources mobile browser check
+- one-Owner Owner-invite runtime
+- multi-Owner Owner-invite runtime
+- refresh/back navigation edge case
+- explicit decision on immediate-confirm member signup mode
 
-## Current invite checkpoint
+See [AUTH_TEST_MATRIX.md](./AUTH_TEST_MATRIX.md).
 
-An Admin invite email was sent for the test flow and the backend invite is open.
+## Temporary UI audit infrastructure
 
-The first email was correctly branded but displayed literal `{{invited_by}}` and `{{role}}` placeholders.
+The final audit used a disposable two-gym Auth account.
 
-Fix status:
+After the PASS:
 
-- placeholder-resolution fix deployed to `send-auth-email` v5
-- smoke checks passed
-- corrected invite email has been resent and verified successfully
-- the open-invite **Resend email** UI and resend action have now passed a live dev browser test; invite acceptance remains tracked separately
+- disposable user was removed
+- `hybridone-ui-audit-harness` was redeployed inert as v2
+- JWT verification is enabled
+- it returns HTTP 410
+- temporary UI-audit workflow/script are removed in the documentation/cleanup commit
 
-Dev UI now contains a **Resend email** action for an already-sent open email invite.
+## Next release work
 
-Production does not contain that UI change because production is still held.
-
-## Temporary test infrastructure
-
-The following old test Edge Functions are intentionally inert and protected with `verify_jwt=true`:
-
-- `hybridone-auth-secret-check`
-- `hybridone-email-auth-test-harness`
-- `hybridone-email-auth-retest-harness`
-- `hybridone-email-auth-url-retest-harness`
-
-They must not be treated as active product functionality.
-
-Disposable Auth test users used by automated email tests were removed after the runs.
-
-## Database/Auth security notes
-
-Existing security-adviser work remains separate from the current Auth release gate.
-
-Do not mass-revoke SECURITY DEFINER functions. Classify each function first as:
-
-- intentionally public
-- authenticated client RPC
-- privileged-only
-
-Leaked-password protection was previously reported disabled and remains a separate security hardening item.
-
-## Next action
-
-Resume at [AUTH_TEST_MATRIX.md](./AUTH_TEST_MATRIX.md), starting with the corrected Admin invite resend and acceptance flow.
-
-Production must remain held until the release-gate rows are complete and browser-verified.
-
-
-## Public Pages runtime verification
-
-A post-deployment public-runtime check is being added at this checkpoint.
-
-The Pages workflow will not complete green unless the public deployment:
-
-1. exposes a `deployment.json` manifest matching the exact checked-out `dev` SHA
-2. serves the Hybrid Hub-specific login content at `hybrid-hub-login.html`
-3. serves the Puffin Performance-specific login content at `puffin-performance-login.html`
-4. retains the explicit query-bound gym-context contract on `index.html?gym_id=...`
-
-Until the first green run completes, this capability is **pending verification**.
-
-
-## Dev runtime verification workflow
-
-Because the Pages deployment workflow is triggered by `workflow_run`, GitHub currently loads that workflow definition from the default branch. Changes to `.github/workflows/pages.yml` on `dev` therefore do not change the running Pages workflow until they reach `main`.
-
-To keep production frozen while still verifying dev correctly, runtime verification now runs independently from:
-
-`.github/workflows/dev-runtime.yml`
-
-On every `dev` push it waits for the public Pages site to expose the matching `deployment.json` SHA, then checks the Hybrid Hub and Puffin login pages. A green runtime-verification workflow is the authoritative proof that the public dev site matches the dev commit.
-
-
-## Public dev runtime verification result
-
-**PASS** on 24 September 2026.
-
-Evidence:
-
-- dev runtime run: `36066958023`
-- verified deployed SHA: `b60aea0ace4195d1f236f8d2d2bc7988870c5683`
-- Pages deployment run: `36066980204`
-- public `deployment.json` matched the exact dev SHA
-- public `hybrid-hub-login.html` served Hybrid Hub-specific content
-- public `puffin-performance-login.html` served Puffin Performance-specific content
-- both query-bound `index.html?gym_id=...` routes retained the explicit gym-context contract
-
-The previous limitation around independently proving the public GitHub Pages deployment is therefore resolved through GitHub Actions.
-
-
-## Resend email UI verification
-
-**PASS** on 25 September 2026.
-
-Evidence:
-
-- GitHub browser run: `36119425104`, second attempt successful
-- fresh Hybrid Hub Admin email invite created and sent
-- public dev Admin access opened in an authenticated Hybrid Hub Owner browser session
-- the open invite row displayed **Resend email**
-- clicking **Resend email** completed successfully and showed the invite-sent confirmation
-- database row remained `open` and `email_sent_at` updated after the resend
-- both initial send and resend were delivered by Resend
-- resent email used the corrected template with resolved inviter and role placeholders
-
-The fresh test invite is intentionally left open so the same button remains visible for manual inspection. Temporary probe permissions were removed and the probe Edge Function was made inert after the test.
-
-
-## Protected login routing fix
-
-**PASS** on 25 September 2026.
-
-The previous bug was that protected admin/staff pages redirected unauthenticated users to bare `./index.html`, which discarded the requested `gym_id` and produced the generic HybridOne login warning.
-
-The dev routing contract now:
-
-- sends Hybrid Hub protected pages to `hybrid-hub-login.html`
-- sends Puffin Performance protected pages to `puffin-performance-login.html`
-- carries the exact requested page in a safe `return_to` value
-- preserves `gym_id`
-- returns the user to the originally requested protected page after password sign-in
-- preserves gym context through the mobile admin-shell handoff
-- keeps sign-out gym-specific rather than returning to the generic platform login
-
-Evidence:
-
-- source routing fix: `8ad9d2087dc0b51977c562e1999f6ec4cbdf22b7`
-- reviewed smoke baseline update: `f8bbade97815b5b19e923d63248b5c7b9cfd391e`
-- protected-routing browser workflow added at `71b8c7f3162c133ea5909a379d43c2fc892019f9`
-- public Pages deployment: PASS
-- dev runtime verification: PASS
-- protected routing browser run `36125403099`: PASS
-
-The browser test used a fresh mobile Chromium context against the public GitHub Pages deployment, so this is runtime evidence rather than source-only evidence.
-
-
-## Production canonical route hotfix
-
-**PASS** on 25 September 2026.
-
-A recurring production bug allowed the canonical no-slash login routes to work while trailing-slash variants such as `/hybrid-hub/` could fail.
-
-Permanent fix:
-
-- `vercel.json` now explicitly sets `"trailingSlash": false`
-- Vercel canonicalises trailing-slash requests to the no-slash route before the existing rewrite
-- the same routing configuration exists on `main` and `dev`
-- permanent workflow `.github/workflows/production-routing.yml` verifies the live custom domain after production routing changes
-
-Production hotfix SHA:
-
-`dbe7528b83687df73a2ef2b289ae44390205ed11`
-
-Vercel production state:
-
-`READY`
-
-Production routing run `36149543418` passed after deployment and verified:
-
-- `/hybrid-hub`
-- `/hybrid-hub/` -> canonical `/hybrid-hub`
-- `/puffin-performance`
-- `/puffin-performance/` -> canonical `/puffin-performance`
-- `/app`
-- `/app/` -> canonical `/app`
-
-The general Auth production hold remains in place for dev-to-main promotion. This was a narrow production routing hotfix, not a full dev promotion.
-
-
-## Public DNS/TLS diagnostic
-
-**PASS** on 25 September 2026.
-
-An external GitHub-hosted runner checked the public DNS and TLS state after a Windows Chrome client reported `ERR_SSL_VERSION_OR_CIPHER_MISMATCH`.
-
-Results:
-
-- apex A: `hybridone.co.uk -> 216.198.79.1`
-- `www.hybridone.co.uk` CNAME: `hybridone.co.uk`
-- Google Public DNS and Cloudflare DNS returned the same records
-- no public AAAA record exists for apex or www
-- IPv4 TLS negotiation succeeded with TLS 1.3
-- `www.hybridone.co.uk` certificate is valid and matches the hostname
-- certificate issuer: Let's Encrypt
-- certificate validity: 22 Sep 2026 to 21 Dec 2026
-- HTTPS returned `200` from Vercel with HSTS enabled
-
-Therefore the observed browser error was not reproducible from the public internet and is consistent with client/network DNS cache, SSL state, HTTPS interception or another local path issue rather than current Vercel DNS/TLS configuration.
-
-
-## UI consistency baseline
-
-**PASS** on 25 September 2026.
-
-HybridOne now has an explicit visual-system contract instead of relying on page-by-page convention.
-
-Source checkpoint:
-
-`0362fec3e341b07a413ecc4232e1316ff9f0211a`
-
-What changed:
-
-- `app-consistency.css` is now the final stylesheet across all product surfaces
-- legacy CSS variables such as `--bg`, `--line`, `--dark`, `--muted` and `--shadow` resolve to the canonical HybridOne tokens
-- shared page headers, cards/panels, ordinary buttons, forms, tabs, tables, notices/statuses and mobile touch sizing use one visual contract
-- feature CSS may still own specialist layout such as timetable grids, floor-plan editing and workout structures
-- `UI_CONSISTENCY.md` documents the design/build rule
-- `scripts/ui_consistency_check.py` validates all 23 product surfaces
-- GitHub smoke run `36155401480`: PASS
-- public Pages deployment run `36155437880`: PASS
-- exact public dev runtime run `36155401478`: PASS
-
-This is a consistency pass, not a redesign. Production remains unchanged until the broader release gate is cleared.
+1. complete the remaining invite/access-grant matrix
+2. reconcile main/dev intentionally, because they diverge
+3. browser-test the production candidate after promotion
+4. only then remove the production hold

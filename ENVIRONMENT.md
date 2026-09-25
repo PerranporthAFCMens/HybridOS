@@ -1,66 +1,101 @@
 # HybridOne environment map
 
-**Operational source of truth for routes, IDs and deployment topology.**
+**Updated: 26 September 2026**
 
-Read this before giving a URL, changing Auth, changing deployment configuration or debugging tenant routing.
+Operational source of truth for routes, IDs and deployment topology. Read this before giving a URL or changing Auth/routing.
 
-## Repository and branches
+## Repository
 
 - Repository: `PerranporthAFCMens/HybridOS`
 - `dev`: development source
 - `main`: production source
-- Production promotion is currently **held**. See [STATUS.md](./STATUS.md).
+- Production promotion: **held**
+
+Verified application checkpoint:
+
+- production main: `dbe7528b83687df73a2ef2b289ae44390205ed11`
+- verified dev application: `6a14cfed829f01eace2ad094dd14e1dd08b27120`
+- relationship at the checkpoint: diverged, dev ahead 89 / behind 4
+- merge base: `b7d83243e9248a64978677efec91c4f9d83c1052`
 
 ## Production
 
-Public origin:
+Origin:
 
 `https://www.hybridone.co.uk`
 
-Approved production login routes:
+Current production entry points remain the pre-universal-login implementation until the release gate is cleared:
 
 - Hybrid Hub: `https://www.hybridone.co.uk/hybrid-hub`
 - Puffin Performance: `https://www.hybridone.co.uk/puffin-performance`
 
+Do not give `/index.html` as a user login URL.
+
 Vercel:
 
-- Project ID: `prj_9DRBM2eBpXpXngPTCawtIwYID6rc`
-- Team ID: `team_p7v1ius4XrtikQ0awFGWP4sF`
-- Production source: `main`
-- Build command: `python3 scripts/build_site.py`
-- Output directory: `_site`
+- project ID: `prj_9DRBM2eBpXpXngPTCawtIwYID6rc`
+- team ID: `team_p7v1ius4XrtikQ0awFGWP4sF`
+- build: `python3 scripts/build_site.py`
+- output: `_site`
+- current deployment source: `dbe7528b83687df73a2ef2b289ae44390205ed11`
+- current state: READY
 
 ## Development
 
-GitHub Pages origin:
+Origin:
 
 `https://perranporthafcmens.github.io/HybridOS/`
 
-**Approved dev login URLs until the dedicated aliases are re-browser-verified:**
+Canonical universal login:
 
-Hybrid Hub:
+`https://perranporthafcmens.github.io/HybridOS/login.html`
 
-`https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98`
+Gym chooser:
 
-Puffin Performance:
+`https://perranporthafcmens.github.io/HybridOS/choose-gym.html`
 
-`https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=aec16956-3793-4543-873b-4412646ca1eb`
+Convenience gym links into that same login:
 
-Source files `hybrid-hub-login.html` and `puffin-performance-login.html` exist, but **do not give those aliases to a user until they have been browser-verified on the deployed Pages site**. A user observed the Hybrid Hub alias landing on the generic login on iPhone on 24 September 2026.
+- Hybrid Hub: `https://perranporthafcmens.github.io/HybridOS/login.html?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98`
+- Puffin Performance: `https://perranporthafcmens.github.io/HybridOS/login.html?gym_id=aec16956-3793-4543-873b-4412646ca1eb`
 
-### GitHub Pages metadata warning
+Public dev runtime verification:
 
-The Pages workflow is triggered by `workflow_run`, so its run metadata may show the `main` SHA even when the job checked out `dev`.
+- run `36199919264`
+- source `6a14cfed829f01eace2ad094dd14e1dd08b27120`
+- result: PASS
 
-**Never use the Pages run `head_sha` as proof of deployed dev code.**
+Multi-gym authenticated browser audit:
 
-To verify dev deployment, inspect the job log for:
+- run `36199919230`
+- source `6a14cfed829f01eace2ad094dd14e1dd08b27120`
+- result: PASS on desktop and mobile
 
-`Checkout dev`
+Protected-routing browser:
 
-and the exact output of:
+- run `36199700825`
+- result: PASS
 
-`git log -1 --format=%H`
+## Auth context
+
+Read [AUTH_CONTEXT.md](./AUTH_CONTEXT.md).
+
+The authoritative invariant is:
+
+> **Authenticate the person first. Then select an active gym context.**
+
+Selected gym:
+
+`sessionStorage['hybrid-gym-id']`
+
+Last-used convenience hint:
+
+`localStorage['hybrid-last-gym-id']`
+
+Known gym IDs:
+
+- Hybrid Hub: `242f57c2-6e37-4977-b3c5-1c87de7d0b98`
+- Puffin Performance: `aec16956-3793-4543-873b-4412646ca1eb`
 
 ## Supabase
 
@@ -68,44 +103,18 @@ Project:
 
 `mzgnhmeydhhpzgxlgudh`
 
-Known gym IDs:
-
-- Hybrid Hub: `242f57c2-6e37-4977-b3c5-1c87de7d0b98`
-- Puffin Performance: `aec16956-3793-4543-873b-4412646ca1eb`
-
-Tenant invariant:
-
-> **The login route decides the gym. The email address does not.**
-
-Browser gym context:
-
-`sessionStorage['hybrid-gym-id']`
-
-Do not reintroduce first-active-gym inference, email-to-gym inference, `.limit(1)` tenant selection or a generic gym picker as the primary login flow.
-
-## Auth and email
-
-Supabase Send Email Hook endpoint:
+Send Email Hook:
 
 `https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/send-auth-email`
 
-Current live functions at the control-layer checkpoint:
+Live email/Auth functions at this checkpoint:
 
-- `send-auth-email` v5, ACTIVE, `verify_jwt=false`
-- `send-access-invite` v11, ACTIVE, `verify_jwt=true`
-
-`send-auth-email` uses signed Supabase webhook verification rather than Supabase JWT verification.
-
-Required Edge Function secrets are configured:
-
-- `RESEND_API_KEY`
-- `SEND_EMAIL_HOOK_SECRET`
-
-Never print secret values into repository files, logs or user-facing messages.
+- `send-auth-email` v5, ACTIVE, signed webhook verification
+- `send-access-invite` v11, ACTIVE, JWT verification enabled
 
 ## Build contract
 
-Both dev and production must serve:
+Both environments must serve the built output:
 
 ```
 source
@@ -113,93 +122,14 @@ source
 -> _site
 ```
 
-Never diagnose a deployed UI only from raw source. Inspect the generated site and then the deployed runtime.
+Never diagnose deployed UI only from raw source.
 
+## Public runtime authority
 
-## Automatic public runtime verification
-
-Every successful dev Pages deployment now performs a post-deploy check against the **public GitHub Pages site**.
-
-It verifies:
-
-- `deployment.json` reports the exact checked-out `dev` SHA
-- the public Hybrid Hub login file serves Hybrid Hub content, not the generic platform login
-- the public Puffin Performance login file serves Puffin content
-- the query-bound generic login still contains the explicit `gym_id` context contract
-
-Files:
-
-- `scripts/runtime_pages_check.py`
-- `.github/workflows/pages.yml`
-
-A green Pages workflow is therefore runtime evidence, not just build evidence.
-
-
-### Dev runtime workflow authority
-
-While `main` remains on the production hold, the authoritative public-dev verification workflow is:
+The authoritative dev runtime workflow is:
 
 `.github/workflows/dev-runtime.yml`
 
-This is intentionally separate from the Pages `workflow_run` definition, because GitHub loads `workflow_run` workflow definitions from the default branch. The dev-runtime workflow can therefore evolve on `dev` without touching production.
+It waits for `deployment.json` to match the exact dev SHA and checks the public login/chooser contract.
 
-
-### Verified public dev routes
-
-The independent runtime workflow has now verified the public Pages deployment.
-
-Verified at SHA:
-
-`b60aea0ace4195d1f236f8d2d2bc7988870c5683`
-
-Server-runtime verified routes:
-
-- `https://perranporthafcmens.github.io/HybridOS/hybrid-hub-login.html`
-- `https://perranporthafcmens.github.io/HybridOS/puffin-performance-login.html`
-- `https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98`
-- `https://perranporthafcmens.github.io/HybridOS/index.html?gym_id=aec16956-3793-4543-873b-4412646ca1eb`
-
-This is public server-runtime verification. Full authenticated browser journeys remain tracked separately in `AUTH_TEST_MATRIX.md`.
-
-
-## Protected-page login routing
-
-Protected admin/staff pages must never redirect an unauthenticated user to bare `index.html`.
-
-Current contract:
-
-- Hybrid Hub gym ID -> `hybrid-hub-login.html`
-- Puffin Performance gym ID -> `puffin-performance-login.html`
-- unknown gym -> `index.html?gym_id=<id>`
-- protected-page redirects include a same-origin `return_to` value
-- dedicated login pages validate `return_to` and restore the exact protected page after sign-in
-
-Permanent browser regression workflow:
-
-`.github/workflows/protected-routing-browser.yml`
-
-Latest public mobile-browser PASS:
-
-- run `36125403099`
-- source SHA `71b8c7f3162c133ea5909a379d43c2fc892019f9`
-
-
-## Production canonical URL rule
-
-Vercel production explicitly uses:
-
-`"trailingSlash": false`
-
-Canonical public routes are:
-
-- `https://www.hybridone.co.uk/hybrid-hub`
-- `https://www.hybridone.co.uk/puffin-performance`
-- `https://www.hybridone.co.uk/app`
-
-The equivalent URLs with a trailing slash are supported and must redirect to the canonical no-slash form.
-
-Permanent production regression check:
-
-`.github/workflows/production-routing.yml`
-
-The workflow checks both slash and no-slash forms against the live custom domain.
+Workflow metadata alone is not proof of what GitHub Pages is serving.

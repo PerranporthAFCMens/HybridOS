@@ -1,98 +1,116 @@
 # HybridOne project control rules
 
-This is the operating protocol for any future HybridOne work.
+This is the operating protocol for HybridOne work.
 
 ## Mandatory read order
 
 Before making a HybridOne change:
 
 1. read `PROJECT_STATE.json`
-2. read `ENVIRONMENT.md`
-3. read `STATUS.md`
-4. read `AUTH_TEST_MATRIX.md` when the work touches Auth, routing, invitations, email or permissions
-5. use `HANDOVER.md` for architecture/background only
-6. inspect the current code and live service state relevant to the task
+2. read `PROJECT_CONTROL.md`
+3. read `ENVIRONMENT.md`
+4. read `STATUS.md`
+5. read `AUTH_CONTEXT.md` for login, routing, tenancy, role or multi-gym work
+6. read `AUTH_TEST_MATRIX.md` for Auth, invitations, email or permissions
+7. read `UI_CONSISTENCY.md` for user-facing UI work
+8. use `HANDOVER.md` for architecture/background
+9. inspect current code and live service state
 
 Do not rely on chat memory when repository/live state can be checked.
 
-## Mandatory live checks before changing code
+## Mandatory live checks
 
 Fetch:
 
 - current `dev` head
 - current `main` head
-- main/dev relationship before any merge/promotion
+- main/dev relationship
 - latest production Vercel deployment for production-sensitive work
-- relevant live Supabase Edge Function version for Auth/email work
+- relevant live Supabase function/version for Auth/email work
 
-For GitHub Pages, require `HybridOne dev runtime verification` to pass. It waits for `deployment.json` to match the exact dev SHA and checks the public tenant-login routes. Workflow metadata alone is not proof.
+For dev Pages, require **HybridOne dev runtime verification** to pass.
 
 ## Definition of "fixed"
 
-Never tell the user something is fixed merely because source code changed.
+Never call something fixed because source changed.
 
-A user-facing fix requires, where applicable:
+Where applicable, require:
 
 1. code committed
 2. build completed
 3. smoke/CI passed
 4. target environment deployed
 5. exact deployed revision verified
-6. actual runtime/browser behaviour verified
+6. runtime/browser behaviour verified
 
-If step 6 is missing, say **deployed, runtime verification pending**, not **fixed**.
+If runtime is not checked, say **deployed, runtime verification pending**.
+
+## Auth context rule
+
+Read [AUTH_CONTEXT.md](./AUTH_CONTEXT.md).
+
+The core rule is:
+
+> **Authenticate the person first. Then select an active gym context.**
+
+Never restore:
+
+- email-to-gym inference
+- `.limit(1)` as tenant selection
+- last-used gym as permission
+- silent cross-gym fallback
+
+A URL `gym_id` is only a hint and must be validated against active membership.
 
 ## URL rule
 
 Never give a HybridOne login/dev URL from memory.
 
-Use `ENVIRONMENT.md`, then require a green public runtime route check before giving a dev route to the user.
+Use `ENVIRONMENT.md` and current runtime evidence.
 
 If source and deployed behaviour disagree, deployed behaviour wins for diagnosis.
 
 ## Environment rule
 
-Do not confuse:
+Keep these layers distinct:
 
-- source file
+- source
 - built `_site`
 - GitHub Pages dev
 - Vercel production
-- live Supabase functions/database
-
-State explicitly which layer was changed and which layer was verified.
+- Supabase Auth/database/functions
+- Resend delivery
 
 ## Production rule
 
 While `PROJECT_STATE.json -> release_gate.production_hold` is true:
 
-- do not promote dev to main
-- do not remove the hold commit
-- do not treat green CI as permission to promote
-- production fixes require an explicit release decision after the release gate is reviewed
+- do not broadly promote dev to main
+- do not remove the hold because CI is green
+- production hotfixes must be narrow and explicitly verified
 
 ## Temporary test rule
 
-Any temporary user, RPC, workflow or Edge Function created for testing must be:
+Any temporary user, RPC, workflow or Edge Function must be:
 
 - tightly scoped
-- recorded in `STATUS.md` while active
+- recorded while active
 - removed or made inert after use
-- verified cleaned before the task is considered complete
+- verified cleaned before completion
 
 ## State-update rule
 
-After any meaningful change to routing, Auth, email, permissions, deployment or the release gate:
+After meaningful routing, Auth, email, permission, UI-system or deployment changes update:
 
-- update `PROJECT_STATE.json`
-- update `STATUS.md`
-- update `AUTH_TEST_MATRIX.md` if evidence changed
-- update `ENVIRONMENT.md` if a route/ID/deployment contract changed
-
-The control files are part of the change, not optional documentation afterwards.
+- `PROJECT_STATE.json`
+- `STATUS.md`
+- `ENVIRONMENT.md` when route/deployment contracts change
+- `AUTH_CONTEXT.md` when gym-context behaviour changes
+- `AUTH_TEST_MATRIX.md` when evidence changes
+- `UI_CONSISTENCY.md` when shared UI rules/evidence change
 
 ## Security rule
 
-Do not weaken RLS, tenant isolation, service-role boundaries, webhook verification or Owner governance to make a test easier.
+Do not weaken RLS, tenant isolation, service-role boundaries, webhook verification or Owner governance to make a test pass.
 
-Prefer narrow SECURITY DEFINER RPCs with explicit caller/service checks over broad table grants.
+Prefer narrow server-side checks/RPCs over broad grants.
