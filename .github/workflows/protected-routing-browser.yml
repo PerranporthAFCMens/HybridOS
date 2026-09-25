@@ -11,6 +11,8 @@ on:
       - 'staff.html'
       - 'login.html'
       - 'choose-gym.html'
+      - 'gym-context.js'
+      - 'account-menu.js'
       - '.github/workflows/protected-routing-browser.yml'
   workflow_dispatch:
 
