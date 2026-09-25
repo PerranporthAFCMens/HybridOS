@@ -55,7 +55,7 @@ RENDER_BASELINE={
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
  'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
- 'admin-frame.js':'d1dbb0df416d9745b9cedc14a35d3b6620ec89c7',
+ 'admin-frame.js':'629dc0ab868ad6847b196028c8d870db48b129b2',
  'app-stability.js':'f5819ecd71e76985b7b7f410c2f25e9e7700a380',
  'shared-admin-nav.js':'ad4fbc29cd9b85ffe42d33ae5b918a3903f30761',
 }
@@ -153,7 +153,7 @@ for x in ('hybrid-admin-nav','embedded=1','history.pushState','adminContentFrame
  if x not in admin_frame_js:problems.append(f'admin-frame.js: persistent routing missing: {x}')
 for x in ('hybrid-admin-ready','pendingSwap','completeSwap','Fallback only'):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: embedded readiness handoff missing: {x}')
-for x in ("matchMedia('(max-width:900px)').matches","location.replace('./'+requested)","const start=requested"):
+for x in ("matchMedia('(max-width:900px)').matches","const target=new URL('./'+requested,location.href)","target.searchParams.set('gym_id',gymId)","const start=requested"):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: mobile top-level handoff missing: {x}')
 for x in ('workout-builder.html',"{key:'workouts'","if(file==='workout-builder.html')return'workouts'"):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: admin registry/routes out of sync: {x}')
