@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "verified_at_utc": "2026-09-25T10:43:00Z",
+  "verified_at_utc": "2026-09-25T14:45:20Z",
   "repository": "PerranporthAFCMens/HybridOS",
   "branches": {
     "production_source": "main",
     "development_source": "dev",
-    "production_main_sha": "424bfb9ec7f0fcf36b7b276e16a0385bb0b3a961",
+    "production_main_sha": "dbe7528b83687df73a2ef2b289ae44390205ed11",
     "verified_dev_application_sha": "82c0978b48b58ba70bd2840e70ff04b25bc05ae9",
     "relationship": "diverged",
-    "dev_ahead_by": 42,
-    "dev_behind_by": 1,
+    "dev_ahead_by": 60,
+    "dev_behind_by": 4,
     "merge_base_sha": "b7d83243e9248a64978677efec91c4f9d83c1052"
   },
   "release_gate": {
     "production_hold": true,
     "production_promotion_allowed": false,
-    "reason": "Auth and invite browser matrix is not complete"
+    "reason": "General dev-to-main Auth promotion remains held; production routing hotfix applied independently."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
@@ -23,8 +23,22 @@
     "puffin_performance_login": "https://www.hybridone.co.uk/puffin-performance",
     "vercel_project_id": "prj_9DRBM2eBpXpXngPTCawtIwYID6rc",
     "vercel_team_id": "team_p7v1ius4XrtikQ0awFGWP4sF",
-    "deployed_source_sha": "424bfb9ec7f0fcf36b7b276e16a0385bb0b3a961",
-    "deployment_state": "READY"
+    "deployed_source_sha": "dbe7528b83687df73a2ef2b289ae44390205ed11",
+    "deployment_state": "READY",
+    "canonical_routes": {
+      "trailing_slash": false,
+      "routing_workflow": ".github/workflows/production-routing.yml",
+      "last_pass_run_id": 36149543418,
+      "last_passed_at_utc": "2026-09-25T14:45:20Z",
+      "verified": [
+        "/hybrid-hub",
+        "/hybrid-hub/",
+        "/puffin-performance",
+        "/puffin-performance/",
+        "/app",
+        "/app/"
+      ]
+    }
   },
   "development": {
     "pages_origin": "https://perranporthafcmens.github.io/HybridOS/",

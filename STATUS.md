@@ -201,3 +201,36 @@ Evidence:
 - protected routing browser run `36125403099`: PASS
 
 The browser test used a fresh mobile Chromium context against the public GitHub Pages deployment, so this is runtime evidence rather than source-only evidence.
+
+
+## Production canonical route hotfix
+
+**PASS** on 25 September 2026.
+
+A recurring production bug allowed the canonical no-slash login routes to work while trailing-slash variants such as `/hybrid-hub/` could fail.
+
+Permanent fix:
+
+- `vercel.json` now explicitly sets `"trailingSlash": false`
+- Vercel canonicalises trailing-slash requests to the no-slash route before the existing rewrite
+- the same routing configuration exists on `main` and `dev`
+- permanent workflow `.github/workflows/production-routing.yml` verifies the live custom domain after production routing changes
+
+Production hotfix SHA:
+
+`dbe7528b83687df73a2ef2b289ae44390205ed11`
+
+Vercel production state:
+
+`READY`
+
+Production routing run `36149543418` passed after deployment and verified:
+
+- `/hybrid-hub`
+- `/hybrid-hub/` -> canonical `/hybrid-hub`
+- `/puffin-performance`
+- `/puffin-performance/` -> canonical `/puffin-performance`
+- `/app`
+- `/app/` -> canonical `/app`
+
+The general Auth production hold remains in place for dev-to-main promotion. This was a narrow production routing hotfix, not a full dev promotion.

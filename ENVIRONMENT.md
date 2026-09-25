@@ -182,3 +182,24 @@ Latest public mobile-browser PASS:
 
 - run `36125403099`
 - source SHA `71b8c7f3162c133ea5909a379d43c2fc892019f9`
+
+
+## Production canonical URL rule
+
+Vercel production explicitly uses:
+
+`"trailingSlash": false`
+
+Canonical public routes are:
+
+- `https://www.hybridone.co.uk/hybrid-hub`
+- `https://www.hybridone.co.uk/puffin-performance`
+- `https://www.hybridone.co.uk/app`
+
+The equivalent URLs with a trailing slash are supported and must redirect to the canonical no-slash form.
+
+Permanent production regression check:
+
+`.github/workflows/production-routing.yml`
+
+The workflow checks both slash and no-slash forms against the live custom domain.

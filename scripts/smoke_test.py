@@ -43,6 +43,8 @@ else:
  vt=vercel.read_text(encoding='utf-8')
  for x in ('/landing.html','/hybrid-hub','/puffin-performance','/app'):
   if x not in vt:problems.append(f'vercel.json: route missing: {x}')
+ if '"trailingSlash": false' not in vt:problems.append('vercel.json: trailingSlash=false canonical route contract missing')
+
 for brand_page in ROOT.glob('*.html'):
  bt=brand_page.read_text(encoding='utf-8')
  if re.search(r'Hybrid OS|HYBRID OS|HYBRIDOS|HybridOS(?=$|[\\s<.,:;!?])',bt):
