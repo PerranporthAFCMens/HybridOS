@@ -502,4 +502,9 @@ body:has(#reportSearch) .report-card{
   body:has(#reportSearch) .controls select,
   body:has(#reportSearch) .controls button{min-height:44px!important}
 }
+/* Multi-gym context switch. Only shown when the signed-in account has 2+ active gyms. */
+.side .hybrid-shell-gym.hybrid-gym-switchable{cursor:pointer;transition:border-color .15s ease,background .15s ease}
+.side .hybrid-shell-gym.hybrid-gym-switchable:hover{border-color:rgba(255,255,255,.22)!important;background:rgba(255,255,255,.10)!important}
+.hybrid-gym-switch-note{margin-top:9px;color:#64f0cf;font-size:11px;font-weight:850;letter-spacing:.02em}
+.side .hybrid-shell-gym.hybrid-gym-switchable:focus-visible{outline:2px solid #64f0cf;outline-offset:3px}
 

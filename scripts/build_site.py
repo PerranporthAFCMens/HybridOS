@@ -53,7 +53,7 @@ def add_shared_runtime():
   if not(OUT/n).exists():continue
   s=read(n)
   if 'hybrid-critical-shell' not in s:s=s.replace('</head>',CRITICAL_SHELL_STYLE+'</head>',1)
-  s=inject_head(s,'gym-context.js',f'<script src="./gym-context.js?v={VERSION}"></script>');s=inject_head(s,'app-consistency.css',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}">');s=inject_head(s,'app-stability.js',f'<script src="./app-stability.js?v={VERSION}"></script>');s=inject_body(s,'shared-shell.js',f'<script src="./shared-shell.js?v={VERSION}" defer></script>');write(n,inject_body(s,'account-menu.js',f'<script src="./account-menu.js?v={VERSION}" defer></script>'))
+  s=inject_head(s,'gym-context.js',f'<script src="./gym-context.js?v={VERSION}"></script>');s=inject_head(s,'app-consistency.css',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}">');s=inject_head(s,'app-stability.js',f'<script src="./app-stability.js?v={VERSION}"></script>');s=inject_body(s,'shared-shell.js',f'<script src="./shared-shell.js?v={VERSION}" defer></script>');s=inject_body(s,'gym-switcher.js',f'<script src="./gym-switcher.js?v={VERSION}" defer></script>');write(n,inject_body(s,'account-menu.js',f'<script src="./account-menu.js?v={VERSION}" defer></script>'))
 def add_tenant_runtime():
  for n in TENANT_PAGES:
   if not(OUT/n).exists():continue
@@ -67,6 +67,7 @@ def version_admin_frame_assets():
  s=re.sub(r'href=["\']\.\/admin-frame\.css(?:\?[^"\']*)?["\']',f'href="./admin-frame.css?v={VERSION}"',s,count=1)
  s=re.sub(r'src=["\']\.\/admin-frame\.js(?:\?[^"\']*)?["\']',f'src="./admin-frame.js?v={VERSION}"',s,count=1)
  s=re.sub(r'src=["\']\.\/shared-shell\.js(?:\?[^"\']*)?["\']',f'src="./shared-shell.js?v={VERSION}"',s,count=1)
+ s=inject_body(s,'gym-switcher.js',f'<script src="./gym-switcher.js?v={VERSION}" defer></script>')
  write('admin.html',s)
 def add_admin_shell():
  for n in ADMIN_PAGES:
