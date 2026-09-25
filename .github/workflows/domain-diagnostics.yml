@@ -1,0 +1,56 @@
+name: HybridOne domain diagnostics
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/domain-diagnostics.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Install DNS tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq dnsutils openssl
+
+      - name: DNS and TLS diagnostics
+        shell: bash
+        run: |
+          set +e
+          echo '=== SYSTEM DNS ==='
+          for host in hybridone.co.uk www.hybridone.co.uk; do
+            echo "--- $host A"; dig +short "$host" A
+            echo "--- $host AAAA"; dig +short "$host" AAAA
+            echo "--- $host CNAME"; dig +short "$host" CNAME
+          done
+
+          echo '=== GOOGLE DNS ==='
+          for host in hybridone.co.uk www.hybridone.co.uk; do
+            echo "--- $host A"; dig +short @8.8.8.8 "$host" A
+            echo "--- $host AAAA"; dig +short @8.8.8.8 "$host" AAAA
+            echo "--- $host CNAME"; dig +short @8.8.8.8 "$host" CNAME
+          done
+
+          echo '=== CLOUDFLARE DNS ==='
+          for host in hybridone.co.uk www.hybridone.co.uk; do
+            echo "--- $host A"; dig +short @1.1.1.1 "$host" A
+            echo "--- $host AAAA"; dig +short @1.1.1.1 "$host" AAAA
+            echo "--- $host CNAME"; dig +short @1.1.1.1 "$host" CNAME
+          done
+
+          echo '=== HTTPS IPV4 ==='
+          curl -4 -Iv --connect-timeout 15 https://www.hybridone.co.uk/ 2>&1 | sed -n '1,80p'
+
+          echo '=== HTTPS IPV6 ==='
+          curl -6 -Iv --connect-timeout 15 https://www.hybridone.co.uk/ 2>&1 | sed -n '1,80p'
+
+          echo '=== TLS CERT WWW ==='
+          echo | openssl s_client -connect www.hybridone.co.uk:443 -servername www.hybridone.co.uk -showcerts 2>&1 | sed -n '1,120p'
+
+          echo '=== TLS CERT APEX ==='
+          echo | openssl s_client -connect hybridone.co.uk:443 -servername hybridone.co.uk -showcerts 2>&1 | sed -n '1,120p'
