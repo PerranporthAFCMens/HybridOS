@@ -14,6 +14,8 @@ required_files=[
     '.github/workflows/dev-runtime.yml',
     '.github/workflows/protected-routing-browser.yml',
     'scripts/runtime_pages_check.py',
+    'scripts/ui_consistency_check.py',
+    'UI_CONSISTENCY.md',
     'HANDOVER.md',
     'README.md',
 ]

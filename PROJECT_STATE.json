@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "verified_at_utc": "2026-09-25T14:45:20Z",
+  "verified_at_utc": "2026-09-25T15:38:30Z",
   "repository": "PerranporthAFCMens/HybridOS",
   "branches": {
     "production_source": "main",
@@ -84,6 +84,22 @@
         "Puffin protected route selects Puffin login"
       ],
       "status": "pass"
+    },
+    "ui_consistency": {
+      "status": "pass_static_and_public_runtime",
+      "source_sha": "0362fec3e341b07a413ecc4232e1316ff9f0211a",
+      "smoke_run_id": 36155401480,
+      "pages_run_id": 36155437880,
+      "runtime_run_id": 36155401478,
+      "contract": "UI_CONSISTENCY.md",
+      "static_check": "scripts/ui_consistency_check.py",
+      "product_surfaces_checked": 23,
+      "rules": [
+        "app-consistency.css is the final stylesheet on every product surface",
+        "legacy page tokens resolve to canonical HybridOne tokens",
+        "shared typography, cards, buttons, forms, tabs, tables and status treatments are canonical",
+        "feature CSS may own layout but not a separate visual system"
+      ]
     }
   },
   "supabase": {

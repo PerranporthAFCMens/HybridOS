@@ -255,3 +255,28 @@ Results:
 - HTTPS returned `200` from Vercel with HSTS enabled
 
 Therefore the observed browser error was not reproducible from the public internet and is consistent with client/network DNS cache, SSL state, HTTPS interception or another local path issue rather than current Vercel DNS/TLS configuration.
+
+
+## UI consistency baseline
+
+**PASS** on 25 September 2026.
+
+HybridOne now has an explicit visual-system contract instead of relying on page-by-page convention.
+
+Source checkpoint:
+
+`0362fec3e341b07a413ecc4232e1316ff9f0211a`
+
+What changed:
+
+- `app-consistency.css` is now the final stylesheet across all product surfaces
+- legacy CSS variables such as `--bg`, `--line`, `--dark`, `--muted` and `--shadow` resolve to the canonical HybridOne tokens
+- shared page headers, cards/panels, ordinary buttons, forms, tabs, tables, notices/statuses and mobile touch sizing use one visual contract
+- feature CSS may still own specialist layout such as timetable grids, floor-plan editing and workout structures
+- `UI_CONSISTENCY.md` documents the design/build rule
+- `scripts/ui_consistency_check.py` validates all 23 product surfaces
+- GitHub smoke run `36155401480`: PASS
+- public Pages deployment run `36155437880`: PASS
+- exact public dev runtime run `36155401478`: PASS
+
+This is a consistency pass, not a redesign. Production remains unchanged until the broader release gate is cleared.
