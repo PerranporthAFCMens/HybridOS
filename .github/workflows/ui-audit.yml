@@ -62,7 +62,5 @@ jobs:
           set -euo pipefail
           OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-ui-audit" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
           echo "::add-mask::$OIDC"
-         Ý\KYZ[]Ú]XÙH\ÔÈR]]Ü^][ÛX\\	ÒQÈRÛÛ[U\N\XØ][ÛÚÛÛKY]H	ÞÈXÝ[ÛÛX[\IÈÎËÛ^ÛY^YÞÝYÝ\X\ÙKÛËÙ[Ý[ÛËÝKÚXYÛK]ZKX]Y]Z\\ÜÈ[ÈÝ\ÝZKXÛX[\ÛÛ]ÛÈXÈ[\ÜÛÛÈZÛÛØY
-Ü[	ËÝ\ÝZKXÛX[\ÛÛÊJNÈ\ÜÙ\Ù]
-	ÛÚÉÊH\ÈYH[Ù]
-	ØÛX[Y	ÊH\ÈYK
+          curl --fail-with-body -sS -H "Authorization: Bearer $OIDC" -H "Content-Type: application/json" --data '{"action":"cleanup"}' https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-ui-audit-harness -o /tmp/ui-cleanup.json
+          python3 -c "import json; d=json.load(open('/tmp/ui-cleanup.json')); assert d.get('ok') is True and d.get('cleaned') is True, d"
