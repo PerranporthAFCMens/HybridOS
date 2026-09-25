@@ -3,12 +3,10 @@ const sb=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publishable
 const shellVersion=new URL(import.meta.url).searchParams.get('v')||Date.now().toString();
 const HUB_GYM_ID='242f57c2-6e37-4977-b3c5-1c87de7d0b98',PUFFIN_GYM_ID='aec16956-3793-4543-873b-4412646ca1eb';
 function routeGymId(){return new URLSearchParams(location.search).get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||''}
-function gymEntryUrl(gymId=routeGymId()){const u=new URL('./index.html',location.href);if(gymId)u.searchParams.set('gym_id',gymId);return u.toString()}
+function gymEntryUrl(gymId=routeGymId()){const u=new URL('./choose-gym.html',location.href);if(gymId)u.searchParams.set('gym_id',gymId);return u.toString()}
 function gymLoginUrl(returnHere=true){
-  const gymId=routeGymId();
-  const page=gymId===HUB_GYM_ID?'./hybrid-hub-login.html':gymId===PUFFIN_GYM_ID?'./puffin-performance-login.html':'./index.html';
-  const u=new URL(page,location.href);
-  if(page==='./index.html'&&gymId)u.searchParams.set('gym_id',gymId);
+  const gymId=routeGymId(),u=new URL('./login.html',location.href);
+  if(gymId)u.searchParams.set('gym_id',gymId);
   if(returnHere){const ret=new URL(location.href);if(gymId)ret.searchParams.set('gym_id',gymId);u.searchParams.set('return_to',ret.toString())}
   return u.toString();
 }
@@ -123,7 +121,7 @@ async function init(){
    selectedGymId=membership.gym_id;
  }
  if(!membership){location.replace(gymEntryUrl(selectedGymId));return}
- sessionStorage.setItem('hybrid-gym-id',membership.gym_id);
+ window.HybridGymContext.setGym(membership.gym_id);
  if(!params.get('gym_id')){
    params.set('gym_id',membership.gym_id);
    history.replaceState(history.state,'',location.pathname+'?'+params.toString());

@@ -25,7 +25,7 @@ const status=document.getElementById('status');
 try{
   sessionStorage.removeItem('hybrid-gym-id');
   await supabase.auth.signOut();
-  location.replace('./');
+  location.replace('./login.html');
 }catch(e){
   status.textContent=e?.message||'Could not sign out. Please try again.';
 }

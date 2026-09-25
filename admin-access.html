@@ -53,12 +53,10 @@ const supabase=createClient('https://mzgnhmeydhhpzgxlgudh.supabase.co','sb_publi
 const $=id=>document.getElementById(id);
 const HUB_GYM_ID='242f57c2-6e37-4977-b3c5-1c87de7d0b98',PUFFIN_GYM_ID='aec16956-3793-4543-873b-4412646ca1eb';
 function routeGymId(){return new URLSearchParams(location.search).get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||''}
-function gymEntryUrl(gymId=routeGymId()){const u=new URL('./index.html',location.href);if(gymId)u.searchParams.set('gym_id',gymId);return u.toString()}
+function gymEntryUrl(gymId=routeGymId()){const u=new URL('./choose-gym.html',location.href);if(gymId)u.searchParams.set('gym_id',gymId);return u.toString()}
 function gymLoginUrl(returnHere=true){
-  const gymId=routeGymId();
-  const page=gymId===HUB_GYM_ID?'./hybrid-hub-login.html':gymId===PUFFIN_GYM_ID?'./puffin-performance-login.html':'./index.html';
-  const u=new URL(page,location.href);
-  if(page==='./index.html'&&gymId)u.searchParams.set('gym_id',gymId);
+  const gymId=routeGymId(),u=new URL('./login.html',location.href);
+  if(gymId)u.searchParams.set('gym_id',gymId);
   if(returnHere){const ret=new URL(location.href);if(gymId)ret.searchParams.set('gym_id',gymId);u.searchParams.set('return_to',ret.toString())}
   return u.toString();
 }
@@ -109,7 +107,7 @@ async function load(){
     $('contextBlockedMsg').textContent='This account owns more than one gym, so HybridOne will not guess which one you mean. Open Admin Access from the gym you want to manage.';
     return;
   }
-  gym=selected.gyms;role=selected.role;accessStatus=selected.access_status;sessionStorage.setItem('hybrid-gym-id',selected.gym_id);
+  gym=selected.gyms;role=selected.role;accessStatus=selected.access_status;window.HybridGymContext.setGym(selected.gym_id);
   $('gymName').textContent=gym.name;$('inviteGymName').textContent=gym.name;$('signedInAccount').textContent=user.email||'';
   $('ownerPanel').classList.remove('hidden');$('ownershipCard').classList.remove('hidden');$('inviteCard').classList.remove('hidden');
   await refresh();
