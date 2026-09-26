@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "verified_at_utc": "2026-09-25T23:12:30Z",
+  "verified_at_utc": "2026-09-26T08:09:48Z",
   "repository": "PerranporthAFCMens/HybridOS",
   "branches": {
     "production_source": "main",
@@ -16,7 +16,7 @@
   "release_gate": {
     "production_hold": true,
     "production_promotion_allowed": false,
-    "reason": "Universal login and multi-gym switching are verified on dev, but the remaining invite/access-grant Auth matrix is not complete."
+    "reason": "Universal login and multi-gym switching are verified on dev. Invite-edge governance/rejection cases are also verified, but browser-level sign-out/re-login, fresh/repeatable invite acceptance edge journeys, mobile refresh/back, and the member-signup confirmation-mode decision still block promotion."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
@@ -102,6 +102,31 @@
       "edge_function_verify_jwt": true,
       "edge_function_state": "inert_410",
       "disposable_user_cleaned": true
+    },
+    "invite_edge_matrix": {
+      "status": "pass_live_backend",
+      "workflow": ".github/workflows/invite-edge-matrix.yml",
+      "run_id": 36071266688,
+      "verifies": [
+        "new-account Admin invite claim",
+        "wrong-account claim rejection",
+        "revoked invite rejection",
+        "expired invite rejection",
+        "single-Owner approval and Owner claim",
+        "multi-Owner approval quorum and Owner claim",
+        "isolated test-data cleanup"
+      ]
+    },
+    "admin_invite_browser": {
+      "status": "pass_existing_account_fresh_browser_context",
+      "workflow": ".github/workflows/invite-browser-test.yml",
+      "run_id": 36069661356,
+      "verifies": [
+        "fresh Playwright browser context",
+        "Hybrid Hub Admin invite link consumption",
+        "Admin access activation"
+      ],
+      "limitation": "The fixture was tied to a specific invite and is not a repeatable fresh acceptance fixture."
     }
   },
   "supabase": {
@@ -128,10 +153,18 @@
     "puffin_password_reset": "pass_full_browser",
     "hybrid_hub_magic_link": "pass_full_browser",
     "puffin_magic_link": "pass_full_browser",
-    "member_signup_mode": "immediate_confirmation_observed",
+    "member_signup_mode": "immediate_confirmation_observed_product_decision_required",
     "admin_invite_email": "pass_corrected_template_delivery_and_dev_resend_ui",
-    "fresh_new_account_invite_acceptance": "partial",
-    "protected_login_routing": "pass_universal_login_browser"
+    "fresh_new_account_invite_acceptance": "partial_backend_claim_pass_browser_create_account_needed",
+    "protected_login_routing": "pass_universal_login_browser",
+    "universal_signout_relogin": "not_tested_full_browser",
+    "admin_invite_fresh_incognito": "pass_existing_account_browser",
+    "existing_account_invite_acceptance": "partial_repeatable_browser_fixture_needed",
+    "wrong_account_invite_handling": "partial_backend_denial_pass_browser_mismatch_needed",
+    "expired_revoked_invites": "pass_live_backend",
+    "owner_invite_single_owner": "pass_live_backend",
+    "owner_invite_multiple_owners": "pass_live_backend",
+    "mobile_refresh_back": "not_tested"
   },
   "current_open_test_invite": {
     "purpose": "Fresh Admin invite acceptance follow-up",
