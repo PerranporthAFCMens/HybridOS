@@ -86,9 +86,19 @@ Still release-gating:
 - repeatable existing-account invite acceptance browser fixture
 - wrong-account mismatch / switch-account browser journey
 - refresh/back navigation edge case on mobile
-- explicit decision on immediate-confirm member signup mode
+- enable the approved email-confirmation requirement for self-service member signup and browser-test the confirmation-link journey
 
 See [AUTH_TEST_MATRIX.md](./AUTH_TEST_MATRIX.md).
+
+### Member signup confirmation decision
+
+Decision locked 26 September 2026:
+
+- self-service member registrations must confirm their email before continuing into membership activation
+- the previous immediate-confirm behaviour is not the intended production mode
+- current Supabase Auth runtime still needs the Email confirmation setting enabled
+- after enabling it, the join confirmation link must be browser-tested through to membership selection
+- invite-based Admin/Owner access remains governed by its separate invite/claim flow
 
 ## Temporary UI audit infrastructure
 
