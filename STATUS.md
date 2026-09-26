@@ -10,7 +10,7 @@ Machine-readable state: [PROJECT_STATE.json](./PROJECT_STATE.json)
 
 Production promotion allowed: **NO**
 
-Reason: the new universal login and multi-gym context model is verified on dev, but the remaining invite/access-grant Auth scenarios are not all complete.
+Reason: universal login/multi-gym context is verified and the isolated invite-edge governance/rejection matrix has passed, but several browser-level Auth journeys plus the member-signup confirmation-mode decision remain open.
 
 ## Production
 
@@ -72,15 +72,20 @@ Browser-verified:
 - universal chooser and switching
 - corrected Admin invite email template
 - open-invite **Resend email** UI and delivery
+- Admin invite activation in a fresh browser context (`36069661356`)
+- isolated new-account Admin claim (`36071266688`)
+- isolated wrong-account claim rejection (`36071266688`)
+- isolated revoked and expired invite rejection (`36071266688`)
+- one-Owner Owner-invite approval and acceptance (`36071266688`)
+- multi-Owner Owner-invite approval quorum and acceptance (`36071266688`)
 
 Still release-gating:
 
-- fresh new-account invite acceptance
-- wrong-account invite runtime
-- expired/revoked invite runtime
-- one-Owner Owner-invite runtime
-- multi-Owner Owner-invite runtime
-- refresh/back navigation edge case
+- full universal sign-out then re-login browser journey
+- fresh new-account invite **Create account** browser journey
+- repeatable existing-account invite acceptance browser fixture
+- wrong-account mismatch / switch-account browser journey
+- refresh/back navigation edge case on mobile
 - explicit decision on immediate-confirm member signup mode
 
 See [AUTH_TEST_MATRIX.md](./AUTH_TEST_MATRIX.md).
@@ -99,7 +104,8 @@ After the PASS:
 
 ## Next release work
 
-1. complete the remaining invite/access-grant matrix
+1. complete the remaining browser-level Auth journeys and signup-mode decision
 2. reconcile main/dev intentionally, because they diverge
-3. browser-test the production candidate after promotion
-4. only then remove the production hold
+3. promote only the chosen candidate after the Auth release gate clears
+4. browser-test the actual Vercel production build
+5. only then remove the production hold
