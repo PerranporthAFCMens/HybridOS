@@ -21,13 +21,13 @@ Status meanings:
 | 6 | Password reset from Puffin Performance | PASS | Full browser link consumption, new password and login passed in run `36071752904`. |
 | 7 | Magic-link sign-in from each gym | PASS | Hub and Puffin full browser magic-link journeys passed in run `36071752904`. |
 | 8 | Member signup confirmation | PARTIAL | Live signup probe showed immediate confirmation and an active session at creation. Decide whether this is the intended product mode. |
-| 9 | Admin invite in fresh incognito | PARTIAL | Corrected delivery and Resend UI pass; fresh invite acceptance still needs completion. |
-| 10 | Existing account accepting invite | PARTIAL | Previous invite is approved and acceptance was observed, but preserve a repeatable release-gate browser test. |
-| 11 | New account accepting invite | NOT TESTED | Use the fresh open test invite through account/password setup to active membership. |
-| 12 | Wrong account already signed in | NOT TESTED | Mismatch UI exists; runtime acceptance denial still required. |
-| 13 | Expired and revoked invite | NOT TESTED | Verify both cannot activate access. |
-| 14 | Owner invite with one active Owner | NOT TESTED | Verify governance and acceptance. |
-| 15 | Owner invite with multiple active Owners | NOT TESTED | Verify every required Owner approval before activation. |
+| 9 | Admin invite in fresh incognito | PASS | Fresh Playwright browser context consumed the Hybrid Hub Admin magic link and activated Admin access. Run `36069661356`. |
+| 10 | Existing account accepting invite | PARTIAL | Existing-account Admin acceptance passed in browser run `36069661356`; keep this partial until the acceptance fixture is repeatable rather than tied to the one claimed invite. |
+| 11 | New account accepting invite | PARTIAL | Isolated live backend run `36071266688` created an invite before the Auth account existed, then created the account and claimed active Admin access. Fresh browser Create account/password setup remains to be exercised. |
+| 12 | Wrong account already signed in | PARTIAL | Live claim denial passed in isolated run `36071266688` and the current invite page contains explicit account-mismatch handling. Browser exercise of the mismatch/switch-account UI remains. |
+| 13 | Expired and revoked invite | PASS | Isolated live run `36071266688` verified revoked and expired invites both fail to claim. |
+| 14 | Owner invite with one active Owner | PASS | Isolated live run `36071266688` verified 1/1 approval, shareable token and successful active Owner claim. |
+| 15 | Owner invite with multiple active Owners | PASS | Isolated live run `36071266688` verified 1/2 blocks sharing, second Owner approval changes to 2/2/open, then successful active Owner claim. |
 | 16 | Refresh/back on mobile | NOT TESTED | Verify selected context survives expected navigation without loops/fallback. |
 | 17 | iPhone/mobile Admin navigation | PASS | Existing mobile navigation browser evidence plus current 390px authenticated surface audit. |
 | 18 | Staff & Resources mobile layout | PASS | Current authenticated 390px audit loaded Staff/Resources without horizontal overflow. Run `36199919230`. |
@@ -45,6 +45,7 @@ Status meanings:
 | Admin invite placeholder resolution | PASS | Resent invite inspected with inviter/role resolved. |
 | Open email invite can be resent from dev UI | PASS | Browser run `36119425104` plus delivered resend. |
 | Temporary universal-login audit user cleaned | PASS | Workflow cleanup passed and `auth.users` query returned no `delivered@resend.dev` user. |
+| Isolated invite-edge fixture cleaned | PASS | Run `36071266688` completed its cleanup step and removed the isolated invite test data. |
 
 ## Release gate
 
