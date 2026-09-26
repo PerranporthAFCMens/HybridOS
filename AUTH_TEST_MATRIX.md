@@ -20,7 +20,7 @@ Status meanings:
 | 5 | Password reset from Hybrid Hub | PASS | Full browser link consumption, new password and login passed in run `36071752904`. |
 | 6 | Password reset from Puffin Performance | PASS | Full browser link consumption, new password and login passed in run `36071752904`. |
 | 7 | Magic-link sign-in from each gym | PASS | Hub and Puffin full browser magic-link journeys passed in run `36071752904`. |
-| 8 | Member signup confirmation | PARTIAL | Live signup probe showed immediate confirmation and an active session at creation. Decide whether this is the intended product mode. |
+| 8 | Member signup confirmation | PARTIAL | Product decision locked 26 Sep: self-service member signup must require email confirmation before access. Current live Auth mode still returns an immediate session, so Supabase Email confirmation must be enabled and the full confirmation-link journey browser-tested before PASS. |
 | 9 | Admin invite in fresh incognito | PASS | Fresh Playwright browser context consumed the Hybrid Hub Admin magic link and activated Admin access. Run `36069661356`. |
 | 10 | Existing account accepting invite | PARTIAL | Existing-account Admin acceptance passed in browser run `36069661356`; keep this partial until the acceptance fixture is repeatable rather than tied to the one claimed invite. |
 | 11 | New account accepting invite | PARTIAL | Isolated live backend run `36071266688` created an invite before the Auth account existed, then created the account and claimed active Admin access. Fresh browser Create account/password setup remains to be exercised. |
