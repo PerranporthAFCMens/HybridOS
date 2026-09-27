@@ -41,6 +41,11 @@ else:
 
 checks=[
     (
+        'index.html',
+        ('hybrid-universal-login-entry',"location.replace('./login.html')"),
+        ()
+    ),
+    (
         'login.html',
         ('<title>Sign in · HybridOne</title>','Your gyms.<br>One login.','choose-gym.html',"eq('access_status','active')"),
         ('Use the login page for the gym you want to open.',)
