@@ -307,6 +307,72 @@ jobs:
           curl --fail-with-body -sS             -H "Authorization: Bearer $OIDC"             -H "Content-Type: application/json"             --data '{}'             https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-auth-journey-cleanup             -o /tmp/cleanup.json
           python3 -c "import json; d=json.load(open('/tmp/cleanup.json')); assert d.get('ok') is True and d.get('cleaned') is True, d; print('Disposable Auth journey account removed')"
 
+      - name: Create disposable one-gym Auth account
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-auth-journey" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          BODY="$(AUTH_JOURNEY_PASSWORD="$AUTH_JOURNEY_PASSWORD" python3 -c 'import json,os; print(json.dumps({"password":os.environ["AUTH_JOURNEY_PASSWORD"],"mode":"hub_only"}))')"
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer $OIDC" \
+            -H "Content-Type: application/json" \
+            --data "$BODY" \
+            https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-auth-journey-setup \
+            -o /tmp/one-gym-setup.json
+          python3 -c "import json; d=json.load(open('/tmp/one-gym-setup.json')); assert d.get('ok') is True and d.get('mode') == 'hub_only', d; print('Disposable one-gym Auth account created')"
+
+      - name: Verify one-gym login bypasses chooser
+        env:
+          DEV_BASE: https://perranporthafcmens.github.io/HybridOS/
+          TEST_EMAIL: delivered@resend.dev
+          HUB_GYM_ID: 242f57c2-6e37-4977-b3c5-1c87de7d0b98
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const assert = require('node:assert/strict');
+          const base=process.env.DEV_BASE;
+          const email=process.env.TEST_EMAIL;
+          const password=process.env.AUTH_JOURNEY_PASSWORD;
+          const hub=process.env.HUB_GYM_ID;
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            try{
+              const context=await browser.newContext({viewport:{width:1440,height:1000}});
+              const page=await context.newPage();
+              await page.goto(base+'login.html',{waitUntil:'domcontentloaded',timeout:30000});
+              await page.locator('#email').fill(email);
+              await page.locator('#password').fill(password);
+              await page.locator('#signIn').click();
+              await page.waitForURL(url=>{
+                const leaf=url.pathname.split('/').pop();
+                return (leaf==='admin.html'||leaf==='index.html')&&url.searchParams.get('gym_id')===hub;
+              },{timeout:20000});
+              assert.ok(!page.url().includes('/choose-gym.html'),'one-gym account was incorrectly sent to chooser');
+              assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),hub,'one-gym login did not set Hub context');
+              console.log('One-gym universal login bypassed chooser and entered Hybrid Hub');
+              await context.close();
+            }finally{await browser.close()}
+          })().catch(err=>{console.error(err);process.exit(1)});
+          JS
+
+      - name: Clean up one-gym Auth account
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-auth-journey" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer $OIDC" \
+            -H "Content-Type: application/json" \
+            --data '{}' \
+            https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-auth-journey-cleanup \
+            -o /tmp/one-gym-cleanup.json
+          python3 -c "import json; d=json.load(open('/tmp/one-gym-cleanup.json')); assert d.get('ok') is True and d.get('cleaned') is True, d; print('Disposable one-gym Auth account removed')"
+
       - name: Classify live member signup confirmation mode
         shell: bash
         run: |
