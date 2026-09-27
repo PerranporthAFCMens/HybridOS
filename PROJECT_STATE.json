@@ -1,22 +1,22 @@
 {
   "schema_version": 2,
-  "verified_at_utc": "2026-09-27T09:30:00Z",
+  "verified_at_utc": "2026-09-27T10:07:00Z",
   "repository": "PerranporthAFCMens/HybridOS",
   "branches": {
     "production_source": "main",
     "development_source": "dev",
     "production_main_sha": "dbe7528b83687df73a2ef2b289ae44390205ed11",
-    "verified_dev_application_sha": "fdc5cffd32e7555c79e891e22ffb6196a15c4288",
+    "verified_dev_application_sha": "cbee25179d8b6ce5a93c09c8937b3194c62da974",
     "relationship": "diverged",
-    "dev_ahead_by": 97,
+    "dev_ahead_by": 115,
     "dev_behind_by": 4,
     "merge_base_sha": "b7d83243e9248a64978677efec91c4f9d83c1052",
-    "note": "Counts verified against main...dev at the 27 Sep handover checkpoint."
+    "note": "Counts verified against main...dev after the universal-login browser release-gate checkpoint on 27 Sep."
   },
   "release_gate": {
     "production_hold": true,
     "production_promotion_allowed": false,
-    "reason": "Universal login, multi-gym switching, protected routing and the bare app-entry handoff are verified on dev. Production remains held while browser-level sign-out/re-login, remaining invite UI journeys, mobile refresh/back, and member email-confirmation enablement/verification are completed."
+    "reason": "Universal login, multi-gym switching, protected routing, persistent Admin account switching, sign-out/re-login and mobile refresh/back are verified on dev. Production remains held while repeatable invite UI journeys, a same-user different-role-per-gym browser fixture, and member email-confirmation enablement/verification are completed."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
@@ -41,8 +41,8 @@
     "runtime_verification": {
       "status": "pass",
       "workflow": ".github/workflows/dev-runtime.yml",
-      "run_id": 36309330458,
-      "source_sha": "fdc5cffd32e7555c79e891e22ffb6196a15c4288",
+      "run_id": 36311298820,
+      "source_sha": "cbee25179d8b6ce5a93c09c8937b3194c62da974",
       "verifies": [
         "exact deployed dev SHA",
         "bare index handoff to universal login",
@@ -53,8 +53,8 @@
     },
     "smoke": {
       "status": "pass",
-      "run_id": 36309330446,
-      "source_sha": "fdc5cffd32e7555c79e891e22ffb6196a15c4288"
+      "run_id": 36311298789,
+      "source_sha": "cbee25179d8b6ce5a93c09c8937b3194c62da974"
     },
     "protected_routing_browser": {
       "status": "pass",
@@ -131,8 +131,31 @@
     },
     "bare_entry": {
       "status": "pass_runtime",
-      "source_sha": "fdc5cffd32e7555c79e891e22ffb6196a15c4288",
+      "source_sha": "cbee25179d8b6ce5a93c09c8937b3194c62da974",
       "behaviour": "Bare index.html redirects to login.html unless embedded, gym_id or access_invite context is present."
+    },
+    "auth_journey_browser": {
+      "status": "pass",
+      "workflow": ".github/workflows/auth-journey-browser.yml",
+      "run_id": 36311299027,
+      "source_sha": "cbee25179d8b6ce5a93c09c8937b3194c62da974",
+      "viewports": [
+        "1440x1000",
+        "390x844"
+      ],
+      "verifies": [
+        "exact public dev revision before browser execution",
+        "two-gym universal login chooser",
+        "persistent desktop Admin account-menu Switch gym",
+        "desktop gym switch and refresh persistence",
+        "desktop sign-out clears gym context",
+        "desktop re-login returns to two-gym chooser",
+        "mobile refresh/back context persistence",
+        "Hybrid Hub and Puffin password-reset browser journeys",
+        "Hybrid Hub and Puffin magic-link browser journeys",
+        "disposable Auth user cleanup",
+        "live member-signup confirmation mode classification"
+      ]
     }
   },
   "supabase": {
@@ -163,17 +186,18 @@
     "admin_invite_email": "pass_corrected_template_delivery_and_dev_resend_ui",
     "fresh_new_account_invite_acceptance": "partial_backend_claim_pass_browser_create_account_needed",
     "protected_login_routing": "pass_universal_login_browser",
-    "universal_signout_relogin": "not_tested_full_browser",
+    "universal_signout_relogin": "pass_full_browser_run_36311299027",
     "admin_invite_fresh_incognito": "pass_existing_account_browser",
     "existing_account_invite_acceptance": "partial_repeatable_browser_fixture_needed",
     "wrong_account_invite_handling": "partial_backend_denial_pass_browser_mismatch_needed",
     "expired_revoked_invites": "pass_live_backend",
     "owner_invite_single_owner": "pass_live_backend",
     "owner_invite_multiple_owners": "pass_live_backend",
-    "mobile_refresh_back": "not_tested",
+    "mobile_refresh_back": "pass_full_browser_run_36311299027",
     "member_signup_decision_date": "2026-09-26",
     "member_signup_decision": "Self-service member registration must confirm email before account access continues.",
-    "member_signup_current_runtime": "immediate_confirmation_still_observed_until_supabase_provider_setting_changes"
+    "member_signup_current_runtime": "immediate_session_and_email_confirmed_at_creation_observed_run_36311299027",
+    "role_specific_gym_routing": "implementation_supported; same-user different-role-per-gym browser fixture still required"
   },
   "current_open_test_invite": {
     "purpose": "Fresh Admin invite acceptance follow-up",
