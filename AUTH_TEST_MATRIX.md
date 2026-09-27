@@ -16,11 +16,11 @@ Status meanings:
 | 1 | Hybrid Hub Owner login | PASS | Universal-login browser audit entered Hybrid Hub successfully. Run `36199919230`. |
 | 2 | Puffin Performance login | PASS | Same Auth account selected Puffin Performance successfully. Run `36199919230`. |
 | 3 | Same Auth account can access multiple gyms without cross-gym fallback | PASS | Two-gym chooser and explicit Hub -> Puffin -> Hub switching passed on desktop and mobile. |
-| 4 | Sign out and sign back in through universal login | NOT TESTED | Sign-out code routes to universal login, but complete sign-out/re-login browser journey remains to be exercised. |
+| 4 | Sign out and sign back in through universal login | PASS | Exact-SHA browser run `36311299027` switched gyms, refreshed, signed out, verified `hybrid-gym-id` was cleared, signed back in and returned to the two-gym chooser. |
 | 5 | Password reset from Hybrid Hub | PASS | Full browser link consumption, new password and login passed in run `36071752904`. |
 | 6 | Password reset from Puffin Performance | PASS | Full browser link consumption, new password and login passed in run `36071752904`. |
 | 7 | Magic-link sign-in from each gym | PASS | Hub and Puffin full browser magic-link journeys passed in run `36071752904`. |
-| 8 | Member signup confirmation | PARTIAL | Product decision locked 26 Sep: self-service member signup must require email confirmation before access. Current live Auth mode still returns an immediate session, so Supabase Email confirmation must be enabled and the full confirmation-link journey browser-tested before PASS. |
+| 8 | Member signup confirmation | PARTIAL | Product decision locked 26 Sep. Source now handles the no-session confirmation state, but live probe in run `36311299027` still returned an active session with the email already confirmed at creation. Supabase Email confirmation must still be enabled and the confirmation-link journey browser-tested before PASS. |
 | 9 | Admin invite in fresh incognito | PASS | Fresh Playwright browser context consumed the Hybrid Hub Admin magic link and activated Admin access. Run `36069661356`. |
 | 10 | Existing account accepting invite | PARTIAL | Existing-account Admin acceptance passed in browser run `36069661356`; keep this partial until the acceptance fixture is repeatable rather than tied to the one claimed invite. |
 | 11 | New account accepting invite | PARTIAL | Isolated live backend run `36071266688` created an invite before the Auth account existed, then created the account and claimed active Admin access. Fresh browser Create account/password setup remains to be exercised. |
@@ -28,7 +28,7 @@ Status meanings:
 | 13 | Expired and revoked invite | PASS | Isolated live run `36071266688` verified revoked and expired invites both fail to claim. |
 | 14 | Owner invite with one active Owner | PASS | Isolated live run `36071266688` verified 1/1 approval, shareable token and successful active Owner claim. |
 | 15 | Owner invite with multiple active Owners | PASS | Isolated live run `36071266688` verified 1/2 blocks sharing, second Owner approval changes to 2/2/open, then successful active Owner claim. |
-| 16 | Refresh/back on mobile | NOT TESTED | Verify selected context survives expected navigation without loops/fallback. |
+| 16 | Refresh/back on mobile | PASS | Exact-SHA browser run `36311299027` verified Puffin context survives mobile refresh and back navigation without falling into login/chooser loops. |
 | 17 | iPhone/mobile Admin navigation | PASS | Existing mobile navigation browser evidence plus current 390px authenticated surface audit. |
 | 18 | Staff & Resources mobile layout | PASS | Current authenticated 390px audit loaded Staff/Resources without horizontal overflow. Run `36199919230`. |
 
@@ -38,6 +38,7 @@ Status meanings:
 |---|---|---|
 | Universal login loads all active memberships, not first membership | PASS | Two gyms appeared in chooser; account menu loads all active memberships. |
 | Multi-gym user can switch after login | PASS | Desktop and mobile account-menu switch passed; desktop sidebar switch also passed. Run `36199919230`. |
+| Role changes correctly when the same person has different roles in different gyms | PARTIAL | Routing is role-aware in source, but the current disposable two-gym browser fixture is Admin in both gyms. A different-role-per-gym browser fixture is still required. |
 | Gym route hint cannot grant access | PASS | Login checks the hinted gym against active memberships before entering it. Protected-route browser guard remains green. |
 | Hybrid Hub-only user cannot silently fall back into another gym | PASS | Earlier cross-gym isolation browser test plus explicit-current-context model. |
 | Hybrid Hub reset email branding | PASS | Branded delivery and return route verified. |
@@ -61,13 +62,14 @@ Do **not** remove the production hold until:
 
 ## Latest dev runtime checkpoint
 
-Current dev head:
+Verified application source:
 
-`fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+`cbee25179d8b6ce5a93c09c8937b3194c62da974`
 
 Latest green checks:
 
-- smoke `36309330446`
-- public dev runtime `36309330458`
+- smoke `36311298789`
+- public dev runtime `36311298820`
+- Auth journey browser `36311299027`
 
-The latest runtime guard confirms that bare `index.html` hands off to the universal login while embedded/gym/invite contexts remain available.
+The Auth journey gate verifies the exact public dev revision before exercising desktop/mobile chooser, switching, refresh/back and sign-out/re-login. The runtime guard still confirms that bare `index.html` hands off to the universal login while embedded/gym/invite contexts remain available.
