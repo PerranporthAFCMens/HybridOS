@@ -24,11 +24,9 @@ Repository:
 
 Current development head:
 
-`fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+`cbee25179d8b6ce5a93c09c8937b3194c62da974`
 
-Latest commit:
-
-`Route bare app entry to universal login`
+Verified application checkpoint includes persistent Admin shell account menu plus exact-SHA universal Auth browser coverage.
 
 Current production main:
 
@@ -36,7 +34,7 @@ Current production main:
 
 The branches are intentionally diverged:
 
-- dev ahead 97
+- dev ahead 115 at the application checkpoint
 - dev behind 4
 - merge base `b7d83243e9248a64978677efec91c4f9d83c1052`
 
@@ -48,8 +46,9 @@ Production hold remains active.
 
 At `fdc5cffd32e7555c79e891e22ffb6196a15c4288`:
 
-- smoke run `36309330446` -> PASS
-- public dev runtime run `36309330458` -> PASS
+- smoke run `36311298789` -> PASS
+- public dev runtime run `36311298820` -> PASS
+- Auth journey browser run `36311299027` -> PASS
 
 Earlier authenticated browser evidence still relevant to the current model:
 
@@ -149,7 +148,7 @@ Verified browser flow:
 - switch back to Hybrid Hub
 - role/context re-evaluates per selected gym
 
-Verified on desktop and mobile in run `36199919230`.
+Verified on desktop and mobile in the whole-app audit `36199919230`. Exact-SHA run `36311299027` additionally verifies persistent desktop Admin account-menu switching, refresh, sign-out/re-login, and mobile refresh/back.
 
 Switch gym is available through shared signed-in UI.
 
@@ -202,18 +201,17 @@ Verified:
 
 Still release-gating:
 
-1. universal sign-out -> re-login browser journey
 2. fresh new-account Admin invite Create account journey
 3. repeatable existing-account invite acceptance fixture
 4. wrong-account mismatch/switch-account browser journey
-5. mobile refresh/back context journey
-6. enable and browser-verify member email confirmation
+4. same-user different-role-per-gym browser fixture
+5. enable and browser-verify member email confirmation
 
 ## Member signup decision
 
 Self-service member signup **must require email confirmation** before access continues.
 
-The decision is documented, but the Supabase Email confirmation setting still needs enabling and the full confirmation-link journey needs browser verification.
+The decision is documented and `join.html` now supports a no-session confirmation state. Live run `36311299027` still observed immediate confirmed signup, so the Supabase Email confirmation setting still needs enabling and the full confirmation-link journey needs browser verification.
 
 ## Production
 
