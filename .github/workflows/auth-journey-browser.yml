@@ -1,5 +1,7 @@
 name: HybridOne Auth journey browser
 
+# Release-gate browser verification for the exact dev revision.
+
 on:
   push:
     branches: [dev]
