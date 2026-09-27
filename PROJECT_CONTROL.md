@@ -30,6 +30,8 @@ Fetch:
 
 For dev Pages, require **HybridOne dev runtime verification** to pass.
 
+For universal-login release work, also require the exact-SHA Auth journey browser gate to pass. Do not treat a same-role multi-gym fixture as proof that different roles route correctly; keep role-differentiated coverage explicit in `AUTH_TEST_MATRIX.md`.
+
 ## Definition of "fixed"
 
 Never call something fixed because source changed.
