@@ -70,6 +70,32 @@ jobs:
           const hub=process.env.HUB_GYM_ID;
           const puffin=process.env.PUFFIN_GYM_ID;
 
+          async function waitForAdminPortal(page,gymId){
+            await page.waitForURL(url=>{
+              const leaf=url.pathname.split('/').pop();
+              return (leaf==='admin.html'||leaf==='index.html')&&url.searchParams.get('gym_id')===gymId;
+            },{timeout:20000});
+          }
+
+          async function accountControls(page){
+            const framed=await page.locator('.admin-content-frame.active').count();
+            if(framed){
+              const frame=page.frameLocator('.admin-content-frame.active');
+              await frame.locator('.userchip').waitFor({state:'visible',timeout:20000});
+              return {
+                chip:frame.locator('.userchip'),
+                switchBtn:frame.locator('#accountSwitchGymBtn'),
+                signOutBtn:frame.locator('#accountSignOutBtn')
+              };
+            }
+            await page.locator('.userchip').waitFor({state:'visible',timeout:20000});
+            return {
+              chip:page.locator('.userchip'),
+              switchBtn:page.locator('#accountSwitchGymBtn'),
+              signOutBtn:page.locator('#accountSignOutBtn')
+            };
+          }
+
           async function loginAndChoose(page,gymId){
             await page.goto(base+'login.html',{waitUntil:'domcontentloaded',timeout:30000});
             await page.locator('#email').fill(email);
@@ -83,26 +109,27 @@ jobs:
             assert.match(chooserText,/Hybrid Hub/i);
             assert.match(chooserText,/Puffin Performance/i);
             await page.locator('[data-gym="'+gymId+'"]').click();
-            await page.waitForURL(url=>url.pathname.endsWith('/admin.html')&&url.searchParams.get('gym_id')===gymId,{timeout:20000});
+            await waitForAdminPortal(page,gymId);
             assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),gymId,'active gym context mismatch after chooser');
           }
 
           async function switchGym(page,gymId){
-            await page.locator('.userchip').waitFor({state:'visible',timeout:20000});
-            await page.locator('.userchip').click();
-            await page.locator('#accountSwitchGymBtn').waitFor({state:'visible',timeout:20000});
-            await page.locator('#accountSwitchGymBtn').click();
+            const account=await accountControls(page);
+            await account.chip.click();
+            await account.switchBtn.waitFor({state:'visible',timeout:20000});
+            await account.switchBtn.click();
             await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html')&&url.searchParams.get('switch')==='1',{timeout:20000});
+            await page.waitForFunction(()=>document.querySelectorAll('.gym-card').length===2,null,{timeout:20000});
             await page.locator('[data-gym="'+gymId+'"]').click();
-            await page.waitForURL(url=>url.pathname.endsWith('/admin.html')&&url.searchParams.get('gym_id')===gymId,{timeout:20000});
+            await waitForAdminPortal(page,gymId);
             assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),gymId,'active gym context mismatch after switch');
           }
 
           async function signOutAndRelog(page){
-            await page.locator('.userchip').waitFor({state:'visible',timeout:20000});
-            await page.locator('.userchip').click();
-            await page.locator('#accountSignOutBtn').waitFor({state:'visible',timeout:20000});
-            await page.locator('#accountSignOutBtn').click();
+            const account=await accountControls(page);
+            await account.chip.click();
+            await account.signOutBtn.waitFor({state:'visible',timeout:20000});
+            await account.signOutBtn.click();
             await page.waitForURL(url=>url.pathname.endsWith('/login.html'),{timeout:20000});
             assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),null,'gym context was not cleared by sign out');
             await page.waitForTimeout(750);
@@ -115,7 +142,7 @@ jobs:
             await page.waitForFunction(()=>document.querySelectorAll('.gym-card').length===2,null,{timeout:20000});
             assert.equal(await page.locator('.gym-card').count(),2,'re-login did not restore the two-gym chooser');
             await page.locator('[data-gym="'+hub+'"]').click();
-            await page.waitForURL(url=>url.pathname.endsWith('/admin.html')&&url.searchParams.get('gym_id')===hub,{timeout:20000});
+            await waitForAdminPortal(page,hub);
             assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),hub);
           }
 
@@ -127,7 +154,7 @@ jobs:
               await loginAndChoose(dp,hub);
               await switchGym(dp,puffin);
               await dp.reload({waitUntil:'domcontentloaded'});
-              await dp.waitForURL(url=>url.pathname.endsWith('/admin.html')&&url.searchParams.get('gym_id')===puffin,{timeout:20000});
+              await waitForAdminPortal(dp,puffin);
               assert.equal(await dp.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),puffin,'desktop refresh lost gym context');
               await signOutAndRelog(dp);
               console.log('Desktop universal login, switch, refresh, sign-out and re-login passed');
@@ -137,7 +164,7 @@ jobs:
               const mp=await mobile.newPage();
               await loginAndChoose(mp,puffin);
               await mp.reload({waitUntil:'domcontentloaded'});
-              await mp.waitForURL(url=>url.pathname.endsWith('/admin.html')&&url.searchParams.get('gym_id')===puffin,{timeout:20000});
+              await waitForAdminPortal(mp,puffin);
               assert.equal(await mp.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),puffin,'mobile refresh lost gym context');
 
               await mp.goto(base+'admin-access.html?gym_id='+puffin,{waitUntil:'domcontentloaded',timeout:30000});
