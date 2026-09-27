@@ -78,21 +78,21 @@ jobs:
           }
 
           async function accountControls(page){
-            const framed=await page.locator('.admin-content-frame.active').count();
-            if(framed){
-              const frame=page.frameLocator('.admin-content-frame.active');
-              await frame.locator('.userchip').waitFor({state:'visible',timeout:20000});
+            const top=page.locator('.userchip').first();
+            if(await top.count()){
+              await top.waitFor({state:'visible',timeout:20000});
               return {
-                chip:frame.locator('.userchip'),
-                switchBtn:frame.locator('#accountSwitchGymBtn'),
-                signOutBtn:frame.locator('#accountSignOutBtn')
+                chip:top,
+                switchBtn:page.locator('#accountSwitchGymBtn'),
+                signOutBtn:page.locator('#accountSignOutBtn')
               };
             }
-            await page.locator('.userchip').waitFor({state:'visible',timeout:20000});
+            const frame=page.frameLocator('.admin-content-frame.active');
+            await frame.locator('.userchip').waitFor({state:'visible',timeout:20000});
             return {
-              chip:page.locator('.userchip'),
-              switchBtn:page.locator('#accountSwitchGymBtn'),
-              signOutBtn:page.locator('#accountSignOutBtn')
+              chip:frame.locator('.userchip'),
+              switchBtn:frame.locator('#accountSwitchGymBtn'),
+              signOutBtn:frame.locator('#accountSignOutBtn')
             };
           }
 
