@@ -211,6 +211,9 @@ else:
 join_auth=(ROOT/'join.html').read_text(encoding='utf-8')
 for x in ("redirectUrl.searchParams.set('gym_id',joinData.gym_id)","emailRedirectTo:redirect"):
  if x not in join_auth:problems.append(f'join.html: gym context missing from signup confirmation flow: {x}')
+for x in ("if(!r.data.session){msg('authMsg','Account created. Check your email and confirm your address to continue.','good');return}","user_metadata?.phone","confirmedPhone"):
+ if x not in join_auth:problems.append(f'join.html: confirmed-email signup handling missing: {x}')
+if "Account created but no active session was returned" in join_auth:problems.append('join.html: retired immediate-session signup assumption returned')
 sign_out=(ROOT/'sign-out.html').read_text(encoding='utf-8')
 for x in ('supabase.auth.signOut()',"location.replace('./login.html')",'Signing you out'):
  if x not in sign_out:problems.append(f'sign-out.html: reliable sign out flow missing: {x}')
