@@ -17,13 +17,13 @@ Branches:
 
 Current verified heads:
 
-- dev: `fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+- verified dev application: `cbee25179d8b6ce5a93c09c8937b3194c62da974`
 - main: `dbe7528b83687df73a2ef2b289ae44390205ed11`
 
 Relationship:
 
 - diverged
-- dev ahead 97
+- dev ahead at application checkpoint 115
 - dev behind 4
 - merge base `b7d83243e9248a64978677efec91c4f9d83c1052`
 
@@ -78,9 +78,10 @@ At the current checkpoint, bare `index.html` immediately hands off to `login.htm
 
 Latest public dev verification:
 
-- source: `fdc5cffd32e7555c79e891e22ffb6196a15c4288`
-- smoke: `36309330446` -> PASS
-- runtime: `36309330458` -> PASS
+- source: `cbee25179d8b6ce5a93c09c8937b3194c62da974`
+- smoke: `36311298789` -> PASS
+- runtime: `36311298820` -> PASS
+- Auth browser journey: `36311299027` -> PASS
 
 ## Auth context
 
