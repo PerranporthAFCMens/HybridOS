@@ -14,6 +14,10 @@
     <div class="brand">HybridOne</div>
     <div class="gym"><small>Current gym</small><div id="adminFrameGym">Loading…</div></div>
     <nav id="adminFrameNav" class="nav"></nav>
+    <div class="admin-frame-account userchip" aria-label="Account menu">
+      <div class="avatar" id="userAvatar">H</div>
+      <div class="who"><b id="userName">Account</b><div class="muted" id="userEmail"></div></div>
+    </div>
   </aside>
   <main class="admin-frame-main">
     <iframe id="adminContentFrameA" class="admin-content-frame active" title="HybridOne admin content"></iframe>
@@ -21,6 +25,7 @@
   </main>
 </div>
 <script src="./shared-shell.js"></script>
+<script src="./account-menu.js" defer></script>
 <script type="module" src="./admin-frame.js"></script>
 </body>
 </html>
