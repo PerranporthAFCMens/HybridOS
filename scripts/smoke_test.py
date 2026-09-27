@@ -12,6 +12,8 @@ account_menu=(ROOT/'account-menu.js').read_text(encoding='utf-8')
 for marker in ('Switch gym','allMemberships',"eq('access_status','active')",'choose-gym.html?switch=1'):
  if marker not in account_menu:problems.append(f'account-menu.js: multi-gym switch contract missing: {marker}')
 if '.limit(1)' in account_menu:problems.append('account-menu.js: first-gym assumption returned')
+for marker in ("function navigateAccountTarget","admin-embedded","window.parent.location.href","navigateAccountTarget('./login.html')"):
+ if marker not in account_menu:problems.append(f'account-menu.js: embedded Admin account navigation missing: {marker}')
 for login_name,gym_id in (('hybrid-hub-login.html','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),('puffin-performance-login.html','aec16956-3793-4543-873b-4412646ca1eb')):
  alias=(ROOT/login_name).read_text(encoding='utf-8')
  if './login.html' not in alias or gym_id not in alias:problems.append(f'{login_name}: gym shortcut does not use universal login')
