@@ -15,6 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Checkout dev
+        uses: actions/checkout@v6
+
+      - name: Record exact dev SHA
+        shell: bash
+        run: echo "HYBRID_BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Wait for exact public Pages revision
+        env:
+          PAGES_URL: https://perranporthafcmens.github.io/HybridOS/
+        run: python3 scripts/runtime_pages_check.py
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -30,11 +42,118 @@ jobs:
           set -euo pipefail
           INITIAL_PASS="$(python3 -c 'import secrets; print("H1!"+secrets.token_urlsafe(24))')"
           echo "::add-mask::$INITIAL_PASS"
+          echo "AUTH_JOURNEY_PASSWORD=$INITIAL_PASS" >> "$GITHUB_ENV"
           OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-auth-journey" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
           echo "::add-mask::$OIDC"
           BODY="$(INITIAL_PASS="$INITIAL_PASS" python3 -c 'import json,os; print(json.dumps({"password":os.environ["INITIAL_PASS"]}))')"
           curl --fail-with-body -sS             -H "Authorization: Bearer $OIDC"             -H "Content-Type: application/json"             --data "$BODY"             https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/hybridone-auth-journey-setup             -o /tmp/setup.json
           python3 -c "import json; d=json.load(open('/tmp/setup.json')); assert d.get('ok') is True, d; print('Disposable Auth journey account created')"
+
+      - name: Verify universal login, switch, refresh/back and sign-out on dev
+        env:
+          DEV_BASE: https://perranporthafcmens.github.io/HybridOS/
+          TEST_EMAIL: delivered@resend.dev
+          HUB_GYM_ID: 242f57c2-6e37-4977-b3c5-1c87de7d0b98
+          PUFFIN_GYM_ID: aec16956-3793-4543-873b-4412646ca1eb
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const assert = require('node:assert/strict');
+
+          const base=process.env.DEV_BASE;
+          const email=process.env.TEST_EMAIL;
+          const password=process.env.AUTH_JOURNEY_PASSWORD;
+          const hub=process.env.HUB_GYM_ID;
+          const puffin=process.env.PUFFIN_GYM_ID;
+
+          async function loginAndChoose(page,gymId){
+            await page.goto(base+'login.html',{waitUntil:'domcontentloaded',timeout:30000});
+            await page.locator('#email').fill(email);
+            await page.locator('#password').fill(password);
+            await page.locator('#signIn').click();
+            await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html'),{timeout:20000});
+            const cards=page.locator('.gym-card');
+            assert.equal(await cards.count(),2,'expected exactly two active gyms');
+            const chooserText=await page.locator('#gyms').innerText();
+            assert.match(chooserText,/Hybrid Hub/i);
+            assert.match(chooserText,/Puffin Performance/i);
+            await page.locator('[data-gym="'+gymId+'"]').click();
+            await page.waitForURL(url=>url.pathname.endsWith('/admin.html')&&url.searchParams.get('gym_id')===gymId,{timeout:20000});
+            assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),gymId,'active gym context mismatch after chooser');
+          }
+
+          async function switchGym(page,gymId){
+            await page.locator('.userchip').waitFor({state:'visible',timeout:20000});
+            await page.locator('.userchip').click();
+            await page.locator('#accountSwitchGymBtn').waitFor({state:'visible',timeout:20000});
+            await page.locator('#accountSwitchGymBtn').click();
+            await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html')&&url.searchParams.get('switch')==='1',{timeout:20000});
+            await page.locator('[data-gym="'+gymId+'"]').click();
+            await page.waitForURL(url=>url.pathname.endsWith('/admin.html')&&url.searchParams.get('gym_id')===gymId,{timeout:20000});
+            assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),gymId,'active gym context mismatch after switch');
+          }
+
+          async function signOutAndRelog(page){
+            await page.locator('.userchip').waitFor({state:'visible',timeout:20000});
+            await page.locator('.userchip').click();
+            await page.locator('#accountSignOutBtn').waitFor({state:'visible',timeout:20000});
+            await page.locator('#accountSignOutBtn').click();
+            await page.waitForURL(url=>url.pathname.endsWith('/login.html'),{timeout:20000});
+            assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),null,'gym context was not cleared by sign out');
+            await page.waitForTimeout(750);
+            assert.ok(page.url().includes('/login.html'),'signed-out session silently re-entered the app');
+
+            await page.locator('#email').fill(email);
+            await page.locator('#password').fill(password);
+            await page.locator('#signIn').click();
+            await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html'),{timeout:20000});
+            assert.equal(await page.locator('.gym-card').count(),2,'re-login did not restore the two-gym chooser');
+            await page.locator('[data-gym="'+hub+'"]').click();
+            await page.waitForURL(url=>url.pathname.endsWith('/admin.html')&&url.searchParams.get('gym_id')===hub,{timeout:20000});
+            assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),hub);
+          }
+
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            try{
+              const desktop=await browser.newContext({viewport:{width:1440,height:1000}});
+              const dp=await desktop.newPage();
+              await loginAndChoose(dp,hub);
+              await switchGym(dp,puffin);
+              await dp.reload({waitUntil:'domcontentloaded'});
+              await dp.waitForURL(url=>url.pathname.endsWith('/admin.html')&&url.searchParams.get('gym_id')===puffin,{timeout:20000});
+              assert.equal(await dp.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),puffin,'desktop refresh lost gym context');
+              await signOutAndRelog(dp);
+              console.log('Desktop universal login, switch, refresh, sign-out and re-login passed');
+              await desktop.close();
+
+              const mobile=await browser.newContext({viewport:{width:390,height:844}});
+              const mp=await mobile.newPage();
+              await loginAndChoose(mp,puffin);
+              await mp.reload({waitUntil:'domcontentloaded'});
+              await mp.waitForURL(url=>url.pathname.endsWith('/admin.html')&&url.searchParams.get('gym_id')===puffin,{timeout:20000});
+              assert.equal(await mp.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),puffin,'mobile refresh lost gym context');
+
+              await mp.goto(base+'admin-access.html?gym_id='+puffin,{waitUntil:'domcontentloaded',timeout:30000});
+              await mp.waitForTimeout(500);
+              assert.ok(!mp.url().includes('/login.html'),'authenticated mobile protected route fell back to login');
+              const back=await mp.goBack({waitUntil:'domcontentloaded',timeout:20000});
+              if(back){
+                await mp.waitForTimeout(500);
+                assert.ok(!mp.url().includes('/login.html')&&!mp.url().includes('/choose-gym.html'),'mobile back navigation entered an auth loop');
+                const url=new URL(mp.url());
+                if(url.searchParams.get('gym_id'))assert.equal(url.searchParams.get('gym_id'),puffin,'mobile back navigation changed gym URL context');
+                assert.equal(await mp.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),puffin,'mobile back navigation lost gym context');
+              }
+              console.log('Mobile refresh/back gym-context journey passed');
+              await mobile.close();
+            }finally{
+              await browser.close();
+            }
+          })().catch(err=>{console.error(err);process.exit(1)});
+          JS
 
       - name: Verify reset and magic-link journeys in production browser
         shell: bash
