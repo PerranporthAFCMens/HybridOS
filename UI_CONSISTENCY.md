@@ -1,6 +1,6 @@
 # HybridOne UI consistency contract
 
-**Updated: 26 September 2026**
+**Updated: 27 September 2026**
 
 HybridOne uses one shared visual language across Admin, Staff and Member surfaces.
 
@@ -57,3 +57,12 @@ When adding/changing a page:
 7. never weaken checks just to obtain green CI
 
 Consistency does not mean every feature has identical geometry. It means the user should always feel they are in the same HybridOne product.
+
+
+## Latest dev head
+
+Current handover checkpoint:
+
+`fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+
+The latest commit changes bare Auth entry routing only. It does not replace the authenticated UI-audit evidence above. Current smoke/runtime checks are green at the latest head.

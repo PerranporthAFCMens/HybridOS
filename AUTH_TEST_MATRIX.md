@@ -1,6 +1,6 @@
 # HybridOne Auth test matrix
 
-**Updated: 26 September 2026**
+**Updated: 27 September 2026**
 
 Release gate for Auth, access and gym-context work.
 
@@ -57,3 +57,17 @@ Do **not** remove the production hold until:
 4. latest candidate smoke/runtime checks are green
 5. main/dev are reconciled intentionally
 6. the actual production build is browser-tested after promotion
+
+
+## Latest dev runtime checkpoint
+
+Current dev head:
+
+`fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+
+Latest green checks:
+
+- smoke `36309330446`
+- public dev runtime `36309330458`
+
+The latest runtime guard confirms that bare `index.html` hands off to the universal login while embedded/gym/invite contexts remain available.

@@ -1,6 +1,6 @@
 # HybridOne Auth and gym context
 
-**Updated: 26 September 2026**
+**Updated: 27 September 2026**
 
 This is the authoritative product and engineering contract for sign-in and gym selection.
 
@@ -104,3 +104,16 @@ Do not collapse authentication, organisation, gym and site into one identifier.
 - re-check active membership for selected gym
 - keep RLS and server-side permission checks authoritative
 - route hints improve convenience only
+
+
+## Bare app entry
+
+As of `fdc5cffd32e7555c79e891e22ffb6196a15c4288`, bare `index.html` is not a tenant-less sign-in surface.
+
+It immediately hands off to the universal `login.html` unless one of these intentional contexts is present:
+
+- `embedded=1` for the Admin shell dashboard
+- explicit `gym_id`
+- `access_invite`
+
+This is runtime-verified in run `36309330458`.

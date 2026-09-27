@@ -1,22 +1,22 @@
 {
   "schema_version": 2,
-  "verified_at_utc": "2026-09-26T08:18:00Z",
+  "verified_at_utc": "2026-09-27T09:30:00Z",
   "repository": "PerranporthAFCMens/HybridOS",
   "branches": {
     "production_source": "main",
     "development_source": "dev",
     "production_main_sha": "dbe7528b83687df73a2ef2b289ae44390205ed11",
-    "verified_dev_application_sha": "6a14cfed829f01eace2ad094dd14e1dd08b27120",
+    "verified_dev_application_sha": "fdc5cffd32e7555c79e891e22ffb6196a15c4288",
     "relationship": "diverged",
-    "dev_ahead_by": 89,
+    "dev_ahead_by": 97,
     "dev_behind_by": 4,
     "merge_base_sha": "b7d83243e9248a64978677efec91c4f9d83c1052",
-    "note": "Counts are the verified application checkpoint before the documentation/cleanup commit."
+    "note": "Counts verified against main...dev at the 27 Sep handover checkpoint."
   },
   "release_gate": {
     "production_hold": true,
     "production_promotion_allowed": false,
-    "reason": "Universal login and multi-gym switching are verified. Invite-edge governance/rejection cases are verified. Remaining promotion blockers are browser-level sign-out/re-login and invite UI journeys, mobile refresh/back, plus enabling and verifying the now-approved member email-confirmation mode."
+    "reason": "Universal login, multi-gym switching, protected routing and the bare app-entry handoff are verified on dev. Production remains held while browser-level sign-out/re-login, remaining invite UI journeys, mobile refresh/back, and member email-confirmation enablement/verification are completed."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
@@ -41,10 +41,11 @@
     "runtime_verification": {
       "status": "pass",
       "workflow": ".github/workflows/dev-runtime.yml",
-      "run_id": 36199919264,
-      "source_sha": "6a14cfed829f01eace2ad094dd14e1dd08b27120",
+      "run_id": 36309330458,
+      "source_sha": "fdc5cffd32e7555c79e891e22ffb6196a15c4288",
       "verifies": [
         "exact deployed dev SHA",
+        "bare index handoff to universal login",
         "universal login",
         "gym chooser",
         "gym-specific compatibility shortcuts"
@@ -52,8 +53,8 @@
     },
     "smoke": {
       "status": "pass",
-      "run_id": 36199919218,
-      "source_sha": "6a14cfed829f01eace2ad094dd14e1dd08b27120"
+      "run_id": 36309330446,
+      "source_sha": "fdc5cffd32e7555c79e891e22ffb6196a15c4288"
     },
     "protected_routing_browser": {
       "status": "pass",
@@ -127,6 +128,11 @@
         "Admin access activation"
       ],
       "limitation": "The fixture was tied to a specific invite and is not a repeatable fresh acceptance fixture."
+    },
+    "bare_entry": {
+      "status": "pass_runtime",
+      "source_sha": "fdc5cffd32e7555c79e891e22ffb6196a15c4288",
+      "behaviour": "Bare index.html redirects to login.html unless embedded, gym_id or access_invite context is present."
     }
   },
   "supabase": {

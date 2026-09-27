@@ -1,6 +1,6 @@
 # HybridOne live status
 
-**Updated: 26 September 2026**
+**Updated: 27 September 2026**
 
 Machine-readable state: [PROJECT_STATE.json](./PROJECT_STATE.json)
 
@@ -10,112 +10,150 @@ Machine-readable state: [PROJECT_STATE.json](./PROJECT_STATE.json)
 
 Production promotion allowed: **NO**
 
-Reason: universal login/multi-gym context is verified and the isolated invite-edge governance/rejection matrix has passed, but several browser-level Auth journeys plus the member-signup confirmation-mode decision remain open.
+The universal login/multi-gym model is working on dev and the latest public dev revision is verified. Production is intentionally still on the older gym-specific entry model until the remaining Auth release-gate journeys are complete.
 
-## Production
+## Branches
 
-- main: `dbe7528b83687df73a2ef2b289ae44390205ed11`
-- Vercel: READY
-- production remains on the existing gym-specific entry implementation
-- canonical trailing-slash routing hotfix remains live
-- production routing workflow last known pass: `36149543418`
+- production `main`: `dbe7528b83687df73a2ef2b289ae44390205ed11`
+- development `dev`: `fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+- relationship: diverged
+- dev ahead of main: 97 commits
+- dev behind main: 4 commits
+- merge base: `b7d83243e9248a64978677efec91c4f9d83c1052`
 
-## Verified dev candidate
+Do **not** blindly merge or overwrite either branch.
 
-Application checkpoint:
+## Latest verified dev checkpoint
 
-`6a14cfed829f01eace2ad094dd14e1dd08b27120`
+Source:
 
-Verification:
+`fdc5cffd32e7555c79e891e22ffb6196a15c4288`
 
-- smoke / UI contract: `36199919218` -> PASS
-- exact public Pages runtime: `36199919264` -> PASS
-- protected universal-login routing: `36199700825` -> PASS
-- authenticated multi-gym + whole-app audit: `36199919230` -> PASS
+Latest verification:
 
-### Universal login
+- HybridOne smoke checks: run `36309330446` -> **PASS**
+- HybridOne dev runtime verification: run `36309330458` -> **PASS**
 
-Verified behaviour:
+The latest change makes the bare application entry coherent with the new Auth model:
 
-1. email/password authenticates the person
-2. active memberships are loaded
-3. one gym enters directly
-4. multiple gyms show **Choose a gym**
-5. selected gym becomes current context
+- bare `index.html` -> universal `login.html`
+- embedded Admin dashboard use remains valid
+- explicit `gym_id` context remains valid
+- access-invite context remains valid
+
+This prevents the old tenant-less dashboard/login surface from appearing when someone visits the app entry directly.
+
+## Universal login / gym context
+
+Authoritative rule:
+
+> **Authenticate the person first. Then select an active gym context.**
+
+Verified flow:
+
+1. user signs in once with email + password
+2. HybridOne loads all active gym memberships
+3. one active gym -> direct entry
+4. multiple active gyms -> **Choose a gym**
+5. selected gym becomes the current context
 6. role is resolved for that gym
-7. multi-gym users can **Switch gym**
-8. desktop and mobile both passed Hub -> Puffin -> Hub
+7. multi-gym users can use **Switch gym** later
 
-The old `.limit(1)` account-menu assumption is removed.
+Current context:
 
-### Whole-app visual sweep
+`sessionStorage['hybrid-gym-id']`
 
-The authenticated audit captured 21 product surfaces on desktop and 21 on mobile.
+Last-used convenience hint:
 
-All audited surfaces reported no horizontal overflow.
+`localStorage['hybrid-last-gym-id']`
 
-The shared visual contract remains enforced by:
+Never use the last-used value, email address or a URL gym hint as permission.
 
-- `app-consistency.css`
-- `scripts/ui_consistency_check.py`
-- [UI_CONSISTENCY.md](./UI_CONSISTENCY.md)
+## Multi-gym browser evidence
 
-## Auth/email status
+Authenticated browser audit:
 
-Browser-verified:
+- workflow run `36199919230`
+- source `6a14cfed829f01eace2ad094dd14e1dd08b27120`
+- desktop: 1440 x 1000
+- mobile: 390 x 844
+- Hub -> Puffin -> Hub switching: **PASS**
+- 21 authenticated product surfaces per viewport
+- no horizontal overflow on audited surfaces
 
-- Hybrid Hub password reset, including link consumption and new-password login
+Later commits through `fdc5cffd32e7555c79e891e22ffb6196a15c4288` retained the same gym-context model. The latest smoke/runtime checks are green.
+
+Protected routing browser evidence:
+
+- run `36199700825` -> **PASS**
+- verifies universal login redirect
+- verifies gym hint preservation
+- verifies safe same-origin `return_to`
+
+## UI consistency
+
+The app-wide visual consistency sweep remains in force.
+
+- canonical shared layer: `app-consistency.css`
+- static guard: `scripts/ui_consistency_check.py`
+- contract: [UI_CONSISTENCY.md](./UI_CONSISTENCY.md)
+- authenticated whole-app audit: `36199919230` -> **PASS**
+
+The purpose is consistency, not identical feature geometry.
+
+## Auth/email
+
+Verified:
+
+- Hybrid Hub password reset
 - Puffin Performance password reset
-- Hybrid Hub magic-link sign-in
-- Puffin Performance magic-link sign-in
+- Hybrid Hub magic link
+- Puffin Performance magic link
 - same Auth identity across multiple gyms
-- universal chooser and switching
+- universal chooser / gym switching
+- protected-route universal login
 - corrected Admin invite email template
-- open-invite **Resend email** UI and delivery
-- Admin invite activation in a fresh browser context (`36069661356`)
-- isolated new-account Admin claim (`36071266688`)
-- isolated wrong-account claim rejection (`36071266688`)
-- isolated revoked and expired invite rejection (`36071266688`)
-- one-Owner Owner-invite approval and acceptance (`36071266688`)
-- multi-Owner Owner-invite approval quorum and acceptance (`36071266688`)
+- invite resend UI + delivery
+- live backend wrong-account / expired / revoked invite rejection
+- one-Owner and multi-Owner invite governance
+- Admin invite activation in a fresh browser context
 
 Still release-gating:
 
-- full universal sign-out then re-login browser journey
+- full universal sign-out -> login -> choose/enter gym browser journey
 - fresh new-account invite **Create account** browser journey
-- repeatable existing-account invite acceptance browser fixture
-- wrong-account mismatch / switch-account browser journey
-- refresh/back navigation edge case on mobile
-- enable the approved email-confirmation requirement for self-service member signup and browser-test the confirmation-link journey
+- repeatable existing-account invite acceptance fixture
+- wrong-account mismatch / switch-account browser UI journey
+- mobile refresh/back context journey
+- enable Supabase member email confirmation and browser-test the confirmation-link flow
 
 See [AUTH_TEST_MATRIX.md](./AUTH_TEST_MATRIX.md).
 
-### Member signup confirmation decision
+## Member email confirmation decision
 
-Decision locked 26 September 2026:
+Decision remains:
 
-- self-service member registrations must confirm their email before continuing into membership activation
-- the previous immediate-confirm behaviour is not the intended production mode
-- current Supabase Auth runtime still needs the Email confirmation setting enabled
-- after enabling it, the join confirmation link must be browser-tested through to membership selection
-- invite-based Admin/Owner access remains governed by its separate invite/claim flow
+> Self-service member registration must confirm the email address before account access continues.
 
-## Temporary UI audit infrastructure
+The product decision is locked, but Supabase still needs the Email confirmation setting enabled and the resulting join/confirmation journey browser-tested before release.
 
-The final audit used a disposable two-gym Auth account.
+## Production
 
-After the PASS:
+Production origin:
 
-- disposable user was removed
-- `hybridone-ui-audit-harness` was redeployed inert as v2
-- JWT verification is enabled
-- it returns HTTP 410
-- temporary UI-audit workflow/script are removed in the documentation/cleanup commit
+`https://www.hybridone.co.uk`
 
-## Next release work
+Production remains on `main` at:
 
-1. complete the remaining browser-level Auth journeys and signup-mode decision
-2. reconcile main/dev intentionally, because they diverge
-3. promote only the chosen candidate after the Auth release gate clears
-4. browser-test the actual Vercel production build
-5. only then remove the production hold
+`dbe7528b83687df73a2ef2b289ae44390205ed11`
+
+Do not treat dev behaviour as production behaviour until an intentional promotion has occurred and the Vercel runtime has been browser-verified.
+
+## Next work
+
+1. finish the remaining browser-level Auth matrix items
+2. enable and verify member email confirmation
+3. intentionally reconcile `main` and `dev`
+4. promote only after the release gate clears
+5. browser-test the exact Vercel production revision
+6. then remove the production hold

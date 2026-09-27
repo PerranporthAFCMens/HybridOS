@@ -1,22 +1,33 @@
 # HybridOne environment map
 
-**Updated: 26 September 2026**
+**Updated: 27 September 2026**
 
-Operational source of truth for routes, IDs and deployment topology. Read this before giving a URL or changing Auth/routing.
+Operational source of truth for routes, IDs and deployment topology.
 
 ## Repository
 
-- Repository: `PerranporthAFCMens/HybridOS`
+Repository:
+
+`PerranporthAFCMens/HybridOS`
+
+Branches:
+
 - `dev`: development source
 - `main`: production source
-- Production promotion: **held**
 
-Verified application checkpoint:
+Current verified heads:
 
-- production main: `dbe7528b83687df73a2ef2b289ae44390205ed11`
-- verified dev application: `6a14cfed829f01eace2ad094dd14e1dd08b27120`
-- relationship at the checkpoint: diverged, dev ahead 89 / behind 4
-- merge base: `b7d83243e9248a64978677efec91c4f9d83c1052`
+- dev: `fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+- main: `dbe7528b83687df73a2ef2b289ae44390205ed11`
+
+Relationship:
+
+- diverged
+- dev ahead 97
+- dev behind 4
+- merge base `b7d83243e9248a64978677efec91c4f9d83c1052`
+
+Production promotion: **HELD**
 
 ## Production
 
@@ -24,21 +35,21 @@ Origin:
 
 `https://www.hybridone.co.uk`
 
-Current production entry points remain the pre-universal-login implementation until the release gate is cleared:
+Current production entry points remain the pre-universal-login implementation:
 
 - Hybrid Hub: `https://www.hybridone.co.uk/hybrid-hub`
 - Puffin Performance: `https://www.hybridone.co.uk/puffin-performance`
 
-Do not give `/index.html` as a user login URL.
+Do not give `/index.html` as a production login URL.
 
 Vercel:
 
 - project ID: `prj_9DRBM2eBpXpXngPTCawtIwYID6rc`
 - team ID: `team_p7v1ius4XrtikQ0awFGWP4sF`
-- build: `python3 scripts/build_site.py`
+- build command: `python3 scripts/build_site.py`
 - output: `_site`
-- current deployment source: `dbe7528b83687df73a2ef2b289ae44390205ed11`
-- current state: READY
+- deployed source: `dbe7528b83687df73a2ef2b289ae44390205ed11`
+- state: READY
 
 ## Development
 
@@ -46,7 +57,7 @@ Origin:
 
 `https://perranporthafcmens.github.io/HybridOS/`
 
-Canonical universal login:
+Universal login:
 
 `https://perranporthafcmens.github.io/HybridOS/login.html`
 
@@ -54,41 +65,36 @@ Gym chooser:
 
 `https://perranporthafcmens.github.io/HybridOS/choose-gym.html`
 
-Convenience gym links into that same login:
+Convenience gym hints into the same universal login:
 
 - Hybrid Hub: `https://perranporthafcmens.github.io/HybridOS/login.html?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98`
 - Puffin Performance: `https://perranporthafcmens.github.io/HybridOS/login.html?gym_id=aec16956-3793-4543-873b-4412646ca1eb`
 
-Public dev runtime verification:
+Bare dev app entry:
 
-- run `36199919264`
-- source `6a14cfed829f01eace2ad094dd14e1dd08b27120`
-- result: PASS
+`https://perranporthafcmens.github.io/HybridOS/index.html`
 
-Multi-gym authenticated browser audit:
+At the current checkpoint, bare `index.html` immediately hands off to `login.html` unless the page is being used as the embedded Admin dashboard or has explicit gym/invite context.
 
-- run `36199919230`
-- source `6a14cfed829f01eace2ad094dd14e1dd08b27120`
-- result: PASS on desktop and mobile
+Latest public dev verification:
 
-Protected-routing browser:
-
-- run `36199700825`
-- result: PASS
+- source: `fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+- smoke: `36309330446` -> PASS
+- runtime: `36309330458` -> PASS
 
 ## Auth context
 
 Read [AUTH_CONTEXT.md](./AUTH_CONTEXT.md).
 
-The authoritative invariant is:
+Invariant:
 
 > **Authenticate the person first. Then select an active gym context.**
 
-Selected gym:
+Current gym:
 
 `sessionStorage['hybrid-gym-id']`
 
-Last-used convenience hint:
+Last-used hint:
 
 `localStorage['hybrid-last-gym-id']`
 
@@ -103,18 +109,18 @@ Project:
 
 `mzgnhmeydhhpzgxlgudh`
 
-Send Email Hook:
+Auth email hook:
 
 `https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1/send-auth-email`
 
-Live email/Auth functions at this checkpoint:
+Known live functions:
 
-- `send-auth-email` v5, ACTIVE, signed webhook verification
-- `send-access-invite` v11, ACTIVE, JWT verification enabled
+- `send-auth-email` v5
+- `send-access-invite` v11
 
 ## Build contract
 
-Both environments must serve the built output:
+Both dev and production use:
 
 ```
 source
@@ -123,13 +129,3 @@ source
 ```
 
 Never diagnose deployed UI only from raw source.
-
-## Public runtime authority
-
-The authoritative dev runtime workflow is:
-
-`.github/workflows/dev-runtime.yml`
-
-It waits for `deployment.json` to match the exact dev SHA and checks the public login/chooser contract.
-
-Workflow metadata alone is not proof of what GitHub Pages is serving.

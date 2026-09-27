@@ -1,8 +1,10 @@
 # HybridOne technical handover
 
-**Updated: 26 September 2026**
+**Updated: 27 September 2026**
 
-This file is architecture/background. Volatile operational truth is in the control layer:
+This is architecture/background. Volatile truth is in the control layer and must be read first.
+
+## Mandatory read order
 
 1. [PROJECT_STATE.json](./PROJECT_STATE.json)
 2. [PROJECT_CONTROL.md](./PROJECT_CONTROL.md)
@@ -11,51 +13,225 @@ This file is architecture/background. Volatile operational truth is in the contr
 5. [AUTH_CONTEXT.md](./AUTH_CONTEXT.md)
 6. [AUTH_TEST_MATRIX.md](./AUTH_TEST_MATRIX.md)
 7. [UI_CONSISTENCY.md](./UI_CONSISTENCY.md)
+8. this file
+9. inspect current code and live state before changing anything
+
+## Current checkpoint
+
+Repository:
+
+`PerranporthAFCMens/HybridOS`
+
+Current development head:
+
+`fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+
+Latest commit:
+
+`Route bare app entry to universal login`
+
+Current production main:
+
+`dbe7528b83687df73a2ef2b289ae44390205ed11`
+
+The branches are intentionally diverged:
+
+- dev ahead 97
+- dev behind 4
+- merge base `b7d83243e9248a64978677efec91c4f9d83c1052`
+
+**Do not blindly merge, fast-forward or overwrite.**
+
+Production hold remains active.
+
+## Latest verification
+
+At `fdc5cffd32e7555c79e891e22ffb6196a15c4288`:
+
+- smoke run `36309330446` -> PASS
+- public dev runtime run `36309330458` -> PASS
+
+Earlier authenticated browser evidence still relevant to the current model:
+
+- protected routing `36199700825` -> PASS
+- multi-gym + whole-app audit `36199919230` -> PASS
 
 ## Product
 
-HybridOne is a multi-tenant operating system for hybrid gyms.
+HybridOne is the operating system for hybrid gyms.
 
-Primary pilot/demo tenant: **Hybrid Hub**.
+It includes:
 
-Major areas:
-
-- memberships and members
+- memberships/members
 - classes and scheduling
 - workouts/programming
 - staff and permissions
 - community/social
 - reporting
 - communications
-- member/staff experiences
-- operational/access administration
+- member/staff/Admin experiences
+- resource/access administration
 
 HybridOne is separate from Football PA.
 
-## Repository and environments
+## Stack
 
-Repository:
+- static HTML/CSS/JavaScript
+- build: `scripts/build_site.py -> _site`
+- GitHub Pages dev
+- Vercel production
+- Supabase database/Auth/Edge Functions
+- Resend email
 
-`PerranporthAFCMens/HybridOS`
+Supabase project:
 
-- `main`: production source
-- `dev`: development source
+`mzgnhmeydhhpzgxlgudh`
 
-Verified production checkpoint:
+## Auth / gym context model
+
+The current dev model is person-first:
+
+> **Authenticate the person first. Then select an active gym context.**
+
+Flow:
+
+`email/password -> active memberships -> one gym direct / multiple gyms chooser -> role-specific experience`
+
+A single Auth identity can belong to multiple gyms and have a different role in each.
+
+Selected context:
+
+`sessionStorage['hybrid-gym-id']`
+
+Last-used convenience hint:
+
+`localStorage['hybrid-last-gym-id']`
+
+Never infer gym from:
+
+- email
+- first returned membership
+- last-used gym
+- URL hint alone
+
+Every selected gym must match an active membership.
+
+## Universal login
+
+Dev canonical login:
+
+`https://perranporthafcmens.github.io/HybridOS/login.html`
+
+Dev chooser:
+
+`https://perranporthafcmens.github.io/HybridOS/choose-gym.html`
+
+Gym-specific links are only hints into the same login.
+
+Latest change:
+
+Bare `index.html` now hands off to the universal login unless it is intentionally being used as:
+
+- embedded Admin dashboard
+- explicit `gym_id` context
+- access-invite context
+
+This prevents the old tenant-less application login/dashboard behaviour.
+
+## Multi-gym switching
+
+Verified browser flow:
+
+- authenticate once
+- chooser appears for two active gyms
+- enter Hybrid Hub
+- Switch gym to Puffin Performance
+- switch back to Hybrid Hub
+- role/context re-evaluates per selected gym
+
+Verified on desktop and mobile in run `36199919230`.
+
+Switch gym is available through shared signed-in UI.
+
+## Multi-site future
+
+Full organisation/site hierarchy is intentionally parked.
+
+Do not design new code around one-user-one-gym assumptions.
+
+The current separation is deliberate:
+
+`person -> memberships/access -> selected gym context -> future organisation/site context`
+
+## UI consistency
+
+HybridOne has an app-wide visual contract.
+
+Canonical shared layer:
+
+`app-consistency.css`
+
+Static guard:
+
+`scripts/ui_consistency_check.py`
+
+Authenticated whole-app audit:
+
+- 21 surfaces on desktop
+- 21 surfaces on mobile
+- no horizontal overflow on audited surfaces
+- run `36199919230`
+
+See [UI_CONSISTENCY.md](./UI_CONSISTENCY.md).
+
+## Auth/email state
+
+Verified:
+
+- Hybrid Hub password reset
+- Puffin password reset
+- Hybrid Hub magic link
+- Puffin magic link
+- universal login + multi-gym chooser
+- multi-gym switching
+- protected universal-login routing
+- corrected Admin invite email
+- resend UI/delivery
+- backend invite rejection/governance cases
+- fresh-browser Admin invite activation
+
+Still release-gating:
+
+1. universal sign-out -> re-login browser journey
+2. fresh new-account Admin invite Create account journey
+3. repeatable existing-account invite acceptance fixture
+4. wrong-account mismatch/switch-account browser journey
+5. mobile refresh/back context journey
+6. enable and browser-verify member email confirmation
+
+## Member signup decision
+
+Self-service member signup **must require email confirmation** before access continues.
+
+The decision is documented, but the Supabase Email confirmation setting still needs enabling and the full confirmation-link journey needs browser verification.
+
+## Production
+
+Production origin:
+
+`https://www.hybridone.co.uk`
+
+Production remains on:
 
 `dbe7528b83687df73a2ef2b289ae44390205ed11`
 
-Verified dev application checkpoint:
+Production still uses the older gym-specific entry implementation.
 
-`6a14cfed829f01eace2ad094dd14e1dd08b27120`
+Do not describe dev universal-login behaviour as production behaviour until an intentional release occurs.
 
-At that checkpoint the branches were diverged, dev ahead 89 and behind 4, merge base `b7d83243e9248a64978677efec91c4f9d83c1052`.
+## Deployment rule
 
-Do not blindly merge/overwrite.
-
-## Build/deployment
-
-Both environments use:
+Both environments serve built output:
 
 ```
 source
@@ -63,182 +239,41 @@ source
 -> _site
 ```
 
-Vercel must keep the build/output contract. GitHub Pages also serves the generated site.
+Do not diagnose a deployed UI from raw source alone.
 
-Dev runtime authority:
-
-`.github/workflows/dev-runtime.yml`
-
-Production deployment details:
-
-[VERCEL.md](./VERCEL.md)
-
-## Identity and gym context
-
-The previous “login URL decides the gym” model has been retired on dev.
-
-Current model:
-
-> **Authenticate the person first. Then select an active gym context.**
-
-A Supabase Auth identity may belong to multiple gyms.
-
-After login:
-
-- 0 active memberships -> no gym entry
-- 1 -> direct entry
-- 2+ -> Choose a gym
-
-Current gym:
-
-`sessionStorage['hybrid-gym-id']`
-
-Last-used hint:
-
-`localStorage['hybrid-last-gym-id']`
-
-Multi-gym users can use **Switch gym** from the signed-in UI.
-
-Role is resolved separately for each gym.
-
-See [AUTH_CONTEXT.md](./AUTH_CONTEXT.md).
-
-## Multi-site future
-
-Full organisation/site hierarchy is parked.
-
-Do not design new work around an assumption that one user has one gym. The person -> access -> context separation is deliberate so organisation/site context can be added later.
-
-## Universal login evidence
-
-Authenticated audit run:
-
-`36199919230`
-
-Passed:
-
-- universal email/password login
-- two-gym chooser
-- Hub -> Puffin
-- Puffin -> Hub
-- desktop account switch
-- desktop current-gym/sidebar switch
-- mobile account switch
-
-Protected-route browser run:
-
-`36199700825`
-
-Passed universal-login redirect plus gym hint and safe `return_to`.
-
-## UI system
-
-Canonical shared visual layer:
-
-`app-consistency.css`
-
-Build guarantees it is the final shared stylesheet on product surfaces.
-
-Static UI contract:
-
-`scripts/ui_consistency_check.py`
-
-Current authenticated audit covered 21 surfaces on desktop and 21 on mobile with no horizontal overflow.
-
-See [UI_CONSISTENCY.md](./UI_CONSISTENCY.md).
-
-## Auth/email
-
-Live:
-
-- `send-auth-email` v5
-- `send-access-invite` v11
-- Resend domain verified
-- managed sender `noreply@hybridone.co.uk`
-
-Full browser password-reset and magic-link journeys have passed for Hybrid Hub and Puffin Performance.
-
-Invite resend and corrected template delivery have passed.
-
-Remaining release-gate work is primarily invite/access edge cases. See [AUTH_TEST_MATRIX.md](./AUTH_TEST_MATRIX.md).
-
-## Owner/Admin access
-
-Primary files:
-
-- `admin-access.html`
-- `admin-invite.html`
-
-Backend rules include Owner governance, pending/active/revoked states, secure invite claims and wrong-account handling.
-
-Do not weaken governance for testing.
-
-## Staff access
-
-Every active Staff/Coach must have an Owner-created Access Level.
-
-Important backend areas:
-
-- `staff_access_levels`
-- `staff_access.access_level_id`
-- assignment/provision RPCs
-- permission propagation
-- `admin-create-staff-with-level`
-
-Granular enforcement across every UI/server action remains a priority.
-
-## Communications
-
-`communications.html` is the Admin communications workspace.
-
-Gym-controlled transactional settings include brand, From preference, Reply-to, logo, footer and template copy.
-
-Marketing remains future work.
-
-## Scheduling/workouts
-
-Reuse the existing scheduler and clash/resource/capability logic.
-
-Workout rule:
-
-> One workout is a multi-activity session, not one exercise.
-
-Do not create parallel scheduling/workout systems without inspecting current code.
-
-## Egress/security
+## Security invariants
 
 Keep:
 
-- `supabase-request-guard.js`
-- exact gym scoping
-- low-frequency social polling
-- no service-role secrets in browser
 - RLS
+- no service role in browser
+- exact gym scoping
 - server-side sensitive checks
-- narrow SECURITY DEFINER/RPC permissions
 - Owner governance
 - no silent cross-gym fallback
+- request/egress guard
+- narrow SECURITY DEFINER/RPC permissions
 
-## Current release gate
+Do not weaken security for tests.
 
-Production remains held.
+## Immediate next work
 
-Before release:
+1. complete remaining browser-level Auth matrix items
+2. enable/verify member email confirmation
+3. intentionally reconcile main/dev
+4. promote only after release gate clears
+5. browser-test exact Vercel production revision
+6. remove production hold only after production evidence passes
 
-1. finish remaining invite/access Auth matrix
-2. intentionally reconcile main/dev
-3. run built-site smoke
-4. verify exact deployed production revision
-5. run real production browser journeys
-6. then update the release gate
+## Definition of fixed
 
-## Temporary audit infrastructure
+Do not call something fixed from source alone.
 
-The authenticated whole-app audit used a disposable two-gym user.
+Where applicable require:
 
-After the final PASS:
-
-- user cleanup succeeded
-- database check confirmed the disposable user no longer exists
-- audit Edge Function was made inert with JWT verification enabled
-- temporary workflow/script are removed in the cleanup/docs commit
+1. committed
+2. built
+3. smoke/CI green
+4. deployed to the intended environment
+5. exact revision verified
+6. actual runtime/browser journey verified
