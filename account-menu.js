@@ -122,6 +122,8 @@
     if(membershipRole&&['staff','coach'].includes(membershipRole.role)){const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',membershipRole.gym_id).eq('user_id',u.id).maybeSingle();staffPermissions=sa?.permissions||{}}
     const display=profile.display_name||[profile.first_name,profile.last_name].filter(Boolean).join(' ')||u.user_metadata?.display_name||u.user_metadata?.full_name||u.email?.split('@')[0]||'Account';
     menuName.textContent=display; menuEmail.textContent=u.email||'';
+    const chipName=document.getElementById('userName')||document.getElementById('displayName'),chipEmail=document.getElementById('userEmail'),chipAvatar=document.getElementById('userAvatar')||document.getElementById('avatar');
+    if(chipName)chipName.textContent=display;if(chipEmail)chipEmail.textContent=u.email||'';if(chipAvatar&&!chipAvatar.querySelector('img'))chipAvatar.textContent=display.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H';
     displayInput.value=display; firstInput.value=profile.first_name||''; lastInput.value=profile.last_name||''; dobInput.value=profile.date_of_birth||''; genderInput.value=profile.gender||''; emailInput.value=u.email||'';
     avatarPreview.innerHTML=profile.avatar_url?'<img src="'+profile.avatar_url+'" alt="">':display.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H';
     avatarFile.value='';
