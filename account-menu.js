@@ -80,6 +80,11 @@
     const raw=p==='owner'?'./admin.html?view=index.html':p==='staff'?(['owner','admin'].includes(membershipRole?.role)?'./staff.html?view=staff':'./staff.html'):(membershipRole?.role==='member'?'./member.html':'./member.html?view=member');
     const u=new URL(raw,location.href);if(gymId)u.searchParams.set('gym_id',gymId);return u.toString();
   }
+  function navigateAccountTarget(raw){
+    const target=new URL(raw,location.href).toString();
+    if(document.documentElement.classList.contains('admin-embedded')&&window.parent!==window){window.parent.location.href=target;return}
+    location.href=target;
+  }
   function renderGymActions(){
     const context=q('#accountGymContext'),wrap=q('#accountGymActions'),divider=q('#accountGymDivider');
     if(!context||!wrap||!divider)return;
@@ -88,7 +93,7 @@
     context.classList.toggle('hidden',allMemberships.length===0);
     wrap.innerHTML=allMemberships.length>1?'<button type="button" class="account-menu-action" id="accountSwitchGymBtn"><span>Switch gym</span><span>↗</span></button>':'';
     divider.classList.toggle('hidden',allMemberships.length<2);
-    const b=q('#accountSwitchGymBtn');if(b)b.onclick=e=>{e.stopPropagation();location.href='./choose-gym.html?switch=1'};
+    const b=q('#accountSwitchGymBtn');if(b)b.onclick=e=>{e.stopPropagation();navigateAccountTarget('./choose-gym.html?switch=1')};
   }
   function renderPortalActions(){
     const wrap=q('#accountPortalActions'),context=q('#accountPortalContext'),divider=q('#accountPortalDivider');
@@ -102,7 +107,7 @@
     context.classList.toggle('hidden',targets.length<2);
     wrap.innerHTML=available.map(p=>`<button type="button" class="account-menu-action account-portal-action" data-portal="${p}"><span>Switch to ${p==='member'?'Member':portalLabel(p)} view</span><span>↗</span></button>`).join('');
     divider.classList.toggle('hidden',available.length===0);
-    wrap.querySelectorAll('.account-portal-action').forEach(btn=>btn.onclick=e=>{e.stopPropagation();location.href=portalHref(btn.dataset.portal)});
+    wrap.querySelectorAll('.account-portal-action').forEach(btn=>btn.onclick=e=>{e.stopPropagation();navigateAccountTarget(portalHref(btn.dataset.portal))});
   }
 
   async function loadAccount(){
@@ -150,7 +155,7 @@
   avatarFile.onchange=()=>{const file=avatarFile.files?.[0];if(!file)return;if(file.size>5242880){msg.textContent='Profile photo must be 5 MB or smaller.';msg.className='account-msg error';avatarFile.value='';return}const url=URL.createObjectURL(file);avatarPreview.innerHTML='<img src="'+url+'" alt="New profile photo preview">'};
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();if(modal.classList.contains('open'))closeModal()}});
-  q('#accountSignOutBtn').onclick=async()=>{q('#accountSignOutBtn').disabled=true;sessionStorage.removeItem('hybrid-gym-id');await sb.auth.signOut();location.href='./login.html'};
+  q('#accountSignOutBtn').onclick=async()=>{q('#accountSignOutBtn').disabled=true;sessionStorage.removeItem('hybrid-gym-id');await sb.auth.signOut();navigateAccountTarget('./login.html')};
 
   saveBtn.onclick=async()=>{
     msg.textContent='';msg.className='account-msg';
