@@ -75,6 +75,7 @@ jobs:
             await page.locator('#signIn').click();
             await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html'),{timeout:20000});
             const cards=page.locator('.gym-card');
+            await page.waitForFunction(()=>document.querySelectorAll('.gym-card').length===2,null,{timeout:20000});
             assert.equal(await cards.count(),2,'expected exactly two active gyms');
             const chooserText=await page.locator('#gyms').innerText();
             assert.match(chooserText,/Hybrid Hub/i);
@@ -109,6 +110,7 @@ jobs:
             await page.locator('#password').fill(password);
             await page.locator('#signIn').click();
             await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html'),{timeout:20000});
+            await page.waitForFunction(()=>document.querySelectorAll('.gym-card').length===2,null,{timeout:20000});
             assert.equal(await page.locator('.gym-card').count(),2,'re-login did not restore the two-gym chooser');
             await page.locator('[data-gym="'+hub+'"]').click();
             await page.waitForURL(url=>url.pathname.endsWith('/admin.html')&&url.searchParams.get('gym_id')===hub,{timeout:20000});
