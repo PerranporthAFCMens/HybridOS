@@ -24,12 +24,13 @@ Production `main`:
 
 Current verified `dev`:
 
-`fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+`cbee25179d8b6ce5a93c09c8937b3194c62da974`
 
 Latest green checks:
 
-- smoke `36309330446`
-- public dev runtime `36309330458`
+- smoke `36311298789`
+- public dev runtime `36311298820`
+- Auth journey browser `36311299027`
 
 Branches are diverged. Do not blindly merge them.
 
@@ -88,7 +89,7 @@ See [UI_CONSISTENCY.md](./UI_CONSISTENCY.md).
 
 Before production promotion:
 
-- finish remaining browser Auth journeys
+- finish repeatable invite UI journeys and same-user different-role-per-gym browser coverage
 - enable + verify member email confirmation
 - reconcile dev/main intentionally
 - verify exact production deployment
