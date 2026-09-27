@@ -63,6 +63,6 @@ Consistency does not mean every feature has identical geometry. It means the use
 
 Current handover checkpoint:
 
-`fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+`cbee25179d8b6ce5a93c09c8937b3194c62da974`
 
-The latest commit changes bare Auth entry routing only. It does not replace the authenticated UI-audit evidence above. Current smoke/runtime checks are green at the latest head.
+The verified application checkpoint adds a persistent Admin-shell account chip using existing shared primitives. The locked `admin-frame.css` visual baseline was deliberately preserved rather than weakened. Current smoke/runtime/Auth browser checks are green; the earlier authenticated whole-app UI audit remains the visual sweep evidence.
