@@ -10,14 +10,14 @@ Machine-readable state: [PROJECT_STATE.json](./PROJECT_STATE.json)
 
 Production promotion allowed: **NO**
 
-The universal login/multi-gym model is working on dev and the latest public dev revision is verified. Production is intentionally still on the older gym-specific entry model until the remaining Auth release-gate journeys are complete.
+The universal login/multi-gym model is working on dev. Exact-SHA browser run `36311299027` now verifies desktop/mobile switching, sign-out/re-login and mobile refresh/back. Production is intentionally still on the older gym-specific entry model until the remaining Auth release-gate journeys are complete.
 
 ## Branches
 
 - production `main`: `dbe7528b83687df73a2ef2b289ae44390205ed11`
-- development `dev`: `fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+- development application checkpoint: `cbee25179d8b6ce5a93c09c8937b3194c62da974`
 - relationship: diverged
-- dev ahead of main: 97 commits
+- dev ahead of main at application checkpoint: 115 commits
 - dev behind main: 4 commits
 - merge base: `b7d83243e9248a64978677efec91c4f9d83c1052`
 
@@ -27,12 +27,13 @@ Do **not** blindly merge or overwrite either branch.
 
 Source:
 
-`fdc5cffd32e7555c79e891e22ffb6196a15c4288`
+`cbee25179d8b6ce5a93c09c8937b3194c62da974`
 
 Latest verification:
 
-- HybridOne smoke checks: run `36309330446` -> **PASS**
-- HybridOne dev runtime verification: run `36309330458` -> **PASS**
+- HybridOne smoke checks: run `36311298789` -> **PASS**
+- HybridOne dev runtime verification: run `36311298820` -> **PASS**
+- HybridOne Auth journey browser: run `36311299027` -> **PASS**
 
 The latest change makes the bare application entry coherent with the new Auth model:
 
@@ -81,7 +82,7 @@ Authenticated browser audit:
 - 21 authenticated product surfaces per viewport
 - no horizontal overflow on audited surfaces
 
-Later commits through `fdc5cffd32e7555c79e891e22ffb6196a15c4288` retained the same gym-context model. The latest smoke/runtime checks are green.
+The exact application checkpoint above retains the same gym-context model. Smoke, runtime and the end-to-end Auth journey are green.
 
 Protected routing browser evidence:
 
@@ -120,11 +121,9 @@ Verified:
 
 Still release-gating:
 
-- full universal sign-out -> login -> choose/enter gym browser journey
 - fresh new-account invite **Create account** browser journey
 - repeatable existing-account invite acceptance fixture
 - wrong-account mismatch / switch-account browser UI journey
-- mobile refresh/back context journey
 - enable Supabase member email confirmation and browser-test the confirmation-link flow
 
 See [AUTH_TEST_MATRIX.md](./AUTH_TEST_MATRIX.md).
@@ -135,7 +134,7 @@ Decision remains:
 
 > Self-service member registration must confirm the email address before account access continues.
 
-The product decision is locked, but Supabase still needs the Email confirmation setting enabled and the resulting join/confirmation journey browser-tested before release.
+The product decision is locked. `join.html` now handles the no-session confirmation state, but live run `36311299027` still observed an active session with the email already confirmed at creation. Supabase still needs the Email confirmation setting enabled and the resulting join/confirmation journey browser-tested before release.
 
 ## Production
 
@@ -151,7 +150,7 @@ Do not treat dev behaviour as production behaviour until an intentional promotio
 
 ## Next work
 
-1. finish the remaining browser-level Auth matrix items
+1. finish the remaining repeatable invite UI journeys and same-user different-role-per-gym browser fixture
 2. enable and verify member email confirmation
 3. intentionally reconcile `main` and `dev`
 4. promote only after the release gate clears
