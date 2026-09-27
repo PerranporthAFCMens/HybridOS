@@ -131,3 +131,16 @@ html,body{
     pointer-events:auto;
   }
 }
+
+.admin-frame-account{
+  width:100%;
+  margin-top:auto;
+  box-sizing:border-box;
+}
+.admin-frame-account .who{min-width:0}
+.admin-frame-account #userEmail{
+  max-width:150px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
