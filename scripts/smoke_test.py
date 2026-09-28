@@ -156,6 +156,12 @@ for x in ('memberProfileSummary','role="button" tabindex="0"','Member record'):
 member=(ROOT/'member.html').read_text(encoding='utf-8')
 for x in ('.userchip{position:fixed;top:16px;right:14px','.top h1{font-size:28px','padding:82px 14px 36px'):
  if x not in member:problems.append(f'member.html: compact mobile member header missing: {x}')
+if '\\n<script type="module" src="./member-workouts-v2.js' in member:problems.append('member.html: literal backslash-n leaked into rendered page')
+for x in ('member-view-banner','member-view-mobile-label'):
+ if x not in member:problems.append(f'member.html: owner-as-member banner contract missing: {x}')
+member_experience_css=(ROOT/'member-experience.css').read_text(encoding='utf-8')
+for x in ('Member mobile polish: content-first header','position:static!important','#memberHomeCanvas>.member-home-tile[data-home-key="hero"].hero','background:linear-gradient(135deg,#08111f'):
+ if x not in member_experience_css:problems.append(f'member-experience.css: mobile member polish missing: {x}')
 if "const membershipShort=$('membershipShort');if(membershipShort)membershipShort.textContent=" not in member:problems.append('member.html: safe membership summary missing')
 if "?.textContent=" in member:problems.append('member.html: invalid optional-chain assignment present')
 mr=(ROOT/'member-experience.js').read_text(encoding='utf-8')
