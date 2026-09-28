@@ -231,7 +231,7 @@ for x in ('supabase.auth.signOut()',"location.replace('./login.html')",'Signing 
  if x not in sign_out:problems.append(f'sign-out.html: reliable sign out flow missing: {x}')
 if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: duplicate Member memberships tab returned')
 
-for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member view','Door access'):
+for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member experience','View as Member','Door access'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: consolidated admin navigation missing: {x}')
 for page_name in ('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
@@ -462,7 +462,7 @@ for page_name in ('index.html','community.html','classes.html','class-setup.html
  for x in ('admin-embed.js?v=','admin-embedded'):
   if x not in page_text:problems.append(f'{page_name}: embedded admin mode missing: {x}')
 member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
-if 'href="./member-preview.html" target="_top"' not in member_view:problems.append('member-view-settings.html: preview must escape persistent admin frame')
+if 'href="./member.html?view=member" target="_top"' not in member_view:problems.append('member-view-settings.html: authenticated View as Member must escape persistent admin frame')
 member_preview=(ROOT/'member-preview.html').read_text(encoding='utf-8')
 if './admin.html?view=member-view-settings.html' not in member_preview:problems.append('member-preview.html: Back to admin must return to persistent admin shell')
 if problems:raise SystemExit('HybridOne smoke checks failed:\n- '+'\n- '.join(problems))
