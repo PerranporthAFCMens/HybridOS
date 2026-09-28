@@ -5,6 +5,8 @@ on:
     branches: [dev]
     paths:
       - '.github/workflows/invite-edge-matrix.yml'
+      - 'admin-invite.html'
+      - 'login.html'
 
 permissions:
   contents: read
@@ -15,9 +17,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
+      - uses: actions/checkout@v6
+
+      - name: Record exact dev SHA
+        shell: bash
+        run: echo "HYBRID_BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Wait for exact public Pages revision
+        env:
+          PAGES_URL: https://perranporthafcmens.github.io/HybridOS/
+        run: python3 scripts/runtime_pages_check.py
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
 
       - name: Create isolated invite test gym
         shell: bash
@@ -45,6 +63,7 @@ jobs:
               print("EDGE_"+k.upper()+"_EMAIL="+v)
           print("EDGE_NEW_EMAIL=hybridone-edge-"+d["run_id"]+"-new@example.com")
           print("EDGE_WRONGTARGET_EMAIL=hybridone-edge-"+d["run_id"]+"-wrongtarget@example.com")
+          print("EDGE_BROWSERNEW_EMAIL=hybridone-edge-"+d["run_id"]+"-browsernew@example.com")
           PY
 
       - name: Run invite access edge matrix
@@ -190,6 +209,125 @@ jobs:
             assert.equal(ownerClaim.access_status,'active');
             assert.equal(ownerClaim.role,'owner');
             console.log('Multi-Owner approval and acceptance passed');
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+
+      - name: Verify invite Create account, existing account and wrong-account recovery in browser
+        shell: bash
+        env:
+          DEV_BASE: https://perranporthafcmens.github.io/HybridOS/
+          SUPABASE_URL: https://mzgnhmeydhhpzgxlgudh.supabase.co
+          SUPABASE_KEY: sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD
+        run: |
+          set -euo pipefail
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const assert = require('node:assert/strict');
+          const base=process.env.DEV_BASE;
+          const api=process.env.SUPABASE_URL;
+          const key=process.env.SUPABASE_KEY;
+          const pass=process.env.EDGE_PASSWORD;
+          const gym=process.env.EDGE_GYM_ID;
+
+          async function loginApi(email){
+            const r=await fetch(api+'/auth/v1/token?grant_type=password',{
+              method:'POST',
+              headers:{apikey:key,'content-type':'application/json'},
+              body:JSON.stringify({email,password:pass})
+            });
+            const j=await r.json();
+            assert.equal(r.ok,true,JSON.stringify(j));
+            return j.access_token;
+          }
+          async function rpc(name,args,token){
+            const r=await fetch(api+'/rest/v1/rpc/'+name,{
+              method:'POST',
+              headers:{apikey:key,Authorization:'Bearer '+token,'content-type':'application/json'},
+              body:JSON.stringify(args)
+            });
+            const text=await r.text();
+            let data; try{data=text?JSON.parse(text):null}catch{data=text}
+            assert.equal(r.ok,true,JSON.stringify(data));
+            return Array.isArray(data)?data[0]:data;
+          }
+          async function createInvite(ownerToken,email){
+            const row=await rpc('create_shareable_access_invite',{
+              target_gym_id:gym,invite_email:email,requested_role:'admin',expires_in_days:7
+            },ownerToken);
+            assert.equal(row.status,'open');
+            assert.ok(row.token);
+            return row.token;
+          }
+          async function expectActivated(page){
+            await page.locator('#doneNotice').waitFor({state:'visible',timeout:20000});
+            const done=await page.locator('#doneNotice').innerText();
+            assert.match(done,/Access activated/i);
+            assert.match(done,/Admin access/i);
+          }
+
+          (async()=>{
+            const ownerToken=await loginApi(process.env.EDGE_OWNER1_EMAIL);
+            const browser=await chromium.launch({headless:true});
+            try{
+              // Fresh account: exercise the visible Create account journey.
+              const freshToken=await createInvite(ownerToken,process.env.EDGE_BROWSERNEW_EMAIL);
+              const fresh=await browser.newContext({viewport:{width:390,height:844}});
+              const fp=await fresh.newPage();
+              await fp.goto(base+'admin-invite.html?token='+encodeURIComponent(freshToken),{waitUntil:'domcontentloaded',timeout:30000});
+              await fp.locator('#authBtn').waitFor({state:'visible',timeout:20000});
+              assert.equal((await fp.locator('#authBtn').innerText()).trim(),'Create account');
+              assert.equal(await fp.locator('#email').inputValue(),process.env.EDGE_BROWSERNEW_EMAIL);
+              await fp.locator('#name').fill('HybridOne Browser New');
+              await fp.locator('#password').fill(pass);
+              await fp.locator('#authBtn').click();
+              const activated=fp.locator('#doneNotice');
+              const confirmMsg=fp.locator('#msg');
+              const outcome=await Promise.race([
+                activated.waitFor({state:'visible',timeout:20000}).then(()=> 'activated'),
+                confirmMsg.waitFor({state:'visible',timeout:20000}).then(async()=>/confirm your email/i.test(await confirmMsg.innerText())?'confirm':'other')
+              ]);
+              if(outcome==='confirm') throw new Error('Fresh invite requires email confirmation; confirmation-link browser continuation is still required');
+              assert.equal(outcome,'activated','Fresh Create account invite did not activate');
+              await expectActivated(fp);
+              console.log('Fresh Create account invite browser journey passed');
+              await fresh.close();
+
+              // Existing account: sign in from the invitation and accept.
+              const existingToken=await createInvite(ownerToken,process.env.EDGE_EXPIRED_EMAIL);
+              const existing=await browser.newContext({viewport:{width:1440,height:1000}});
+              const ep=await existing.newPage();
+              await ep.goto(base+'admin-invite.html?token='+encodeURIComponent(existingToken),{waitUntil:'domcontentloaded',timeout:30000});
+              await ep.locator('#loginTab').click();
+              await ep.locator('#password').fill(pass);
+              await ep.locator('#authBtn').click();
+              await expectActivated(ep);
+              console.log('Existing-account invite browser acceptance passed');
+              await existing.close();
+
+              // Wrong account: sign in as another account first, verify mismatch,
+              // use the visible Switch account recovery, then accept as the target.
+              const targetToken=await createInvite(ownerToken,process.env.EDGE_REVOKED_EMAIL);
+              const wrong=await browser.newContext({viewport:{width:390,height:844}});
+              const wp=await wrong.newPage();
+              await wp.goto(base+'login.html',{waitUntil:'domcontentloaded',timeout:30000});
+              await wp.locator('#email').fill(process.env.EDGE_WRONG_EMAIL);
+              await wp.locator('#password').fill(pass);
+              await wp.locator('#signIn').click();
+              await wp.waitForFunction(()=>/does not currently have active access/i.test(document.querySelector('#msg')?.textContent||''),null,{timeout:20000});
+              await wp.goto(base+'admin-invite.html?token='+encodeURIComponent(targetToken),{waitUntil:'domcontentloaded',timeout:30000});
+              await wp.locator('#accountMismatch').waitFor({state:'visible',timeout:20000});
+              assert.equal((await wp.locator('#signedInEmail').innerText()).toLowerCase(),process.env.EDGE_WRONG_EMAIL.toLowerCase());
+              assert.equal((await wp.locator('#invitedEmail').innerText()).toLowerCase(),process.env.EDGE_REVOKED_EMAIL.toLowerCase());
+              await wp.locator('#switchAccountBtn').click();
+              await wp.locator('#authBox').waitFor({state:'visible',timeout:20000});
+              assert.equal(await wp.locator('#email').inputValue(),process.env.EDGE_REVOKED_EMAIL);
+              assert.equal((await wp.locator('#authBtn').innerText()).trim(),'Sign in');
+              await wp.locator('#password').fill(pass);
+              await wp.locator('#authBtn').click();
+              await expectActivated(wp);
+              console.log('Wrong-account mismatch and Switch account browser recovery passed');
+              await wrong.close();
+            }finally{await browser.close()}
           })().catch(e=>{console.error(e);process.exit(1)});
           JS
 
