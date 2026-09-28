@@ -126,6 +126,33 @@ jobs:
             assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),gymId,'active gym context mismatch after switch');
           }
 
+          async function visibleSidebarSwitch(page,{mobile=false}={}){
+            if(mobile){
+              const menu=page.locator('.admin-frame-mobile');
+              await menu.waitFor({state:'visible',timeout:20000});
+              const open=await page.evaluate(()=>document.body.classList.contains('admin-frame-menu-open'));
+              if(!open)await menu.click();
+              await page.waitForFunction(()=>document.body.classList.contains('admin-frame-menu-open'),null,{timeout:5000});
+            }
+            const note=page.locator('.admin-frame-shell>.side .hybrid-gym-switch-note');
+            await note.waitFor({state:'visible',timeout:20000});
+            assert.equal((await note.innerText()).trim(),'Switch gym','persistent sidebar switch label mismatch');
+            const card=page.locator('.admin-frame-shell>.side .hybrid-shell-gym.hybrid-gym-switchable');
+            await card.waitFor({state:'visible',timeout:20000});
+            assert.equal(await card.getAttribute('aria-label'),'Switch gym','persistent sidebar switch control missing aria label');
+            return card;
+          }
+
+          async function switchGymFromSidebar(page,gymId,{mobile=false}={}){
+            const card=await visibleSidebarSwitch(page,{mobile});
+            await card.click();
+            await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html')&&url.searchParams.get('switch')==='1',{timeout:20000});
+            await page.waitForFunction(()=>document.querySelectorAll('.gym-card').length===2,null,{timeout:20000});
+            await page.locator('[data-gym="'+gymId+'"]').click();
+            await waitForAdminPortal(page,gymId);
+            assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),gymId,'active gym context mismatch after persistent sidebar switch');
+          }
+
           async function signOutAndRelog(page){
             const account=await accountControls(page);
             await account.chip.click();
@@ -153,6 +180,9 @@ jobs:
               const desktop=await browser.newContext({viewport:{width:1440,height:1000}});
               const dp=await desktop.newPage();
               await loginAndChoose(dp,hub);
+              await visibleSidebarSwitch(dp);
+              await switchGymFromSidebar(dp,puffin);
+              await switchGymFromSidebar(dp,hub);
               await switchGym(dp,puffin);
               await dp.reload({waitUntil:'domcontentloaded'});
               await waitForAdminPortal(dp,puffin);
@@ -163,7 +193,11 @@ jobs:
 
               const mobile=await browser.newContext({viewport:{width:390,height:844}});
               const mp=await mobile.newPage();
-              await loginAndChoose(mp,puffin);
+              await loginAndChoose(mp,hub);
+              await visibleSidebarSwitch(mp,{mobile:true});
+              await switchGymFromSidebar(mp,puffin,{mobile:true});
+              await switchGymFromSidebar(mp,hub,{mobile:true});
+              await switchGym(mp,puffin);
               await mp.reload({waitUntil:'domcontentloaded'});
               await waitForAdminPortal(mp,puffin);
               assert.equal(await mp.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),puffin,'mobile refresh lost gym context');
