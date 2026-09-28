@@ -8,6 +8,18 @@ on:
     branches: [dev]
     paths:
       - '.github/workflows/auth-journey-browser.yml'
+      - 'admin.html'
+      - 'admin-frame.js'
+      - 'admin-frame.css'
+      - 'gym-switcher.js'
+      - 'account-menu.js'
+      - 'shared-shell.js'
+      - 'app-consistency.css'
+      - 'gym-context.js'
+      - 'choose-gym.html'
+      - 'login.html'
+      - 'scripts/build_site.py'
+      - 'scripts/smoke_test.py'
 
 permissions:
   contents: read
@@ -197,7 +209,7 @@ jobs:
               await visibleSidebarSwitch(mp,{mobile:true});
               await switchGymFromSidebar(mp,puffin,{mobile:true});
               await switchGymFromSidebar(mp,hub,{mobile:true});
-              await switchGym(mp,puffin);
+              await switchGymFromSidebar(mp,puffin,{mobile:true});
               await mp.reload({waitUntil:'domcontentloaded'});
               await waitForAdminPortal(mp,puffin);
               assert.equal(await mp.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),puffin,'mobile refresh lost gym context');
