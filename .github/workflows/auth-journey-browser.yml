@@ -4,6 +4,7 @@ name: HybridOne Auth journey browser
 # Persistent Admin shell account menu is included in this gate.
 
 on:
+  workflow_dispatch:
   push:
     branches: [dev]
     paths:
