@@ -1,19 +1,21 @@
 # HybridOne environment map
 
-## 28 September verification note
+## 28 September post-regression verification note
 
-Current dev head:
+Current dev application/state head before this documentation checkpoint:
 
-`35a7a80a3b6894a776dd253c94f8b47fcefc15d6`
+`0654b4a085d463eaaaccd241caf741015e0ac871`
 
-Exact-head checks:
+Exact current-head checks:
 
-- smoke `36460766581` -> PASS
-- dev runtime `36460766735` -> PASS
+- smoke `36467112929` -> PASS
+- dev runtime `36467112883` -> PASS
 
-Latest full Auth/multi-gym browser pass remains `36311647499` at `9039ed4b...`, which predates the latest member-view/navigation work.
+Gym switching is no longer an open regression. Exact authenticated browser run `36466232127` passed the visible desktop/mobile persistent shell switch and Hub <-> Puffin switching on source `25ad1f57...`; the picker implementation is unchanged through current dev.
 
-Open current-build report: **Switch gym / gym picker is not visible in the core app for the user.** The chooser URL still exists, but UI visibility must be reverified before release.
+Repeatable invite browser matrix `36465324428` is PASS.
+
+Production remains held on `main` `dbe7528b...`.
 
 **Updated: 28 September 2026**
 
@@ -32,13 +34,13 @@ Branches:
 
 Current verified heads:
 
-- current dev head: `35a7a80a3b6894a776dd253c94f8b47fcefc15d6`
+- current dev head: `0654b4a085d463eaaaccd241caf741015e0ac871`
 - main: `dbe7528b83687df73a2ef2b289ae44390205ed11`
 
 Relationship:
 
 - diverged
-- dev ahead: 127
+- dev ahead: 146
 - dev behind 4
 - merge base `b7d83243e9248a64978677efec91c4f9d83c1052`
 
@@ -93,10 +95,11 @@ At the current checkpoint, bare `index.html` immediately hands off to `login.htm
 
 Latest public dev verification:
 
-- source: `cbee25179d8b6ce5a93c09c8937b3194c62da974`
-- smoke: `36311298789` -> PASS
-- runtime: `36311298820` -> PASS
-- Auth browser journey: `36311299027` -> PASS
+- source: `0654b4a085d463eaaaccd241caf741015e0ac871`
+- smoke: `36467112929` -> PASS
+- runtime: `36467112883` -> PASS
+- picker/multi-gym browser step: `36466232127` -> PASS on `25ad1f57...`
+- repeatable invite browser matrix: `36465324428` -> PASS
 
 ## Auth context
 

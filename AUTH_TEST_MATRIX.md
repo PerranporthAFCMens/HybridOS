@@ -22,9 +22,9 @@ Status meanings:
 | 7 | Magic-link sign-in from each gym | PASS | Hub and Puffin full browser magic-link journeys passed in run `36071752904`. |
 | 8 | Member signup confirmation | PARTIAL | Product decision locked 26 Sep. Source now handles the no-session confirmation state, but live probe in run `36311299027` still returned an active session with the email already confirmed at creation. Supabase Email confirmation must still be enabled and the confirmation-link journey browser-tested before PASS. |
 | 9 | Admin invite in fresh incognito | PASS | Fresh Playwright browser context consumed the Hybrid Hub Admin magic link and activated Admin access. Run `36069661356`. |
-| 10 | Existing account accepting invite | PARTIAL | Existing-account Admin acceptance passed in browser run `36069661356`; keep this partial until the acceptance fixture is repeatable rather than tied to the one claimed invite. |
-| 11 | New account accepting invite | PARTIAL | Isolated live backend run `36071266688` created an invite before the Auth account existed, then created the account and claimed active Admin access. Fresh browser Create account/password setup remains to be exercised. |
-| 12 | Wrong account already signed in | PARTIAL | Live claim denial passed in isolated run `36071266688` and the current invite page contains explicit account-mismatch handling. Browser exercise of the mismatch/switch-account UI remains. |
+| 10 | Existing account accepting invite | PASS | Repeatable isolated browser fixture accepted an existing-account invite in run `36465324428`. |
+| 11 | New account accepting invite | PASS | Fresh browser **Create account** / password setup and invite claim passed in repeatable isolated run `36465324428`. |
+| 12 | Wrong account already signed in | PASS | Wrong-account mismatch and **Switch account** recovery passed in repeatable browser run `36465324428`. |
 | 13 | Expired and revoked invite | PASS | Isolated live run `36071266688` verified revoked and expired invites both fail to claim. |
 | 14 | Owner invite with one active Owner | PASS | Isolated live run `36071266688` verified 1/1 approval, shareable token and successful active Owner claim. |
 | 15 | Owner invite with multiple active Owners | PASS | Isolated live run `36071266688` verified 1/2 blocks sharing, second Owner approval changes to 2/2/open, then successful active Owner claim. |
@@ -37,7 +37,7 @@ Status meanings:
 | Invariant | Status | Evidence |
 |---|---|---|
 | Universal login loads all active memberships, not first membership | PASS | Two gyms appeared in chooser; account menu loads all active memberships. |
-| Multi-gym user can switch after login | PASS | Desktop and mobile account-menu switch passed; desktop sidebar switch also passed. Run `36199919230`. |
+| Multi-gym user can switch after login | PASS | Exact current-fix browser step in run `36466232127` passed visible persistent sidebar switching on desktop/mobile plus Hub -> Puffin -> Hub context changes. |
 | Role changes correctly when the same person has different roles in different gyms | PARTIAL | Routing is role-aware in source, but the current disposable two-gym browser fixture is Admin in both gyms. A different-role-per-gym browser fixture is still required. |
 | Gym route hint cannot grant access | PASS | Login checks the hinted gym against active memberships before entering it. Protected-route browser guard remains green. |
 | Hybrid Hub-only user cannot silently fall back into another gym | PASS | Earlier cross-gym isolation browser test plus explicit-current-context model. |
@@ -62,36 +62,28 @@ Do **not** remove the production hold until:
 
 ## Latest dev runtime checkpoint
 
-Verified application source:
+Verified current dev source:
 
-`cbee25179d8b6ce5a93c09c8937b3194c62da974`
+`0654b4a085d463eaaaccd241caf741015e0ac871`
 
-Latest green checks:
+Latest current-head green checks:
 
-- smoke `36311298789`
-- public dev runtime `36311298820`
-- Auth journey browser `36311299027`
+- smoke `36467112929`
+- public dev runtime `36467112883`
+- picker/multi-gym browser step `36466232127` -> PASS on `25ad1f57...`
+- repeatable invite browser matrix `36465324428` -> PASS
 
 The Auth journey gate verifies the exact public dev revision before exercising desktop/mobile chooser, switching, refresh/back and sign-out/re-login. The runtime guard still confirms that bare `index.html` hands off to the universal login while embedded/gym/invite contexts remain available.
 
 
-## 28 September regression note
+## 28 September gym-picker resolution
 
-**Gym picker / Switch gym visibility on current dev:** **PARTIAL / REGRESSION REPORTED**
+**Gym picker / Switch gym visibility:** **PASS / CLOSED**
 
-- current dev head: `35a7a80a3b6894a776dd253c94f8b47fcefc15d6`
-- current smoke: `36460766581` PASS
-- current runtime: `36460766735` PASS
-- latest full Auth journey: `36311647499` PASS on `9039ed4b...`
-- user reports that the picker is not visible in the core app on the current build
-- historical run `36199919230` is therefore not sufficient evidence for the current head
+- fix commit: `3ee9028a...`
+- authenticated browser evidence: run `36466232127` on `25ad1f57...`
+- visible persistent shell switch: PASS desktop + mobile
+- Hub -> Puffin -> Hub: PASS
+- current dev `0654b4a0...` has not changed the picker runtime since that proof
 
-Required before closing:
-
-- reproduce with 2+ active memberships
-- confirm chooser after login
-- confirm **Switch gym** visible inside the authenticated app
-- confirm Hub -> Puffin -> Hub switch
-- confirm role is re-resolved for each gym
-- confirm desktop + mobile
-- rerun against the exact current/fixed SHA
+The separate same-user **different-role-per-gym** fixture remains PARTIAL and is the next multi-gym Auth gate.

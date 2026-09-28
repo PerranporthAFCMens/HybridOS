@@ -1,28 +1,18 @@
 # HybridOne Auth and gym context
 
-## Current picker visibility issue - OPEN
+## Current picker visibility issue — CLOSED
 
-On 28 September the user reported that the **gym selection picker / Switch gym control is not showing in the core app**.
+The 28 September missing **Switch gym** regression has been reproduced, fixed and browser-verified.
 
-The intended contract has not changed:
+Evidence:
 
-- `choose-gym.html` is the chooser screen
-- multi-gym accounts must be able to return to it after entering a gym
-- `account-menu.js` currently contains a **Switch gym** action for accounts with more than one active membership
-- any desktop current-gym/sidebar switch affordance is supplementary; the account-menu route must still work
-- one-gym users should not be forced through a chooser
+- the affected account still had two active memberships: Hybrid Hub and Puffin Performance
+- fix commit: `3ee9028a7cae68e07d7536a10c60a969c14aabdf`
+- the persistent shell switcher now consumes the same active-membership state loaded by `account-menu.js`, while retaining an independent membership-query fallback
+- browser run `36466232127` on `25ad1f57282dd1a21e29e868e28ac6cbcf80ace8` passed the visible desktop/mobile sidebar switch and Hub <-> Puffin switching
+- later commits through current dev `0654b4a0...` do not modify the picker runtime
 
-Historical browser run `36199919230` proved switching on an earlier dev revision. It does **not** prove the control is visible on current head `35a7a80a3b6894a776dd253c94f8b47fcefc15d6`.
-
-Next work must reproduce the user's current account/session on current dev and determine whether:
-
-1. multiple active memberships are being loaded into `account-menu.js`
-2. the account menu is present in the top-level/persistent shell
-3. the Switch gym action is hidden by shell/embedded-page placement or styling
-4. the user is actually entering a one-gym context because one membership is inactive/pending
-5. an always-visible current-gym picker is now required in the shared core shell
-
-Do not mark this closed without exact-SHA browser proof.
+The product contract remains: a multi-gym user must always be able to return to `choose-gym.html?switch=1` from inside the authenticated app.
 
 **Updated: 28 September 2026**
 

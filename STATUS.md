@@ -1,5 +1,50 @@
 # HybridOne live status
 
+## Authoritative post-regression checkpoint — 28 September 2026
+
+Current `dev` application/state head before this documentation checkpoint:
+
+`0654b4a085d463eaaaccd241caf741015e0ac871`
+
+Current verification:
+
+- smoke `36467112929` -> **PASS**
+- public dev runtime `36467112883` -> **PASS**
+- production `main` remains `dbe7528b83687df73a2ef2b289ae44390205ed11`
+- branches remain diverged: dev **146 ahead / 4 behind**, merge base `b7d83243e9248a64978677efec91c4f9d83c1052`
+
+### Gym picker regression — CLOSED
+
+The missing **Switch gym** / gym picker regression is fixed.
+
+- runtime fix: `3ee9028a7cae68e07d7536a10c60a969c14aabdf`
+- exact authenticated browser evidence: run `36466232127` on `25ad1f57282dd1a21e29e868e28ac6cbcf80ace8`
+- desktop + mobile visible persistent sidebar switch: **PASS**
+- Hub -> Puffin -> Hub: **PASS**
+- refresh/back and sign-out/re-login context handling: **PASS**
+- later commits through current dev do not modify the picker runtime implementation
+
+The overall Auth workflow later failed in a separate fixed-email helper collision because two Auth runs overlapped. The real reset/magic-link browser journeys had already passed. The shared fixture is now serialized by workflow commit `cc519860add97eb796dc379c5eaf3f53c1cff133`.
+
+### Invite browser gate — PASS
+
+Run `36465324428` on `574f959d33a716661ad321e9a9d803d312e5bb33` now repeatably verifies fresh Create account invites, existing-account acceptance, wrong-account mismatch + Switch account recovery, backend invite edge cases and cleanup.
+
+### Remaining Auth release gates
+
+Still open:
+
+1. same Auth user with **different roles in different gyms** browser fixture
+2. enable Supabase member email confirmation
+3. browser-test the real confirmation-link signup journey
+4. intentionally reconcile `main` / `dev`
+5. promote and browser-test the exact Vercel production revision
+
+**PRODUCTION_HOLD remains ACTIVE.**
+
+> Older checkpoint sections below are retained as historical evidence; this block is the current operational state.
+
+
 ## Current checkpoint - 28 September 2026
 
 Current `dev` head:

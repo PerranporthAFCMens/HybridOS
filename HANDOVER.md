@@ -1,103 +1,90 @@
 # HybridOne handover
 
-## CURRENT HANDOVER CHECKPOINT - 28 SEPTEMBER 2026
+## CURRENT HANDOVER CHECKPOINT - 28 SEPTEMBER 2026 — POST PICKER FIX
 
 **Read this section first, then the control layer.**
 
 Repository: `PerranporthAFCMens/HybridOS`
 
-Current heads:
+Current application/state head before this documentation checkpoint:
 
-- `dev`: `35a7a80a3b6894a776dd253c94f8b47fcefc15d6`
+- `dev`: `0654b4a085d463eaaaccd241caf741015e0ac871`
 - `main`: `dbe7528b83687df73a2ef2b289ae44390205ed11`
 - relationship: **diverged**
-- dev ahead: **127**
+- dev ahead: **146**
 - dev behind: **4**
 - merge base: `b7d83243e9248a64978677efec91c4f9d83c1052`
 
 Production hold: **ACTIVE**. Do not broadly merge dev into main.
 
-### Exact current-head evidence
+### Current dev evidence
 
-- smoke run `36460766581` -> PASS
-- public dev runtime run `36460766735` -> PASS
+- smoke `36467112929` -> PASS
+- public dev runtime `36467112883` -> PASS
+- protected routing `36466163472` -> PASS
 
-Latest full universal Auth/multi-gym browser pass:
+### GYM PICKER REGRESSION — CLOSED
 
-- run `36311647499` -> PASS
-- SHA `9039ed4b20017580be0eb0c17034497d3cc6733b`
+The user-reported missing **Switch gym** control was reproduced as a persistent-shell coordination problem, not a missing-membership problem.
 
-That full browser pass is older than the 28 Sep member-view/navigation changes.
+Database check confirmed the affected account has two active memberships:
 
-### FIRST ISSUE FOR NEXT CHAT - GYM PICKER NOT SHOWING
+- Hybrid Hub — Owner
+- Puffin Performance — Owner
 
-The user reports:
+Runtime fix:
 
-> the gym selection picker / Switch gym control is not showing in the core app.
+`3ee9028a7cae68e07d7536a10c60a969c14aabdf`
 
-This is **not closed**.
+Exact authenticated browser evidence:
 
-Intended model:
+- run `36466232127`
+- source `25ad1f57282dd1a21e29e868e28ac6cbcf80ace8`
+- desktop visible persistent **Switch gym**: PASS
+- mobile visible persistent **Switch gym**: PASS
+- Hub -> Puffin -> Hub: PASS
+- refresh/back: PASS
+- sign-out/re-login: PASS
 
-`email + password -> authenticate person -> active memberships -> one gym direct / multiple gyms choose -> role resolved per selected gym`
+The overall Auth run later failed in a separate CI fixture collision when two concurrent runs hit the same fixed email helper. Workflow serialization was added at `cc519860...`. The actual reset/magic-link browser journeys had already passed.
 
-Expected files/components:
+Current dev `0654b4a0...` only adds an unrelated workout-table grant migration after that test change; it does not alter picker/Auth shell files.
 
-- `login.html` universal login
-- `choose-gym.html` chooser
-- `gym-context.js` current gym context helpers
-- `account-menu.js` loads all active memberships and should render **Switch gym** when `allMemberships.length > 1`
-- active context: `sessionStorage['hybrid-gym-id']`
-- last-used hint only: `localStorage['hybrid-last-gym-id']`
+### INVITE BROWSER GATE — PASS
 
-Previous browser evidence `36199919230` verified switching on an older revision, but current user observation overrides any assumption that this remains good.
+Run `36465324428` on `574f959d...` repeatably passes:
 
-**Next chat should reproduce the picker issue on current dev before changing architecture.** Check actual active gym memberships for the test/user account, top-level versus embedded account-menu placement, CSS visibility, and whether a persistent shared-shell gym selector is required.
+- fresh new-account Create account invite flow
+- existing-account invite acceptance
+- wrong-account mismatch + Switch account recovery
+- backend revoked/expired/governance cases
+- isolated cleanup
 
-### Recent 28 Sep work
+### REMAINING AUTH RELEASE GATES
 
-Latest commits:
+Still open:
 
-- `f80dbe5a...` Separate member settings from authenticated member view
-- `f0665dc2...` Update smoke checks for authenticated member view
-- `35a7a80a...` Align member-view smoke assertion with nav structure
+1. same-user **different-role-per-gym** browser fixture
+2. enable Supabase member email confirmation
+3. browser-test the real confirmation-link member signup journey
+4. intentionally reconcile `main` and `dev`
+5. promote only after the gate clears
+6. browser-test the exact Vercel production revision
 
-Current smoke/runtime are green after those changes.
+The person-first model remains authoritative:
 
-### Universal Auth model remains authoritative
+`email + password -> active memberships -> one gym direct / multiple gyms choose -> selected gym context -> role resolved for that gym`
 
-Read `AUTH_CONTEXT.md`.
+Never restore email-to-gym inference, `.limit(1)` tenant selection, last-used gym as permission, or silent cross-gym fallback.
 
-Core rule:
+### MONDAY.COM
 
-> **Authenticate the person first. Then select an active gym context.**
+Board: **HybridOne Development** (`5104590878`)
 
-Never restore email-to-gym inference, first-membership `.limit(1)` tenant selection, last-gym-as-permission, or silent cross-gym fallback.
-
-### Other release-gate items still open
-
-- repeatable fresh new-account invite Create account browser journey
-- repeatable existing-account invite acceptance fixture
-- wrong-account mismatch/switch-account browser UI
-- same-user different-role-per-gym browser fixture
-- enable Supabase member email confirmation and browser-test the confirmation-link journey
-- current gym picker visibility regression above
-
-### UI consistency
-
-The shared UI contract remains in force. The app-wide consistency work is not a redesign. `app-consistency.css` is the canonical final shared visual layer. However, the current picker visibility report now counts as a **shared-shell consistency issue**.
-
-### Production
-
-Production remains at:
-
-`https://www.hybridone.co.uk`
-
-source:
-
-`dbe7528b83687df73a2ef2b289ae44390205ed11`
-
-Do not assume dev universal-login behaviour is live in production.
+- **Switch gym desktop/mobile** -> Done
+- **Universal login** -> Testing
+- **Invite/access Auth matrix** -> In Progress, with repeatable invite UI cases recorded as PASS
+- Production promotion remains Blocked
 
 ---
 

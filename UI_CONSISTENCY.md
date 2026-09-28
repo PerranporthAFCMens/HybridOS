@@ -1,6 +1,6 @@
 # HybridOne UI consistency contract
 
-**Updated: 27 September 2026**
+**Updated: 28 September 2026**
 
 HybridOne uses one shared visual language across Admin, Staff and Member surfaces.
 
@@ -61,15 +61,17 @@ Consistency does not mean every feature has identical geometry. It means the use
 
 ## Latest dev head
 
-Current handover checkpoint:
+Current verified dev source before this documentation checkpoint:
 
-`cbee25179d8b6ce5a93c09c8937b3194c62da974`
+`0654b4a085d463eaaaccd241caf741015e0ac871`
 
-The verified application checkpoint adds a persistent Admin-shell account chip using existing shared primitives. The locked `admin-frame.css` visual baseline was deliberately preserved rather than weakened. Current smoke/runtime/Auth browser checks are green; the earlier authenticated whole-app UI audit remains the visual sweep evidence.
+- smoke `36467112929`: PASS
+- public runtime `36467112883`: PASS
 
+The persistent Admin shell and canonical `app-consistency.css` contract remain intact.
 
 ## Multi-gym shell visibility
 
 For accounts with access to more than one active gym, the shared shell must expose a discoverable **Switch gym** route. This is part of the cross-app consistency contract, not a page-specific feature.
 
-As of 28 September 2026, the user reports that the gym picker / Switch gym control is not visible in the core app on current dev `35a7a80a3b6894a776dd253c94f8b47fcefc15d6`. Treat this as an open shared-shell regression until exact-SHA authenticated browser verification passes again.
+The 28 September visibility regression is **closed**. Fix `3ee9028a...` hardened the persistent shell switcher; authenticated browser run `36466232127` passed the visible desktop/mobile switch and Hub <-> Puffin navigation. Later current-dev commits do not modify that runtime implementation.

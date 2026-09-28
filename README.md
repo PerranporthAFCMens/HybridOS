@@ -2,15 +2,20 @@
 
 ## Current development checkpoint - 28 September 2026
 
-Current dev head: `35a7a80a3b6894a776dd253c94f8b47fcefc15d6`
+Current verified dev source before this documentation checkpoint:
 
-- smoke `36460766581`: PASS
-- public runtime `36460766735`: PASS
-- latest full Auth browser `36311647499`: PASS on older SHA `9039ed4b...`
+`0654b4a085d463eaaaccd241caf741015e0ac871`
 
-Open current-build regression: the user reports that **Switch gym / the gym picker is not visible in the core app**. See `STATUS.md`, `AUTH_CONTEXT.md` and `HANDOVER.md` before continuing.
+- smoke `36467112929`: PASS
+- public runtime `36467112883`: PASS
+- current picker/multi-gym browser step `36466232127`: PASS on `25ad1f57...`
+- repeatable invite browser matrix `36465324428`: PASS
+
+The 28 September **Switch gym / gym picker regression is closed**. Persistent desktop/mobile switching Hub <-> Puffin is browser-verified.
 
 Production remains held on `main` `dbe7528b...`.
+
+Remaining release gates are same-user different-role-per-gym browser coverage, member email-confirmation enablement/confirmation-link verification, intentional branch reconciliation, and exact production browser verification.
 
 
 **HybridOne is the operating system for hybrid gyms.**
@@ -37,13 +42,14 @@ Production `main`:
 
 Current verified `dev`:
 
-`cbee25179d8b6ce5a93c09c8937b3194c62da974`
+`0654b4a085d463eaaaccd241caf741015e0ac871`
 
-Latest green checks:
+Latest current-head green checks:
 
-- smoke `36311298789`
-- public dev runtime `36311298820`
-- Auth journey browser `36311299027`
+- smoke `36467112929`
+- public dev runtime `36467112883`
+- picker/multi-gym browser step `36466232127` PASS on `25ad1f57...`
+- repeatable invite browser matrix `36465324428` PASS
 
 Branches are diverged. Do not blindly merge them.
 
@@ -102,7 +108,7 @@ See [UI_CONSISTENCY.md](./UI_CONSISTENCY.md).
 
 Before production promotion:
 
-- finish repeatable invite UI journeys and same-user different-role-per-gym browser coverage
+- finish same-user different-role-per-gym browser coverage
 - enable + verify member email confirmation
 - reconcile dev/main intentionally
 - verify exact production deployment
