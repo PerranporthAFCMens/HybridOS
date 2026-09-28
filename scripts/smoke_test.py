@@ -95,7 +95,7 @@ RENDER_BASELINE={
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
  'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
  'admin-frame.js':'99e719d9d67ca6272c0d574453886a245bff4400',
- 'app-stability.js':'f5819ecd71e76985b7b7f410c2f25e9e7700a380',
+ 'app-stability.js':'77bc50425bcc8bca57390d71d38f9468f56acdcc',
  'shared-admin-nav.js':'2ab89dfbca4cd8e121f4072cb14f4f49ee0d71b0',
 }
 def git_blob_sha(path):
@@ -402,6 +402,8 @@ for x in ('showOpsTab','location.hash.replace','history.replaceState','resources
 stability=(ROOT/'app-stability.js').read_text(encoding='utf-8')
 for x in ('hybridNavigationMask','beginNavigation','HybridNavigation','adminFiles.indexOf(currentFile)','adminFiles.indexOf(targetFile)'):
  if x not in stability:problems.append(f'app-stability.js: admin navigation transition rule missing: {x}')
+for x in ("syncMobileBrowserChrome","mobileViewport.matches)return","meta[name=\"theme-color\"]","pageshow","visibilitychange","#f5f7fb"):
+ if x not in stability:problems.append(f'app-stability.js: mobile Safari chrome reset missing: {x}')
 for x in ("document.documentElement.classList.contains('admin-embedded')","'workout-builder.html'","'gym-layout.html'"):
  if x not in stability:problems.append(f'app-stability.js: embedded admin transition isolation missing: {x}')
 for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','staff.html','member.html','member-preview.html','social.html','groups.html'):

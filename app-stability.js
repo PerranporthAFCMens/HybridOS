@@ -6,8 +6,25 @@
   var lastError=null;
   var recoveryShown=false;
   var navMask=null;
+  var mobileViewport=window.matchMedia('(max-width:900px)');
+  var mobileChromeColor='#f5f7fb';
+
+  function syncMobileBrowserChrome(){
+    if(!mobileViewport.matches)return;
+    var meta=document.querySelector('meta[name="theme-color"]');
+    if(!meta){
+      meta=document.createElement('meta');
+      meta.setAttribute('name','theme-color');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content',mobileChromeColor);
+    document.documentElement.style.backgroundColor=mobileChromeColor;
+    if(document.body)document.body.style.backgroundColor=mobileChromeColor;
+  }
 
   function beginNavigation(){
+    syncMobileBrowserChrome();
+    if(mobileViewport.matches)return;
     if(navMask)return;
     navMask=document.createElement('div');
     navMask.id='hybridNavigationMask';
@@ -62,6 +79,8 @@
     document.body.appendChild(el);
   }
   window.addEventListener('online',connectionBanner);window.addEventListener('offline',connectionBanner);
+  window.addEventListener('pageshow',syncMobileBrowserChrome);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)syncMobileBrowserChrome()});
 
   document.addEventListener('click',function(e){
     if(document.documentElement.classList.contains('admin-embedded'))return;
@@ -82,6 +101,8 @@
   },true);
 
   document.addEventListener('DOMContentLoaded',function(){
+    syncMobileBrowserChrome();
+    requestAnimationFrame(syncMobileBrowserChrome);
     connectionBanner();
     var obs=new MutationObserver(markReady),loading=byId('loading'),app=byId('app');
     if(loading)obs.observe(loading,{attributes:true,attributeFilter:['class','style']});
