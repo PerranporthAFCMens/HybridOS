@@ -26,6 +26,10 @@ permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: hybridone-auth-journey
+  cancel-in-progress: false
+
 jobs:
   auth-journeys:
     runs-on: ubuntu-latest
