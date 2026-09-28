@@ -9,8 +9,13 @@ chooser_text=(ROOT/'choose-gym.html').read_text(encoding='utf-8')
 for marker in ('Choose a gym',"params.get('switch')==='1'",'data-gym','hybrid-last-gym-id'):
  if marker not in chooser_text:problems.append(f'choose-gym.html: multi-gym chooser contract missing: {marker}')
 admin_frame=(ROOT/'admin.html').read_text(encoding='utf-8')
-for marker in ('admin-frame-account userchip','account-menu.js'):
- if marker not in admin_frame:problems.append(f'admin.html: persistent account menu missing: {marker}')
+for marker in ('admin-frame-account userchip','account-menu.js','gym-switcher.js'):
+ if marker not in admin_frame:problems.append(f'admin.html: persistent account/gym shell missing: {marker}')
+admin_frame_js=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
+for marker in ('admin-frame-mobile','admin-frame-backdrop','mobile()'):
+ if marker not in admin_frame_js:problems.append(f'admin-frame.js: persistent mobile Admin shell missing: {marker}')
+if "if(window.matchMedia('(max-width:900px)').matches){" in admin_frame_js:
+ problems.append('admin-frame.js: mobile Admin shell redirects out of the persistent top-level shell')
 account_menu=(ROOT/'account-menu.js').read_text(encoding='utf-8')
 for marker in ('Switch gym','allMemberships',"eq('access_status','active')",'choose-gym.html?switch=1'):
  if marker not in account_menu:problems.append(f'account-menu.js: multi-gym switch contract missing: {marker}')
