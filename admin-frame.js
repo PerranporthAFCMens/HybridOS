@@ -21,8 +21,9 @@ const routes=[
  {key:'members',label:'Members',icon:'members',view:'index.html#members'},
  {key:'communications',label:'Communications',icon:'community',view:'communications.html'},
  {key:'reporting',label:'Reporting',icon:'reporting',view:'reporting.html'},
- {key:'member-view',label:'Member view',icon:'profile',view:'member-view-settings.html',section:'View as'},
- {key:'staff-view',label:'Staff view',icon:'staff',href:'./staff.html?view=staff'}
+ {key:'member-experience',label:'Member experience',icon:'profile',view:'member-view-settings.html'},
+ {key:'member-view',label:'Member',icon:'profile',href:'./member.html?view=member',section:'View as'},
+ {key:'staff-view',label:'Staff',icon:'staff',href:'./staff.html?view=staff'}
 ];
 const frameA=document.getElementById('adminContentFrameA'),frameB=document.getElementById('adminContentFrameB'),nav=document.getElementById('adminFrameNav'),gymName=document.getElementById('adminFrameGym');
 let activeFrame=frameA,inactiveFrame=frameB,currentView='',loadSeq=0,pendingSwap=null;
@@ -49,7 +50,7 @@ function keyFor(view){
  if(file==='resource-availability.html'||file==='gym-layout.html')return'services';
  if(file==='reporting.html')return'reporting';
  if(file==='communications.html')return'communications';
- if(file==='member-view-settings.html')return'member-view';
+ if(file==='member-view-settings.html')return'member-experience';
  if(file==='index.html'&&hash==='members')return'members';
  if(file==='index.html')return'dashboard';
  return '';

@@ -30,6 +30,13 @@ for brand_file in list(ROOT.glob('*.html'))+list(ROOT.glob('*.js'))+list((ROOT/'
 index_entry=(ROOT/'index.html').read_text(encoding='utf-8')
 if 'hybrid-universal-login-entry' not in index_entry or "location.replace('./login.html')" not in index_entry:
  problems.append('index.html: bare entry must hand off to universal login')
+member_settings=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
+for marker in ('Member experience settings','./member.html?view=member','View as Member'):
+ if marker not in member_settings:problems.append(f'member-view-settings.html: authenticated member-view contract missing: {marker}')
+if './member-preview.html' in member_settings:problems.append('member-view-settings.html: fake Member Preview remains the primary admin action')
+member_portal=(ROOT/'member.html').read_text(encoding='utf-8')
+for marker in ("memberViewParams.get('view')==='member'",'Viewing the member portal as your account','./admin.html'):
+ if marker not in member_portal:problems.append(f'member.html: authenticated owner-as-member flow missing: {marker}')
 CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
 JS=('supabase-request-guard.js','app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','gym-context.js','gym-switcher.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
@@ -75,9 +82,9 @@ RENDER_BASELINE={
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
  'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
- 'admin-frame.js':'bc003259220aaf80973be7f646321a69f637d4dd',
+ 'admin-frame.js':'61611d01b510af48b7acfec06c89db0516132781',
  'app-stability.js':'f5819ecd71e76985b7b7f410c2f25e9e7700a380',
- 'shared-admin-nav.js':'ad4fbc29cd9b85ffe42d33ae5b918a3903f30761',
+ 'shared-admin-nav.js':'8f4160065cc6f02af83e97bc9ed7748c4b26cd7d',
 }
 def git_blob_sha(path):
  import hashlib

@@ -105,7 +105,7 @@
     const currentName=current==='member'?'Member':portalLabel(current);
     context.textContent='Viewing '+currentName;
     context.classList.toggle('hidden',targets.length<2);
-    wrap.innerHTML=available.map(p=>`<button type="button" class="account-menu-action account-portal-action" data-portal="${p}"><span>Switch to ${p==='member'?'Member':portalLabel(p)} view</span><span>↗</span></button>`).join('');
+    wrap.innerHTML=available.map(p=>{const label=p==='member'?'View as Member':p==='staff'?'View as Staff/Employee':'Return to Owner/Admin';return `<button type="button" class="account-menu-action account-portal-action" data-portal="${p}"><span>${label}</span><span>↗</span></button>`}).join('');
     divider.classList.toggle('hidden',available.length===0);
     wrap.querySelectorAll('.account-portal-action').forEach(btn=>btn.onclick=e=>{e.stopPropagation();navigateAccountTarget(portalHref(btn.dataset.portal))});
   }
