@@ -455,6 +455,19 @@ for x in ('Assign to member','Publish as WOD','workout_assignments','workout_wod
 member_v2=(ROOT/'member-workouts-v2.js').read_text(encoding='utf-8')
 for x in ('workout_assignments','workout_wods','Start workout','Complete workout',"source:'wod'"):
  if x not in member_v2:problems.append(f'member-workouts-v2.js: member Workout V2 boundary missing: {x}')
+for x in ("sessionStorage.getItem('hybrid-gym-id')",".eq('gym_id',selectedGymId)","hybrid:workout-saved"):
+ if x not in member_v2:problems.append(f'member-workouts-v2.js: selected-gym/live workout refresh contract missing: {x}')
+if ".eq('user_id',userId).eq('is_active',true).limit(1).maybeSingle()" in member_v2:problems.append('member-workouts-v2.js: first-active-gym shortcut returned')
+member_experience=(ROOT/'member-experience.js').read_text(encoding='utf-8')
+for x in ("sessionStorage.getItem('hybrid-gym-id')",".eq('gym_id',selectedGymId)","hybrid:workout-saved","loadRecentActivity()"):
+ if x not in member_experience:problems.append(f'member-experience.js: selected-gym/live activity refresh contract missing: {x}')
+if ".select('gym_id').eq('user_id',userId).eq('is_active',true).limit(1)" in member_experience:problems.append('member-experience.js: first-active-gym shortcut returned')
+pb_enhancements=(ROOT/'pb-workout-enhancements.js').read_text(encoding='utf-8')
+for x in ("sessionStorage.getItem('hybrid-gym-id')",".eq('gym_id',selectedGymId)",".eq('gym_id',gymId)"):
+ if x not in pb_enhancements:problems.append(f'pb-workout-enhancements.js: selected-gym PB boundary missing: {x}')
+if ".select('gym_id').eq('user_id',authUser.id).eq('is_active',true).limit(1)" in pb_enhancements:problems.append('pb-workout-enhancements.js: first-active-gym shortcut returned')
+member_portal=(ROOT/'member.html').read_text(encoding='utf-8')
+if "hybrid:workout-saved" not in member_portal:problems.append('member.html: successful manual workout save must refresh member activity surfaces')
 for page_name in ('member.html','member-preview.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('member-workouts-v2.js','member-workouts-v2.css'):

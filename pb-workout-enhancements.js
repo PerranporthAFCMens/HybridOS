@@ -73,7 +73,7 @@ function renderPreviewPBs(){
 
 async function loadRealPBs(){
   if(!supabase||!authUser) return;
-  const {data}=await supabase.from('personal_bests').select('*').eq('user_id',authUser.id).order('achieved_at',{ascending:false});
+  const {data}=await supabase.from('personal_bests').select('*').eq('user_id',authUser.id).eq('gym_id',gymId).order('achieved_at',{ascending:false});
   const grid=getPBGrid(); if(grid && data) grid.innerHTML=data.length?data.map(cardHTML).join(''):'<div class="empty">No PBs yet. Add one or save a workout to create your first PB.</div>';
 }
 
@@ -147,7 +147,7 @@ async function init(){
     renderPreviewPBs();
   } else {
     const {data:{session}}=await supabase.auth.getSession(); authUser=session?.user||null;
-    if(authUser){const {data}=await supabase.from('gym_members').select('gym_id').eq('user_id',authUser.id).eq('is_active',true).limit(1); gymId=data?.[0]?.gym_id||null; await loadRealPBs();}
+    if(authUser){const selectedGymId=new URLSearchParams(location.search).get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||'';if(selectedGymId){const {data}=await supabase.from('gym_members').select('gym_id').eq('user_id',authUser.id).eq('gym_id',selectedGymId).eq('is_active',true).eq('access_status','active').maybeSingle();gymId=data?.gym_id||null;}if(gymId)await loadRealPBs();}
   }
   const save=document.getElementById('saveWorkout'); if(save) save.addEventListener('click',()=>setTimeout(capturePBsFromWorkout,350));
 }
