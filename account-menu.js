@@ -157,7 +157,7 @@
   avatarFile.onchange=()=>{const file=avatarFile.files?.[0];if(!file)return;if(file.size>5242880){msg.textContent='Profile photo must be 5 MB or smaller.';msg.className='account-msg error';avatarFile.value='';return}const url=URL.createObjectURL(file);avatarPreview.innerHTML='<img src="'+url+'" alt="New profile photo preview">'};
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();if(modal.classList.contains('open'))closeModal()}});
-  q('#accountSignOutBtn').onclick=async()=>{q('#accountSignOutBtn').disabled=true;sessionStorage.removeItem('hybrid-gym-id');await sb.auth.signOut();navigateAccountTarget('./login.html')};
+  q('#accountSignOutBtn').onclick=async()=>{q('#accountSignOutBtn').disabled=true;sessionStorage.removeItem('hybrid-gym-id');await sb.auth.signOut();sessionStorage.removeItem('hybrid-gym-id');navigateAccountTarget('./login.html')};
 
   saveBtn.onclick=async()=>{
     msg.textContent='';msg.className='account-msg';
