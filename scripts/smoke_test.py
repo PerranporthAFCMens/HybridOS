@@ -20,6 +20,11 @@ account_menu=(ROOT/'account-menu.js').read_text(encoding='utf-8')
 for marker in ('Switch gym','allMemberships',"eq('access_status','active')",'choose-gym.html?switch=1'):
  if marker not in account_menu:problems.append(f'account-menu.js: multi-gym switch contract missing: {marker}')
 if '.limit(1)' in account_menu:problems.append('account-menu.js: first-gym assumption returned')
+for marker in ('hybrid:memberships-loaded','__hybridActiveMemberships'):
+ if marker not in account_menu:problems.append(f'account-menu.js: persistent shell membership handoff missing: {marker}')
+gym_switcher=(ROOT/'gym-switcher.js').read_text(encoding='utf-8')
+for marker in ('hybrid:memberships-loaded','__hybridActiveMemberships','hybrid-gym-switchable','choose-gym.html?switch=1'):
+ if marker not in gym_switcher:problems.append(f'gym-switcher.js: persistent multi-gym shell contract missing: {marker}')
 for marker in ("function navigateAccountTarget","admin-embedded","window.parent.location.href","navigateAccountTarget('./login.html')"):
  if marker not in account_menu:problems.append(f'account-menu.js: embedded Admin account navigation missing: {marker}')
 if "await sb.auth.signOut();sessionStorage.removeItem('hybrid-gym-id');navigateAccountTarget('./login.html')" not in account_menu:

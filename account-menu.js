@@ -118,7 +118,7 @@
       sb.from('profiles').select('display_name,first_name,last_name,avatar_url,date_of_birth,gender').eq('id',u.id).maybeSingle(),
       sb.from('gym_members').select('gym_id,role,access_status,gyms(id,name,slug)').eq('user_id',u.id).eq('is_active',true).eq('access_status','active').order('created_at')
     ]);
-    profile=p||{};allMemberships=gms||[];const activeGymId=sessionStorage.getItem('hybrid-gym-id')||'';membershipRole=allMemberships.find(x=>x.gym_id===activeGymId)||(allMemberships.length===1?allMemberships[0]:null);staffPermissions={};
+    profile=p||{};allMemberships=gms||[];window.__hybridActiveMemberships=allMemberships.map(x=>({gym_id:x.gym_id,role:x.role}));window.dispatchEvent(new CustomEvent('hybrid:memberships-loaded',{detail:{count:allMemberships.length}}));const activeGymId=sessionStorage.getItem('hybrid-gym-id')||'';membershipRole=allMemberships.find(x=>x.gym_id===activeGymId)||(allMemberships.length===1?allMemberships[0]:null);staffPermissions={};
     if(membershipRole&&['staff','coach'].includes(membershipRole.role)){const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',membershipRole.gym_id).eq('user_id',u.id).maybeSingle();staffPermissions=sa?.permissions||{}}
     const display=profile.display_name||[profile.first_name,profile.last_name].filter(Boolean).join(' ')||u.user_metadata?.display_name||u.user_metadata?.full_name||u.email?.split('@')[0]||'Account';
     menuName.textContent=display; menuEmail.textContent=u.email||'';
