@@ -60,7 +60,7 @@ jobs:
           const puffin=process.env.PUFFIN_GYM_ID;
           const sha=process.env.HYBRID_BUILD_SHA;
 
-          async function checkProtected(browser,path,gymId,returnFile){
+          async function checkProtected(browser,path,gymId,returnFile,returnView=''){
             const context=await browser.newContext({viewport:{width:390,height:844}});
             const page=await context.newPage();
             try{
@@ -75,6 +75,7 @@ jobs:
               assert.ok(ret,'return_to missing from '+final.href);
               const retUrl=new URL(ret);
               assert.ok(retUrl.pathname.endsWith('/'+returnFile),'wrong return path: '+ret);
+              if(returnView)assert.equal(retUrl.searchParams.get('view'),returnView,'admin shell view lost from return path');
               assert.equal(retUrl.searchParams.get('gym_id'),gymId,'gym_id lost from return path');
               console.log('Protected route passed:',path,'-> universal login ->',returnFile);
             }finally{
@@ -86,7 +87,7 @@ jobs:
             const browser=await chromium.launch({headless:true});
             try{
               await checkProtected(browser,'admin-access.html?gym_id='+hub,hub,'admin-access.html');
-              await checkProtected(browser,'admin.html?view=admin-access.html&gym_id='+hub,hub,'admin-access.html');
+              await checkProtected(browser,'admin.html?view=admin-access.html&gym_id='+hub,hub,'admin.html','admin-access.html');
               await checkProtected(browser,'staff-permissions.html?gym_id='+hub,hub,'staff-permissions.html');
               await checkProtected(browser,'admin-access.html?gym_id='+puffin,puffin,'admin-access.html');
               console.log('Protected routing browser verification passed');
