@@ -66,6 +66,7 @@ def version_admin_frame_assets():
  s=read('admin.html')
  s=re.sub(r'href=["\']\.\/admin-frame\.css(?:\?[^"\']*)?["\']',f'href="./admin-frame.css?v={VERSION}"',s,count=1)
  s=re.sub(r'src=["\']\.\/admin-frame\.js(?:\?[^"\']*)?["\']',f'src="./admin-frame.js?v={VERSION}"',s,count=1)
+ s=re.sub(r'src=["\']\.\/gym-context\.js(?:\?[^"\']*)?["\']',f'src="./gym-context.js?v={VERSION}"',s,count=1)
  s=re.sub(r'src=["\']\.\/shared-shell\.js(?:\?[^"\']*)?["\']',f'src="./shared-shell.js?v={VERSION}"',s,count=1)
  s=re.sub(r'src=["\']\.\/account-menu\.js(?:\?[^"\']*)?["\']',f'src="./account-menu.js?v={VERSION}"',s,count=1)
  s=inject_body(s,'gym-switcher.js',f'<script src="./gym-switcher.js?v={VERSION}" defer></script>')
