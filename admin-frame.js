@@ -103,12 +103,6 @@ function mobile(){
 }
 async function init(){
  const requested=cleanView(new URLSearchParams(location.search).get('view')||'index.html');
- if(window.matchMedia('(max-width:900px)').matches){
-   const target=new URL('./'+requested,location.href),gymId=routeGymId();
-   if(gymId)target.searchParams.set('gym_id',gymId);
-   location.replace(target.toString());
-   return;
- }
  const{data:{session}}=await sb.auth.getSession();if(!session){location.replace(gymLoginUrl(true));return}
  const{data:gms,error:gmErr}=await sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',session.user.id).eq('is_active',true);
  if(gmErr||!gms?.length){location.replace(gymEntryUrl());return}
