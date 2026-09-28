@@ -206,6 +206,13 @@ jobs:
               const mobile=await browser.newContext({viewport:{width:390,height:844}});
               const mp=await mobile.newPage();
               await loginAndChoose(mp,hub);
+              console.log('Mobile portal diagnostics',JSON.stringify({
+                url:mp.url(),
+                shellCount:await mp.locator('.admin-frame-shell').count(),
+                menuCount:await mp.locator('.admin-frame-mobile').count(),
+                innerWidth:await mp.evaluate(()=>innerWidth),
+                mobileMedia:await mp.evaluate(()=>matchMedia('(max-width:900px)').matches)
+              }));
               await visibleSidebarSwitch(mp,{mobile:true});
               await switchGymFromSidebar(mp,puffin,{mobile:true});
               await switchGymFromSidebar(mp,hub,{mobile:true});
