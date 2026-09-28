@@ -1,5 +1,18 @@
 # HybridOne
 
+## Current development checkpoint - 28 September 2026
+
+Current dev head: `35a7a80a3b6894a776dd253c94f8b47fcefc15d6`
+
+- smoke `36460766581`: PASS
+- public runtime `36460766735`: PASS
+- latest full Auth browser `36311647499`: PASS on older SHA `9039ed4b...`
+
+Open current-build regression: the user reports that **Switch gym / the gym picker is not visible in the core app**. See `STATUS.md`, `AUTH_CONTEXT.md` and `HANDOVER.md` before continuing.
+
+Production remains held on `main` `dbe7528b...`.
+
+
 **HybridOne is the operating system for hybrid gyms.**
 
 HybridOne is a multi-tenant gym-management SaaS covering memberships, members, classes, programming, staff, community, reporting, communications and member/staff/Admin experiences.

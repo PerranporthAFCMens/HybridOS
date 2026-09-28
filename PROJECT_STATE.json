@@ -1,22 +1,22 @@
 {
   "schema_version": 2,
-  "verified_at_utc": "2026-09-27T10:07:00Z",
+  "verified_at_utc": "2026-09-28T17:50:00Z",
   "repository": "PerranporthAFCMens/HybridOS",
   "branches": {
     "production_source": "main",
     "development_source": "dev",
     "production_main_sha": "dbe7528b83687df73a2ef2b289ae44390205ed11",
-    "verified_dev_application_sha": "cbee25179d8b6ce5a93c09c8937b3194c62da974",
+    "verified_dev_application_sha": "35a7a80a3b6894a776dd253c94f8b47fcefc15d6",
     "relationship": "diverged",
-    "dev_ahead_by": 115,
+    "dev_ahead_by": 127,
     "dev_behind_by": 4,
     "merge_base_sha": "b7d83243e9248a64978677efec91c4f9d83c1052",
-    "note": "Counts verified against main...dev after the universal-login browser release-gate checkpoint on 27 Sep."
+    "note": "Counts verified against main...dev on 28 Sep 2026. Current dev head includes the authenticated member-view separation/navigation changes."
   },
   "release_gate": {
     "production_hold": true,
     "production_promotion_allowed": false,
-    "reason": "Universal login, multi-gym switching, protected routing, persistent Admin account switching, sign-out/re-login and mobile refresh/back are verified on dev. Production remains held while repeatable invite UI journeys, a same-user different-role-per-gym browser fixture, and member email-confirmation enablement/verification are completed."
+    "reason": "Production remains held. Current dev smoke and public runtime are green, but the user reports that the multi-gym picker/Switch gym control is not showing in the core app on the current build. That regression must be reproduced and fixed/reverified on the exact current dev head, alongside the remaining invite UI, role-differentiated gym, and member email-confirmation release-gate work."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
@@ -41,20 +41,18 @@
     "runtime_verification": {
       "status": "pass",
       "workflow": ".github/workflows/dev-runtime.yml",
-      "run_id": 36311298820,
-      "source_sha": "cbee25179d8b6ce5a93c09c8937b3194c62da974",
+      "run_id": 36460766735,
+      "source_sha": "35a7a80a3b6894a776dd253c94f8b47fcefc15d6",
       "verifies": [
         "exact deployed dev SHA",
-        "bare index handoff to universal login",
-        "universal login",
-        "gym chooser",
-        "gym-specific compatibility shortcuts"
+        "public dev runtime/build contract",
+        "current member-view navigation candidate"
       ]
     },
     "smoke": {
       "status": "pass",
-      "run_id": 36311298789,
-      "source_sha": "cbee25179d8b6ce5a93c09c8937b3194c62da974"
+      "run_id": 36460766581,
+      "source_sha": "35a7a80a3b6894a776dd253c94f8b47fcefc15d6"
     },
     "protected_routing_browser": {
       "status": "pass",
@@ -156,6 +154,24 @@
         "disposable Auth user cleanup",
         "live member-signup confirmation mode classification"
       ]
+    },
+    "latest_full_auth_browser": {
+      "status": "pass",
+      "workflow": ".github/workflows/auth-journey-browser.yml",
+      "run_id": 36311647499,
+      "source_sha": "9039ed4b20017580be0eb0c17034497d3cc6733b",
+      "note": "This is the latest full Auth/multi-gym browser pass. It predates the 28 Sep member-view/navigation commits and therefore does not clear the newly reported picker visibility regression."
+    },
+    "reported_regressions": {
+      "gym_switch_picker_visibility": {
+        "status": "open_user_reported",
+        "reported_on": "2026-09-28",
+        "current_dev_head": "35a7a80a3b6894a776dd253c94f8b47fcefc15d6",
+        "symptom": "User reports the gym selection picker / Switch gym control is not showing in the core app.",
+        "expected_contract": "A multi-gym user must be able to return to Choose a gym from the authenticated app. account-menu.js currently contains a Switch gym action and choose-gym.html is the chooser route.",
+        "historical_evidence": "Run 36199919230 previously verified Hub -> Puffin -> Hub on desktop/mobile, but that evidence is older than the current dev head.",
+        "next_action": "Reproduce with a real multi-gym account on current dev, determine whether the issue is account-menu visibility, current-gym/sidebar control, membership loading, or shell placement, then browser-verify the fix on the exact SHA."
+      }
     }
   },
   "supabase": {
@@ -177,7 +193,7 @@
     }
   },
   "current_auth_status": {
-    "universal_login_multi_gym_switch": "pass_browser_desktop_mobile",
+    "universal_login_multi_gym_switch": "historically_passed_browser; current picker visibility regression reported 28 Sep",
     "hybrid_hub_password_reset": "pass_full_browser",
     "puffin_password_reset": "pass_full_browser",
     "hybrid_hub_magic_link": "pass_full_browser",
@@ -197,7 +213,8 @@
     "member_signup_decision_date": "2026-09-26",
     "member_signup_decision": "Self-service member registration must confirm email before account access continues.",
     "member_signup_current_runtime": "immediate_session_and_email_confirmed_at_creation_observed_run_36311299027",
-    "role_specific_gym_routing": "implementation_supported; same-user different-role-per-gym browser fixture still required"
+    "role_specific_gym_routing": "implementation_supported; same-user different-role-per-gym browser fixture still required",
+    "gym_picker_current_head": "REGRESSION_REPORTED_REVERIFY_REQUIRED"
   },
   "current_open_test_invite": {
     "purpose": "Fresh Admin invite acceptance follow-up",

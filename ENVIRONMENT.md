@@ -1,6 +1,21 @@
 # HybridOne environment map
 
-**Updated: 27 September 2026**
+## 28 September verification note
+
+Current dev head:
+
+`35a7a80a3b6894a776dd253c94f8b47fcefc15d6`
+
+Exact-head checks:
+
+- smoke `36460766581` -> PASS
+- dev runtime `36460766735` -> PASS
+
+Latest full Auth/multi-gym browser pass remains `36311647499` at `9039ed4b...`, which predates the latest member-view/navigation work.
+
+Open current-build report: **Switch gym / gym picker is not visible in the core app for the user.** The chooser URL still exists, but UI visibility must be reverified before release.
+
+**Updated: 28 September 2026**
 
 Operational source of truth for routes, IDs and deployment topology.
 
@@ -17,13 +32,13 @@ Branches:
 
 Current verified heads:
 
-- verified dev application: `cbee25179d8b6ce5a93c09c8937b3194c62da974`
+- current dev head: `35a7a80a3b6894a776dd253c94f8b47fcefc15d6`
 - main: `dbe7528b83687df73a2ef2b289ae44390205ed11`
 
 Relationship:
 
 - diverged
-- dev ahead at application checkpoint 115
+- dev ahead: 127
 - dev behind 4
 - merge base `b7d83243e9248a64978677efec91c4f9d83c1052`
 

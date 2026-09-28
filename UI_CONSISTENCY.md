@@ -66,3 +66,10 @@ Current handover checkpoint:
 `cbee25179d8b6ce5a93c09c8937b3194c62da974`
 
 The verified application checkpoint adds a persistent Admin-shell account chip using existing shared primitives. The locked `admin-frame.css` visual baseline was deliberately preserved rather than weakened. Current smoke/runtime/Auth browser checks are green; the earlier authenticated whole-app UI audit remains the visual sweep evidence.
+
+
+## Multi-gym shell visibility
+
+For accounts with access to more than one active gym, the shared shell must expose a discoverable **Switch gym** route. This is part of the cross-app consistency contract, not a page-specific feature.
+
+As of 28 September 2026, the user reports that the gym picker / Switch gym control is not visible in the core app on current dev `35a7a80a3b6894a776dd253c94f8b47fcefc15d6`. Treat this as an open shared-shell regression until exact-SHA authenticated browser verification passes again.

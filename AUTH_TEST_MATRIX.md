@@ -1,6 +1,6 @@
 # HybridOne Auth test matrix
 
-**Updated: 27 September 2026**
+**Updated: 28 September 2026**
 
 Release gate for Auth, access and gym-context work.
 
@@ -73,3 +73,25 @@ Latest green checks:
 - Auth journey browser `36311299027`
 
 The Auth journey gate verifies the exact public dev revision before exercising desktop/mobile chooser, switching, refresh/back and sign-out/re-login. The runtime guard still confirms that bare `index.html` hands off to the universal login while embedded/gym/invite contexts remain available.
+
+
+## 28 September regression note
+
+**Gym picker / Switch gym visibility on current dev:** **PARTIAL / REGRESSION REPORTED**
+
+- current dev head: `35a7a80a3b6894a776dd253c94f8b47fcefc15d6`
+- current smoke: `36460766581` PASS
+- current runtime: `36460766735` PASS
+- latest full Auth journey: `36311647499` PASS on `9039ed4b...`
+- user reports that the picker is not visible in the core app on the current build
+- historical run `36199919230` is therefore not sufficient evidence for the current head
+
+Required before closing:
+
+- reproduce with 2+ active memberships
+- confirm chooser after login
+- confirm **Switch gym** visible inside the authenticated app
+- confirm Hub -> Puffin -> Hub switch
+- confirm role is re-resolved for each gym
+- confirm desktop + mobile
+- rerun against the exact current/fixed SHA

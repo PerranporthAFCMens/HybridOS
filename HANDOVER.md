@@ -1,4 +1,105 @@
-# HybridOne technical handover
+# HybridOne handover
+
+## CURRENT HANDOVER CHECKPOINT - 28 SEPTEMBER 2026
+
+**Read this section first, then the control layer.**
+
+Repository: `PerranporthAFCMens/HybridOS`
+
+Current heads:
+
+- `dev`: `35a7a80a3b6894a776dd253c94f8b47fcefc15d6`
+- `main`: `dbe7528b83687df73a2ef2b289ae44390205ed11`
+- relationship: **diverged**
+- dev ahead: **127**
+- dev behind: **4**
+- merge base: `b7d83243e9248a64978677efec91c4f9d83c1052`
+
+Production hold: **ACTIVE**. Do not broadly merge dev into main.
+
+### Exact current-head evidence
+
+- smoke run `36460766581` -> PASS
+- public dev runtime run `36460766735` -> PASS
+
+Latest full universal Auth/multi-gym browser pass:
+
+- run `36311647499` -> PASS
+- SHA `9039ed4b20017580be0eb0c17034497d3cc6733b`
+
+That full browser pass is older than the 28 Sep member-view/navigation changes.
+
+### FIRST ISSUE FOR NEXT CHAT - GYM PICKER NOT SHOWING
+
+The user reports:
+
+> the gym selection picker / Switch gym control is not showing in the core app.
+
+This is **not closed**.
+
+Intended model:
+
+`email + password -> authenticate person -> active memberships -> one gym direct / multiple gyms choose -> role resolved per selected gym`
+
+Expected files/components:
+
+- `login.html` universal login
+- `choose-gym.html` chooser
+- `gym-context.js` current gym context helpers
+- `account-menu.js` loads all active memberships and should render **Switch gym** when `allMemberships.length > 1`
+- active context: `sessionStorage['hybrid-gym-id']`
+- last-used hint only: `localStorage['hybrid-last-gym-id']`
+
+Previous browser evidence `36199919230` verified switching on an older revision, but current user observation overrides any assumption that this remains good.
+
+**Next chat should reproduce the picker issue on current dev before changing architecture.** Check actual active gym memberships for the test/user account, top-level versus embedded account-menu placement, CSS visibility, and whether a persistent shared-shell gym selector is required.
+
+### Recent 28 Sep work
+
+Latest commits:
+
+- `f80dbe5a...` Separate member settings from authenticated member view
+- `f0665dc2...` Update smoke checks for authenticated member view
+- `35a7a80a...` Align member-view smoke assertion with nav structure
+
+Current smoke/runtime are green after those changes.
+
+### Universal Auth model remains authoritative
+
+Read `AUTH_CONTEXT.md`.
+
+Core rule:
+
+> **Authenticate the person first. Then select an active gym context.**
+
+Never restore email-to-gym inference, first-membership `.limit(1)` tenant selection, last-gym-as-permission, or silent cross-gym fallback.
+
+### Other release-gate items still open
+
+- repeatable fresh new-account invite Create account browser journey
+- repeatable existing-account invite acceptance fixture
+- wrong-account mismatch/switch-account browser UI
+- same-user different-role-per-gym browser fixture
+- enable Supabase member email confirmation and browser-test the confirmation-link journey
+- current gym picker visibility regression above
+
+### UI consistency
+
+The shared UI contract remains in force. The app-wide consistency work is not a redesign. `app-consistency.css` is the canonical final shared visual layer. However, the current picker visibility report now counts as a **shared-shell consistency issue**.
+
+### Production
+
+Production remains at:
+
+`https://www.hybridone.co.uk`
+
+source:
+
+`dbe7528b83687df73a2ef2b289ae44390205ed11`
+
+Do not assume dev universal-login behaviour is live in production.
+
+---
 
 **Updated: 27 September 2026**
 

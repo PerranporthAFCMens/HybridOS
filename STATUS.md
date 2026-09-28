@@ -1,6 +1,56 @@
 # HybridOne live status
 
-**Updated: 27 September 2026**
+## Current checkpoint - 28 September 2026
+
+Current `dev` head:
+
+`35a7a80a3b6894a776dd253c94f8b47fcefc15d6`
+
+Current exact-head evidence:
+
+- smoke run `36460766581` -> **PASS**
+- public dev runtime run `36460766735` -> **PASS**
+
+Latest full Auth/multi-gym browser evidence:
+
+- run `36311647499` -> **PASS**
+- source `9039ed4b20017580be0eb0c17034497d3cc6733b`
+
+Important: that full Auth browser pass predates the 28 September member-view/navigation commits.
+
+### OPEN REGRESSION: gym picker / Switch gym visibility
+
+The user reports that the gym selection picker is **not showing in the core app** on the current dev build.
+
+Expected contract:
+
+- authentication is person-first
+- one active gym -> enter directly
+- 2+ active gyms -> `choose-gym.html`
+- once inside the app, a multi-gym user must have a visible **Switch gym** route back to the chooser
+- role must be re-resolved for the selected gym
+
+Current implementation still contains:
+
+- `choose-gym.html`
+- `account-menu.js` multi-membership loading
+- `Switch gym` action to `choose-gym.html?switch=1`
+
+Do **not** treat the historical multi-gym browser pass as proof that the picker is visible on the current head. Reproduce this exact report first in the next chat.
+
+### Recent 28 September change
+
+The latest commits separate **member settings** from the authenticated **Member view** navigation and align the smoke assertions with that structure:
+
+- `f80dbe5a...` Separate member settings from authenticated member view
+- `f0665dc2...` Update smoke checks for authenticated member view
+- `35a7a80a...` Align member-view smoke assertion with nav structure
+
+The final smoke/runtime checks are green at `35a7a80a...`.
+
+Production remains **HELD** on `main` `dbe7528b83687df73a2ef2b289ae44390205ed11`.
+
+**Updated: 28 September 2026**
 
 Machine-readable state: [PROJECT_STATE.json](./PROJECT_STATE.json)
 
