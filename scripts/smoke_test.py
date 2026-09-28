@@ -231,7 +231,7 @@ for x in ('supabase.auth.signOut()',"location.replace('./login.html')",'Signing 
  if x not in sign_out:problems.append(f'sign-out.html: reliable sign out flow missing: {x}')
 if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: duplicate Member memberships tab returned')
 
-for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member experience','View as Member','Door access'):
+for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member experience',"section:'View as'","href:'./member.html?view=member'",'Door access'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: consolidated admin navigation missing: {x}')
 for page_name in ('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
