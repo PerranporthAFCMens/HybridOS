@@ -87,9 +87,9 @@ RENDER_BASELINE={
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
  'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
- 'admin-frame.js':'61611d01b510af48b7acfec06c89db0516132781',
+ 'admin-frame.js':'99e719d9d67ca6272c0d574453886a245bff4400',
  'app-stability.js':'f5819ecd71e76985b7b7f410c2f25e9e7700a380',
- 'shared-admin-nav.js':'8f4160065cc6f02af83e97bc9ed7748c4b26cd7d',
+ 'shared-admin-nav.js':'2ab89dfbca4cd8e121f4072cb14f4f49ee0d71b0',
 }
 def git_blob_sha(path):
  import hashlib
@@ -185,8 +185,10 @@ for x in ('hybrid-admin-nav','embedded=1','history.pushState','adminContentFrame
  if x not in admin_frame_js:problems.append(f'admin-frame.js: persistent routing missing: {x}')
 for x in ('hybrid-admin-ready','pendingSwap','completeSwap','Fallback only'):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: embedded readiness handoff missing: {x}')
-for x in ("matchMedia('(max-width:900px)').matches","const target=new URL('./'+requested,location.href)","target.searchParams.set('gym_id',gymId)","const start=requested"):
- if x not in admin_frame_js:problems.append(f'admin-frame.js: mobile top-level handoff missing: {x}')
+for x in ("const requested=cleanView(new URLSearchParams(location.search).get('view')||'index.html')","mobile()","const start=requested"):
+ if x not in admin_frame_js:problems.append(f'admin-frame.js: persistent mobile shell routing missing: {x}')
+if "window.matchMedia('(max-width:900px)').matches" in admin_frame_js:
+ problems.append('admin-frame.js: mobile route escaped the persistent Admin shell')
 for x in ('workout-builder.html',"{key:'workouts'","if(file==='workout-builder.html')return'workouts'"):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: admin registry/routes out of sync: {x}')
 admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
@@ -211,7 +213,7 @@ for x in ("const adminPages=new Set","enterPersistentShell","shellUrlFor"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: persistent router registry missing: {x}')
 for x in ('enterPersistentShell','admin.html?view=','shellUrlFor'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: persistent shell routing missing: {x}')
-if "window.top!==window.self||window.matchMedia('(max-width:900px)').matches" not in admin_nav:problems.append('shared-admin-nav.js: mobile must stay outside persistent shell')
+if "function enterPersistentShell(e,href){if(window.top!==window.self)return false;" not in admin_nav:problems.append('shared-admin-nav.js: top-level mobile navigation must enter the persistent shell')
 if "function markAdminHotNav(href){try{" not in admin_nav:problems.append('shared-admin-nav.js: smooth top-level admin handoff missing')
 for x in ('markAdminHotNav','hybrid-admin-hot-nav','sessionStorage.setItem'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: smooth admin hand-off missing: {x}')
@@ -277,7 +279,7 @@ for protected_name in ('admin-access.html','admin-operations.html','staff-permis
  if 'hybrid-hub-login.html' in protected_text or 'puffin-performance-login.html' in protected_text:
   problems.append(f'{protected_name}: dedicated login implementation reference returned')
 if "location.replace('./'+requested);" in admin_frame_js:problems.append('admin-frame.js: mobile handoff drops gym context')
-for marker in ('./login.html','./choose-gym.html','return_to',"target.searchParams.set('gym_id',gymId)"):
+for marker in ('./login.html','./choose-gym.html','return_to',"params.set('gym_id',membership.gym_id)"):
  if marker not in admin_frame_js:problems.append(f'admin-frame.js: universal protected routing missing: {marker}')
 admin_frame_context=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
 for x in ("const explicitGymId=params.get('gym_id')||''","const storedGymId=sessionStorage.getItem('hybrid-gym-id')||''","!membership&&!explicitGymId&&!storedGymId&&gms.length===1"):
