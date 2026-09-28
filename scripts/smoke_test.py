@@ -9,7 +9,7 @@ chooser_text=(ROOT/'choose-gym.html').read_text(encoding='utf-8')
 for marker in ('Choose a gym',"params.get('switch')==='1'",'data-gym','hybrid-last-gym-id'):
  if marker not in chooser_text:problems.append(f'choose-gym.html: multi-gym chooser contract missing: {marker}')
 admin_frame=(ROOT/'admin.html').read_text(encoding='utf-8')
-for marker in ('admin-frame-account userchip','account-menu.js','gym-switcher.js'):
+for marker in ('admin-frame-account userchip','gym-context.js?v=','account-menu.js','gym-switcher.js'):
  if marker not in admin_frame:problems.append(f'admin.html: persistent account/gym shell missing: {marker}')
 admin_frame_js=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
 for marker in ('admin-frame-mobile','admin-frame-backdrop','mobile()'):
