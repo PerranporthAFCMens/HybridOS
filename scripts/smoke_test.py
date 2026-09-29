@@ -438,7 +438,11 @@ if '<nav class="bottom">' in staff_page:problems.append('staff.html: retired mob
 for x in ('staffTimetableLink','ownerPreviewNav','Back to Owner/Admin','Gym timetable',"supabase.from('class_sessions')"):
  if x not in staff_page:problems.append(f'staff.html: staff role-switch/timetable boundary missing: {x}')
 if 'href="./classes.html"' in staff_page:problems.append('staff.html: Staff View must not link into Owner/Admin classes page')
+if 'grid-template-columns:repeat(2,minmax(0,1fr));gap:12px' not in staff_page:
+ problems.append('staff.html: compact two-stat mobile Staff layout missing')
 member_exp_css=(ROOT/'member-experience.css').read_text(encoding='utf-8')
+for x in ('member-empty-state','Secondary Member pages: intentional empty states and calmer desktop density','#membership>.card'):
+ if x not in member_exp_css:problems.append(f'member-experience.css: Member secondary-page polish missing: {x}')
 for x in ('Desktop member workspace','display:none!important','width:min(1220px,100%)','member-home-tile[data-home-key="hero"]'):
  if x not in member_exp_css:problems.append(f'member-experience.css: desktop member layout guard missing: {x}')
 member_exp_js=(ROOT/'member-experience.js').read_text(encoding='utf-8')
