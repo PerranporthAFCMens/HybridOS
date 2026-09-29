@@ -321,8 +321,11 @@ input.staff-member-search{width:100%;min-height:44px;padding:11px 12px!important
 .card,.panel{
   border:1px solid var(--hybrid-line)!important;
   border-radius:var(--hybrid-radius-lg)!important;
-  background:var(--hybrid-panel)!important;
   box-shadow:var(--hybrid-shadow)!important;
+}
+/* Semantic variants (for example .hero) own their own paint. */
+.card:not(.hero),.panel:not(.hero){
+  background:var(--hybrid-panel)!important;
 }
 .report-card,.group-card,.member-card,.challenge-card,
 .staff-member-result,.staff-pt-row,.staff-access-code{
@@ -466,8 +469,96 @@ input.staff-member-search{width:100%;min-height:44px;padding:11px 12px!important
   border-radius:14px!important;
   line-height:1.45;
 }
+
 .status,.tag{
   line-height:1.2;
+}
+
+/* Shared loading / empty-state language. */
+.loading-state,.empty-state{
+  width:100%;
+  min-height:72px;
+  border:1px dashed #d0d5dd;
+  border-radius:14px;
+  background:#fafbfc;
+  color:var(--hybrid-muted);
+  padding:16px;
+}
+.loading-state{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  font-size:13px;
+  font-weight:750;
+}
+.loading-state::before{
+  content:"";
+  width:16px;
+  height:16px;
+  flex:0 0 16px;
+  border:2px solid #d0d5dd;
+  border-top-color:var(--hybrid-dark);
+  border-radius:50%;
+  animation:hybrid-loading-spin .8s linear infinite;
+}
+.empty-state{
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:5px;
+  text-align:center;
+}
+.empty-state strong{color:var(--hybrid-ink);font-size:14px}
+.empty-state p{margin:0;max-width:520px;line-height:1.45}
+@keyframes hybrid-loading-spin{to{transform:rotate(360deg)}}
+
+/* One preview-mode banner for Member / Staff / Admin role previews. */
+.hybrid-preview-banner{
+  position:sticky;
+  top:0;
+  z-index:82;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:42px;
+  padding:9px 16px;
+  background:var(--hybrid-dark);
+  color:#fff;
+  font-size:13px;
+  line-height:1.25;
+  font-weight:800;
+  text-align:center;
+}
+.hybrid-preview-banner a{
+  color:#64f0cf;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+.hybrid-preview-mobile-label{display:none}
+
+@media(max-width:900px){
+  .hybrid-preview-banner{
+    min-height:44px;
+    padding:8px 12px;
+    font-size:12px;
+    white-space:nowrap;
+  }
+  .hybrid-preview-desktop-label{display:none}
+  .hybrid-preview-mobile-label{display:inline}
+  body:has(.hybrid-preview-banner) .mobile-menu-btn,
+  body:has(.hybrid-preview-banner) .admin-mobile-menu-btn,
+  body:has(.hybrid-preview-banner) .staff-mobile-menu-btn{
+    top:calc(env(safe-area-inset-top) + 60px)!important;
+  }
+  body:has(.hybrid-preview-banner) .userchip{
+    top:calc(env(safe-area-inset-top) + 60px)!important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .loading-state::before{animation:none}
 }
 
 /* Specialist shells should still use the same page background. */
