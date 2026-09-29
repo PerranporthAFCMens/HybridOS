@@ -579,6 +579,37 @@ input.staff-member-search{width:100%;min-height:44px;padding:11px 12px!important
 }
 
 @media(max-width:900px){
+  /* Staff uses the same compact account control as Member on mobile. */
+  body:has(.staff-mobile-menu-btn) .userchip{
+    position:fixed!important;
+    top:calc(env(safe-area-inset-top) + 16px)!important;
+    right:14px!important;
+    z-index:81!important;
+    padding:2px!important;
+    border-radius:50%!important;
+    box-shadow:var(--hybrid-control-shadow)!important;
+  }
+  body:has(.staff-mobile-menu-btn) .userchip .avatar{
+    width:44px!important;
+    height:44px!important;
+    flex:0 0 44px!important;
+  }
+  body:has(.staff-mobile-menu-btn) .userchip .who,
+  body:has(.staff-mobile-menu-btn) .userchip:after{
+    display:none!important;
+  }
+  body:has(.staff-mobile-menu-btn) .top{
+    padding-right:54px!important;
+  }
+  body:has(.hybrid-preview-banner):has(.staff-mobile-menu-btn) .userchip{
+    top:calc(env(safe-area-inset-top) + 60px)!important;
+  }
+  body:has(.hybrid-preview-banner) .account-popover{
+    top:calc(env(safe-area-inset-top) + 116px)!important;
+  }
+}
+
+@media(max-width:900px){
   .top,.groups-top{gap:10px!important;margin-bottom:16px!important}
   .top h1,.groups-top h1{font-size:28px!important}
   .card,.panel{border-radius:18px!important}
