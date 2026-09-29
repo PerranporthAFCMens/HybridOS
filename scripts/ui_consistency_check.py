@@ -24,11 +24,17 @@ else:
   '--bg:var(--hybrid-bg)!important',
   '.top,.groups-top',
   '.card,.panel',
+  '.card:not(.hero),.panel:not(.hero)',
+  '.hybrid-preview-banner',
+  '.loading-state',
   '.btn,.staff-ops-btn,.roster-btn,.export,.mini-btn,.report-actions button',
   '.tab,.page-tab,.admin-context-tab',
   '.table-wrap'
  ):
   if marker not in css:problems.append(f'app-consistency.css missing UI contract marker: {marker}')
+ broad_card_rule=re.search(r'\.card\s*,\s*\.panel\s*\{[^}]*background\s*:',css,flags=re.S)
+ if broad_card_rule:
+  problems.append('app-consistency.css must not force a background on all cards/panels; semantic variants such as .hero must own their paint')
 
 for name in APP_PAGES:
  p=ROOT/name
