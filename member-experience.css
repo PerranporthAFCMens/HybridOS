@@ -51,6 +51,47 @@
 @media(max-width:900px){.member-home-canvas{grid-template-columns:minmax(0,1fr);gap:12px}.member-home-tile{grid-column:1!important;width:100%!important;max-width:100%!important}}
 
 
+/* Secondary Member pages: intentional empty states and calmer desktop density. */
+.member-empty-state{
+  min-height:150px;
+  width:100%;
+  border:1px dashed #cfd6e4;
+  border-radius:18px;
+  background:linear-gradient(135deg,#ffffff,#f8fafc);
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:6px;
+  padding:26px;
+  text-align:center;
+  color:var(--hybrid-muted);
+}
+.member-empty-state .member-empty-icon{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:#eef2f7;
+  color:var(--hybrid-ink);
+  font-size:20px;
+  font-weight:900;
+  margin-bottom:2px;
+}
+.member-empty-state strong{color:var(--hybrid-ink);font-size:15px}
+.member-empty-state p{margin:0;max-width:460px;line-height:1.45;font-size:13px}
+#pbs .member-empty-state{grid-column:1/-1}
+@media(min-width:901px){
+  #workouts>.v2-training,
+  #pbs>.pb-grid,
+  #membership>.card,
+  #profile>.card{max-width:920px}
+  #profile>.card{margin-right:auto}
+}
+@media(max-width:900px){
+  .member-empty-state{min-height:126px;padding:20px 16px}
+}
+
 /* Desktop member workspace: app-like proportions rather than stretched mobile content. */
 @media(min-width:901px){
   body:has(.member-gym-logo) .main{
