@@ -92,9 +92,9 @@ RENDER_BASELINE={
  'app-consistency.css':'2f44a19fcb7520f2dd3b5f08f044bb923c665d99',
  'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
- 'admin-frame.css':'e4ca8488bbc5f19de1bc6652ba49298b37fa62a5',
+ 'admin-frame.css':'3677fbd1ff517bf9df84d852e2eeaa5736d2e607',
  'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
- 'admin-frame.js':'99e719d9d67ca6272c0d574453886a245bff4400',
+ 'admin-frame.js':'a5da331b313677b3c8a2a8fe40fdc3e6090cce13',
  'app-stability.js':'77bc50425bcc8bca57390d71d38f9468f56acdcc',
  'shared-admin-nav.js':'2ab89dfbca4cd8e121f4072cb14f4f49ee0d71b0',
 }
@@ -459,6 +459,15 @@ for x in ('Customer lifecycle','avgCustomerLifecycle','avgLiveTenure','genderLif
 for x in ('Customer pulse','pulse-head','seasonality-grid','YOY SWING','seasonality at a glance','prior=year-1'):
  if x not in admin_index:problems.append(f'index.html: customer pulse view missing: {x}')
 if 'stroke-dasharray="7 6"' in admin_index or 'yoy-grid' in admin_index:problems.append('index.html: retired customer comparison view returned')
+admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
+admin_frame_js=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
+admin_frame_css=(ROOT/'admin-frame.css').read_text(encoding='utf-8')
+for x in ('adminFrameLoading','Loading workspace','aria-busy="true"'):
+ if x not in admin_frame_html:problems.append(f'admin.html: first-route loading surface missing: {x}')
+for x in ('markFrameReady','8000','else if(e.source===activeFrame.contentWindow)markFrameReady()'):
+ if x not in admin_frame_js:problems.append(f'admin-frame.js: settled iframe reveal contract missing: {x}')
+for x in ('.admin-frame-loading','.admin-frame-content-ready .admin-frame-loading','admin-frame-spin'):
+ if x not in admin_frame_css:problems.append(f'admin-frame.css: loading surface contract missing: {x}')
 if 'Last 30 days ·' in admin_index:problems.append('index.html: retired rolling customer movement chart copy returned')
 workout_builder=(ROOT/'workout-builder.html').read_text(encoding='utf-8')
 if 'admin-frame.css' in workout_builder:problems.append('workout-builder.html: iframe shell stylesheet must not load in top-level Admin page')

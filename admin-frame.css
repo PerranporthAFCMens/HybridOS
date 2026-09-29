@@ -28,6 +28,43 @@ html,body{
   background:#f5f7fb;
   overflow:hidden;
 }
+.admin-frame-loading{
+  position:absolute;
+  inset:0;
+  z-index:6;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:24px;
+  background:#f5f7fb;
+  color:#667085;
+  opacity:1;
+  visibility:visible;
+  transition:opacity .16s ease,visibility .16s ease;
+}
+.admin-frame-loading b{display:block;color:#101828;font-size:14px}
+.admin-frame-loading small{display:block;margin-top:3px;font-size:12px}
+.admin-frame-loading-spinner{
+  width:18px;
+  height:18px;
+  flex:0 0 18px;
+  border:2px solid #d0d5dd;
+  border-top-color:#0b1020;
+  border-radius:50%;
+  animation:admin-frame-spin .8s linear infinite;
+}
+.admin-frame-main.admin-frame-content-ready .admin-frame-loading{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+@keyframes admin-frame-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){
+  .admin-frame-loading{transition:none}
+  .admin-frame-loading-spinner{animation:none}
+}
+
 .admin-content-frame{
   position:absolute;
   inset:0;

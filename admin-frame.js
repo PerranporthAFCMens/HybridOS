@@ -25,8 +25,13 @@ const routes=[
  {key:'member-view',label:'Member',icon:'profile',href:'./member.html?view=member',section:'View as'},
  {key:'staff-view',label:'Staff',icon:'staff',href:'./staff.html?view=staff'}
 ];
-const frameA=document.getElementById('adminContentFrameA'),frameB=document.getElementById('adminContentFrameB'),nav=document.getElementById('adminFrameNav'),gymName=document.getElementById('adminFrameGym');
-let activeFrame=frameA,inactiveFrame=frameB,currentView='',loadSeq=0,pendingSwap=null;
+const frameA=document.getElementById('adminContentFrameA'),frameB=document.getElementById('adminContentFrameB'),nav=document.getElementById('adminFrameNav'),gymName=document.getElementById('adminFrameGym'),frameMain=document.querySelector('.admin-frame-main');
+let activeFrame=frameA,inactiveFrame=frameB,currentView='',loadSeq=0,pendingSwap=null,initialReadyFallback=null;
+function markFrameReady(){
+ if(initialReadyFallback){clearTimeout(initialReadyFallback);initialReadyFallback=null}
+ frameMain?.classList.add('admin-frame-content-ready');
+ frameMain?.setAttribute('aria-busy','false');
+}
 
 function cleanView(raw){
  raw=String(raw||'index.html').replace(/^\.\//,'');
@@ -72,6 +77,7 @@ function completeSwap(seq,target,previous){
  previous.classList.remove('active');
  activeFrame=target;
  inactiveFrame=previous;
+ markFrameReady();
 }
 function swapTo(view){
  const seq=++loadSeq,target=inactiveFrame,previous=activeFrame;
@@ -79,8 +85,9 @@ function swapTo(view){
  target.onload=()=>{
    if(seq!==loadSeq)return;
    target.onload=null;
-   // Fallback only. Normal swaps wait for the embedded page's explicit ready signal.
-   if(pendingSwap)pendingSwap.fallback=setTimeout(()=>completeSwap(seq,target,previous),1200);
+   // Fallback only. Keep the previous page visible while the destination starts.
+   // Eight seconds gives the embedded page time to render or show its own recovery state.
+   if(pendingSwap)pendingSwap.fallback=setTimeout(()=>completeSwap(seq,target,previous),8000);
  };
  pendingSwap={seq,target,previous,fallback:null};
  target.src=embeddedUrl(view);
@@ -131,12 +138,22 @@ async function init(){
  window.HybridShell?.apply();
  mobile();
  const start=requested;
- currentView=start;drawNav();activeFrame.src=embeddedUrl(start);
+ currentView=start;drawNav();
+ frameMain?.classList.remove('admin-frame-content-ready');
+ frameMain?.setAttribute('aria-busy','true');
+ activeFrame.onload=()=>{
+   activeFrame.onload=null;
+   // The explicit ready message normally wins. If it never arrives, reveal the
+   // embedded page after its own startup/recovery layer has had time to settle.
+   initialReadyFallback=setTimeout(markFrameReady,8000);
+ };
+ activeFrame.src=embeddedUrl(start);
 }
 window.addEventListener('message',e=>{
  if(e.origin!==location.origin)return;
  if(e.data?.type==='hybrid-admin-ready'){
    if(pendingSwap&&e.source===pendingSwap.target.contentWindow)completeSwap(pendingSwap.seq,pendingSwap.target,pendingSwap.previous);
+   else if(e.source===activeFrame.contentWindow)markFrameReady();
    return;
  }
  if(e.data?.type!=='hybrid-admin-nav'||e.source!==activeFrame.contentWindow)return;

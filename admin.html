@@ -19,7 +19,11 @@
       <div class="who" style="min-width:0"><b id="userName">Account</b><div class="muted" id="userEmail" style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div></div>
     </div>
   </aside>
-  <main class="admin-frame-main">
+  <main class="admin-frame-main" aria-busy="true">
+    <div id="adminFrameLoading" class="admin-frame-loading" aria-live="polite">
+      <span class="admin-frame-loading-spinner" aria-hidden="true"></span>
+      <div><b>Loading workspace</b><small>Preparing this page…</small></div>
+    </div>
     <iframe id="adminContentFrameA" class="admin-content-frame active" title="HybridOne admin content"></iframe>
     <iframe id="adminContentFrameB" class="admin-content-frame" title="HybridOne admin content"></iframe>
   </main>
