@@ -25,5 +25,12 @@
       "source": "/app",
       "destination": "/index.html"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": false
+    }
   ]
 }
