@@ -1,6 +1,6 @@
 # HybridOne UI consistency contract
 
-**Updated: 28 September 2026**
+**Updated: 29 September 2026**
 
 HybridOne uses one shared visual language across Admin, Staff and Member surfaces.
 
@@ -9,6 +9,8 @@ HybridOne uses one shared visual language across Admin, Staff and Member surface
 `app-consistency.css` is the final shared visual stylesheet in the built product.
 
 Feature CSS may define genuinely unique layout, such as a timetable grid, gym floor-plan canvas or workout editor. It must not create a second product design system.
+
+**Known visual-system debt (29 Sep):** the final shared layer currently applies some base rules too broadly. In particular, a generic `.card,.panel` background override can erase semantic variants such as Member/Staff heroes. The contract is therefore being refined so shared tokens/primitives stay authoritative without flattening explicit component variants.
 
 The shared layer owns:
 
@@ -75,3 +77,31 @@ The persistent Admin shell and canonical `app-consistency.css` contract remain i
 For accounts with access to more than one active gym, the shared shell must expose a discoverable **Switch gym** route. This is part of the cross-app consistency contract, not a page-specific feature.
 
 The 28 September visibility regression is **closed**. Fix `3ee9028a...` hardened the persistent shell switcher; authenticated browser run `36466232127` passed the visible desktop/mobile switch and Hub <-> Puffin navigation. Later current-dev commits do not modify that runtime implementation.
+
+
+## Full visual / UX audit — 29 September
+
+A deeper audit now supplements the structural consistency test above.
+
+- audited revision: `1bd1a6c075d70dd5ea52da77c817bcc26663b973`
+- authenticated browser run: `36570992500` — PASS
+- screenshot artifact: `11035095102`
+- 59 successful captures, 0 capture errors
+- 28 desktop captures at 1440 × 1000
+- 31 mobile captures at 390 × 844
+
+The audit includes public/Auth, Owner/Admin, Staff preview, Member preview and mobile drawer states.
+
+Full findings and implementation phases are recorded in `VISUAL_UX_AUDIT.md`.
+
+The audit distinguishes **structural consistency** (shared shell, no overflow, common primitives) from **visual quality** (hierarchy, semantic variants, density, branding, loading/empty states). A page is not considered visually complete merely because the structural consistency check passes.
+
+### Immediate visual priorities
+
+1. stop base card rules overriding semantic hero variants
+2. restore the desktop Member hero to match its configured preview
+3. restore the Staff workspace hero on desktop/mobile
+4. unify Member/Staff preview banner and mobile safe-area handling
+5. standardise loading/empty states
+6. reduce page-local visual drift and native browser alerts
+7. make gym-targeted customer/member login surfaces gym-first while keeping universal login HybridOne-first
