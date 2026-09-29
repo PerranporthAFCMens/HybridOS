@@ -305,7 +305,13 @@ jobs:
             await page.locator('#app:not(.hidden)').waitFor({state:'visible',timeout:20000}).catch(()=>{});
             await snap(page,vp,'member-home',{wait:1400});
             for(const key of ['classes','workouts','pbs','membership','profile']){
-              const target=page.locator('[data-page="'+key+'"]').first();if(await target.count()){await target.click();await page.waitForTimeout(450);await snap(page,vp,'member-'+key,{wait:250})}
+              const switched=await page.evaluate(key=>{
+                const target=[...document.querySelectorAll('[data-page]')].find(el=>el.dataset.page===key);
+                if(!target)return false;
+                target.click();
+                return true;
+              },key);
+              if(switched){await page.waitForTimeout(450);await snap(page,vp,'member-'+key,{wait:250})}
             }
             if(vp==='mobile'){const btn=page.locator('#mobileMenuBtn').first();if(await btn.count()){await btn.click();await page.waitForTimeout(250);await snap(page,vp,'member-mobile-drawer',{fullPage:false})}}
           }
@@ -321,7 +327,7 @@ jobs:
           JS
 
       - name: Upload visual UX audit
-        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[visual-audit]')
+        if: always() && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[visual-audit]'))
         uses: actions/upload-artifact@v4
         with:
           name: hybridone-visual-audit-${{ github.sha }}
