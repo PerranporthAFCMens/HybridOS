@@ -16,7 +16,7 @@ create type public.payment_provider as enum ('gocardless', 'manual', 'other');
 create type public.payment_state as enum ('pending', 'submitted', 'confirmed', 'paid_out', 'failed', 'cancelled', 'charged_back', 'refunded');
 create type public.provider_connection_status as enum ('not_connected', 'pending', 'connected', 'error', 'revoked');
 
-create sequence private.strava_webhook_events_id_seq increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence private.strava_webhook_events_id_seq increment by 1 minvalue 1 no maxvalue start with 1 cache 1 no cycle;
 
 create table private.gocardless_webhook_events (
   id uuid default gen_random_uuid() not null,
