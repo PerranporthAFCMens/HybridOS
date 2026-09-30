@@ -9,6 +9,7 @@ on:
     branches: [dev]
     paths:
       - '.github/workflows/auth-journey-browser.yml'
+      - '.github/workflows/hourly-production.yml'
       - 'admin.html'
       - 'admin-frame.js'
       - 'admin-frame.css'
