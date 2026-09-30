@@ -1,6 +1,6 @@
 name: HybridOne Auth journey browser
 
-# Release-gate browser verification for the exact dev revision.
+# Release-gate browser verification for the exact dev revision; harmless trigger comment.
 # Persistent Admin shell account menu is included in this gate.
 
 on:
