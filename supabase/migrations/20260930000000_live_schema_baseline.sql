@@ -1181,21 +1181,21 @@ CREATE OR REPLACE FUNCTION private.active_owner_count(target_gym_id uuid)
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
   select count(*)::integer
   from public.gym_members gm
   where gm.gym_id=target_gym_id
     and gm.role='owner'::public.gym_member_role
     and gm.is_active=true
     and gm.access_status='active';
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.can_manage_gym_member(target_gym_id uuid, target_user_id uuid, target_role gym_member_role)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
   select exists (
     select 1
     from public.gym_members actor
@@ -1217,14 +1217,14 @@ AS $
         )
       )
   );
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.can_view_profile(target_user_id uuid)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
   select exists (
     select 1
     from public.gym_members mine
@@ -1234,14 +1234,14 @@ AS $
       and theirs.user_id = target_user_id
       and theirs.is_active = true
   );
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.can_write_gym(target_gym_id uuid)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
   select exists (
     select 1
     from public.gym_members gm
@@ -1250,14 +1250,14 @@ AS $
       and gm.is_active = true
       and gm.access_status = 'active'
   );
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.enforce_workout_assignment_integrity()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'pg_temp'
-AS $
+AS $$
 declare
   actor uuid := auth.uid();
   actor_is_staff boolean := false;
@@ -1323,14 +1323,14 @@ begin
   new.updated_at := now();
   return new;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.execute_ownership_action(target_action_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   a public.gym_ownership_actions%rowtype;
   required_count integer;
@@ -1442,14 +1442,14 @@ begin
     'action_id',a.id
   );
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.handle_new_user()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 begin
   insert into public.profiles (id, first_name, last_name, display_name, avatar_url)
   values (
@@ -1462,14 +1462,14 @@ begin
   on conflict (id) do nothing;
   return new;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.has_active_owner(target_gym_id uuid)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
   select exists(
     select 1 from public.gym_members gm
     where gm.gym_id=target_gym_id
@@ -1477,14 +1477,14 @@ AS $
       and gm.is_active=true
       and gm.access_status='active'
   );
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.has_gym_role(target_gym_id uuid, allowed_roles gym_member_role[])
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
   select exists (
     select 1
     from public.gym_members gm
@@ -1510,14 +1510,14 @@ AS $
         )
       )
   );
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.has_gym_staff_permission(target_gym_id uuid, permission_key text)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
   select exists (
     select 1
     from public.gym_members gm
@@ -1531,14 +1531,14 @@ AS $
       and gm.role in ('staff'::public.gym_member_role,'coach'::public.gym_member_role)
       and coalesce((sa.permissions->>permission_key)::boolean,false)=true
   );
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.is_gym_member(target_gym_id uuid)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
   select exists (
     select 1
     from public.gym_members gm
@@ -1546,14 +1546,14 @@ AS $
       and gm.user_id = (select auth.uid())
       and gm.is_active = true
   );
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.is_pending_admin(target_gym_id uuid)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
   select exists (
     select 1
     from public.gym_members gm
@@ -1563,14 +1563,14 @@ AS $
       and gm.role = 'admin'::public.gym_member_role
       and gm.access_status = 'pending'
   );
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.member_has_class_access(p_gym_id uuid, p_user_id uuid)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO 'public', 'pg_temp'
-AS $
+AS $$
   select coalesce((
     select mp.includes_classes
     from public.memberships m
@@ -1581,26 +1581,26 @@ AS $
     order by m.created_at desc
     limit 1
   ),false)
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.member_has_paid_class(p_session_id uuid, p_user_id uuid)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO 'public', 'pg_temp'
-AS $
+AS $$
   select exists(
     select 1 from public.class_booking_purchases p
     where p.session_id=p_session_id and p.user_id=p_user_id and p.status='paid'
   )
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.notify_social_comment()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   recipient uuid;
   kind text;
@@ -1629,14 +1629,14 @@ begin
   end if;
   return new;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.notify_social_reaction()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   recipient uuid;
   target_post uuid;
@@ -1661,14 +1661,14 @@ begin
   end if;
   return new;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.propagate_staff_access_level_permissions()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'pg_temp'
-AS $
+AS $$
 begin
   if new.permissions is distinct from old.permissions then
     update public.staff_access
@@ -1679,28 +1679,28 @@ begin
   end if;
   return new;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.protect_gym_creator()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 begin
   if new.created_by is distinct from old.created_by then
     raise exception 'Gym owner identity cannot be changed';
   end if;
   return new;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.social_notifications_enabled(p_gym_id uuid, p_user_id uuid)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
   select exists (
     select 1 from public.gym_members gm
     where gm.gym_id = p_gym_id and gm.user_id = p_user_id and gm.is_active
@@ -1709,26 +1709,26 @@ AS $
     from public.notification_preferences np
     where np.gym_id = p_gym_id and np.user_id = p_user_id
   ), true);
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION private.staff_has_permission(p_gym_id uuid, p_user_id uuid, p_permission text)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO 'public', 'private', 'pg_temp'
-AS $
+AS $$
   select case
     when private.has_gym_role(p_gym_id,array['owner'::gym_member_role,'admin'::gym_member_role]) then true
     else coalesce((select (permissions ->> p_permission)::boolean from public.staff_access where gym_id=p_gym_id and user_id=p_user_id),false)
   end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.approve_admin_access(target_gym_id uuid, target_user_id uuid)
  RETURNS boolean
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 begin
   if not private.has_gym_role(target_gym_id,array['owner'::public.gym_member_role]) then
     raise exception 'Owner access required';
@@ -1756,14 +1756,14 @@ begin
 
   return true;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.approve_email_owner_invite(target_invite_id uuid)
  RETURNS TABLE(status text, owner_approvals integer, owner_approvals_required integer, ready_to_send boolean)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   inv public.gym_admin_invites%rowtype;
   approvals integer;
@@ -1799,14 +1799,14 @@ begin
 
   return query select inv.status,approvals,required_count,(approvals>=required_count);
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.approve_ownership_action(target_action_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   a public.gym_ownership_actions%rowtype;
   result jsonb;
@@ -1825,14 +1825,14 @@ begin
   select private.execute_ownership_action(a.id) into result;
   return result;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.approve_pending_access(target_gym_id uuid, target_user_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   member public.gym_members%rowtype;
   result jsonb;
@@ -1875,14 +1875,14 @@ begin
 
   raise exception 'Unsupported pending role';
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.approve_shareable_owner_invite(target_invite_id uuid)
  RETURNS TABLE(status text, token text, owner_approvals integer, owner_approvals_required integer, ready_to_share boolean)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   inv public.gym_admin_invites%rowtype;
   approvals integer;
@@ -1927,14 +1927,14 @@ begin
          case when approvals>=required_count then raw_token else null end,
          approvals,required_count,(approvals>=required_count);
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.assign_staff_access_level(target_gym_id uuid, target_user_id uuid, target_level_id uuid)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'auth', 'pg_temp'
-AS $
+AS $$
 declare
   v_permissions jsonb;
   v_target_role public.gym_member_role;
@@ -1985,14 +1985,14 @@ begin
         updated_at=now(),
         updated_by=auth.uid();
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.book_class_session(p_session_id uuid)
  RETURNS class_bookings
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'pg_temp'
-AS $
+AS $$
 declare
   v_session public.class_sessions%rowtype;
   v_existing public.class_bookings%rowtype;
@@ -2071,14 +2071,14 @@ begin
     values(v_session.gym_id,p_session_id,auth.uid(),'booked') returning * into v_booking;
   end if;
   return v_booking;
-end$;
+end$$;
 
 CREATE OR REPLACE FUNCTION public.cancel_class_booking(p_session_id uuid)
  RETURNS class_bookings
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'pg_temp'
-AS $
+AS $$
 declare
   v_booking public.class_bookings%rowtype;
   v_gym_id uuid;
@@ -2096,14 +2096,14 @@ begin
   if not found then raise exception 'Active booking not found'; end if;
   return v_booking;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.claim_access_invite(invite_token text)
  RETURNS TABLE(gym_id uuid, gym_name text, access_status text, role text)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   inv public.gym_admin_invites%rowtype;
   user_email text;
@@ -2198,14 +2198,14 @@ begin
          case when activate_now then 'active' else 'pending' end::text,
          inv.invite_role;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.claim_admin_invite(invite_token text)
  RETURNS TABLE(gym_id uuid, gym_name text, access_status text)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   inv public.gym_admin_invites%rowtype;
   user_email text;
@@ -2271,14 +2271,14 @@ begin
   select name into gname from public.gyms where id=inv.gym_id;
   return query select inv.gym_id,gname,'pending'::text;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.create_access_invite(target_gym_id uuid, invite_email text, requested_role text DEFAULT 'admin'::text, expires_in_days integer DEFAULT 7)
  RETURNS TABLE(invite_id uuid, token text, expires_at timestamp with time zone, gym_name text, invite_role text)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   raw_token text;
   expiry timestamptz;
@@ -2322,14 +2322,14 @@ begin
   select name into gname from public.gyms where id=target_gym_id;
   return query select new_id,raw_token,expiry,gname,normal_role;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.create_admin_invite(target_gym_id uuid, invite_email text, expires_in_days integer DEFAULT 7)
  RETURNS TABLE(invite_id uuid, token text, expires_at timestamp with time zone, gym_name text)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   raw_token text;
   expiry timestamptz;
@@ -2363,14 +2363,14 @@ begin
 
   return query select new_id,raw_token,expiry,gname;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.create_email_access_invite(target_gym_id uuid, invite_email text, requested_role text DEFAULT 'admin'::text, expires_in_days integer DEFAULT 7)
  RETURNS TABLE(invite_id uuid, status text, owner_approvals integer, owner_approvals_required integer)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   normal_email text:=lower(trim(invite_email));
   normal_role text:=lower(trim(coalesce(requested_role,'admin')));
@@ -2428,13 +2428,13 @@ begin
   return query
   select new_id,new_status,1,required_count;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.create_gym_for_current_user(gym_name text, gym_slug text)
  RETURNS uuid
  LANGUAGE plpgsql
  SET search_path TO 'public'
-AS $
+AS $$
 declare
   new_gym_id uuid;
 begin
@@ -2459,14 +2459,14 @@ begin
 
   return new_gym_id;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.create_shareable_access_invite(target_gym_id uuid, invite_email text, requested_role text DEFAULT 'admin'::text, expires_in_days integer DEFAULT 7)
  RETURNS TABLE(invite_id uuid, token text, status text, owner_approvals integer, owner_approvals_required integer)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   normal_email text:=lower(trim(invite_email));
   normal_role text:=lower(trim(coalesce(requested_role,'admin')));
@@ -2530,14 +2530,14 @@ begin
          case when new_status='open' then raw_token else null end,
          new_status,1,required_count;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.create_training_group(p_gym_id uuid, p_name text, p_description text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'auth'
-AS $
+AS $$
 declare
   v_user uuid:=auth.uid();
   v_group public.training_groups%rowtype;
@@ -2557,14 +2557,14 @@ begin
   returning * into v_group;
   insert into public.training_group_members(group_id,user_id) values(v_group.id,v_user);
   return jsonb_build_object('id',v_group.id,'name',v_group.name,'description',v_group.description,'invite_code',v_group.invite_code);
-end$;
+end$$;
 
 CREATE OR REPLACE FUNCTION public.create_training_group_challenge(p_group_id uuid, p_name text, p_activity_name text, p_metric_type text, p_unit text, p_comparison_direction text DEFAULT 'higher'::text, p_ends_at timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'auth'
-AS $
+AS $$
 declare
   v_user uuid:=auth.uid();
   v_id uuid;
@@ -2585,14 +2585,14 @@ begin
   returning id into v_id;
   return v_id;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.create_validated_class_session(p_gym_id uuid, p_class_type_id uuid, p_name text, p_description text, p_starts_at timestamp with time zone, p_ends_at timestamp with time zone, p_capacity integer, p_reserved_capacity integer DEFAULT 0, p_reserved_release_minutes_before integer DEFAULT NULL::integer, p_staff_ids uuid[] DEFAULT '{}'::uuid[], p_plan_ids uuid[] DEFAULT '{}'::uuid[])
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'pg_temp'
-AS $
+AS $$
 declare
   v_check jsonb;
   v_session_id uuid;
@@ -2655,14 +2655,14 @@ begin
   end if;
 
   return jsonb_build_object('ok',true,'session_id',v_session_id);
-end$;
+end$$;
 
 CREATE OR REPLACE FUNCTION public.delete_admin_invite(target_invite_id uuid)
  RETURNS boolean
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   inv public.gym_admin_invites%rowtype;
 begin
@@ -2688,14 +2688,14 @@ begin
   delete from public.gym_admin_invites where id=target_invite_id;
   return true;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.get_access_invite(invite_token text)
  RETURNS TABLE(invite_id uuid, gym_name text, email text, status text, expires_at timestamp with time zone, invite_role text)
  LANGUAGE sql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
   select i.id,g.name,i.email,
          case when i.status='open' and i.expires_at<=now() then 'expired' else i.status end,
          i.expires_at,
@@ -2704,14 +2704,14 @@ AS $
   join public.gyms g on g.id=i.gym_id
   where i.token_hash=encode(extensions.digest(invite_token,'sha256'),'hex')
   limit 1;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.get_admin_invite(invite_token text)
  RETURNS TABLE(invite_id uuid, gym_name text, email text, status text, expires_at timestamp with time zone)
  LANGUAGE sql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
   select i.id,g.name,i.email,
          case when i.status='open' and i.expires_at <= now() then 'expired' else i.status end,
          i.expires_at
@@ -2719,14 +2719,14 @@ AS $
   join public.gyms g on g.id=i.gym_id
   where i.token_hash=encode(extensions.digest(invite_token,'sha256'),'hex')
   limit 1;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.get_auth_email_context(p_user_id uuid, p_email text, p_gym_id uuid DEFAULT NULL::uuid, p_access_invite text DEFAULT NULL::text, p_signup_slug text DEFAULT NULL::text)
  RETURNS TABLE(gym_id uuid, gym_name text, gym_slug text, sender_name text, sender_email text, reply_to_email text, sender_domain_status text, accent_color text, logo_url text, footer_text text, invited_by text, invite_role text, access_invite boolean)
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   v_gym_id uuid;
   v_inviter uuid;
@@ -2816,14 +2816,14 @@ begin
   where g.id = v_gym_id
   limit 1;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.get_auth_email_template(p_gym_id uuid, p_template_key text)
  RETURNS TABLE(subject text, preheader text, heading text, body_text text, button_label text, enabled boolean)
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 begin
   if coalesce(auth.jwt()->>'role','') <> 'service_role' then
     raise exception 'Service role required';
@@ -2842,14 +2842,14 @@ begin
     and t.template_key = p_template_key
   limit 1;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.get_class_booking_options(p_session_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
  SET search_path TO 'public', 'private', 'pg_temp'
-AS $
+AS $$
 declare
   s public.class_sessions%rowtype;
   v_included boolean;
@@ -2879,14 +2879,14 @@ begin
     'can_pay_drop_in',s.drop_in_price_pence is not null,
     'upgrade_plans',v_plans
   );
-end$;
+end$$;
 
 CREATE OR REPLACE FUNCTION public.get_class_calendar(p_gym_id uuid, p_from timestamp with time zone, p_to timestamp with time zone)
  RETURNS TABLE(session_id uuid, name text, description text, starts_at timestamp with time zone, ends_at timestamp with time zone, capacity integer, reserved_capacity integer, reserved_release_minutes_before integer, is_cancelled boolean, booked_count bigint, spaces_left bigint, my_booking_status text, reserved_eligible boolean, reserved_plan_names text[], bookable_for_me boolean, availability_note text)
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO 'public', 'pg_temp'
-AS $
+AS $$
   with my_plan as (
     select m.plan_id
     from public.memberships m
@@ -2941,14 +2941,14 @@ AS $
       else greatest(capacity-booked_count,0)||' spaces left'
     end as availability_note
   from base order by starts_at;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.get_email_invite_send_context(target_invite_id uuid, requesting_user_id uuid)
  RETURNS TABLE(invite_id uuid, gym_id uuid, email text, invite_role text, status text, expires_at timestamp with time zone)
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   inv public.gym_admin_invites%rowtype;
 begin
@@ -2979,14 +2979,14 @@ begin
   return query
   select inv.id, inv.gym_id, inv.email, inv.invite_role, inv.status, inv.expires_at;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.get_gym_team_accounts(target_gym_id uuid)
  RETURNS TABLE(user_id uuid, email text, display_name text, role gym_member_role, is_active boolean, access_status text, joined_at timestamp with time zone)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 begin
   if not exists (
     select 1
@@ -3028,14 +3028,14 @@ begin
     end,
     lower(coalesce(p.display_name, trim(concat_ws(' ',p.first_name,p.last_name)), u.email));
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.get_member_home_settings(p_gym_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public'
-AS $
+AS $$
 declare
   v_layout jsonb;
   v_cta jsonb;
@@ -3064,14 +3064,14 @@ begin
     'cta_config', coalesce(v_cta, '{}'::jsonb)
   );
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.get_my_training_groups(p_gym_id uuid)
  RETURNS jsonb
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO 'public', 'auth'
-AS $
+AS $$
 select coalesce(jsonb_agg(jsonb_build_object(
   'id',g.id,
   'name',g.name,
@@ -3088,14 +3088,14 @@ join public.training_group_members gm on gm.group_id=g.id and gm.user_id=auth.ui
 left join public.profiles p on p.id=g.owner_user_id
 where g.gym_id=p_gym_id
 and exists(select 1 from public.gym_members m where m.gym_id=p_gym_id and m.user_id=auth.uid() and m.is_active=true)
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.get_public_gym_join_options(p_gym_slug text)
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
  SET search_path TO 'public', 'pg_temp'
-AS $
+AS $$
 declare
   v_gym public.gyms%rowtype;
   v_plans jsonb;
@@ -3140,14 +3140,14 @@ begin
     'plans', v_plans
   );
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.get_training_group_dashboard(p_group_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
  SET search_path TO 'public', 'auth'
-AS $
+AS $$
 declare v_user uuid:=auth.uid(); v_group public.training_groups%rowtype;
 begin
   if v_user is null then raise exception 'Authentication required'; end if;
@@ -3208,14 +3208,14 @@ begin
       where c.group_id=p_group_id
     ),'[]'::jsonb)
   );
-end$;
+end$$;
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public'
-AS $
+AS $$
 begin
   insert into public.profiles (id, first_name, last_name, display_name, avatar_url)
   values (
@@ -3228,14 +3228,14 @@ begin
   on conflict (id) do nothing;
   return new;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.hybridone_invite_edge_test_admin(p_action text, p_run_id text, p_user_id uuid DEFAULT NULL::uuid, p_gym_id uuid DEFAULT NULL::uuid, p_invite_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   v_prefix text := 'hybridone-edge-'||p_run_id||'-';
   v_email text;
@@ -3310,14 +3310,14 @@ begin
 
   raise exception 'Unsupported action';
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.join_public_gym_with_membership(p_gym_slug text, p_plan_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'pg_temp'
-AS $
+AS $$
 declare
   v_uid uuid := auth.uid();
   v_gym_id uuid;
@@ -3409,14 +3409,14 @@ begin
     'payment_mode', 'manual_test'
   );
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.join_training_group_by_code(p_code text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'auth'
-AS $
+AS $$
 declare v_user uuid:=auth.uid(); v_group public.training_groups%rowtype;
 begin
   if v_user is null then raise exception 'Authentication required'; end if;
@@ -3427,28 +3427,28 @@ begin
   end if;
   insert into public.training_group_members(group_id,user_id) values(v_group.id,v_user) on conflict do nothing;
   return jsonb_build_object('id',v_group.id,'name',v_group.name);
-end$;
+end$$;
 
 CREATE OR REPLACE FUNCTION public.mark_email_invite_sent(target_invite_id uuid)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 begin
   if auth.role()<>'service_role' then raise exception 'Service role required'; end if;
   update public.gym_admin_invites i
   set email_sent_at=now()
   where i.id=target_invite_id and i.status='open';
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.member_book_class(p_session_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'pg_temp'
-AS $
+AS $$
 declare
   s public.class_sessions%rowtype;
   v_count integer;
@@ -3488,14 +3488,14 @@ begin
   returning id into v_id;
 
   return jsonb_build_object('status','booked','booking_id',v_id);
-end$;
+end$$;
 
 CREATE OR REPLACE FUNCTION public.member_cancel_class(p_session_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'pg_temp'
-AS $
+AS $$
 declare
   s public.class_sessions%rowtype;
 begin
@@ -3508,14 +3508,14 @@ begin
   delete from public.class_bookings where session_id=p_session_id and user_id=auth.uid();
   return jsonb_build_object('status','cancelled');
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.member_class_schedule(p_gym_id uuid, p_from timestamp with time zone DEFAULT now(), p_to timestamp with time zone DEFAULT (now() + '30 days'::interval))
  RETURNS TABLE(session_id uuid, name text, description text, starts_at timestamp with time zone, ends_at timestamp with time zone, capacity integer, booked_count integer, available_spaces integer, is_booked boolean)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'pg_temp'
-AS $
+AS $$
 begin
   if auth.uid() is null then raise exception 'Not authenticated'; end if;
   if not exists (select 1 from public.gym_members gm where gm.gym_id=p_gym_id and gm.user_id=auth.uid() and gm.is_active) then
@@ -3540,13 +3540,13 @@ begin
   group by s.id,s.name,s.description,s.starts_at,s.ends_at,s.capacity
   order by s.starts_at;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.normalise_member_phone()
  RETURNS trigger
  LANGUAGE plpgsql
  SET search_path TO ''
-AS $
+AS $$
 declare
   v text;
 begin
@@ -3572,13 +3572,13 @@ begin
   new.phone := v;
   return new;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.normalise_profile_phone()
  RETURNS trigger
  LANGUAGE plpgsql
  SET search_path TO ''
-AS $
+AS $$
 declare
   v text;
 begin
@@ -3604,14 +3604,14 @@ begin
   new.phone := v;
   return new;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.notify_social_comment_activity()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'pg_catalog'
-AS $
+AS $$
 declare post_owner uuid; parent_owner uuid; pref boolean;
 begin
  select p.user_id into post_owner from public.social_posts p where p.id=new.post_id and p.gym_id=new.gym_id;
@@ -3625,14 +3625,14 @@ begin
   if coalesce(pref,true) then insert into public.member_notifications(gym_id,user_id,notification_type,title,body,related_post_id,related_comment_id) values(new.gym_id,post_owner,'social_comment','New comment on your post',left(new.body,180),new.post_id,new.id); end if;
  end if;
  return new;
-end; $;
+end; $$;
 
 CREATE OR REPLACE FUNCTION public.notify_social_reaction_activity()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'pg_catalog'
-AS $
+AS $$
 declare target_user uuid; target_post uuid; pref boolean;
 begin
  if new.comment_id is not null then select c.user_id,c.post_id into target_user,target_post from public.social_comments c where c.id=new.comment_id and c.gym_id=new.gym_id;
@@ -3641,14 +3641,14 @@ begin
  select coalesce(np.social_notifications,true) into pref from public.notification_preferences np where np.gym_id=new.gym_id and np.user_id=target_user;
  if coalesce(pref,true) then insert into public.member_notifications(gym_id,user_id,notification_type,title,body,related_post_id,related_comment_id) values(new.gym_id,target_user,'social_reaction','New reaction in Social','Someone reacted to your ' || case when new.comment_id is null then 'post' else 'comment' end || '.',target_post,new.comment_id); end if;
  return new;
-end; $;
+end; $$;
 
 CREATE OR REPLACE FUNCTION public.prepare_class_drop_in_purchase(p_session_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'pg_temp'
-AS $
+AS $$
 declare
   s public.class_sessions%rowtype;
   p public.class_booking_purchases%rowtype;
@@ -3685,14 +3685,14 @@ begin
     'status',p.status,
     'checkout_connected',false
   );
-end$;
+end$$;
 
 CREATE OR REPLACE FUNCTION public.prepare_email_invite_token(target_invite_id uuid, new_token text)
  RETURNS TABLE(email text, invite_role text, gym_name text, expires_at timestamp with time zone)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   inv public.gym_admin_invites%rowtype;
   gname text;
@@ -3713,14 +3713,14 @@ begin
   select g.name into gname from public.gyms g where g.id=inv.gym_id;
   return query select inv.email,inv.invite_role,gname,inv.expires_at;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.preview_training_group_invite(p_code text)
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
  SET search_path TO 'public', 'auth'
-AS $
+AS $$
 declare v jsonb;
 begin
   if auth.uid() is null then raise exception 'Authentication required'; end if;
@@ -3738,14 +3738,14 @@ begin
     raise exception 'You need an active membership at this gym to join this group';
   end if;
   return v;
-end$;
+end$$;
 
 CREATE OR REPLACE FUNCTION public.propose_gym_deletion(target_gym_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   action_id uuid;
   result jsonb;
@@ -3774,14 +3774,14 @@ begin
   select private.execute_ownership_action(action_id) into result;
   return result;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.propose_owner_promotion(target_gym_id uuid, target_user_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   member public.gym_members%rowtype;
   action_id uuid;
@@ -3831,14 +3831,14 @@ begin
   select private.execute_ownership_action(action_id) into result;
   return result;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.propose_owner_removal(target_gym_id uuid, target_user_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   owner_count integer;
   action_id uuid;
@@ -3890,14 +3890,14 @@ begin
   select private.execute_ownership_action(action_id) into result;
   return result;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.provision_staff_membership_with_level(target_gym_id uuid, target_user_id uuid, target_display_name text, target_role text, target_level_id uuid)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'auth', 'pg_temp'
-AS $
+AS $$
 declare
   v_permissions jsonb;
   v_first text;
@@ -3967,14 +3967,14 @@ begin
         access_revoked_at=null,
         updated_at=now();
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.queue_class_booking_notifications()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'pg_temp'
-AS $
+AS $$
 declare
   s public.class_sessions%rowtype;
   p public.notification_preferences%rowtype;
@@ -4004,14 +4004,14 @@ begin
     on conflict (user_id,related_session_id,notification_type) where related_session_id is not null do update set body=excluded.body,scheduled_for=now(),delivered_at=null,read_at=null;
   end if;
   return new;
-end $;
+end $$;
 
 CREATE OR REPLACE FUNCTION public.queue_social_comment_notification()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'pg_temp'
-AS $
+AS $$
 declare
   v_post_owner uuid;
   v_parent_owner uuid;
@@ -4071,14 +4071,14 @@ begin
   end if;
 
   return new;
-end$;
+end$$;
 
 CREATE OR REPLACE FUNCTION public.remove_admin_access(target_gym_id uuid, target_user_id uuid)
  RETURNS boolean
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 begin
   if not private.has_gym_role(target_gym_id,array['owner'::public.gym_member_role]) then
     raise exception 'Owner access required';
@@ -4103,14 +4103,14 @@ begin
 
   return true;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.remove_gym_staff_access(target_gym_id uuid, target_user_id uuid)
  RETURNS boolean
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   target_role public.gym_member_role;
 begin
@@ -4162,14 +4162,14 @@ begin
 
   return true;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.revoke_admin_invite(target_invite_id uuid)
  RETURNS boolean
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $
+AS $$
 declare
   inv public.gym_admin_invites%rowtype;
 begin
@@ -4198,14 +4198,14 @@ begin
 
   return true;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.rls_auto_enable()
  RETURNS event_trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'pg_catalog'
-AS $
+AS $$
 DECLARE
   cmd record;
 BEGIN
@@ -4228,31 +4228,31 @@ BEGIN
      END IF;
   END LOOP;
 END;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.set_staff_updated_at()
  RETURNS trigger
  LANGUAGE plpgsql
  SET search_path TO 'public'
-AS $ begin new.updated_at=now(); return new; end; $;
+AS $$ begin new.updated_at=now(); return new; end; $$;
 
 CREATE OR REPLACE FUNCTION public.set_updated_at()
  RETURNS trigger
  LANGUAGE plpgsql
  SET search_path TO 'public'
-AS $
+AS $$
 begin
   new.updated_at = now();
   return new;
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.submit_training_group_challenge_result(p_challenge_id uuid, p_value numeric, p_note text DEFAULT NULL::text)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'auth'
-AS $
+AS $$
 declare
   v_user uuid:=auth.uid();
   v_group uuid;
@@ -4275,14 +4275,14 @@ begin
   on conflict(challenge_id,user_id) do update
   set value_numeric=excluded.value_numeric,note=excluded.note,submitted_at=now();
 end;
-$;;
+$$;
 
 CREATE OR REPLACE FUNCTION public.sync_future_class_session_price()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'pg_temp'
-AS $
+AS $$
 begin
   if new.drop_in_price_pence is distinct from old.drop_in_price_pence then
     update public.class_sessions
@@ -4292,14 +4292,14 @@ begin
       and coalesce(is_cancelled,false)=false;
   end if;
   return new;
-end$;
+end$$;
 
 CREATE OR REPLACE FUNCTION public.validate_class_schedule(p_gym_id uuid, p_class_type_id uuid, p_starts_at timestamp with time zone, p_ends_at timestamp with time zone, p_capacity integer, p_staff_ids uuid[] DEFAULT '{}'::uuid[], p_exclude_session_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public', 'private', 'pg_temp'
-AS $
+AS $$
 declare
   v_local_start timestamp;
   v_local_end timestamp;
@@ -4400,7 +4400,7 @@ begin
 
   return jsonb_build_object('ok',jsonb_array_length(v_errors)=0,'errors',v_errors,'warnings',v_warnings);
 end;
-$;
+$$;
 ;
 set check_function_bodies = on;
 
