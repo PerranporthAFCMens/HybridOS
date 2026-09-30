@@ -1188,7 +1188,7 @@ AS $function$
     and gm.role='owner'::public.gym_member_role
     and gm.is_active=true
     and gm.access_status='active';
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.can_manage_gym_member(target_gym_id uuid, target_user_id uuid, target_role gym_member_role)
  RETURNS boolean
@@ -1217,7 +1217,7 @@ AS $function$
         )
       )
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.can_view_profile(target_user_id uuid)
  RETURNS boolean
@@ -1234,7 +1234,7 @@ AS $function$
       and theirs.user_id = target_user_id
       and theirs.is_active = true
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.can_write_gym(target_gym_id uuid)
  RETURNS boolean
@@ -1250,7 +1250,7 @@ AS $function$
       and gm.is_active = true
       and gm.access_status = 'active'
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.enforce_workout_assignment_integrity()
  RETURNS trigger
@@ -1323,7 +1323,7 @@ begin
   new.updated_at := now();
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.execute_ownership_action(target_action_id uuid)
  RETURNS jsonb
@@ -1442,7 +1442,7 @@ begin
     'action_id',a.id
   );
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.handle_new_user()
  RETURNS trigger
@@ -1462,7 +1462,7 @@ begin
   on conflict (id) do nothing;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.has_active_owner(target_gym_id uuid)
  RETURNS boolean
@@ -1477,7 +1477,7 @@ AS $function$
       and gm.is_active=true
       and gm.access_status='active'
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.has_gym_role(target_gym_id uuid, allowed_roles gym_member_role[])
  RETURNS boolean
@@ -1510,7 +1510,7 @@ AS $function$
         )
       )
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.has_gym_staff_permission(target_gym_id uuid, permission_key text)
  RETURNS boolean
@@ -1531,7 +1531,7 @@ AS $function$
       and gm.role in ('staff'::public.gym_member_role,'coach'::public.gym_member_role)
       and coalesce((sa.permissions->>permission_key)::boolean,false)=true
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.is_gym_member(target_gym_id uuid)
  RETURNS boolean
@@ -1546,7 +1546,7 @@ AS $function$
       and gm.user_id = (select auth.uid())
       and gm.is_active = true
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.is_pending_admin(target_gym_id uuid)
  RETURNS boolean
@@ -1563,7 +1563,7 @@ AS $function$
       and gm.role = 'admin'::public.gym_member_role
       and gm.access_status = 'pending'
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.member_has_class_access(p_gym_id uuid, p_user_id uuid)
  RETURNS boolean
@@ -1581,7 +1581,7 @@ AS $function$
     order by m.created_at desc
     limit 1
   ),false)
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.member_has_paid_class(p_session_id uuid, p_user_id uuid)
  RETURNS boolean
@@ -1593,7 +1593,7 @@ AS $function$
     select 1 from public.class_booking_purchases p
     where p.session_id=p_session_id and p.user_id=p_user_id and p.status='paid'
   )
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.notify_social_comment()
  RETURNS trigger
@@ -1629,7 +1629,7 @@ begin
   end if;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.notify_social_reaction()
  RETURNS trigger
@@ -1661,7 +1661,7 @@ begin
   end if;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.propagate_staff_access_level_permissions()
  RETURNS trigger
@@ -1679,7 +1679,7 @@ begin
   end if;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.protect_gym_creator()
  RETURNS trigger
@@ -1693,7 +1693,7 @@ begin
   end if;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.social_notifications_enabled(p_gym_id uuid, p_user_id uuid)
  RETURNS boolean
@@ -1709,7 +1709,7 @@ AS $function$
     from public.notification_preferences np
     where np.gym_id = p_gym_id and np.user_id = p_user_id
   ), true);
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.staff_has_permission(p_gym_id uuid, p_user_id uuid, p_permission text)
  RETURNS boolean
@@ -1721,7 +1721,7 @@ AS $function$
     when private.has_gym_role(p_gym_id,array['owner'::gym_member_role,'admin'::gym_member_role]) then true
     else coalesce((select (permissions ->> p_permission)::boolean from public.staff_access where gym_id=p_gym_id and user_id=p_user_id),false)
   end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.approve_admin_access(target_gym_id uuid, target_user_id uuid)
  RETURNS boolean
@@ -1756,7 +1756,7 @@ begin
 
   return true;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.approve_email_owner_invite(target_invite_id uuid)
  RETURNS TABLE(status text, owner_approvals integer, owner_approvals_required integer, ready_to_send boolean)
@@ -1799,7 +1799,7 @@ begin
 
   return query select inv.status,approvals,required_count,(approvals>=required_count);
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.approve_ownership_action(target_action_id uuid)
  RETURNS jsonb
@@ -1825,7 +1825,7 @@ begin
   select private.execute_ownership_action(a.id) into result;
   return result;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.approve_pending_access(target_gym_id uuid, target_user_id uuid)
  RETURNS jsonb
@@ -1875,7 +1875,7 @@ begin
 
   raise exception 'Unsupported pending role';
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.approve_shareable_owner_invite(target_invite_id uuid)
  RETURNS TABLE(status text, token text, owner_approvals integer, owner_approvals_required integer, ready_to_share boolean)
@@ -1927,7 +1927,7 @@ begin
          case when approvals>=required_count then raw_token else null end,
          approvals,required_count,(approvals>=required_count);
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.assign_staff_access_level(target_gym_id uuid, target_user_id uuid, target_level_id uuid)
  RETURNS void
@@ -1985,7 +1985,7 @@ begin
         updated_at=now(),
         updated_by=auth.uid();
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.book_class_session(p_session_id uuid)
  RETURNS class_bookings
@@ -2096,7 +2096,7 @@ begin
   if not found then raise exception 'Active booking not found'; end if;
   return v_booking;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.claim_access_invite(invite_token text)
  RETURNS TABLE(gym_id uuid, gym_name text, access_status text, role text)
@@ -2198,7 +2198,7 @@ begin
          case when activate_now then 'active' else 'pending' end::text,
          inv.invite_role;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.claim_admin_invite(invite_token text)
  RETURNS TABLE(gym_id uuid, gym_name text, access_status text)
@@ -2271,7 +2271,7 @@ begin
   select name into gname from public.gyms where id=inv.gym_id;
   return query select inv.gym_id,gname,'pending'::text;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.create_access_invite(target_gym_id uuid, invite_email text, requested_role text DEFAULT 'admin'::text, expires_in_days integer DEFAULT 7)
  RETURNS TABLE(invite_id uuid, token text, expires_at timestamp with time zone, gym_name text, invite_role text)
@@ -2322,7 +2322,7 @@ begin
   select name into gname from public.gyms where id=target_gym_id;
   return query select new_id,raw_token,expiry,gname,normal_role;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.create_admin_invite(target_gym_id uuid, invite_email text, expires_in_days integer DEFAULT 7)
  RETURNS TABLE(invite_id uuid, token text, expires_at timestamp with time zone, gym_name text)
@@ -2363,7 +2363,7 @@ begin
 
   return query select new_id,raw_token,expiry,gname;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.create_email_access_invite(target_gym_id uuid, invite_email text, requested_role text DEFAULT 'admin'::text, expires_in_days integer DEFAULT 7)
  RETURNS TABLE(invite_id uuid, status text, owner_approvals integer, owner_approvals_required integer)
@@ -2428,7 +2428,7 @@ begin
   return query
   select new_id,new_status,1,required_count;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.create_gym_for_current_user(gym_name text, gym_slug text)
  RETURNS uuid
@@ -2459,7 +2459,7 @@ begin
 
   return new_gym_id;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.create_shareable_access_invite(target_gym_id uuid, invite_email text, requested_role text DEFAULT 'admin'::text, expires_in_days integer DEFAULT 7)
  RETURNS TABLE(invite_id uuid, token text, status text, owner_approvals integer, owner_approvals_required integer)
@@ -2530,7 +2530,7 @@ begin
          case when new_status='open' then raw_token else null end,
          new_status,1,required_count;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.create_training_group(p_gym_id uuid, p_name text, p_description text DEFAULT NULL::text)
  RETURNS jsonb
@@ -2585,7 +2585,7 @@ begin
   returning id into v_id;
   return v_id;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.create_validated_class_session(p_gym_id uuid, p_class_type_id uuid, p_name text, p_description text, p_starts_at timestamp with time zone, p_ends_at timestamp with time zone, p_capacity integer, p_reserved_capacity integer DEFAULT 0, p_reserved_release_minutes_before integer DEFAULT NULL::integer, p_staff_ids uuid[] DEFAULT '{}'::uuid[], p_plan_ids uuid[] DEFAULT '{}'::uuid[])
  RETURNS jsonb
@@ -2688,7 +2688,7 @@ begin
   delete from public.gym_admin_invites where id=target_invite_id;
   return true;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_access_invite(invite_token text)
  RETURNS TABLE(invite_id uuid, gym_name text, email text, status text, expires_at timestamp with time zone, invite_role text)
@@ -2704,7 +2704,7 @@ AS $function$
   join public.gyms g on g.id=i.gym_id
   where i.token_hash=encode(extensions.digest(invite_token,'sha256'),'hex')
   limit 1;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_admin_invite(invite_token text)
  RETURNS TABLE(invite_id uuid, gym_name text, email text, status text, expires_at timestamp with time zone)
@@ -2719,7 +2719,7 @@ AS $function$
   join public.gyms g on g.id=i.gym_id
   where i.token_hash=encode(extensions.digest(invite_token,'sha256'),'hex')
   limit 1;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_auth_email_context(p_user_id uuid, p_email text, p_gym_id uuid DEFAULT NULL::uuid, p_access_invite text DEFAULT NULL::text, p_signup_slug text DEFAULT NULL::text)
  RETURNS TABLE(gym_id uuid, gym_name text, gym_slug text, sender_name text, sender_email text, reply_to_email text, sender_domain_status text, accent_color text, logo_url text, footer_text text, invited_by text, invite_role text, access_invite boolean)
@@ -2816,7 +2816,7 @@ begin
   where g.id = v_gym_id
   limit 1;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_auth_email_template(p_gym_id uuid, p_template_key text)
  RETURNS TABLE(subject text, preheader text, heading text, body_text text, button_label text, enabled boolean)
@@ -2842,7 +2842,7 @@ begin
     and t.template_key = p_template_key
   limit 1;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_class_booking_options(p_session_id uuid)
  RETURNS jsonb
@@ -2941,7 +2941,7 @@ AS $function$
       else greatest(capacity-booked_count,0)||' spaces left'
     end as availability_note
   from base order by starts_at;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_email_invite_send_context(target_invite_id uuid, requesting_user_id uuid)
  RETURNS TABLE(invite_id uuid, gym_id uuid, email text, invite_role text, status text, expires_at timestamp with time zone)
@@ -2979,7 +2979,7 @@ begin
   return query
   select inv.id, inv.gym_id, inv.email, inv.invite_role, inv.status, inv.expires_at;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_gym_team_accounts(target_gym_id uuid)
  RETURNS TABLE(user_id uuid, email text, display_name text, role gym_member_role, is_active boolean, access_status text, joined_at timestamp with time zone)
@@ -3028,7 +3028,7 @@ begin
     end,
     lower(coalesce(p.display_name, trim(concat_ws(' ',p.first_name,p.last_name)), u.email));
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_member_home_settings(p_gym_id uuid)
  RETURNS jsonb
@@ -3064,7 +3064,7 @@ begin
     'cta_config', coalesce(v_cta, '{}'::jsonb)
   );
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_my_training_groups(p_gym_id uuid)
  RETURNS jsonb
@@ -3088,7 +3088,7 @@ join public.training_group_members gm on gm.group_id=g.id and gm.user_id=auth.ui
 left join public.profiles p on p.id=g.owner_user_id
 where g.gym_id=p_gym_id
 and exists(select 1 from public.gym_members m where m.gym_id=p_gym_id and m.user_id=auth.uid() and m.is_active=true)
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_public_gym_join_options(p_gym_slug text)
  RETURNS jsonb
@@ -3140,7 +3140,7 @@ begin
     'plans', v_plans
   );
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_training_group_dashboard(p_group_id uuid)
  RETURNS jsonb
@@ -3228,7 +3228,7 @@ begin
   on conflict (id) do nothing;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.hybridone_invite_edge_test_admin(p_action text, p_run_id text, p_user_id uuid DEFAULT NULL::uuid, p_gym_id uuid DEFAULT NULL::uuid, p_invite_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -3310,7 +3310,7 @@ begin
 
   raise exception 'Unsupported action';
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.join_public_gym_with_membership(p_gym_slug text, p_plan_id uuid)
  RETURNS jsonb
@@ -3409,7 +3409,7 @@ begin
     'payment_mode', 'manual_test'
   );
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.join_training_group_by_code(p_code text)
  RETURNS jsonb
@@ -3441,7 +3441,7 @@ begin
   set email_sent_at=now()
   where i.id=target_invite_id and i.status='open';
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.member_book_class(p_session_id uuid)
  RETURNS jsonb
@@ -3508,7 +3508,7 @@ begin
   delete from public.class_bookings where session_id=p_session_id and user_id=auth.uid();
   return jsonb_build_object('status','cancelled');
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.member_class_schedule(p_gym_id uuid, p_from timestamp with time zone DEFAULT now(), p_to timestamp with time zone DEFAULT (now() + '30 days'::interval))
  RETURNS TABLE(session_id uuid, name text, description text, starts_at timestamp with time zone, ends_at timestamp with time zone, capacity integer, booked_count integer, available_spaces integer, is_booked boolean)
@@ -3540,7 +3540,7 @@ begin
   group by s.id,s.name,s.description,s.starts_at,s.ends_at,s.capacity
   order by s.starts_at;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.normalise_member_phone()
  RETURNS trigger
@@ -3572,7 +3572,7 @@ begin
   new.phone := v;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.normalise_profile_phone()
  RETURNS trigger
@@ -3604,7 +3604,7 @@ begin
   new.phone := v;
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.notify_social_comment_activity()
  RETURNS trigger
@@ -3713,7 +3713,7 @@ begin
   select g.name into gname from public.gyms g where g.id=inv.gym_id;
   return query select inv.email,inv.invite_role,gname,inv.expires_at;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.preview_training_group_invite(p_code text)
  RETURNS jsonb
@@ -3774,7 +3774,7 @@ begin
   select private.execute_ownership_action(action_id) into result;
   return result;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.propose_owner_promotion(target_gym_id uuid, target_user_id uuid)
  RETURNS jsonb
@@ -3831,7 +3831,7 @@ begin
   select private.execute_ownership_action(action_id) into result;
   return result;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.propose_owner_removal(target_gym_id uuid, target_user_id uuid)
  RETURNS jsonb
@@ -3890,7 +3890,7 @@ begin
   select private.execute_ownership_action(action_id) into result;
   return result;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.provision_staff_membership_with_level(target_gym_id uuid, target_user_id uuid, target_display_name text, target_role text, target_level_id uuid)
  RETURNS void
@@ -3967,7 +3967,7 @@ begin
         access_revoked_at=null,
         updated_at=now();
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.queue_class_booking_notifications()
  RETURNS trigger
@@ -4103,7 +4103,7 @@ begin
 
   return true;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.remove_gym_staff_access(target_gym_id uuid, target_user_id uuid)
  RETURNS boolean
@@ -4162,7 +4162,7 @@ begin
 
   return true;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.revoke_admin_invite(target_invite_id uuid)
  RETURNS boolean
@@ -4198,7 +4198,7 @@ begin
 
   return true;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.rls_auto_enable()
  RETURNS event_trigger
@@ -4228,7 +4228,7 @@ BEGIN
      END IF;
   END LOOP;
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.set_staff_updated_at()
  RETURNS trigger
@@ -4245,7 +4245,7 @@ begin
   new.updated_at = now();
   return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.submit_training_group_challenge_result(p_challenge_id uuid, p_value numeric, p_note text DEFAULT NULL::text)
  RETURNS void
@@ -4275,7 +4275,7 @@ begin
   on conflict(challenge_id,user_id) do update
   set value_numeric=excluded.value_numeric,note=excluded.note,submitted_at=now();
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.sync_future_class_session_price()
  RETURNS trigger
@@ -4400,7 +4400,7 @@ begin
 
   return jsonb_build_object('ok',jsonb_array_length(v_errors)=0,'errors',v_errors,'warnings',v_warnings);
 end;
-$function$
+$function$;
 
 set check_function_bodies = on;
 
