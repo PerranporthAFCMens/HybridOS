@@ -14,6 +14,7 @@ on:
       - 'gym-context.js'
       - 'account-menu.js'
       - '.github/workflows/protected-routing-browser.yml'
+      - '.github/workflows/hourly-production.yml'
   workflow_dispatch:
 
 permissions:
