@@ -63,6 +63,22 @@ jobs:
           const puffin=process.env.PUFFIN_GYM_ID;
           const sha=process.env.HYBRID_BUILD_SHA;
 
+          async function checkBareIndex(browser){
+            const context=await browser.newContext({viewport:{width:390,height:844}});
+            const page=await context.newPage();
+            try{
+              await page.goto(base+'index.html?routing_probe='+encodeURIComponent(sha),{waitUntil:'domcontentloaded',timeout:30000});
+              await page.waitForURL(url=>url.pathname.endsWith('/login.html'),{timeout:20000});
+              const final=new URL(page.url());
+              assert.equal(final.pathname.endsWith('/login.html'),true,'bare index did not reach universal login: '+final.href);
+              assert.equal(final.searchParams.get('gym_id'),null,'bare index unexpectedly carried a gym hint: '+final.href);
+              assert.match(await page.title(),/Sign in .* HybridOne/i);
+              console.log('Bare index passed: index.html -> universal login');
+            }finally{
+              await context.close();
+            }
+          }
+
           async function checkProtected(browser,path,gymId,returnFile,returnView=''){
             const context=await browser.newContext({viewport:{width:390,height:844}});
             const page=await context.newPage();
@@ -89,6 +105,7 @@ jobs:
           (async()=>{
             const browser=await chromium.launch({headless:true});
             try{
+              await checkBareIndex(browser);
               await checkProtected(browser,'admin-access.html?gym_id='+hub,hub,'admin-access.html');
               await checkProtected(browser,'admin.html?view=admin-access.html&gym_id='+hub,hub,'admin.html','admin-access.html');
               await checkProtected(browser,'staff-permissions.html?gym_id='+hub,hub,'staff-permissions.html');
