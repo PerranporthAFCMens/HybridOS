@@ -8,9 +8,12 @@
   const localTime=v=>{const d=new Date(v);return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
   let gymId=null,currentId=null,staffDirectory=[],resourceDirectory=[];
   const {data:{session}}=await sb.auth.getSession(); if(!session) return;
-  const gm=await sb.from('gym_members').select('gym_id,role').eq('user_id',session.user.id).eq('is_active',true).limit(1);
-  if(!gm.data?.length||!['owner','admin'].includes(gm.data[0].role)) return;
-  gymId=gm.data[0].gym_id;
+  const selectedGymId=window.HybridGymContext?.currentGymId?.()||'';
+  if(!selectedGymId){location.href=window.HybridGymContext.chooserUrl({returnTo:location.href});return}
+  const gm=await sb.from('gym_members').select('gym_id,role').eq('user_id',session.user.id).eq('is_active',true).eq('gym_id',selectedGymId).maybeSingle();
+  if(!gm.data||!['owner','admin'].includes(gm.data.role)) return;
+  gymId=gm.data.gym_id;
+  window.__hybridTask3GymChecks={...(window.__hybridTask3GymChecks||{}),'session-manager.js':selectedGymId};
 
   async function loadDirectory(){
     const [members,resources]=await Promise.all([
