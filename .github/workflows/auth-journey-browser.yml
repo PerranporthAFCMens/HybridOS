@@ -4,6 +4,7 @@ name: HybridOne Auth journey browser
 # Persistent Admin shell account menu is included in this gate.
 # Task 4 route-preservation verification trigger.
 # Release-candidate exact-SHA gate trigger.
+# Hold-lift exact-SHA gate trigger.
 
 on:
   workflow_dispatch:
