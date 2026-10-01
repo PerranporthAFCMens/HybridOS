@@ -1,30 +1,30 @@
 {
   "schema_version": 2,
-  "verified_at_utc": "2026-09-28T18:45:00Z",
+  "verified_at_utc": "2026-10-01T21:57:21Z",
   "repository": "PerranporthAFCMens/HybridOS",
   "branches": {
     "production_source": "main",
     "development_source": "dev",
-    "production_main_sha": "dbe7528b83687df73a2ef2b289ae44390205ed11",
-    "verified_dev_application_sha": "0654b4a085d463eaaaccd241caf741015e0ac871",
-    "relationship": "diverged",
-    "dev_ahead_by": 146,
-    "dev_behind_by": 4,
-    "merge_base_sha": "b7d83243e9248a64978677efec91c4f9d83c1052",
-    "note": "Current dev includes the verified persistent gym-switch fix plus later unrelated test/workout-grant commits. Picker runtime files are unchanged since fix commit 3ee9028a7cae68e07d7536a10c60a969c14aabdf."
+    "production_main_sha": "94803abaf78b3b994708bbd6c3e8f0f956a91d89",
+    "verified_dev_application_sha": "db125d7e0f024ec5a828a3930c89ec3fa385fd29",
+    "relationship": "main_is_ancestor_of_dev",
+    "dev_ahead_by": 281,
+    "dev_behind_by": 0,
+    "merge_base_sha": "94803abaf78b3b994708bbd6c3e8f0f956a91d89",
+    "note": "Reconciliation completed through PR #48. Verified at db125d7e0f024ec5a828a3930c89ec3fa385fd29; final release-candidate SHA will be the merge commit of the release-candidate state PR."
   },
   "release_gate": {
     "production_hold": true,
     "production_promotion_allowed": false,
-    "reason": "Gym picker regression is closed and repeatable invite browser journeys are green. Production remains held for same-user different-role-per-gym browser coverage, member email-confirmation enablement and confirmation-link browser verification, intentional main/dev reconciliation, and exact production browser verification."
+    "reason": "Main/dev reconciliation is complete. Production remains held pending exact-SHA Auth/protected-routing gates for the final release candidate, remaining release prerequisites, release dry run, pre-release checks, and an explicit separate hold-lift PR."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
     "hybrid_hub_login": "https://www.hybridone.co.uk/hybrid-hub",
     "puffin_performance_login": "https://www.hybridone.co.uk/puffin-performance",
-    "deployed_source_sha": "dbe7528b83687df73a2ef2b289ae44390205ed11",
+    "deployed_source_sha": "94803abaf78b3b994708bbd6c3e8f0f956a91d89",
     "deployment_state": "READY",
-    "auth_model": "legacy gym-specific production entry points until the universal-login candidate is released",
+    "auth_model": "legacy gym-specific production entry points until the universal-login release candidate is deliberately promoted",
     "canonical_routes": {
       "trailing_slash": false,
       "routing_workflow": ".github/workflows/production-routing.yml",
@@ -41,29 +41,30 @@
     "runtime_verification": {
       "status": "pass",
       "workflow": ".github/workflows/dev-runtime.yml",
-      "run_id": 36467112883,
-      "source_sha": "0654b4a085d463eaaaccd241caf741015e0ac871",
+      "run_id": 36931978891,
+      "source_sha": "db125d7e0f024ec5a828a3930c89ec3fa385fd29",
       "verifies": [
         "exact deployed dev SHA",
         "public dev runtime/build contract",
-        "current dev after unrelated workout-grant migration"
+        "post-reconciliation dev runtime"
       ]
     },
     "smoke": {
       "status": "pass",
-      "run_id": 36467112929,
-      "source_sha": "0654b4a085d463eaaaccd241caf741015e0ac871"
+      "run_id": 36931979424,
+      "source_sha": "db125d7e0f024ec5a828a3930c89ec3fa385fd29"
     },
     "protected_routing_browser": {
-      "status": "pass",
+      "status": "pass_latest_pre_candidate",
       "workflow": ".github/workflows/protected-routing-browser.yml",
-      "run_id": 36466163472,
-      "source_sha": "4a967c2222b6d89c1a5b318b9dc8eac654bd7587",
+      "run_id": 36927765376,
+      "source_sha": "54d691f89e0c6473192a6dabadb95062962fca54",
       "verifies": [
-        "universal login redirect",
+        "bare index redirects to universal login",
         "gym hint preservation",
         "persistent Admin-shell return_to preservation"
-      ]
+      ],
+      "note": "The release-candidate state PR adds a comment-only trigger so this workflow reruns on the final merge SHA."
     },
     "multi_gym_browser_audit": {
       "status": "pass",
@@ -137,10 +138,10 @@
       "behaviour": "Bare index.html redirects to login.html unless embedded, gym_id or access_invite context is present."
     },
     "auth_journey_browser": {
-      "status": "pass",
+      "status": "pass_latest_pre_candidate",
       "workflow": ".github/workflows/auth-journey-browser.yml",
-      "run_id": 36311299027,
-      "source_sha": "cbee25179d8b6ce5a93c09c8937b3194c62da974",
+      "run_id": 36927765162,
+      "source_sha": "54d691f89e0c6473192a6dabadb95062962fca54",
       "viewports": [
         "1440x1000",
         "390x844"
@@ -157,7 +158,8 @@
         "Hybrid Hub and Puffin magic-link browser journeys",
         "disposable Auth user cleanup",
         "live member-signup confirmation mode classification"
-      ]
+      ],
+      "note": "The release-candidate state PR adds a comment-only trigger so this workflow reruns on the final merge SHA."
     },
     "latest_full_auth_browser": {
       "status": "pass",
@@ -247,5 +249,31 @@
     "resend_browser_run_id": 36119425104,
     "repeatable_fixture_verified": true,
     "repeatable_browser_run_id": 36465324428
+  },
+  "release_candidate": {
+    "verified_at_sha": "db125d7e0f024ec5a828a3930c89ec3fa385fd29",
+    "final_candidate_sha": "merge commit of the release-candidate state PR",
+    "main_ancestor_sha": "94803abaf78b3b994708bbd6c3e8f0f956a91d89",
+    "manual_release_workflow": {
+      "path": ".github/workflows/hourly-production.yml",
+      "blob_sha": "945cc4386654c1199d534d9354d0ac29608d4962",
+      "trigger": "workflow_dispatch_only",
+      "schedule": false,
+      "cron": false
+    },
+    "routing_model": "Option C: public root serves landing; bare /index.html serves the universal-login guard and browser-executes to login.html",
+    "evidence_now": {
+      "smoke_run_id": 36931979424,
+      "dev_runtime_run_id": 36931978891,
+      "auth_journey_latest_pre_candidate_run_id": 36927765162,
+      "protected_routing_latest_pre_candidate_run_id": 36927765376
+    },
+    "exact_sha_gates_required_after_merge": [
+      "HybridOne smoke checks",
+      "HybridOne dev runtime verification",
+      "HybridOne Auth journey browser",
+      "HybridOne protected routing browser"
+    ],
+    "main_ruleset_bypass": "Repository admin; pull requests only; temporary governance escape hatch pending permanent fix"
   }
 }
