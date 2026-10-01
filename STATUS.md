@@ -47,10 +47,75 @@ Task 3 is complete on dev.
 - Member Coach membership decision: eligible statuses are `active` + `paused` only. Paused members keep their coaching dashboard and history; `pending`, `cancelled`, and `expired` do not qualify. The invalid legacy `trial` status is being replaced with `paused`, with browser verification requiring the selected-gym membership request to return HTTP 200.
 - No production promotion is implied by Task 3 completion.
 
+### Live test accounts
+
+Two temporary Puffin Performance test accounts are now present for membership-status verification. No passwords are stored here or committed to the repository.
+
+- `a.j.turner+pause@hotmail.com` — Auth user `0860adc5-3a3d-4b45-881c-f0a7a77b1131` — Puffin `gym_members` role `member`, access `active`, membership status `paused`.
+- `a.j.turner+cancelled@hotmail.com` — Auth user `f63cf0f2-2637-4f74-a5f1-08a5f3709e1f` — Puffin `gym_members` role `member`, access `active`, membership status `cancelled`.
+
+Cleanup SQL:
+
+```sql
+begin;
+
+delete from public.memberships
+where user_id in (
+  '0860adc5-3a3d-4b45-881c-f0a7a77b1131',
+  'f63cf0f2-2637-4f74-a5f1-08a5f3709e1f'
+);
+
+delete from public.gym_members
+where user_id in (
+  '0860adc5-3a3d-4b45-881c-f0a7a77b1131',
+  'f63cf0f2-2637-4f74-a5f1-08a5f3709e1f'
+);
+
+commit;
+```
+
+Then delete both Auth users manually in the Supabase dashboard. After deleting the Auth users, confirm that the trigger-created profile rows are gone. If either profile remains, delete only those two profile rows with:
+
+```sql
+delete from public.profiles
+where id in (
+  '0860adc5-3a3d-4b45-881c-f0a7a77b1131',
+  'f63cf0f2-2637-4f74-a5f1-08a5f3709e1f'
+);
+```
+
+### Go-live checklist
+
+Before lifting `PRODUCTION_HOLD`:
+
+- remove the two temporary Puffin test accounts using the documented cleanup order;
+- delete the test helper functions used for Auth/release verification once they are no longer required;
+- turn on Supabase leaked-password protection;
+- confirm no disposable/test Auth users remain;
+- enable and verify member email confirmation;
+- run the full Auth journey against the exact release SHA;
+- verify multi-gym switching and per-gym role isolation on the exact release SHA;
+- ensure required release/ruleset checks can report cleanly without a status deadlock;
+- intentionally reconcile `dev` and `main` rather than blindly merging;
+- deploy only the exact approved release SHA;
+- browser-test the exact production revision before removing the production hold.
+
 ### Workflow backlog
 
 - Auth workflow: Playwright install timeout and retry
 - Sidebar active/highlight state quirk in the persistent admin shell (pre-existing; not introduced by Task 3)
+
+### Legacy hourly production workflow safety
+
+`main` and `dev` use the **same workflow path**, `.github/workflows/hourly-production.yml`, but currently contain different versions of that file.
+
+- `main`: **Hourly production release** still contains `cron: '37 * * * *'` plus `workflow_dispatch`, and attempts to fast-forward `main` to `dev` whenever `main` is an ancestor of `dev`.
+- `dev`: that same path has been replaced by **Manual production release**, which is `workflow_dispatch` only and requires the exact current dev SHA, an explicitly cleared production hold, all four exact-SHA checks, fast-forward ancestry, and a rollback tag before promotion.
+- Because GitHub Actions enables/disables the workflow by repository workflow identity/path, disabling it in the Actions UI also leaves the manual replacement at that path disabled until it is deliberately re-enabled. Keep it disabled through reconciliation; only consider re-enabling after the scheduled trigger is removed from the version on `main`.
+- Read-only history review from 26 September onward found **no hourly run that pushed to main**. Scheduled runs skipped because `main` and `dev` were diverged. The observed main changes in that period were direct/manual production changes and PR #29, not hourly promotion.
+- The active `main` ruleset does not require a pull request. It requires fast-forward history and four status contexts (`smoke`, `auth-journeys`, `verify`, `routing`). Therefore an hourly fast-forward to a dev SHA carrying those four required green checks could satisfy the ruleset and push directly to `main`.
+
+**Task 4 step 0:** keep the legacy hourly workflow disabled and, in the reconciliation PR, remove its schedule on `main` before any operation can make `dev` a descendant of `main` or otherwise make the branches fast-forwardable. No reconciliation step may create that ancestry while the schedule still exists.
 
 ### Remaining Auth release gates
 
