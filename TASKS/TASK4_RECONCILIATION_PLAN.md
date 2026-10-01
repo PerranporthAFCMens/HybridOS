@@ -360,6 +360,35 @@ For every release candidate:
    - deployment is `READY`;
    - the deployment was not skipped by Automatic / Ignored Build Step.
 
+### Immediate post-promotion production route go/no-go
+
+As soon as the manual release workflow pushes the approved release-candidate SHA to `main` and Vercel reports the matching production deployment as `READY`:
+
+1. Dispatch **HybridOne production routing** from `main` (or run the exact equivalent live route checks).
+2. Verify the live production routes:
+   - `/`
+   - `/hybrid-hub`
+   - `/puffin-performance`
+   - `/index.html`
+   - `/app`
+3. For `/index.html`, require all of the following:
+   - HTTP 200;
+   - final route-layer path remains exactly `/index.html`;
+   - the served HTML contains the universal-login guard;
+   - the guard contains the embedded / `gym_id` / `access_invite` exemptions;
+   - the guard contains `location.replace('./login.html')`.
+4. **GO:** only if the production-routing run/live checks are green and the exact Vercel production Git SHA is the approved release candidate.
+5. **NO-GO:** if any route check fails, the production deployment SHA does not match, or `/index.html` is redirected/served incorrectly. Stop further release activity and trigger the documented rollback procedure immediately. Do not fix forward in production.
+
+### Re-arm the production hold after a successful release
+
+After production is verified healthy and the first-release acceptance checks are complete, open a separate small PR that returns:
+
+- `production_hold: true`
+- `production_promotion_allowed: false`
+
+Merge that hold-reset PR before normal development toward the next planned release. Every future release must use its own separately reviewed hold-lift PR and exact-SHA release gates.
+
 ### Paper rollback rehearsal for the first production release
 
 The standard rollback target is the pre-release `prod-YYYY-MM-DD` tag created by the manual release workflow immediately before promotion. The immutable Task 4 fallback remains `task4-baseline-2026-10-01`.
