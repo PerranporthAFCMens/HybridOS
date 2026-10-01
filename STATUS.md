@@ -107,11 +107,11 @@ Before lifting `PRODUCTION_HOLD`:
 
 ### Legacy hourly production workflow safety
 
-The legacy `.github/workflows/hourly-production.yml` on `main` is a different workflow from the new manual release workflow currently present on `dev`.
+`main` and `dev` use the **same workflow path**, `.github/workflows/hourly-production.yml`, but currently contain different versions of that file.
 
 - `main`: **Hourly production release** still contains `cron: '37 * * * *'` plus `workflow_dispatch`, and attempts to fast-forward `main` to `dev` whenever `main` is an ancestor of `dev`.
-- `dev`: the file has been replaced by **Manual production release**, which is `workflow_dispatch` only and requires the exact current dev SHA, an explicitly cleared production hold, all four exact-SHA checks, fast-forward ancestry, and a rollback tag before promotion.
-- Disabling the legacy workflow in the GitHub Actions UI disables that workflow definition at repository level; it must remain disabled until reconciliation removes the schedule from the version that will land on `main`.
+- `dev`: that same path has been replaced by **Manual production release**, which is `workflow_dispatch` only and requires the exact current dev SHA, an explicitly cleared production hold, all four exact-SHA checks, fast-forward ancestry, and a rollback tag before promotion.
+- Because GitHub Actions enables/disables the workflow by repository workflow identity/path, disabling it in the Actions UI also leaves the manual replacement at that path disabled until it is deliberately re-enabled. Keep it disabled through reconciliation; only consider re-enabling after the scheduled trigger is removed from the version on `main`.
 - Read-only history review from 26 September onward found **no hourly run that pushed to main**. Scheduled runs skipped because `main` and `dev` were diverged. The observed main changes in that period were direct/manual production changes and PR #29, not hourly promotion.
 - The active `main` ruleset does not require a pull request. It requires fast-forward history and four status contexts (`smoke`, `auth-journeys`, `verify`, `routing`). Therefore an hourly fast-forward to a dev SHA carrying those four required green checks could satisfy the ruleset and push directly to `main`.
 
