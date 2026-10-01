@@ -105,6 +105,18 @@ Before lifting `PRODUCTION_HOLD`:
 - Auth workflow: Playwright install timeout and retry
 - Sidebar active/highlight state quirk in the persistent admin shell (pre-existing; not introduced by Task 3)
 
+### Legacy hourly production workflow safety
+
+The legacy `.github/workflows/hourly-production.yml` on `main` is a different workflow from the new manual release workflow currently present on `dev`.
+
+- `main`: **Hourly production release** still contains `cron: '37 * * * *'` plus `workflow_dispatch`, and attempts to fast-forward `main` to `dev` whenever `main` is an ancestor of `dev`.
+- `dev`: the file has been replaced by **Manual production release**, which is `workflow_dispatch` only and requires the exact current dev SHA, an explicitly cleared production hold, all four exact-SHA checks, fast-forward ancestry, and a rollback tag before promotion.
+- Disabling the legacy workflow in the GitHub Actions UI disables that workflow definition at repository level; it must remain disabled until reconciliation removes the schedule from the version that will land on `main`.
+- Read-only history review from 26 September onward found **no hourly run that pushed to main**. Scheduled runs skipped because `main` and `dev` were diverged. The observed main changes in that period were direct/manual production changes and PR #29, not hourly promotion.
+- The active `main` ruleset does not require a pull request. It requires fast-forward history and four status contexts (`smoke`, `auth-journeys`, `verify`, `routing`). Therefore an hourly fast-forward to a dev SHA carrying those four required green checks could satisfy the ruleset and push directly to `main`.
+
+**Task 4 step 0:** keep the legacy hourly workflow disabled and, in the reconciliation PR, remove its schedule on `main` before any operation can make `dev` a descendant of `main` or otherwise make the branches fast-forwardable. No reconciliation step may create that ancestry while the schedule still exists.
+
 ### Remaining Auth release gates
 
 Still open:
