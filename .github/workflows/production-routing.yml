@@ -54,8 +54,31 @@ jobs:
           PY
           }
 
+          check_index_guard() {
+            local url="https://www.hybridone.co.uk/index.html"
+            local tmp
+            tmp="$(mktemp)"
+            local meta
+            meta="$(curl -sS -L --max-time 20 -H 'Cache-Control: no-cache' -o "$tmp" -w '%{http_code}|%{url_effective}' "$url?route_probe=$GITHUB_SHA")" || return 1
+            local status
+            status="$(printf '%s' "$meta" | cut -d'|' -f1)"
+            local effective
+            effective="$(printf '%s' "$meta" | cut -d'|' -f2-)"
+            [ "$status" = "200" ] || return 1
+            python3 - "$effective" <<'PY'
+          import sys
+          from urllib.parse import urlparse
+          actual=urlparse(sys.argv[1]).path
+          if actual != "/index.html":
+              raise SystemExit(f"Expected /index.html to be served without a route-layer redirect, got {actual}")
+          PY
+            grep -Fq 'id="hybrid-universal-login-entry"' "$tmp" || return 1
+            grep -Fq "q.get('embedded')==='1'||q.get('gym_id')||q.get('access_invite')" "$tmp" || return 1
+            grep -Fq "location.replace('./login.html')" "$tmp" || return 1
+          }
+
           for attempt in $(seq 1 36); do
-            if               check_route "https://www.hybridone.co.uk/hybrid-hub" "/hybrid-hub" "<title>Hybrid Hub · HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/hybrid-hub/" "/hybrid-hub" "<title>Hybrid Hub · HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/puffin-performance" "/puffin-performance" "<title>Puffin Performance · HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/puffin-performance/" "/puffin-performance" "<title>Puffin Performance · HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/app" "/app" "<title>HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/app/" "/app" "<title>HybridOne</title>"; then
+            if               check_route "https://www.hybridone.co.uk/" "/" "<title>HybridOne · The operating system for hybrid gyms</title>" &&               check_index_guard &&               check_route "https://www.hybridone.co.uk/hybrid-hub" "/hybrid-hub" "<title>Hybrid Hub · HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/hybrid-hub/" "/hybrid-hub" "<title>Hybrid Hub · HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/puffin-performance" "/puffin-performance" "<title>Puffin Performance · HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/puffin-performance/" "/puffin-performance" "<title>Puffin Performance · HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/app" "/app" "<title>HybridOne</title>" &&               check_route "https://www.hybridone.co.uk/app/" "/app" "<title>HybridOne</title>"; then
               echo "Production route verification passed"
               exit 0
             fi
