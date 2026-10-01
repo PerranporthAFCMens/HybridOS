@@ -172,6 +172,87 @@ jobs:
             assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),gymId,'active gym context mismatch after persistent sidebar switch');
           }
 
+          async function captureSupabaseRequests(page,action){
+            const seen=[];
+            const onRequest=req=>{
+              try{
+                const u=new URL(req.url());
+                if(u.hostname==='mzgnhmeydhhpzgxlgudh.supabase.co'&&u.pathname.startsWith('/rest/v1/'))seen.push(u);
+              }catch{}
+            };
+            page.on('request',onRequest);
+            try{await action();await page.waitForTimeout(1200)}finally{page.off('request',onRequest)}
+            return seen;
+          }
+
+          async function assertTask3GymContext(page,gymId,gymName){
+            const helperAssets=[
+              'scheduling-engine.js',
+              'calendar-mobile.js',
+              'calendar-views.js',
+              'session-manager.js',
+              'class-admin-enhancements.js',
+              'class-admin-live-refresh.js'
+            ];
+            const scopedHelpers=[
+              'scheduling-engine.js',
+              'calendar-views.js',
+              'session-manager.js',
+              'class-admin-enhancements.js',
+              'class-admin-live-refresh.js'
+            ];
+            const classRequests=await captureSupabaseRequests(page,async()=>{
+              await page.goto(base+'classes.html?gym_id='+gymId,{waitUntil:'domcontentloaded',timeout:30000});
+              await page.locator('#gymName').waitFor({state:'visible',timeout:20000});
+              await page.waitForFunction(({names,gym})=>names.every(name=>window.__hybridTask3GymChecks?.[name]===gym),{names:scopedHelpers,gym:gymId},{timeout:20000});
+            });
+            assert.equal((await page.locator('#gymName').innerText()).trim(),gymName,'Classes rendered the wrong gym data');
+            const loadedAssets=await page.evaluate(()=>[...document.scripts].map(s=>new URL(s.src,location.href).pathname.split('/').pop()));
+            for(const asset of helperAssets)assert.ok(loadedAssets.some(x=>x?.startsWith(asset)),'Classes helper asset not loaded: '+asset);
+            const checks=await page.evaluate(()=>window.__hybridTask3GymChecks||{});
+            for(const name of scopedHelpers)assert.equal(checks[name],gymId,name+' did not complete a Puffin-scoped membership request');
+            const selectorRequests=classRequests.filter(u=>u.pathname.endsWith('/gym_members')&&u.searchParams.get('select')==='gym_id,role');
+            assert.ok(selectorRequests.length>=scopedHelpers.length,'Expected scoped Classes helper membership requests were not observed');
+            assert.equal(selectorRequests.filter(u=>!u.searchParams.get('gym_id')).length,0,'Classes helper made an unscoped gym lookup');
+            assert.equal(selectorRequests.filter(u=>u.searchParams.get('gym_id')!=='eq.'+gymId).length,0,'Classes helper queried the wrong gym');
+
+            const staffRequests=await captureSupabaseRequests(page,async()=>{
+              await page.goto(base+'staff.html?view=staff&gym_id='+gymId,{waitUntil:'domcontentloaded',timeout:30000});
+              await page.locator('#gymName').waitFor({state:'visible',timeout:20000});
+            });
+            assert.equal((await page.locator('#gymName').innerText()).trim(),gymName,'Staff rendered the wrong gym data');
+            const staffSelectors=staffRequests.filter(u=>u.pathname.endsWith('/gym_members')&&u.searchParams.get('select')==='gym_id,role');
+            assert.ok(staffSelectors.length>=1,'Staff operations selector did not run');
+            assert.equal(staffSelectors.filter(u=>!u.searchParams.get('gym_id')).length,0,'Staff operations made an unscoped gym lookup');
+            assert.equal(staffSelectors.filter(u=>u.searchParams.get('gym_id')!=='eq.'+gymId).length,0,'Staff operations queried the wrong gym');
+
+            const memberRequests=await captureSupabaseRequests(page,async()=>{
+              await page.goto(base+'member.html?view=member&gym_id='+gymId,{waitUntil:'domcontentloaded',timeout:30000});
+              await page.locator('#gymName').waitFor({state:'visible',timeout:20000});
+            });
+            assert.equal((await page.locator('#gymName').innerText()).trim(),gymName,'Member view rendered the wrong gym data');
+            const social=memberRequests.filter(u=>u.pathname.endsWith('/gym_members')&&u.searchParams.get('select')==='gym_id');
+            assert.ok(social.length>=1,'Social selector did not run');
+            assert.equal(social.filter(u=>!u.searchParams.get('gym_id')).length,0,'Social made an unscoped gym lookup');
+            assert.equal(social.filter(u=>u.searchParams.get('gym_id')!=='eq.'+gymId).length,0,'Social queried the wrong gym');
+            const coach=memberRequests.filter(u=>u.pathname.endsWith('/memberships')&&u.searchParams.get('select')==='gym_id,created_at');
+            assert.ok(coach.length>=1,'Member coach selector did not run');
+            assert.equal(coach.filter(u=>!u.searchParams.get('gym_id')).length,0,'Member coach made an unscoped gym lookup');
+            assert.equal(coach.filter(u=>u.searchParams.get('gym_id')!=='eq.'+gymId).length,0,'Member coach queried the wrong gym');
+
+            await page.goto(base+'admin.html?gym_id='+gymId,{waitUntil:'domcontentloaded',timeout:30000});
+            await waitForAdminPortal(page,gymId);
+          }
+
+          async function assertNoGymFallsBackToChooser(context){
+            const page=await context.newPage();
+            try{
+              await page.goto(base+'classes.html',{waitUntil:'domcontentloaded',timeout:30000});
+              await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html'),{timeout:20000});
+              assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),null,'Missing gym context silently selected a gym');
+            }finally{await page.close()}
+          }
+
           async function signOutAndRelog(page){
             const account=await accountControls(page);
             await account.chip.click();
@@ -203,6 +284,8 @@ jobs:
               await switchGymFromSidebar(dp,puffin);
               await switchGymFromSidebar(dp,hub);
               await switchGym(dp,puffin);
+              await assertTask3GymContext(dp,puffin,'Puffin Performance');
+              await assertNoGymFallsBackToChooser(desktop);
               await dp.reload({waitUntil:'domcontentloaded'});
               await waitForAdminPortal(dp,puffin);
               assert.equal(await dp.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),puffin,'desktop refresh lost gym context');
