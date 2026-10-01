@@ -231,10 +231,33 @@ jobs:
               await page.locator('#gymName').waitFor({state:'visible',timeout:20000});
             });
             assert.equal((await page.locator('#gymName').innerText()).trim(),gymName,'Member view rendered the wrong gym data');
-            const social=memberRequests.filter(u=>u.pathname.endsWith('/gym_members')&&u.searchParams.get('select')==='gym_id');
-            assert.ok(social.length>=1,'Social selector did not run');
-            assert.equal(social.filter(u=>!u.searchParams.get('gym_id')).length,0,'Social made an unscoped gym lookup');
-            assert.equal(social.filter(u=>u.searchParams.get('gym_id')!=='eq.'+gymId).length,0,'Social queried the wrong gym');
+            const memberRoot=memberRequests.filter(u=>u.pathname.endsWith('/gym_members')&&u.searchParams.get('select')==='gym_id,role,gyms(id,name)'&&u.searchParams.get('gym_id')==='eq.'+gymId);
+            assert.ok(memberRoot.length>=1,'Member page did not validate the selected gym');
+            const currentUserEq=memberRoot[0].searchParams.get('user_id');
+            assert.ok(currentUserEq&&currentUserEq.startsWith('eq.'),'Member page user context missing');
+
+            const gymIdOnly=memberRequests.filter(u=>u.pathname.endsWith('/gym_members')&&u.searchParams.get('select')==='gym_id');
+            const tenantBranding=gymIdOnly.filter(u=>{
+              const keys=[...u.searchParams.keys()];
+              return u.searchParams.get('user_id')===currentUserEq
+                &&u.searchParams.get('is_active')==='eq.true'
+                &&!u.searchParams.has('gym_id')
+                &&keys.length===3
+                &&keys.includes('select')&&keys.includes('user_id')&&keys.includes('is_active');
+            });
+            assert.equal(tenantBranding.length,1,'Expected exactly one tenant-branding list-my-gyms request on Member page');
+
+            const otherUnscoped=gymIdOnly.filter(u=>!u.searchParams.has('gym_id')&&!tenantBranding.includes(u));
+            assert.equal(otherUnscoped.length,0,'Unexpected unscoped gym_id-only lookup on Member page');
+
+            const socialOwn=gymIdOnly.filter(u=>
+              u.searchParams.get('user_id')===currentUserEq
+              &&u.searchParams.get('is_active')==='eq.true'
+              &&u.searchParams.get('gym_id')==='eq.'+gymId
+              &&!u.searchParams.has('access_status')
+              &&u.search.includes('&is_active=eq.true&gym_id=eq.'+gymId)
+            );
+            assert.equal(socialOwn.length,1,'Social did not make exactly one selected-gym membership request');
             const coach=memberRequests.filter(u=>u.pathname.endsWith('/memberships')&&u.searchParams.get('select')==='gym_id,created_at');
             assert.ok(coach.length>=1,'Member coach selector did not run');
             assert.equal(coach.filter(u=>!u.searchParams.get('gym_id')).length,0,'Member coach made an unscoped gym lookup');
