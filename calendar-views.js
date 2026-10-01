@@ -12,8 +12,10 @@
   const nameOf=p=>p?.display_name||[p?.first_name,p?.last_name].filter(Boolean).join(' ')||'Staff';
 
   const {data:{session}}=await sb.auth.getSession();if(!session)return;
-  const gm=await sb.from('gym_members').select('gym_id,role').eq('user_id',session.user.id).eq('is_active',true).limit(1);
-  if(!gm.data?.length||!['owner','admin'].includes(gm.data[0].role))return;gymId=gm.data[0].gym_id;
+  const selectedGymId=window.HybridGymContext?.currentGymId?.()||'';
+  if(!selectedGymId){location.href=window.HybridGymContext.chooserUrl({returnTo:location.href});return}
+  const gm=await sb.from('gym_members').select('gym_id,role').eq('user_id',session.user.id).eq('is_active',true).eq('gym_id',selectedGymId).maybeSingle();
+  if(!gm.data||!['owner','admin'].includes(gm.data.role))return;gymId=gm.data.gym_id;
 
   async function loadDirectory(){
     const [members,resources]=await Promise.all([
