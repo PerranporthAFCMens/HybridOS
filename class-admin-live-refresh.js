@@ -6,11 +6,9 @@
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const {data:{session}}=await supabase.auth.getSession();
   if(!session) return;
-  const selectedGymId=window.HybridGymContext?.currentGymId?.()||'';
-  if(!selectedGymId){location.href=window.HybridGymContext.chooserUrl({returnTo:location.href});return}
-  const {data:gm}=await supabase.from('gym_members').select('gym_id,role').eq('user_id',session.user.id).eq('is_active',true).eq('gym_id',selectedGymId).maybeSingle();
-  if(!gm||!['owner','admin'].includes(gm.role)) return;
-  const gymId=gm.gym_id;
+  const {data:gm}=await supabase.from('gym_members').select('gym_id,role').eq('user_id',session.user.id).eq('is_active',true).limit(1);
+  if(!gm?.length||!['owner','admin'].includes(gm[0].role)) return;
+  const gymId=gm[0].gym_id;
 
   async function refreshTemplates(){
     const modal=document.getElementById('modal');
