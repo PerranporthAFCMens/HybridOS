@@ -89,12 +89,18 @@ No ancestry-changing operation has been started.
 - Equivalent on dev: yes.
 - Risk of loss: none beyond preserving the newer dev versions already noted.
 
+## Task 4 routing decision — Option C
+
+The main-only `/index.html → /` redirect is not carried forward because dev's `index.html` guard supersedes the legacy login it protected against; bare `/index.html` now goes to the universal login.
+
+The useful main-only behaviour retained is the production verification itself: the public root must serve the HybridOne landing page, `/index.html` must serve the current universal-login guard, and a real browser test must prove that the guard executes and reaches `login.html`. Existing `/hybrid-hub`, `/puffin-performance`, and `/app` checks remain.
+
 ## What main has that dev would currently lose
 
-The read-only inventory identifies two production-routing details that are not presently in dev and should be deliberately carried into the reconciled result:
+The read-only inventory originally identified two main-only routing details. After tracing current dev, the reconciliation decision is:
 
-1. Vercel redirect: `/index.html -> /` (temporary/non-permanent redirect).
-2. Production routing verification for both `/` and `/index.html` resolving to the public HybridOne landing page.
+1. Do **not** carry the Vercel `/index.html -> /` redirect forward; current dev's early `index.html` guard supersedes the legacy generic-login protection and routes bare visits to universal `login.html`.
+2. Carry forward the useful production-route verification by checking the public root and the static `index.html` universal-login guard, with a real browser check proving bare `/index.html` executes that guard and reaches `login.html`.
 
 Everything else in the nine main-only commits is either:
 - already present on dev in a newer/equivalent form; or
@@ -105,7 +111,7 @@ Everything else in the nine main-only commits is either:
 The reconciled release must keep these production URLs working:
 
 - `/` -> public HybridOne landing page
-- `/index.html` -> `/` -> public landing page
+- `/index.html` -> universal `login.html` via the current dev guard
 - `/hybrid-hub` and `/hybrid-hub/` -> Hybrid Hub login
 - `/puffin-performance` and `/puffin-performance/` -> Puffin Performance login
 - `/app` and `/app/` -> HybridOne application entry, which then follows the universal person-first login/gym-context model
@@ -183,11 +189,12 @@ After Step 0:
 
 **Owner approval view:** branch SHAs, fresh compare, list of any newly changed files, exact proposed baseline tag name/target, and confirmation that creating the tag does not change either branch.
 
-### A2. Carry the two intentional production-route deltas onto dev first
+### A2. Carry the intentional production-route verification onto dev first
 
 On a branch created from the exact approved `dev` SHA:
-- add `/index.html -> /` to `vercel.json`;
-- extend the production-routing verification so it also probes `/` and `/index.html`;
+- do **not** change `vercel.json`;
+- extend the production-routing verification so it checks `/` serves the public landing and `/index.html` serves the current universal-login guard;
+- extend the protected-routing browser test so JavaScript execution proves bare `/index.html` reaches `login.html`;
 - keep dev's newer `index.html`, `auth-return.html`, `admin-frame.js`, and smoke logic.
 
 Open a PR to `dev`. Owner merges it.
@@ -201,7 +208,7 @@ Checks before approval:
 Browser checks after merge to dev:
 - GitHub Pages/dev application entry still reaches universal login;
 - embedded/gym/invite entry still works;
-- **Admin-shell regression check on both desktop and mobile:** sign in as an admin, open the Admin shell, and confirm the Admin dashboard still loads correctly with `index.html` embedded inside the shell after the `/index.html -> /` production redirect has been carried over. The redirect must apply to a bare production `/index.html` request without breaking the shell's bound/embedded dashboard load;
+- **Admin-shell regression check on both desktop and mobile:** sign in as an admin, open the Admin shell, and confirm the Admin dashboard still loads correctly with `index.html` embedded inside the shell while bare `/index.html` continues to route to universal login;
 - mobile Admin shell remains persistent;
 - Auth journey and protected routing pass on the exact merged dev SHA.
 
