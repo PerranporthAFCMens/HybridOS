@@ -43,6 +43,10 @@ Task 3 is being retried after PR #34 was reverted.
 - Separate observation from the same failed run: the existing `member-coach.js` membership query returned HTTP 400 because it includes status `trial`, while the live membership status enum does not include `trial`. That predicate existed before Task 3; this test-only correction does not change runtime behaviour.
 - No production promotion is implied by this work.
 
+### Workflow backlog
+
+- Auth workflow: Playwright install timeout and retry
+
 ### Remaining Auth release gates
 
 Still open:
