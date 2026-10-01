@@ -335,6 +335,101 @@ After Step 0:
 
 Use **Option A** unless the fresh post-Step-0 compare shows the branches have become materially simpler. It gives the owner smaller approval points and clearer rollback boundaries.
 
+## First-release preview and rollback rehearsal
+
+### Vercel preview rule
+
+The Vercel project currently uses **Ignored Build Step: Automatic**.
+
+Because Automatic can skip a build for a Git SHA that Vercel has already deployed, **never use the exact release-candidate SHA itself to create the production-shape preview**.
+
+For every release candidate:
+
+1. Keep the exact release-candidate commit unchanged.
+2. Create a temporary preview-only commit whose tree is byte-for-byte identical to the release-candidate tree and whose parent is the exact release-candidate SHA.
+3. Put only that preview-only commit on a temporary non-`dev`, non-`main` preview branch.
+4. Prove:
+   - preview-only tree SHA equals the release-candidate tree SHA;
+   - compare release candidate -> preview-only commit has **0 files changed**.
+5. Use only the resulting Vercel Preview deployment to test production-shape routes such as `/hybrid-hub`, `/puffin-performance`, `/index.html`, and `/app`.
+6. The preview-only commit/branch is never promoted to production.
+7. After the actual release, verify the Vercel **production** deployment:
+   - target is `production`;
+   - Git ref is `main`;
+   - Git SHA is exactly the approved release-candidate SHA;
+   - deployment is `READY`;
+   - the deployment was not skipped by Automatic / Ignored Build Step.
+
+### Paper rollback rehearsal for the first production release
+
+The standard rollback target is the pre-release `prod-YYYY-MM-DD` tag created by the manual release workflow immediately before promotion. The immutable Task 4 fallback remains `task4-baseline-2026-10-01`.
+
+#### A. Immediate service rollback in Vercel
+
+1. **Owner:** identify the failed production deployment and stop further release activity.
+2. **Owner:** in Vercel, use **Instant Rollback** to restore the last known-good production deployment when immediate service restoration is required.
+3. **Owner:** confirm both production aliases resolve to the rolled-back deployment:
+   - `www.hybridone.co.uk`
+   - `hybridone.co.uk`
+4. **Owner / AI read-only verification:** record the exact Vercel deployment ID and Git SHA now serving production.
+5. **Important re-check:** Vercel Instant Rollback normally stops production from automatically following later Git `main` deployments until production is deliberately re-promoted. Before any subsequent release, explicitly verify which deployment currently owns the production aliases and re-promote the intended Git-backed production deployment if required.
+
+Instant Rollback restores service, but it does **not** by itself repair GitHub branch history.
+
+#### B. Restore GitHub main without force-moving protected history
+
+Preferred recovery keeps `main` moving forward.
+
+1. **Owner / AI:** identify the chosen rollback source:
+   - first choice: the new `prod-YYYY-MM-DD` tag created immediately before the failed release;
+   - fallback: `task4-baseline-2026-10-01`.
+2. **AI:** prepare a rollback branch from the current `main` head whose resulting tree exactly matches the chosen rollback tag's tree. Do not force-reset `main`.
+3. **AI:** prove the rollback branch tree equals the chosen rollback tag tree and show the exact diff against current `main`.
+4. **AI:** open a rollback PR to `main`. Do not merge it.
+5. **Owner ruleset step, in plain English:**
+   - leave the `main` ruleset enabled;
+   - leave all four required checks present;
+   - leave deletion protection enabled;
+   - leave non-fast-forward protection enabled;
+   - use the existing **Repository admin — pull requests only** bypass only on this rollback PR if the normal required-check set cannot all report before merge;
+   - explicitly choose GitHub's **Merge without waiting for requirements** option for that PR;
+   - do not add any bot, workflow or GitHub App to the bypass list;
+   - do not disable the ruleset and do not remove/re-add the required checks.
+6. **Owner:** merge the rollback PR with **Create a merge commit**.
+7. **AI read-only verification:** confirm the new `main` merge commit's tree exactly matches the selected rollback tag tree.
+8. **AI read-only Vercel verification:** confirm Vercel creates a production deployment for that new rollback merge SHA, reaches `READY`, and production aliases point to it.
+9. **Owner / AI:** browser-check `/`, `/index.html`, `/hybrid-hub`, `/puffin-performance`, and `/app`, plus one Hybrid Hub Admin login.
+
+#### C. Consequence: main/dev diverge again after a rollback commit
+
+A forward rollback commit on `main` means `main` will no longer be an ancestor of the unchanged `dev` branch.
+
+The manual production release workflow deliberately checks:
+
+`git merge-base --is-ancestor current-main candidate-dev`
+
+Therefore, after the rollback commit, the next attempted promotion from `dev` will correctly **refuse** until history is reconciled again.
+
+Recovery before the next release:
+
+1. Keep the production hold active.
+2. Re-run the same controlled history-reconciliation pattern:
+   - freeze exact current `main` and `dev` SHAs;
+   - preserve the verified `dev` tree;
+   - create an ancestry-only two-parent reconciliation commit with the current dev tree, parent 1 = current dev, parent 2 = the new rollback `main`;
+   - prove the tree is unchanged, the ordered parents are correct, `main` is now an ancestor, and compare dev -> reconciliation branch has 0 files changed;
+   - open a PR to `dev`;
+   - owner merges with **Create a merge commit** only.
+3. Re-run the four exact-SHA gates on the resulting dev merge SHA.
+4. Re-do the preview-only Vercel route check using a new identical-tree preview-only commit, never the exact release-candidate SHA.
+5. Only then may a future hold-lift/release sequence proceed.
+
+#### D. Exact historical-SHA reset is emergency-only
+
+If the owner explicitly requires `main` itself to point back to the exact historical tag SHA rather than restoring that tag's tree through a new forward rollback commit, the non-fast-forward protection would have to be temporarily bypassed/changed and `main` force-moved.
+
+That is **not** the standard rollback path and must never happen automatically. It requires a separate explicit owner-approved emergency procedure.
+
 ## Approval gates — what the owner should inspect
 
 Before every approval, provide:
