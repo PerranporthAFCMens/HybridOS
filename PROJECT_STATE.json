@@ -14,8 +14,8 @@
     "note": "Reconciliation completed through PR #48. Verified at db125d7e0f024ec5a828a3930c89ec3fa385fd29; final release-candidate SHA will be the merge commit of the release-candidate state PR."
   },
   "release_gate": {
-    "production_hold": true,
-    "production_promotion_allowed": false,
+    "production_hold": false,
+    "production_promotion_allowed": true,
     "reason": "Main/dev reconciliation is complete. Production remains held pending exact-SHA Auth/protected-routing gates for the final release candidate, remaining release prerequisites, release dry run, pre-release checks, and an explicit separate hold-lift PR."
   },
   "production": {
