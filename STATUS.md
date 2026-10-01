@@ -30,22 +30,27 @@ The overall Auth workflow later failed in a separate fixed-email helper collisio
 
 Run `36465324428` on `574f959d33a716661ad321e9a9d803d312e5bb33` now repeatably verifies fresh Create account invites, existing-account acceptance, wrong-account mismatch + Switch account recovery, backend invite edge cases and cleanup.
 
-### Task 3 multi-gym selector hardening
+### Task 3 multi-gym selector hardening — DONE
 
-Task 3 is being retried after PR #34 was reverted.
+Task 3 is complete on dev.
 
-- PR #34 changed the intended eight first-gym selectors to use `HybridGymContext`, but its Auth journey failed because the new test incorrectly expected six Classes helper membership-selector requests.
-- Read-only diagnosis showed only five named Classes helpers make that selector: `scheduling-engine.js`, `calendar-views.js`, `session-manager.js`, `class-admin-enhancements.js`, and `class-admin-live-refresh.js`. `calendar-mobile.js` is DOM-only and does not select a gym.
-- The retry test no longer relies on a bare request count. It verifies each of those five named helpers completed a Puffin-scoped membership lookup, verifies the expected helper assets loaded, rejects unscoped/wrong-gym requests, checks rendered Puffin data, and confirms missing gym context routes to the chooser.
-- The first retry run (`36880730545`) then failed at `Social made an unscoped gym lookup`. Read-only diagnosis showed the flagged request was the pre-existing `tenant-branding.js` list-my-gyms call on `member.html`, not `social-nav.js`: it intentionally selects all active `gym_id` rows for the current user so branding/door-access logic can validate the selected gym.
-- The Member-page assertion is being corrected to allow exactly one call with that exact tenant-branding shape, require the actual `social-nav.js` selected-gym request separately, and reject any other unscoped `select=gym_id` lookup.
-- The remaining three Task 3 runtime paths (`staff-operations.js`, `social-nav.js`, `member-coach.js`) are also checked for selected-gym scoping.
-- Separate observation from the same failed run: the existing `member-coach.js` membership query returned HTTP 400 because it includes status `trial`, while the live membership status enum does not include `trial`. That predicate existed before Task 3; this test-only correction does not change runtime behaviour.
-- No production promotion is implied by this work.
+- PR #34 first applied the eight selected-gym hardening changes, then PR #35 reverted it when the Auth journey failed.
+- Read-only diagnosis showed the first failure was a test-design error: the test expected six Classes membership-selector requests, but only five named helper scripts make that lookup; `calendar-mobile.js` is DOM-only.
+- PR #36 retried the eight runtime changes with named-helper verification instead of relying on the original six-request assumption.
+- The retry run then exposed a second test-design error: the Member-page test treated every `select=gym_id` request as Social, but the pre-existing `tenant-branding.js` legitimately lists the current user's active gyms.
+- PR #37 corrected that classification: it allows exactly one named tenant-branding list-my-gyms call, separately requires `social-nav.js` to query the selected gym, and rejects any other unscoped `select=gym_id` lookup.
+- Verified Task 3 source SHA: `979a36ce7aba3ab6c85bbffd3efe7822a310c6a7` (`979a36c`). Manual gym-switching verification on dev passed.
+- Task 3 test-design lessons:
+  - do not hard-code request counts when multiple independently loaded helpers can change timing or request coalescing;
+  - attribute important network assertions to named scripts/behaviours rather than infer ownership from a broad URL shape;
+  - shared scripts can make legitimate unscoped list-my-gyms calls, so tests must permit only the exact named call and continue rejecting broader unscoped tenant selection.
+- Separate pre-existing issue remains: `member-coach.js` queries membership status `trial`, but the live membership status enum does not contain `trial`. This is not part of Task 3 and remains unresolved.
+- No production promotion is implied by Task 3 completion.
 
 ### Workflow backlog
 
 - Auth workflow: Playwright install timeout and retry
+- Sidebar active/highlight state quirk in the persistent admin shell (pre-existing; not introduced by Task 3)
 
 ### Remaining Auth release gates
 
