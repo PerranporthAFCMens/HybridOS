@@ -47,6 +47,38 @@ Task 3 is complete on dev.
 - Member Coach membership decision: eligible statuses are `active` + `paused` only. Paused members keep their coaching dashboard and history; `pending`, `cancelled`, and `expired` do not qualify. The invalid legacy `trial` status is being replaced with `paused`, with browser verification requiring the selected-gym membership request to return HTTP 200.
 - No production promotion is implied by Task 3 completion.
 
+### Planned live test accounts
+
+No live test-account rows have been created yet. Creation remains blocked until the two Supabase Auth user IDs are supplied and the exact SQL with those IDs is explicitly approved.
+
+Planned Puffin Performance test accounts:
+
+- paused-membership test account — fake email and Auth user ID to be recorded after creation; membership status `paused`.
+- cancelled-membership test account — fake email and Auth user ID to be recorded after creation; membership status `cancelled`.
+- Passwords must **never** be stored in `STATUS.md` or committed to the repository.
+
+Cleanup order after testing:
+
+1. delete the two `public.memberships` rows;
+2. delete the two `public.gym_members` rows;
+3. delete each corresponding Auth user in the Supabase dashboard.
+
+### Go-live checklist
+
+Before lifting `PRODUCTION_HOLD`:
+
+- remove the two temporary Puffin test accounts using the documented cleanup order;
+- delete the test helper functions used for Auth/release verification once they are no longer required;
+- turn on Supabase leaked-password protection;
+- confirm no disposable/test Auth users remain;
+- enable and verify member email confirmation;
+- run the full Auth journey against the exact release SHA;
+- verify multi-gym switching and per-gym role isolation on the exact release SHA;
+- ensure required release/ruleset checks can report cleanly without a status deadlock;
+- intentionally reconcile `dev` and `main` rather than blindly merging;
+- deploy only the exact approved release SHA;
+- browser-test the exact production revision before removing the production hold.
+
 ### Workflow backlog
 
 - Auth workflow: Playwright install timeout and retry
