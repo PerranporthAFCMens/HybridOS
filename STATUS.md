@@ -47,21 +47,42 @@ Task 3 is complete on dev.
 - Member Coach membership decision: eligible statuses are `active` + `paused` only. Paused members keep their coaching dashboard and history; `pending`, `cancelled`, and `expired` do not qualify. The invalid legacy `trial` status is being replaced with `paused`, with browser verification requiring the selected-gym membership request to return HTTP 200.
 - No production promotion is implied by Task 3 completion.
 
-### Planned live test accounts
+### Live test accounts
 
-No live test-account rows have been created yet. Creation remains blocked until the two Supabase Auth user IDs are supplied and the exact SQL with those IDs is explicitly approved.
+Two temporary Puffin Performance test accounts are now present for membership-status verification. No passwords are stored here or committed to the repository.
 
-Planned Puffin Performance test accounts:
+- `a.j.turner+pause@hotmail.com` — Auth user `0860adc5-3a3d-4b45-881c-f0a7a77b1131` — Puffin `gym_members` role `member`, access `active`, membership status `paused`.
+- `a.j.turner+cancelled@hotmail.com` — Auth user `f63cf0f2-2637-4f74-a5f1-08a5f3709e1f` — Puffin `gym_members` role `member`, access `active`, membership status `cancelled`.
 
-- paused-membership test account — fake email and Auth user ID to be recorded after creation; membership status `paused`.
-- cancelled-membership test account — fake email and Auth user ID to be recorded after creation; membership status `cancelled`.
-- Passwords must **never** be stored in `STATUS.md` or committed to the repository.
+Cleanup SQL:
 
-Cleanup order after testing:
+```sql
+begin;
 
-1. delete the two `public.memberships` rows;
-2. delete the two `public.gym_members` rows;
-3. delete each corresponding Auth user in the Supabase dashboard.
+delete from public.memberships
+where user_id in (
+  '0860adc5-3a3d-4b45-881c-f0a7a77b1131',
+  'f63cf0f2-2637-4f74-a5f1-08a5f3709e1f'
+);
+
+delete from public.gym_members
+where user_id in (
+  '0860adc5-3a3d-4b45-881c-f0a7a77b1131',
+  'f63cf0f2-2637-4f74-a5f1-08a5f3709e1f'
+);
+
+commit;
+```
+
+Then delete both Auth users manually in the Supabase dashboard. After deleting the Auth users, confirm that the trigger-created profile rows are gone. If either profile remains, delete only those two profile rows with:
+
+```sql
+delete from public.profiles
+where id in (
+  '0860adc5-3a3d-4b45-881c-f0a7a77b1131',
+  'f63cf0f2-2637-4f74-a5f1-08a5f3709e1f'
+);
+```
 
 ### Go-live checklist
 
