@@ -171,15 +171,17 @@ The owner makes any ruleset edit manually. The AI must show the proposed setting
 
 This option keeps dev as the authoritative application implementation and uses a normal merge only after Step 0 is safe.
 
-### A1. Freeze and re-inventory
+### A1. Freeze, re-inventory and tag the reconciliation baseline
 
 After Step 0:
 - record exact `main` and `dev` SHAs again;
 - confirm no new main-only commits appeared;
 - confirm workflow schedule is absent on `main`;
-- confirm the workflow remains disabled.
+- confirm the workflow remains disabled;
+- present the exact proposed baseline tag name and target SHA to the owner;
+- only after explicit approval, create the Task 4 baseline tag on the exact pre-reconciliation production commit. Do not move or overwrite that tag later.
 
-**Owner approval view:** branch SHAs, fresh compare, list of any newly changed files.
+**Owner approval view:** branch SHAs, fresh compare, list of any newly changed files, exact proposed baseline tag name/target, and confirmation that creating the tag does not change either branch.
 
 ### A2. Carry the two intentional production-route deltas onto dev first
 
