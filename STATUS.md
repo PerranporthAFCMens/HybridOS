@@ -37,7 +37,10 @@ Task 3 is being retried after PR #34 was reverted.
 - PR #34 changed the intended eight first-gym selectors to use `HybridGymContext`, but its Auth journey failed because the new test incorrectly expected six Classes helper membership-selector requests.
 - Read-only diagnosis showed only five named Classes helpers make that selector: `scheduling-engine.js`, `calendar-views.js`, `session-manager.js`, `class-admin-enhancements.js`, and `class-admin-live-refresh.js`. `calendar-mobile.js` is DOM-only and does not select a gym.
 - The retry test no longer relies on a bare request count. It verifies each of those five named helpers completed a Puffin-scoped membership lookup, verifies the expected helper assets loaded, rejects unscoped/wrong-gym requests, checks rendered Puffin data, and confirms missing gym context routes to the chooser.
+- The first retry run (`36880730545`) then failed at `Social made an unscoped gym lookup`. Read-only diagnosis showed the flagged request was the pre-existing `tenant-branding.js` list-my-gyms call on `member.html`, not `social-nav.js`: it intentionally selects all active `gym_id` rows for the current user so branding/door-access logic can validate the selected gym.
+- The Member-page assertion is being corrected to allow exactly one call with that exact tenant-branding shape, require the actual `social-nav.js` selected-gym request separately, and reject any other unscoped `select=gym_id` lookup.
 - The remaining three Task 3 runtime paths (`staff-operations.js`, `social-nav.js`, `member-coach.js`) are also checked for selected-gym scoping.
+- Separate observation from the same failed run: the existing `member-coach.js` membership query returned HTTP 400 because it includes status `trial`, while the live membership status enum does not include `trial`. That predicate existed before Task 3; this test-only correction does not change runtime behaviour.
 - No production promotion is implied by this work.
 
 ### Remaining Auth release gates
