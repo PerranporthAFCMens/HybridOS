@@ -20,6 +20,7 @@ on:
       - 'gym-context.js'
       - 'choose-gym.html'
       - 'login.html'
+      - 'index.html'
       - 'scripts/build_site.py'
       - 'scripts/smoke_test.py'
 
