@@ -44,7 +44,7 @@ Task 3 is complete on dev.
   - do not hard-code request counts when multiple independently loaded helpers can change timing or request coalescing;
   - attribute important network assertions to named scripts/behaviours rather than infer ownership from a broad URL shape;
   - shared scripts can make legitimate unscoped list-my-gyms calls, so tests must permit only the exact named call and continue rejecting broader unscoped tenant selection.
-- Separate pre-existing issue remains: `member-coach.js` queries membership status `trial`, but the live membership status enum does not contain `trial`. This is not part of Task 3 and remains unresolved.
+- Member Coach membership decision: eligible statuses are `active` + `paused` only. Paused members keep their coaching dashboard and history; `pending`, `cancelled`, and `expired` do not qualify. The invalid legacy `trial` status is being replaced with `paused`, with browser verification requiring the selected-gym membership request to return HTTP 200.
 - No production promotion is implied by Task 3 completion.
 
 ### Workflow backlog
