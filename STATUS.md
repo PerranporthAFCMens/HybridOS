@@ -30,6 +30,16 @@ The overall Auth workflow later failed in a separate fixed-email helper collisio
 
 Run `36465324428` on `574f959d33a716661ad321e9a9d803d312e5bb33` now repeatably verifies fresh Create account invites, existing-account acceptance, wrong-account mismatch + Switch account recovery, backend invite edge cases and cleanup.
 
+### Task 3 multi-gym selector hardening
+
+Task 3 is being retried after PR #34 was reverted.
+
+- PR #34 changed the intended eight first-gym selectors to use `HybridGymContext`, but its Auth journey failed because the new test incorrectly expected six Classes helper membership-selector requests.
+- Read-only diagnosis showed only five named Classes helpers make that selector: `scheduling-engine.js`, `calendar-views.js`, `session-manager.js`, `class-admin-enhancements.js`, and `class-admin-live-refresh.js`. `calendar-mobile.js` is DOM-only and does not select a gym.
+- The retry test no longer relies on a bare request count. It verifies each of those five named helpers completed a Puffin-scoped membership lookup, verifies the expected helper assets loaded, rejects unscoped/wrong-gym requests, checks rendered Puffin data, and confirms missing gym context routes to the chooser.
+- The remaining three Task 3 runtime paths (`staff-operations.js`, `social-nav.js`, `member-coach.js`) are also checked for selected-gym scoping.
+- No production promotion is implied by this work.
+
 ### Remaining Auth release gates
 
 Still open:
