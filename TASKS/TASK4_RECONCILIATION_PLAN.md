@@ -199,6 +199,7 @@ Checks before approval:
 Browser checks after merge to dev:
 - GitHub Pages/dev application entry still reaches universal login;
 - embedded/gym/invite entry still works;
+- **Admin-shell regression check on both desktop and mobile:** sign in as an admin, open the Admin shell, and confirm the Admin dashboard still loads correctly with `index.html` embedded inside the shell after the `/index.html -> /` production redirect has been carried over. The redirect must apply to a bare production `/index.html` request without breaking the shell's bound/embedded dashboard load;
 - mobile Admin shell remains persistent;
 - Auth journey and protected routing pass on the exact merged dev SHA.
 
