@@ -49,10 +49,10 @@ Task 3 is complete on dev.
 
 ### Live test accounts
 
-Two temporary Puffin Performance test accounts are now present for membership-status verification. No passwords are stored here or committed to the repository.
+Two temporary Puffin Performance test accounts are now present for membership-status verification. Public documentation uses placeholders for account emails and Auth user IDs. No passwords are stored here or committed to the repository.
 
-- `a.j.turner+pause@hotmail.com` — Auth user `0860adc5-3a3d-4b45-881c-f0a7a77b1131` — Puffin `gym_members` role `member`, access `active`, membership status `paused`.
-- `a.j.turner+cancelled@hotmail.com` — Auth user `f63cf0f2-2637-4f74-a5f1-08a5f3709e1f` — Puffin `gym_members` role `member`, access `active`, membership status `cancelled`.
+- `<paused-test-email>` — Auth user `<paused-test-user-id>` — Puffin `gym_members` role `member`, access `active`, membership status `paused`.
+- `<cancelled-test-email>` — Auth user `<cancelled-test-user-id>` — Puffin `gym_members` role `member`, access `active`, membership status `cancelled`.
 
 Cleanup SQL:
 
@@ -61,14 +61,14 @@ begin;
 
 delete from public.memberships
 where user_id in (
-  '0860adc5-3a3d-4b45-881c-f0a7a77b1131',
-  'f63cf0f2-2637-4f74-a5f1-08a5f3709e1f'
+  '<paused-test-user-id>',
+  '<cancelled-test-user-id>'
 );
 
 delete from public.gym_members
 where user_id in (
-  '0860adc5-3a3d-4b45-881c-f0a7a77b1131',
-  'f63cf0f2-2637-4f74-a5f1-08a5f3709e1f'
+  '<paused-test-user-id>',
+  '<cancelled-test-user-id>'
 );
 
 commit;
@@ -79,8 +79,8 @@ Then delete both Auth users manually in the Supabase dashboard. After deleting t
 ```sql
 delete from public.profiles
 where id in (
-  '0860adc5-3a3d-4b45-881c-f0a7a77b1131',
-  'f63cf0f2-2637-4f74-a5f1-08a5f3709e1f'
+  '<paused-test-user-id>',
+  '<cancelled-test-user-id>'
 );
 ```
 
