@@ -25,26 +25,5 @@
       "source": "/app",
       "destination": "/index.html"
     }
-  ],
-  "redirects": [
-    {
-      "source": "/index.html",
-      "missing": [
-        {
-          "type": "query",
-          "key": "embedded"
-        },
-        {
-          "type": "query",
-          "key": "gym_id"
-        },
-        {
-          "type": "query",
-          "key": "access_invite"
-        }
-      ],
-      "destination": "/",
-      "permanent": false
-    }
   ]
 }
