@@ -1,37 +1,189 @@
-name: Hourly production release
+name: Manual production release
 
 on:
   workflow_dispatch:
+    inputs:
+      dev_sha:
+        description: "Exact 40-character dev commit SHA to promote"
+        required: true
+        type: string
 
 permissions:
+  actions: read
   contents: write
 
 concurrency:
-  group: "hourly-production"
+  group: "production-release"
   cancel-in-progress: false
 
 jobs:
-  promote-dev:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
+      - name: Checkout current production
         uses: actions/checkout@v6
         with:
           ref: main
           fetch-depth: 0
 
-      - name: Fast-forward main to dev
+      - name: Fetch dev and production tags
+        run: git fetch origin dev --tags --force
+
+      - name: Verify exact dev commit
+        id: candidate
+        shell: bash
+        env:
+          REQUESTED_SHA: ${{ inputs.dev_sha }}
         run: |
-          git fetch origin dev
-          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/dev)" ]; then
-            echo "Production is already up to date."
-            exit 0
+          set -euo pipefail
+
+          if [[ ! "$REQUESTED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Release refused: dev_sha must be a full 40-character commit SHA."
+            exit 1
           fi
-          if ! git merge-base --is-ancestor HEAD origin/dev; then
-            echo "main and dev have intentionally diverged; skipping hourly promotion."
-            exit 0
+
+          DEV_SHA="$(git rev-parse origin/dev)"
+          if [ "$REQUESTED_SHA" != "$DEV_SHA" ]; then
+            echo "Release refused: requested SHA is not the current dev head."
+            echo "Requested: $REQUESTED_SHA"
+            echo "Current dev: $DEV_SHA"
+            exit 1
           fi
+
+          echo "sha=$DEV_SHA" >> "$GITHUB_OUTPUT"
+          echo "Exact dev candidate confirmed: $DEV_SHA"
+
+      - name: Verify production hold is deliberately cleared
+        shell: bash
+        env:
+          TARGET_SHA: ${{ steps.candidate.outputs.sha }}
+        run: |
+          set -euo pipefail
+          git show "$TARGET_SHA:PROJECT_STATE.json" > /tmp/project-state.json
+          python3 - <<'PY'
+          import json
+
+          state = json.load(open("/tmp/project-state.json"))
+          gate = state.get("release_gate", {})
+          hold = gate.get("production_hold")
+          allowed = gate.get("production_promotion_allowed")
+
+          print(f"production_hold={hold}")
+          print(f"production_promotion_allowed={allowed}")
+
+          if hold is not False or allowed is not True:
+              raise SystemExit(
+                  "Release refused: PROJECT_STATE.json has not explicitly cleared the production hold."
+              )
+          PY
+
+      - name: Require successful checks for this exact commit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ steps.candidate.outputs.sha }}
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          sha = os.environ["TARGET_SHA"]
+          token = os.environ["GH_TOKEN"]
+
+          required = [
+              "HybridOne smoke checks",
+              "HybridOne dev runtime verification",
+              "HybridOne Auth journey browser",
+              "HybridOne protected routing browser",
+          ]
+
+          url = f"https://api.github.com/repos/{repo}/actions/runs?head_sha={sha}&per_page=100"
+          request = urllib.request.Request(
+              url,
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f"Bearer {token}",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              },
+          )
+
+          with urllib.request.urlopen(request, timeout=30) as response:
+              data = json.load(response)
+
+          runs = data.get("workflow_runs", [])
+          print(f"Exact candidate: {sha}")
+          print("Required release checks:")
+
+          failed = []
+          for name in required:
+              matches = [r for r in runs if r.get("name") == name]
+              successful = [r for r in matches if r.get("conclusion") == "success"]
+
+              if successful:
+                  latest = sorted(successful, key=lambda r: r.get("created_at", ""), reverse=True)[0]
+                  print(f"PASS  {name}  run={latest.get('id')}  event={latest.get('event')}")
+              else:
+                  if matches:
+                      states = ", ".join(
+                          f"run={r.get('id')} status={r.get('status')} conclusion={r.get('conclusion')}"
+                          for r in matches
+                      )
+                      print(f"FAIL  {name}  {states}")
+                  else:
+                      print(f"FAIL  {name}  no workflow run found for exact SHA")
+                  failed.append(name)
+
+          if failed:
+              raise SystemExit(
+                  "Release refused: required checks have not all passed for the exact candidate SHA: "
+                  + ", ".join(failed)
+              )
+
+          print("All required release checks passed for the exact candidate SHA.")
+          PY
+
+      - name: Verify promotion is fast-forward only
+        shell: bash
+        env:
+          TARGET_SHA: ${{ steps.candidate.outputs.sha }}
+        run: |
+          set -euo pipefail
+          MAIN_SHA="$(git rev-parse HEAD)"
+          echo "Current main: $MAIN_SHA"
+          echo "Candidate dev: $TARGET_SHA"
+
+          if ! git merge-base --is-ancestor "$MAIN_SHA" "$TARGET_SHA"; then
+            echo "Release refused: main and dev are diverged. Reconcile them deliberately before production promotion."
+            exit 1
+          fi
+
+      - name: Tag current production for rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="prod-$(date -u +%F)"
+
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Release refused: rollback tag $TAG already exists."
+            echo "Only one production promotion per UTC date is allowed by this workflow."
+            exit 1
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git merge --ff-only origin/dev
-          git push origin main
+          git tag -a "$TAG" -m "Production rollback point before release ${{ steps.candidate.outputs.sha }}"
+          git push origin "$TAG"
+          echo "Rollback tag created: $TAG -> $(git rev-parse HEAD)"
+
+      - name: Promote exact tested commit to main
+        shell: bash
+        env:
+          TARGET_SHA: ${{ steps.candidate.outputs.sha }}
+        run: |
+          set -euo pipefail
+          git push origin "$TARGET_SHA:refs/heads/main"
+          echo "Promoted exact tested commit: $TARGET_SHA"
