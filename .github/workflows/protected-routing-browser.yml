@@ -1,5 +1,7 @@
 name: HybridOne protected routing browser
 
+# Task 4 route-preservation verification trigger.
+
 on:
   push:
     branches: [dev]
