@@ -106,6 +106,10 @@ Before lifting `PRODUCTION_HOLD`:
 - Sidebar active/highlight state quirk in the persistent admin shell (pre-existing; not introduced by Task 3)
 - Membership status rules and banner for paused/cancelled/pending/expired members
 - Member navigation inconsistent across member.html, groups.html and social.html
+- Enable GitHub secret scanning and push protection — **done by owner**
+- Make repo private — **separate infrastructure task before real customers**; requires a paid GitHub plan for private Pages and must first confirm the Vercel GitHub app retains access
+- Run an all-history secret scan with Gitleaks or TruffleHog before launch
+- Work-laptop SSL / connection error — **low priority**; now known to be specific to the work laptop/network environment and is probably not a site fault
 
 ### Legacy hourly production workflow safety
 
@@ -118,6 +122,23 @@ Before lifting `PRODUCTION_HOLD`:
 - The active `main` ruleset does not require a pull request. It requires fast-forward history and four status contexts (`smoke`, `auth-journeys`, `verify`, `routing`). Therefore an hourly fast-forward to a dev SHA carrying those four required green checks could satisfy the ruleset and push directly to `main`.
 
 **Task 4 step 0:** keep the legacy hourly workflow disabled and, in the reconciliation PR, remove its schedule on `main` before any operation can make `dev` a descendant of `main` or otherwise make the branches fast-forwardable. No reconciliation step may create that ancestry while the schedule still exists.
+
+### Task 4 Step 0 — COMPLETE (1 October 2026)
+
+Step 0 was completed through PR #43.
+
+- `main` before Step 0: `1684f9bc155769f6eb718742e3c0029893c674e2`
+- Step 0 branch commit: `b16d5234205e093af6bd03138b39ffe0c02b8dbd`
+- merged `main` commit: `34fada3c7e1780bdc9aad18acf6d02971049ba6c`
+- only changed file on `main`: `.github/workflows/hourly-production.yml`
+- exact runtime/config change: removed only the `schedule:` / `cron: '37 * * * *'` trigger; `workflow_dispatch:` remains
+- the legacy workflow was kept disabled during the change and no `Hourly production release` run occurred after the merge
+- the `main` ruleset was restored immediately after the merge and again requires `smoke`, `auth-journeys`, `verify`, and `routing`, with deletion and non-fast-forward protection still active
+- Vercel production deployment `dpl_Ath7h42QS2YGVrWL2Mp49o1SHXue` for exact merge SHA `34fada3c7e1780bdc9aad18acf6d02971049ba6c` completed `READY` in the existing `hybrid-one` project
+- compare from `1684f9b` to current `main` shows only the Step 0 workflow file change (0 additions, 2 deletions)
+- no further Task 4 reconciliation step has started
+
+**Hard stop remains:** do not begin the next Task 4 step until the owner approves that exact step.
 
 ### Task 4 read-only inventory — 1 October 2026
 
