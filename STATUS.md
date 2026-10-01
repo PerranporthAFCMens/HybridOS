@@ -38,6 +38,7 @@ Still open:
 2. enable Supabase member email confirmation
 3. browser-test the real confirmation-link signup journey
 4. intentionally reconcile `main` / `dev`
+   - Restore the `main` ruleset to all 4 required checks as a permanent fix, but ensure every required check can actually report on a PR to `main` (or is enforced by the release workflow) so required-status deadlocks cannot recur.
 5. promote and browser-test the exact Vercel production revision
 
 **PRODUCTION_HOLD remains ACTIVE.**
