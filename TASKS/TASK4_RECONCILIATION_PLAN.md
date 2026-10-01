@@ -89,6 +89,24 @@ No ancestry-changing operation has been started.
 - Equivalent on dev: yes.
 - Risk of loss: none beyond preserving the newer dev versions already noted.
 
+## Step 1 — production workflow neutralised before reconciliation
+
+**Status: COMPLETE — PR #46**
+
+- frozen `main` SHA for reconciliation: `94803abaf78b3b994708bbd6c3e8f0f956a91d89`
+- `.github/workflows/hourly-production.yml` on `main` is now dev's exact gated **Manual production release** file
+- blob SHA: `945cc4386654c1199d534d9354d0ac29608d4962`
+- trigger: `workflow_dispatch` only
+- no `schedule:` and no `cron:`
+- PR #46 changed no application files
+- no reconciliation commit or ancestry-changing reconciliation branch has been created
+
+The active `main` ruleset retains `smoke`, `auth-journeys`, `routing`, and `verify`, together with deletion and non-fast-forward protection. A repository-admin bypass is configured as **pull requests only**. It is a temporary owner escape hatch for PR deadlocks, not the intended permanent governance model.
+
+**Permanent ruleset follow-up:** Replace the bypass with a permanent fix: make required checks reportable on PRs to main, or trim the ruleset to smoke and let the release workflow enforce the four gates.
+
+Repository visibility: the repository is currently **public**. Any move to private remains a separate infrastructure task and must first account for private GitHub Pages availability and continued Vercel GitHub-app access.
+
 ## Task 4 routing decision — Option C
 
 The main-only `/index.html → /` redirect is not carried forward because dev's `index.html` guard supersedes the legacy login it protected against; bare `/index.html` now goes to the universal login.
