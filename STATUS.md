@@ -160,6 +160,36 @@ Temporary bypass governance follow-up:
 
 Repository visibility note: this repository is currently **public**. Making it private remains a separate infrastructure task before real customers and must consider private GitHub Pages availability and Vercel GitHub-app access.
 
+### Task 4 reconciliation — COMPLETE (1 October 2026)
+
+History reconciliation is complete through PR #48.
+
+- reconciled `dev` merge SHA: `db125d7e0f024ec5a828a3930c89ec3fa385fd29`
+- reconciled tree SHA: `c3891f8c68e9633b340a5eb3b06be5a3ba76b1ed`, unchanged from pre-merge dev
+- frozen `main`: `94803abaf78b3b994708bbd6c3e8f0f956a91d89`
+- `main` is now an ancestor of `dev`
+- compare `main...dev`: `behind_by: 0`
+- exact post-reconciliation smoke run `36931979424` -> **PASS**
+- exact post-reconciliation dev runtime run `36931978891` -> **PASS**
+- public dev runtime verified at `db125d7e0f024ec5a828a3930c89ec3fa385fd29`
+- manual production release workflow remains `workflow_dispatch` only, no schedule/cron, blob `945cc4386654c1199d534d9354d0ac29608d4962`
+- production `main` did not change during reconciliation
+
+The next release-candidate state PR records the current state and intentionally adds comment-only trigger changes to the Auth journey and protected-routing workflows. Its merge commit will be the final release-candidate SHA, and all four release gates must pass on that exact SHA.
+
+### Before the first production release
+
+- merge the release-candidate state PR and require all four exact-SHA gates on its merge commit: smoke, dev runtime, Auth journey, and protected routing;
+- complete the remaining release prerequisites already tracked in the Auth/release checklist;
+- **real-phone Hybrid Hub check:** use the friend's demo/Admin login on a physical phone and verify branded login, persistent Admin shell, dashboard, menu/navigation, refresh, and active-gym persistence;
+- **paper rollback rehearsal:** write out the exact rollback sequence before release, anchored by `task4-baseline-2026-10-01` and the workflow's pre-release `prod-YYYY-MM-DD` tag;
+- **Vercel read-only settings check:** verify the `hybrid-one` project, Git repository, production branch `main`, build command/output directory, domains, and that no dashboard override changes the repo contract;
+- **Vercel Ignored Build Step:** verify the intended setting before release so only the intended production branch/build path is used; do not change it without separate approval;
+- **release dry run:** execute the manual release flow up to, but not including, the production push and confirm exact SHA, hold state, four exact-SHA gates, fast-forward ancestry, rollback-tag availability, and the new `/index.html` curl/static guard check;
+- **production hold:** lifting `PRODUCTION_HOLD` must be its own explicit PR. Until then, `production_hold: true` and `production_promotion_allowed: false` remain release-blocking;
+- after the hold-lift PR, rerun the required exact-SHA gates if its merge commit becomes the release candidate;
+- perform production promotion only after explicit owner approval, then verify the exact Vercel production SHA and production browser routes.
+
 ### Task 4 Step 2 routing decision — Option C
 
 The main-only `/index.html → /` redirect is not carried forward because dev's `index.html` guard supersedes the legacy login it protected against; bare `/index.html` now goes to the universal login.
