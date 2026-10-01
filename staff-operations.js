@@ -8,9 +8,11 @@
   const fmt=v=>new Intl.DateTimeFormat('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(v));
   const localDate=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const {data:{session}}=await sb.auth.getSession();if(!session)return;
-  const {data:gm}=await sb.from('gym_members').select('gym_id,role').eq('user_id',session.user.id).eq('is_active',true).limit(1);
-  if(!gm?.length||!['staff','coach','admin','owner'].includes(gm[0].role))return;
-  const gymId=gm[0].gym_id,role=gm[0].role;
+  const selectedGymId=window.HybridGymContext?.currentGymId?.()||'';
+  if(!selectedGymId){location.href=window.HybridGymContext.chooserUrl({returnTo:location.href});return}
+  const {data:gm}=await sb.from('gym_members').select('gym_id,role').eq('user_id',session.user.id).eq('is_active',true).eq('gym_id',selectedGymId).maybeSingle();
+  if(!gm||!['staff','coach','admin','owner'].includes(gm.role))return;
+  const gymId=gm.gym_id,role=gm.role;
   let permissions={};
   if(['staff','coach'].includes(role)){
     const r=await sb.from('staff_access').select('permissions').eq('gym_id',gymId).eq('user_id',session.user.id).maybeSingle();

@@ -9,9 +9,12 @@
 
   const {data:{session}}=await supabase.auth.getSession();
   if(!session) return;
-  const {data:gm}=await supabase.from('gym_members').select('gym_id,role').eq('user_id',session.user.id).eq('is_active',true).limit(1);
-  if(!gm?.length || !['owner','admin'].includes(gm[0].role)) return;
-  gymId=gm[0].gym_id;
+  const selectedGymId=window.HybridGymContext?.currentGymId?.()||'';
+  if(!selectedGymId){location.href=window.HybridGymContext.chooserUrl({returnTo:location.href});return}
+  const {data:gm}=await supabase.from('gym_members').select('gym_id,role').eq('user_id',session.user.id).eq('is_active',true).eq('gym_id',selectedGymId).maybeSingle();
+  if(!gm || !['owner','admin'].includes(gm.role)) return;
+  gymId=gm.gym_id;
+  window.__hybridTask3GymChecks={...(window.__hybridTask3GymChecks||{}),'class-admin-enhancements.js':selectedGymId};
 
   const style=document.createElement('style');
   style.textContent=`#classTypeScheduleDependency{grid-column:1/-1;margin:0 0 12px}`;
