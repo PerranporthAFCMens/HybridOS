@@ -140,6 +140,12 @@ Step 0 was completed through PR #43.
 
 **Hard stop remains:** do not begin the next Task 4 step until the owner approves that exact step.
 
+### Task 4 Step 2 routing decision — Option C
+
+The main-only `/index.html → /` redirect is not carried forward because dev's `index.html` guard supersedes the legacy login it protected against; bare `/index.html` now goes to the universal login.
+
+The production route gate will verify the public root, the static universal-login guard served at `/index.html`, the existing Hybrid Hub and Puffin Performance entry routes, and `/app`. The protected-routing browser gate verifies with JavaScript execution that bare `/index.html` reaches `login.html`.
+
 ### Task 4 read-only inventory — 1 October 2026
 
 Read-only comparison at the start of Task 4 planning:
