@@ -140,6 +140,26 @@ Step 0 was completed through PR #43.
 
 **Hard stop remains:** do not begin the next Task 4 step until the owner approves that exact step.
 
+### Task 4 Step 1 — COMPLETE (1 October 2026)
+
+The production release workflow on `main` has been neutralised before any ancestry reconciliation.
+
+- PR #46 replaced only `.github/workflows/hourly-production.yml` on `main` with dev's exact gated **Manual production release** version.
+- frozen `main` SHA for reconciliation: `94803abaf78b3b994708bbd6c3e8f0f956a91d89`
+- workflow blob on `main`: `945cc4386654c1199d534d9354d0ac29608d4962`, identical to dev
+- trigger: `workflow_dispatch` only; no `schedule:` and no `cron:`
+- Vercel production deployment for the PR #46 merge SHA completed `READY`
+- compare from pre-Step-1 `main` `34fada3c7e1780bdc9aad18acf6d02971049ba6c` to current `main` changes only `.github/workflows/hourly-production.yml`
+- no reconciliation commit has been created
+
+The active `main` ruleset keeps all four required checks (`smoke`, `auth-journeys`, `routing`, `verify`) plus deletion and non-fast-forward protection. A repository-admin bypass is configured with mode **pull requests only** so the owner can explicitly bypass unmet PR requirements without weakening direct-push protections.
+
+Temporary bypass governance follow-up:
+
+> **Replace the bypass with a permanent fix:** make required checks reportable on PRs to main, or trim the ruleset to smoke and let the release workflow enforce the four gates.
+
+Repository visibility note: this repository is currently **public**. Making it private remains a separate infrastructure task before real customers and must consider private GitHub Pages availability and Vercel GitHub-app access.
+
 ### Task 4 Step 2 routing decision — Option C
 
 The main-only `/index.html → /` redirect is not carried forward because dev's `index.html` guard supersedes the legacy login it protected against; bare `/index.html` now goes to the universal login.
