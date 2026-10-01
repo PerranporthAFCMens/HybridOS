@@ -49,10 +49,10 @@ Task 3 is complete on dev.
 
 ### Live test accounts
 
-Two temporary Puffin Performance test accounts are now present for membership-status verification. No passwords are stored here or committed to the repository.
+Two temporary Puffin Performance test accounts are now present for membership-status verification. Public documentation uses placeholders for account emails and Auth user IDs. No passwords are stored here or committed to the repository.
 
-- `a.j.turner+pause@hotmail.com` — Auth user `0860adc5-3a3d-4b45-881c-f0a7a77b1131` — Puffin `gym_members` role `member`, access `active`, membership status `paused`.
-- `a.j.turner+cancelled@hotmail.com` — Auth user `f63cf0f2-2637-4f74-a5f1-08a5f3709e1f` — Puffin `gym_members` role `member`, access `active`, membership status `cancelled`.
+- `<paused-test-email>` — Auth user `<paused-test-user-id>` — Puffin `gym_members` role `member`, access `active`, membership status `paused`.
+- `<cancelled-test-email>` — Auth user `<cancelled-test-user-id>` — Puffin `gym_members` role `member`, access `active`, membership status `cancelled`.
 
 Cleanup SQL:
 
@@ -61,14 +61,14 @@ begin;
 
 delete from public.memberships
 where user_id in (
-  '0860adc5-3a3d-4b45-881c-f0a7a77b1131',
-  'f63cf0f2-2637-4f74-a5f1-08a5f3709e1f'
+  '<paused-test-user-id>',
+  '<cancelled-test-user-id>'
 );
 
 delete from public.gym_members
 where user_id in (
-  '0860adc5-3a3d-4b45-881c-f0a7a77b1131',
-  'f63cf0f2-2637-4f74-a5f1-08a5f3709e1f'
+  '<paused-test-user-id>',
+  '<cancelled-test-user-id>'
 );
 
 commit;
@@ -79,8 +79,8 @@ Then delete both Auth users manually in the Supabase dashboard. After deleting t
 ```sql
 delete from public.profiles
 where id in (
-  '0860adc5-3a3d-4b45-881c-f0a7a77b1131',
-  'f63cf0f2-2637-4f74-a5f1-08a5f3709e1f'
+  '<paused-test-user-id>',
+  '<cancelled-test-user-id>'
 );
 ```
 
@@ -104,6 +104,8 @@ Before lifting `PRODUCTION_HOLD`:
 
 - Auth workflow: Playwright install timeout and retry
 - Sidebar active/highlight state quirk in the persistent admin shell (pre-existing; not introduced by Task 3)
+- Membership status rules and banner for paused/cancelled/pending/expired members
+- Member navigation inconsistent across member.html, groups.html and social.html
 
 ### Legacy hourly production workflow safety
 
@@ -116,6 +118,19 @@ Before lifting `PRODUCTION_HOLD`:
 - The active `main` ruleset does not require a pull request. It requires fast-forward history and four status contexts (`smoke`, `auth-journeys`, `verify`, `routing`). Therefore an hourly fast-forward to a dev SHA carrying those four required green checks could satisfy the ruleset and push directly to `main`.
 
 **Task 4 step 0:** keep the legacy hourly workflow disabled and, in the reconciliation PR, remove its schedule on `main` before any operation can make `dev` a descendant of `main` or otherwise make the branches fast-forwardable. No reconciliation step may create that ancestry while the schedule still exists.
+
+### Task 4 read-only inventory — 1 October 2026
+
+Read-only comparison at the start of Task 4 planning:
+
+- current `dev`: `070a3cc3713ceb7aa0be1a340f08b25205cbb149`
+- current `main`: `1684f9bc155769f6eb718742e3c0029893c674e2`
+- merge base: `b7d83243e9248a64978677efec91c4f9d83c1052`
+- branches are diverged: `main` has **9 commits not in dev** and `dev` has **256 commits not in main**
+- no ancestry-changing reconciliation has been started
+- the legacy `.github/workflows/hourly-production.yml` remains disabled in the Actions UI
+
+The staged reconciliation plan and per-commit inventory are documented in [TASKS/TASK4_RECONCILIATION_PLAN.md](./TASKS/TASK4_RECONCILIATION_PLAN.md).
 
 ### Remaining Auth release gates
 
