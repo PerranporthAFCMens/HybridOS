@@ -119,6 +119,13 @@ jobs:
             };
           }
 
+          async function assertAdminChip(page,expectedGym){
+            const account=await accountControls(page);
+            const chipText=(await account.chip.innerText()).replace(/\s+/g,' ').trim();
+            assert.match(chipText,/HybridOne Auth Journey Test/i,'Admin account chip did not show the test account name');
+            assert.ok(chipText.includes('Admin · '+expectedGym),'Admin account chip did not show the selected gym role/context: '+chipText);
+          }
+
           async function loginAndChoose(page,gymId){
             await page.goto(base+'login.html',{waitUntil:'domcontentloaded',timeout:30000});
             await page.locator('#email').fill(email);
@@ -321,10 +328,14 @@ jobs:
               const desktop=await browser.newContext({viewport:{width:1440,height:1000}});
               const dp=await desktop.newPage();
               await loginAndChoose(dp,hub);
+              await assertAdminChip(dp,'Hybrid Hub');
               await visibleSidebarSwitch(dp);
               await switchGymFromSidebar(dp,puffin);
+              await assertAdminChip(dp,'Puffin Performance');
               await switchGymFromSidebar(dp,hub);
+              await assertAdminChip(dp,'Hybrid Hub');
               await switchGym(dp,puffin);
+              await assertAdminChip(dp,'Puffin Performance');
               await assertTask3GymContext(dp,puffin,'Puffin Performance');
               await assertNoGymFallsBackToChooser(desktop);
               await dp.reload({waitUntil:'domcontentloaded'});
