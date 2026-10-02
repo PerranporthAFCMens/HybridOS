@@ -101,6 +101,54 @@ html,body{
 }
 .admin-frame-mobile{display:none}
 
+.admin-frame-account.userchip{
+  width:100%!important;
+  margin-top:auto!important;
+  box-sizing:border-box!important;
+  padding:10px 12px!important;
+  background:rgba(255,255,255,.075)!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  border-radius:17px!important;
+  color:#fff!important;
+  box-shadow:none!important;
+}
+.admin-frame-account .avatar{
+  width:38px!important;
+  height:38px!important;
+  flex:0 0 38px!important;
+  background:rgba(255,255,255,.12)!important;
+  color:#fff!important;
+}
+.admin-frame-account .who{
+  display:block!important;
+  min-width:0!important;
+  flex:1!important;
+}
+.admin-frame-account .who b{
+  display:block!important;
+  color:#fff!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.admin-frame-account.userchip #userEmail{
+  display:block!important;
+  margin-top:2px!important;
+  color:#a7b0c0!important;
+  font-size:11px!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.admin-frame-account.userchip:after{
+  display:block!important;
+  flex:0 0 auto!important;
+  border-color:#a7b0c0!important;
+  transform:rotate(-45deg)!important;
+  margin-left:auto!important;
+}
+
+
 @media(max-width:900px){
   html,body{
     width:100%;
