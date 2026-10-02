@@ -3,6 +3,7 @@ name: HybridOne protected routing browser
 # Task 4 route-preservation verification trigger.
 # Release-candidate exact-SHA gate trigger.
 # Hold-lift exact-SHA gate trigger.
+# Cross-gate exact-SHA trigger.
 
 on:
   push:
