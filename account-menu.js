@@ -69,6 +69,35 @@
   const passwordInput=q('#accountPassword'),password2Input=q('#accountPassword2'),msg=q('#accountMsg'),saveBtn=q('#accountSaveBtn'),avatarFile=q('#accountAvatarFile'),avatarPreview=q('#accountAvatarPreview');
   let user=null,profile=null,membershipRole=null,staffPermissions={},allMemberships=[];
 
+  function adminChipContext(fallback=''){
+    try{
+      if(!chip?.classList?.contains('admin-frame-account'))return fallback;
+      const gymId=window.HybridGymContext?.currentGymId?.()||'';
+      const membership=allMemberships.find(x=>x?.gym_id===gymId)||null;
+      if(!membership)return fallback;
+      const role={
+        owner:'Owner',
+        admin:'Admin',
+        staff:'Staff',
+        coach:'Coach',
+        member:'Member'
+      }[membership.role]||membership.role||'';
+      const gym=membership?.gyms?.name||'';
+      return role&&gym?role+' · '+gym:fallback;
+    }catch{
+      return fallback;
+    }
+  }
+  function adminChipInitial(display){
+    try{
+      return chip?.classList?.contains('admin-frame-account')
+        ? (String(display||'').trim().charAt(0).toUpperCase()||'H')
+        : (String(display||'').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H');
+    }catch{
+      return 'H';
+    }
+  }
+
   function currentPortal(){
     if(location.pathname.endsWith('/member.html'))return 'member';
     if(location.pathname.endsWith('/staff.html'))return 'staff';
@@ -123,7 +152,7 @@
     const display=profile.display_name||[profile.first_name,profile.last_name].filter(Boolean).join(' ')||u.user_metadata?.display_name||u.user_metadata?.full_name||u.email?.split('@')[0]||'Account';
     menuName.textContent=display; menuEmail.textContent=u.email||'';
     const chipName=document.getElementById('userName')||document.getElementById('displayName'),chipEmail=document.getElementById('userEmail'),chipAvatar=document.getElementById('userAvatar')||document.getElementById('avatar');
-    if(chipName)chipName.textContent=display;if(chipEmail)chipEmail.textContent=u.email||'';if(chipAvatar&&!chipAvatar.querySelector('img'))chipAvatar.textContent=display.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H';
+    if(chipName)chipName.textContent=display;if(chipEmail)chipEmail.textContent=adminChipContext(u.email||'');if(chipAvatar&&!chipAvatar.querySelector('img'))chipAvatar.textContent=adminChipInitial(display);
     displayInput.value=display; firstInput.value=profile.first_name||''; lastInput.value=profile.last_name||''; dobInput.value=profile.date_of_birth||''; genderInput.value=profile.gender||''; emailInput.value=u.email||'';
     avatarPreview.innerHTML=profile.avatar_url?'<img src="'+profile.avatar_url+'" alt="">':display.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H';
     avatarFile.value='';
@@ -190,8 +219,11 @@
       if(authError) throw authError;
       const nameNode=document.getElementById('userName')||document.getElementById('displayName'),emailNode=document.getElementById('userEmail')||document.getElementById('email'),avatar=document.getElementById('userAvatar')||document.getElementById('avatar');
       if(nameNode) nameNode.textContent=display;
-      if(emailNode&&!emailChanged) emailNode.textContent=email;
-      if(avatar){if(avatarUrl)avatar.innerHTML='<img src="'+avatarUrl+'" alt="">';else if(!avatar.querySelector('img'))avatar.textContent=display.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'H'}
+      if(emailNode){
+        if(chip?.classList?.contains('admin-frame-account'))emailNode.textContent=adminChipContext(user?.email||email||'');
+        else if(!emailChanged)emailNode.textContent=email;
+      }
+      if(avatar){if(avatarUrl)avatar.innerHTML='<img src="'+avatarUrl+'" alt="">';else if(!avatar.querySelector('img'))avatar.textContent=adminChipInitial(display)}
       menuName.textContent=display;menuEmail.textContent=email;
       const welcome=document.getElementById('welcomeTitle');if(welcome){const h=new Date().getHours();welcome.textContent='Good '+(h<12?'morning':h<18?'afternoon':'evening')+', '+display.split(' ')[0]}
       user=authData?.user||user;profile={display_name:display,first_name:first,last_name:last,avatar_url:avatarUrl,date_of_birth:dob,gender};avatarFile.value='';
