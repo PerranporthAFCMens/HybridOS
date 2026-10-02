@@ -121,7 +121,25 @@ jobs:
 
           async function assertAdminChip(page,expectedGym){
             const account=await accountControls(page);
+            try{
+              await page.waitForFunction(expectedGym=>{
+                const chip=document.querySelector('.admin-frame-account.userchip');
+                const name=chip?.querySelector('#userName')?.textContent?.trim()||'';
+                const context=chip?.querySelector('#userEmail')?.textContent?.trim()||'';
+                return name&&name!=='Account'&&context==='Admin · '+expectedGym;
+              },expectedGym,{timeout:20000});
+            }catch(err){
+              const actual=await page.evaluate(()=>{
+                const chip=document.querySelector('.admin-frame-account.userchip');
+                return {
+                  name:chip?.querySelector('#userName')?.textContent?.trim()||'',
+                  context:chip?.querySelector('#userEmail')?.textContent?.trim()||''
+                };
+              });
+              throw new Error('Admin account chip did not settle for '+expectedGym+'; actual name="'+actual.name+'" context="'+actual.context+'"; '+(err?.message||err));
+            }
             const chipText=(await account.chip.innerText()).replace(/\s+/g,' ').trim();
+            console.log('Admin account chip passed: '+expectedGym+' -> '+chipText);
             assert.match(chipText,/HybridOne Auth Journey Test/i,'Admin account chip did not show the test account name');
             assert.ok(chipText.includes('Admin · '+expectedGym),'Admin account chip did not show the selected gym role/context: '+chipText);
           }
