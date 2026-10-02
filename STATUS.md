@@ -417,11 +417,19 @@ Production origin:
 
 `https://www.hybridone.co.uk`
 
-Production remains on `main` at:
+Production is on `main` at:
 
-`dbe7528b83687df73a2ef2b289ae44390205ed11`
+`538312c56996de115326970f45e42f0fcd841571`
 
-Do not treat dev behaviour as production behaviour until an intentional promotion has occurred and the Vercel runtime has been browser-verified.
+Vercel production for that exact SHA is READY and the release has been manually browser-verified for login, Admin dashboard and the account menu.
+
+### Production routing verification — 2 October 2026
+
+- Production routing run #4 (`37015314660`) failed after release because its first `/` assertion still expected the marketing-page title.
+- Live production `/` serves the same universal-login guard as `/index.html`; this also matches the final-candidate preview that was approved before release.
+- Because the route assertions are chained with `&&`, run #4 stopped at `/` on every attempt and did not independently execute the later `/index.html`, `/hybrid-hub`, `/puffin-performance` or `/app` checks.
+- Current decision: `/` is the HybridOne sign-in entry page.
+- Open product decision: decide separately whether the public marketing page should later be restored at `/`.
 
 ## Next work
 
