@@ -429,6 +429,9 @@ Vercel production for that exact SHA is READY and the release has been manually 
 - Live production `/` serves the same universal-login guard as `/index.html`; this also matches the final-candidate preview that was approved before release.
 - Because the route assertions are chained with `&&`, run #4 stopped at `/` on every attempt and did not independently execute the later `/index.html`, `/hybrid-hub`, `/puffin-performance` or `/app` checks.
 - Current decision: `/` is the HybridOne sign-in entry page.
+- The marketing page has not been served at `/` on the previous or current production deployment; it is available at `/landing.html`.
+- `/hybrid-hub` and `/puffin-performance` are redirect entry pages. Their JavaScript sends users to the universal `login.html` with the correct gym hint, while preserving an incoming `return_to`.
+- The production-routing workflow now checks their live page titles: `Opening Hybrid Hub · HybridOne` and `Opening Puffin Performance · HybridOne`.
 - Open product decision: decide separately whether the public marketing page should later be restored at `/`.
 
 ## Next work
