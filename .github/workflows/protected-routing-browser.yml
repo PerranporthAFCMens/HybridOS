@@ -9,17 +9,13 @@ on:
   push:
     branches: [dev]
     paths:
-      - 'admin-access.html'
-      - 'admin-frame.js'
-      - 'admin-operations.html'
-      - 'staff-permissions.html'
-      - 'staff.html'
-      - 'login.html'
-      - 'choose-gym.html'
-      - 'gym-context.js'
-      - 'account-menu.js'
-      - '.github/workflows/protected-routing-browser.yml'
-      - '.github/workflows/hourly-production.yml'
+      - '**.html'
+      - '**.js'
+      - '**.css'
+      - 'vercel.json'
+      - 'scripts/**'
+      - 'PROJECT_STATE.json'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 permissions:
