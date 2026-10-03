@@ -12,21 +12,13 @@ on:
   push:
     branches: [dev]
     paths:
-      - '.github/workflows/auth-journey-browser.yml'
-      - '.github/workflows/hourly-production.yml'
-      - 'admin.html'
-      - 'admin-frame.js'
-      - 'admin-frame.css'
-      - 'gym-switcher.js'
-      - 'account-menu.js'
-      - 'shared-shell.js'
-      - 'app-consistency.css'
-      - 'gym-context.js'
-      - 'choose-gym.html'
-      - 'login.html'
-      - 'index.html'
-      - 'scripts/build_site.py'
-      - 'scripts/smoke_test.py'
+      - '**.html'
+      - '**.js'
+      - '**.css'
+      - 'vercel.json'
+      - 'scripts/**'
+      - 'PROJECT_STATE.json'
+      - '.github/workflows/**'
 
 permissions:
   contents: read
