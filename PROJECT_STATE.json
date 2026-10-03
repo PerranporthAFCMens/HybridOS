@@ -1,34 +1,34 @@
 {
   "schema_version": 2,
-  "verified_at_utc": "2026-10-01T21:57:21Z",
+  "verified_at_utc": "2026-10-03T07:54:19Z",
   "repository": "PerranporthAFCMens/HybridOS",
   "branches": {
     "production_source": "main",
     "development_source": "dev",
-    "production_main_sha": "94803abaf78b3b994708bbd6c3e8f0f956a91d89",
+    "production_main_sha": "538312c56996de115326970f45e42f0fcd841571",
     "verified_dev_application_sha": "db125d7e0f024ec5a828a3930c89ec3fa385fd29",
     "relationship": "main_is_ancestor_of_dev",
     "dev_ahead_by": 281,
     "dev_behind_by": 0,
-    "merge_base_sha": "94803abaf78b3b994708bbd6c3e8f0f956a91d89",
-    "note": "Reconciliation completed through PR #48. Verified at db125d7e0f024ec5a828a3930c89ec3fa385fd29; final release-candidate SHA will be the merge commit of the release-candidate state PR."
+    "merge_base_sha": "538312c56996de115326970f45e42f0fcd841571",
+    "note": "Production release completed at 538312c56996de115326970f45e42f0fcd841571. Dev has since advanced with test/docs-only routing verification updates."
   },
   "release_gate": {
-    "production_hold": false,
-    "production_promotion_allowed": true,
-    "reason": "Main/dev reconciliation is complete. Production remains held pending exact-SHA Auth/protected-routing gates for the final release candidate, remaining release prerequisites, release dry run, pre-release checks, and an explicit separate hold-lift PR."
+    "production_hold": true,
+    "production_promotion_allowed": false,
+    "reason": "Production release 538312c56996de115326970f45e42f0fcd841571 is complete and verified. Promotion is re-held until a future release is deliberately prepared and re-authorised."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
     "hybrid_hub_login": "https://www.hybridone.co.uk/hybrid-hub",
     "puffin_performance_login": "https://www.hybridone.co.uk/puffin-performance",
-    "deployed_source_sha": "94803abaf78b3b994708bbd6c3e8f0f956a91d89",
+    "deployed_source_sha": "538312c56996de115326970f45e42f0fcd841571",
     "deployment_state": "READY",
-    "auth_model": "legacy gym-specific production entry points until the universal-login release candidate is deliberately promoted",
+    "auth_model": "universal login in production; / is the sign-in entry, with gym-specific /hybrid-hub and /puffin-performance redirect shims",
     "canonical_routes": {
       "trailing_slash": false,
       "routing_workflow": ".github/workflows/production-routing.yml",
-      "last_pass_run_id": 36149543418
+      "last_pass_run_id": 37107898456
     }
   },
   "development": {
@@ -251,8 +251,8 @@
     "repeatable_browser_run_id": 36465324428
   },
   "release_candidate": {
-    "verified_at_sha": "db125d7e0f024ec5a828a3930c89ec3fa385fd29",
-    "final_candidate_sha": "merge commit of the release-candidate state PR",
+    "verified_at_sha": "538312c56996de115326970f45e42f0fcd841571",
+    "final_candidate_sha": "538312c56996de115326970f45e42f0fcd841571",
     "main_ancestor_sha": "94803abaf78b3b994708bbd6c3e8f0f956a91d89",
     "manual_release_workflow": {
       "path": ".github/workflows/hourly-production.yml",
@@ -261,12 +261,17 @@
       "schedule": false,
       "cron": false
     },
-    "routing_model": "Option C: public root serves landing; bare /index.html serves the universal-login guard and browser-executes to login.html",
+    "routing_model": "Released model: public root / serves the universal-login guard/sign-in entry; /index.html serves the same guard; /hybrid-hub and /puffin-performance are gym-hinted redirect shims; marketing page remains at /landing.html.",
     "evidence_now": {
-      "smoke_run_id": 36931979424,
-      "dev_runtime_run_id": 36931978891,
-      "auth_journey_latest_pre_candidate_run_id": 36927765162,
-      "protected_routing_latest_pre_candidate_run_id": 36927765376
+      "smoke_run_id": 37002385613,
+      "dev_runtime_run_id": 37002385682,
+      "auth_journey_run_id": 37002385635,
+      "protected_routing_run_id": 37002385677,
+      "production_routing_run_id": 37107898456,
+      "production_routing_source_sha": "370873ea46b26d01e7bd99463cfa36be179f977f",
+      "released_source_sha": "538312c56996de115326970f45e42f0fcd841571",
+      "rollback_tag": "prod-2026-10-02",
+      "rollback_target_sha": "94803abaf78b3b994708bbd6c3e8f0f956a91d89"
     },
     "exact_sha_gates_required_after_merge": [
       "HybridOne smoke checks",
