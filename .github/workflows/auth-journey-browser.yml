@@ -5,6 +5,7 @@ name: HybridOne Auth journey browser
 # Task 4 route-preservation verification trigger.
 # Release-candidate exact-SHA gate trigger.
 # Hold-lift exact-SHA gate trigger.
+# Cross-gate exact-SHA trigger.
 
 on:
   workflow_dispatch:
@@ -117,6 +118,31 @@ jobs:
               switchBtn:frame.locator('#accountSwitchGymBtn'),
               signOutBtn:frame.locator('#accountSignOutBtn')
             };
+          }
+
+          async function assertAdminChip(page,expectedGym){
+            const account=await accountControls(page);
+            try{
+              await page.waitForFunction(expectedGym=>{
+                const chip=document.querySelector('.admin-frame-account.userchip');
+                const name=chip?.querySelector('#userName')?.textContent?.trim()||'';
+                const context=chip?.querySelector('#userEmail')?.textContent?.trim()||'';
+                return name&&name!=='Account'&&context==='Admin · '+expectedGym;
+              },expectedGym,{timeout:20000});
+            }catch(err){
+              const actual=await page.evaluate(()=>{
+                const chip=document.querySelector('.admin-frame-account.userchip');
+                return {
+                  name:chip?.querySelector('#userName')?.textContent?.trim()||'',
+                  context:chip?.querySelector('#userEmail')?.textContent?.trim()||''
+                };
+              });
+              throw new Error('Admin account chip did not settle for '+expectedGym+'; actual name="'+actual.name+'" context="'+actual.context+'"; '+(err?.message||err));
+            }
+            const chipText=(await account.chip.innerText()).replace(/\s+/g,' ').trim();
+            console.log('Admin account chip passed: '+expectedGym+' -> '+chipText);
+            assert.match(chipText,/HybridOne Auth Journey Test/i,'Admin account chip did not show the test account name');
+            assert.ok(chipText.includes('Admin · '+expectedGym),'Admin account chip did not show the selected gym role/context: '+chipText);
           }
 
           async function loginAndChoose(page,gymId){
@@ -321,10 +347,14 @@ jobs:
               const desktop=await browser.newContext({viewport:{width:1440,height:1000}});
               const dp=await desktop.newPage();
               await loginAndChoose(dp,hub);
+              await assertAdminChip(dp,'Hybrid Hub');
               await visibleSidebarSwitch(dp);
               await switchGymFromSidebar(dp,puffin);
+              await assertAdminChip(dp,'Puffin Performance');
               await switchGymFromSidebar(dp,hub);
+              await assertAdminChip(dp,'Hybrid Hub');
               await switchGym(dp,puffin);
+              await assertAdminChip(dp,'Puffin Performance');
               await assertTask3GymContext(dp,puffin,'Puffin Performance');
               await assertNoGymFallsBackToChooser(desktop);
               await dp.reload({waitUntil:'domcontentloaded'});

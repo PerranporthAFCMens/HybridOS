@@ -417,17 +417,38 @@ Production origin:
 
 `https://www.hybridone.co.uk`
 
-Production remains on `main` at:
+Production release completed at:
 
-`dbe7528b83687df73a2ef2b289ae44390205ed11`
+`538312c56996de115326970f45e42f0fcd841571`
 
-Do not treat dev behaviour as production behaviour until an intentional promotion has occurred and the Vercel runtime has been browser-verified.
+Release evidence:
+
+- Vercel production for exact SHA `538312c56996de115326970f45e42f0fcd841571` reached **READY**.
+- rollback tag `prod-2026-10-02` points to prior production `94803abaf78b3b994708bbd6c3e8f0f956a91d89`.
+- production routing run #5 (`37107898456`), dispatched from dev after the route-check corrections, passed against live production.
+- production routing run #4 (`37015314660`) is a known, explained failure: it expected the marketing-page title at `/`, while live production and the approved candidate preview serve the universal-login guard there.
+- login, Admin dashboard and the account menu were manually verified on production.
+- `/` is currently the HybridOne sign-in entry page.
+- the marketing page has not been served at `/` on the previous or current production deployment; it is available at `/landing.html`.
+- `/hybrid-hub` and `/puffin-performance` are JavaScript redirect entry pages to universal `login.html`, carrying their gym hint and preserving `return_to`.
+
+The production promotion hold is restored in dev after this verified release. A future release must deliberately clear it again.
 
 ## Next work
 
-1. finish the remaining repeatable invite UI journeys and same-user different-role-per-gym browser fixture
-2. enable and verify member email confirmation
-3. intentionally reconcile `main` and `dev`
-4. promote only after the release gate clears
-5. browser-test the exact Vercel production revision
-6. then remove the production hold
+Release / platform backlog:
+
+1. handle the `ubuntu-latest` runner change due on **19 October 2026**
+2. fix the white menu button overlapping **Community** in the drawer
+3. add a browser test for the `/hybrid-hub` and `/puffin-performance` redirect pages
+4. make the product decision on whether a marketing page should be restored at `/`
+5. enable leaked-password protection before real customers
+6. make the Auth and protected-routing path filters cover each other, so one merge cannot leave a gate missing
+7. delete the old preview branches
+8. replace the temporary main-ruleset bypass with the permanent release/check solution
+
+Product / auth backlog:
+
+9. finish the remaining repeatable invite UI journeys and same-user different-role-per-gym browser fixture
+10. enable and verify member email confirmation
+
