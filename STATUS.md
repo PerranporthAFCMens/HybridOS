@@ -47,6 +47,30 @@ Task 3 is complete on dev.
 - Member Coach membership decision: eligible statuses are `active` + `paused` only. Paused members keep their coaching dashboard and history; `pending`, `cancelled`, and `expired` do not qualify. The invalid legacy `trial` status is being replaced with `paused`, with browser verification requiring the selected-gym membership request to return HTTP 200.
 - No production promotion is implied by Task 3 completion.
 
+### Membership status rules — Stage 1 IN PROGRESS (3 October 2026)
+
+Owner decisions:
+
+- The **newest membership row** (by `created_at`, then `id`) for the **selected gym** governs, whatever its status. Never filter by status before choosing the row, and never fall back to another gym.
+- **Active:** everything.
+- **Paused:** can sign in and see account, membership page, workouts, PBs and Member Coach, with a "membership is paused" banner. Cannot book classes.
+- **Pending** (and no membership row): membership page and plans only, with a banner.
+- **Cancelled and expired:** a message only ("Your membership has ended. Contact your gym to renew.") plus sign out.
+- Owners, admins, staff and coaches bypass these rules.
+
+Read-only audit counts: Hybrid Hub has 24 members, all active, no duplicate rows. Puffin Performance has 1 active, 1 paused and 1 ended-type membership, plus 19 active members with no membership row (they would be treated as pending) and one user with eight active rows in the same gym. Decision for those 19: leave them pending for now, reconcile individually later.
+
+Stage 1 (UI only) is on branch `member-access-stage1`, with **no PR yet**:
+
+- `gym-context.js`: new `getMembershipAccess` only; no existing function changed.
+- `member-access-guard.js` (new): banner or blocking screen per status; sets `window.HybridMemberAccessReady`; fails open on a lookup error.
+- `member-coach.js`: uses the resolver; skips the class schedule for paused members.
+- Still to do: `scripts/build_site.py` injection and the `member.html` patch, then the PR. Details in `TASKS/HANDOVER_CLAUDE_CODE.md`.
+
+Known gaps (to be stated in the PR): `member-experience.js` home tiles are not status-aware; `group-join.html` is not guarded; nothing blocks API reads until Stage 2; the Auth journey test must be read for member-page assertions before merge.
+
+Stage 2 (database enforcement: RLS helper functions and policies, booking RPCs, calendar-feed Edge Function) and Stage 3 (browser tests with disposable per-run personas, which needs an Edge Function change) are not started. Each needs the owner's approval of the exact SQL or change, and a rollback file built from the exact live definitions.
+
 ### Live test accounts
 
 Two temporary Puffin Performance test accounts are now present for membership-status verification. Public documentation uses placeholders for account emails and Auth user IDs. No passwords are stored here or committed to the repository.
@@ -451,4 +475,3 @@ Product / auth backlog:
 
 9. finish the remaining repeatable invite UI journeys and same-user different-role-per-gym browser fixture
 10. enable and verify member email confirmation
-
