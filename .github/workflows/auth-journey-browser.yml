@@ -253,15 +253,16 @@ jobs:
                 const u=new URL(response.url());
                 if(u.hostname==='mzgnhmeydhhpzgxlgudh.supabase.co'
                   &&u.pathname.endsWith('/rest/v1/memberships')
-                  &&u.searchParams.get('select')==='gym_id,created_at'
+                  &&(u.searchParams.get('select')||'').includes('ends_on')
                   &&u.searchParams.get('gym_id')==='eq.'+gymId
-                  &&u.searchParams.get('status')==='in.(active,paused)') memberCoachStatus=response.status();
+                  &&!u.searchParams.has('status')) memberCoachStatus=response.status();
               }catch{}
             };
             page.on('response',onMemberCoachResponse);
             const memberRequests=await captureSupabaseRequests(page,async()=>{
               await page.goto(base+'member.html?view=member&gym_id='+gymId,{waitUntil:'domcontentloaded',timeout:30000});
               await page.locator('#gymName').waitFor({state:'visible',timeout:20000});
+              for(let i=0;i<40&&memberCoachStatus===null;i++)await page.waitForTimeout(250);
             });
             page.off('response',onMemberCoachResponse);
             assert.equal((await page.locator('#gymName').innerText()).trim(),gymName,'Member view rendered the wrong gym data');
@@ -292,11 +293,17 @@ jobs:
               &&u.search.includes('&is_active=eq.true&gym_id=eq.'+gymId)
             );
             assert.equal(socialOwn.length,1,'Social did not make exactly one selected-gym membership request');
-            const coach=memberRequests.filter(u=>u.pathname.endsWith('/memberships')&&u.searchParams.get('select')==='gym_id,created_at');
+            const coach=memberRequests.filter(u=>u.pathname.endsWith('/memberships')&&(u.searchParams.get('select')||'').includes('ends_on'));
             assert.ok(coach.length>=1,'Member coach selector did not run');
             assert.equal(coach.filter(u=>!u.searchParams.get('gym_id')).length,0,'Member coach made an unscoped gym lookup');
             assert.equal(coach.filter(u=>u.searchParams.get('gym_id')!=='eq.'+gymId).length,0,'Member coach queried the wrong gym');
-            assert.equal(coach.filter(u=>u.searchParams.get('status')!=='in.(active,paused)').length,0,'Member coach queried an unexpected membership status set');
+            assert.equal(coach.filter(u=>u.searchParams.get('user_id')!==currentUserEq).length,0,'Member coach queried a different user');
+            assert.equal(coach.filter(u=>u.searchParams.has('status')).length,0,'Member coach filtered membership rows by status before choosing the newest');
+            assert.equal(coach.filter(u=>u.searchParams.get('order')!=='created_at.desc,id.desc'||u.searchParams.get('limit')!=='1').length,0,'Member coach did not select the single newest membership row');
+            const accessChecks=memberRequests.filter(u=>u.pathname.endsWith('/gym_members')&&u.searchParams.get('select')==='gym_id,role,is_active,access_status');
+            assert.ok(accessChecks.length>=1,'Member access gym_members check did not run');
+            assert.equal(accessChecks.filter(u=>u.searchParams.get('gym_id')!=='eq.'+gymId||u.searchParams.get('user_id')!==currentUserEq).length,0,'Member access check was not scoped to the selected gym and user');
+            assert.ok(memberRequests.indexOf(accessChecks[0])<memberRequests.indexOf(coach[0]),'Member coach looked up the membership before the gym_members check');
             assert.equal(memberCoachStatus,200,'Member coach selected-gym membership request did not return 200');
 
             await page.goto(base+'admin.html?gym_id='+gymId,{waitUntil:'domcontentloaded',timeout:30000});
