@@ -14,11 +14,14 @@ Give this file to whichever AI is working on the repo. These rules apply to ever
 5. **Do not touch unrelated code**, including formatting, renaming and "quick clean-ups". Log them as suggestions instead.
 6. **Never edit protected areas** (listed in the project's change-control file) without an explicit instruction from the owner in the current task.
 7. **You open PRs. The owner merges. You never merge.**
-8. **Nothing touches `main`, workflows, rulesets or the live Supabase project without the owner's explicit approval of the exact text** (the exact SQL, the exact command, the exact file change). No exceptions for "small" changes.
+8. **Nothing touches `main`, rulesets, Vercel settings or the live Supabase project without the owner's explicit approval of the exact text** (the exact SQL, the exact command, the exact setting). No exceptions for "small" changes. See rule 15 for the one narrow exception for workflow files on a PR branch.
 9. **Stop at the first problem and report.** Do not fix forward. If a check fails after a merge or a live change, roll back first and investigate second.
 10. **Update `STATUS.md` in every PR.** At the start of every chat, read `STATUS.md` and this file and summarise where we are before doing anything. Anything not in `STATUS.md` counts as forgotten.
 11. **Say which gym a change touches.** Puffin Performance is the test gym. Hybrid Hub is a demo for a friend's gym: keep test accounts and experiments off it.
 12. **Plain English.** The owner is not a developer. Explain what each step does and what a pass or fail looks like.
+13. **The repository is public.** Never put secrets, tokens, passwords, personal emails or user IDs in it. Use placeholders.
+14. **Do not weaken a test to make it pass.** Change a test only when the test is wrong, and show the evidence.
+15. **Workflow files on a PR branch (owner-approved, 5 Oct 2026).** A workflow change that belongs to the task (for example a browser-test assertion that must change together with the code it checks) may be committed to the task's PR branch without separate prior approval. It only takes effect on `dev` when the owner merges the PR, so the owner's review of the PR diff is the approval. The PR description must list every workflow file changed and show each change. This does NOT cover: the release workflow (`hourly-production.yml`), anything that changes `permissions`, secrets, tokens, OIDC or who can deploy, a change made directly on `dev` or `main`, or loosening any assertion. Those still need the owner's approval of the exact text first.
 
 ## 2. Definition of done
 
@@ -28,7 +31,7 @@ A change is **not done** until you have shown me:
 - for any UI change, a browser test or screenshot from the running preview,
 - confirmation that the existing browser tests still pass.
 
-- after any live Supabase change, a fresh Auth journey run on the exact resulting `dev` SHA (it only runs on a push to `dev`, and only for its watched paths),
+- after any live Supabase change, a fresh Auth journey run on the exact resulting `dev` SHA (it only runs on a push to `dev`),
 - test design: attribute requests to named scripts and avoid hard-coded request counts.
 
 "I've fixed it" without evidence means it is not fixed. If you cannot run something, say so plainly and tell me exactly what I need to check by hand.
@@ -44,24 +47,43 @@ A change is **not done** until you have shown me:
 ## 4. Multi-gym / multi-team rules
 
 - The active gym or team always comes from the shared context module (`HybridGymContext` in HybridOne). Never choose one with `.limit(1)`, "first membership found", or a default ID.
+- Membership status is read from the newest membership row for the selected gym only (see `HybridGymContext.getMembershipAccess`), never from another gym and never by filtering statuses before choosing the row.
 - Any change touching gym/team selection must be tested with an account that belongs to **two** gyms/teams with different roles.
 
 ## 5. Release rules
 
 - Promotion from `dev` to `main` is a **deliberate, manual step** after all checks pass. No automatic promotion.
 - Before each promotion, tag the current production commit (`prod-YYYY-MM-DD`) so rollback is a redeploy of that tag.
+- Lifting the production hold is its own PR. The merge commit of that PR is the release candidate, and all four gates must pass on that exact commit.
+- Never deploy a preview of the exact release-candidate commit (Vercel's Ignored Build Step skips previously deployed commits). Test a new preview-only commit that has an identical tree and prove it changes 0 files.
+- After a release, check Vercel deployed the exact SHA, run the production routing check, and check production on a real phone before calling it done. Then put the hold back with a small PR.
 - No feature work on the day of a match or a live gym event.
-- The old hourly promotion workflow must stay disabled until `main` contains the verified manual-only version (see `TASK4_RECONCILIATION_PLAN.md`).
+- The release workflow stays disabled in the Actions tab except while a release is being run.
 
 ## 6. Honesty rules
 
 - Tell me when you are unsure, when a test is missing, or when a request conflicts with these rules.
+- If a tool blocks a write, report the exact message. Do not retry, split, reword or disguise the write to get around it.
 - If you find a bug outside the task, report it. Do not silently fix it.
 - If a request would break these rules, say so instead of complying.
 
+## 7. Working style with the owner
+
+- One action at a time. Anything the owner must do or wait for goes FIRST in a list, never in a closing line.
+- Do not schedule the owner's steps onto days or dates.
+- When the owner says stop, or asks a question, stop and answer before doing more.
+- Keep handling to a minimum: the owner talks to the builder tool directly and does not relay messages between tools.
+
+## 8. Who does what (agreed 5 Oct 2026)
+
+- **Builder (Claude Code):** writes code, runs `python3 scripts/build_site.py` and `python3 scripts/smoke_test.py _site`, opens the PR to `dev`, and updates `STATUS.md`. The owner approves exact text in the builder's own chat.
+- **Reviewer (Claude in chat):** reviews each PR once, from the PR number, by reading the diff, files and checks on GitHub. Says merge or do not merge, with reasons. Does not relay or reword the builder's messages, and does not write to the repo unless the owner asks.
+- **ChatGPT:** only for what needs its connectors: reading Actions run results after a merge, and Supabase or Vercel work, with SQL written for the owner to approve.
+- **Owner:** merges everything, and approves anything touching `main`, rulesets, Vercel settings or the live Supabase project.
+
 ---
 
-# HybridOne: tasks (status as of 1 Oct 2026; STATUS.md is authoritative)
+# HybridOne: tasks (status as of 5 Oct 2026; STATUS.md is authoritative)
 
 **Task 1: Release gate. DONE (PR #21).** Change the hourly promotion workflow so it cannot promote unless the browser and smoke tests pass on the exact commit being promoted. Preferably remove the hourly schedule and make promotion manual. Also set up GitHub branch protection (required status checks) on `main` and `dev`.
 
@@ -69,11 +91,13 @@ A change is **not done** until you have shown me:
 
 **Task 3: Remove the `.limit(1)` gym lookups. DONE (eight scripts, after the #34 revert and retry).** Originally: remove the six lookups in `session-manager.js`, `scheduling-engine.js`, `class-admin-live-refresh.js`, `class-admin-enhancements.js`, `calendar-views.js` and `staff-operations.js`. Replace them with the shared gym-context helper. Add a browser test with an owner-of-A / member-of-B account that opens classes, scheduling and staff pages and checks the right gym loads each time.
 
-**Task 4: Reconcile `main` and `dev`. NEXT. Step 0 is mandatory: remove the hourly schedule from `main` before the branches can become fast-forwardable.** List every commit only on `main` and decide, one by one, whether `dev` already contains it. Known one to check: the `/index.html` redirect in `vercel.json`. Then tag a baseline.
+**Task 4: Reconcile `main` and `dev`. DONE (PRs #43 to #48).** The hourly schedule was removed from `main` first, the release workflow was replaced on `main`, and history was reconciled with an ancestry-only merge that left the file tree unchanged.
 
-**Task 5: Planned cut-over** of the new login flow to production, with the old `/hybrid-hub` and `/puffin-performance` URLs kept as redirects.
+**Task 5: Cut-over of the new login flow to production. DONE (release `538312c`, 2 Oct 2026).** `/hybrid-hub` and `/puffin-performance` are redirect pages to the universal login, and `/` is the sign-in entry page. Production routing run #5 passed. The hold has been put back.
 
-Do not start any restructuring or redesign (below) until Tasks 1 to 4 are done.
+**Task 6: Membership status rules. IN PROGRESS.** Stage 1 (UI only) is PR #60. Stage 2 (database enforcement) and Stage 3 (browser tests with disposable personas) are not started and need the owner's approval of exact SQL.
+
+Feature work has resumed under the rules above. The restructuring and redesign track below stays report-first until the owner asks for it.
 
 ---
 
