@@ -482,6 +482,16 @@ Release evidence:
 
 The production promotion hold is restored in dev after this verified release. A future release must deliberately clear it again.
 
+## Membership status database enforcement
+
+Stage 2a was applied to the live Supabase project on **5 October 2026 at 14:19:19 UTC**.
+
+- exact migration blob: `341874829ff5620a5703d96d7fa4d634a353ddd1` (`supabase/migrations/20261005120000_membership_status_enforcement.sql`, 32,782 bytes)
+- applied as one transaction with only outer `BEGIN` / `COMMIT` added
+- read-only post-apply verification: **12/12 checks passed**
+- rollback file: `supabase/rollback/20261005_restore_pre_membership_status.sql`
+- no rollback was required
+
 ## Next work
 
 Release / platform backlog:
@@ -498,7 +508,7 @@ Release / platform backlog:
 
 Product / auth backlog:
 
-10. membership status rules: Stage 2b (apply Stage 2a SQL to live), Stage 2c (calendar-feed function), Stage 3 (disposable personas), pending test account, `member-experience.js` tiles, `group-join.html` UI guard, shared resolver request, paused "Edit goal"
+10. membership status rules: Stage 2a live database enforcement applied and verified; next: Stage 2c (calendar-feed function), Stage 3 (disposable personas), pending test account, `member-experience.js` tiles, `group-join.html` UI guard, shared resolver request, paused "Edit goal"
 11. replace the public self-join (manual test payment) with real payment before real customers
 12. finish the remaining repeatable invite UI journeys and same-user different-role-per-gym browser fixture
 13. enable and verify member email confirmation
