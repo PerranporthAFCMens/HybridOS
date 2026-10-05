@@ -62,6 +62,25 @@ def harden_member():
  css=f'<link rel="stylesheet" href="./member-experience.css?v={VERSION}">';coachcss=f'<link rel="stylesheet" href="./member-coach.css?v={VERSION}">';js=f'<script type="module" src="./member-experience.js?v={VERSION}"></script>';coachjs=f'<script type="module" src="./member-coach.js?v={VERSION}"></script>';activities=f'<script src="./gym-activities.js?v={VERSION}" defer></script>';classaccess=f'<script type="module" src="./class-booking-access.js?v={VERSION}"></script>';socialnotice=f'<script type="module" src="./social-notifications.js?v={VERSION}"></script>';s=read('member.html');s=inject_head(s,'member-experience.css',css);s=inject_head(s,'member-coach.css',coachcss);s=inject_body(s,'social-nav.js',f'<script src="./social-nav.js?v={VERSION}" defer></script>');s=inject_body(s,'gym-activities.js',activities);s=inject_body(s,'class-booking-access.js',classaccess);s=inject_body(s,'social-notifications.js',socialnotice);s=inject_body(s,'member-experience.js',js);write('member.html',inject_body(s,'member-coach.js',coachjs));s=read('member-preview.html');s=inject_head(s,'member-experience.css',css);s=inject_head(s,'member-coach.css',coachcss)
  for a in ('social-nav.js','member-preview-classes.js','member-preview-controls.js'):s=inject_body(s,a,f'<script src="./{a}?v={VERSION}" defer></script>')
  s=inject_body(s,'gym-activities.js',activities);s=inject_body(s,'member-experience.js',js);write('member-preview.html',inject_body(s,'member-coach.js',coachjs))
+def replace_exact(t,old,new,label):
+ if t.count(old)!=1:raise RuntimeError(f'member.html membership-status patch failed: expected exactly one match for {label} (found {t.count(old)}); member.html changed, update add_member_access_guard()')
+ return t.replace(old,new,1)
+def add_member_access_guard():
+ # UI stage of the membership-status rules. The newest membership row for the selected gym governs (see gym-context.js getMembershipAccess).
+ for n in ('member.html','social.html','groups.html','integrations.html'):
+  write(n,inject_head(read(n),'member-access-guard.js',f'<script src="./member-access-guard.js?v={VERSION}"></script>'))
+ s=read('member.html')
+ if 'HybridMemberAccessReady' in s:return
+ old_lookup="const mr=await supabase.from('memberships').select('id,status,membership_plans(name,description,price_pence,billing_interval)').eq('user_id',session.user.id).eq('gym_id',gym.id).in('status',['active','paused','pending']).order('created_at',{ascending:false}).limit(1);membership=mr.data?.[0]||null;"
+ new_lookup="if(guarded&&!memberAccess.privileged){membership=memberAccess.membership}else{"+old_lookup+"}"
+ gate="window.HybridGymContext.setGym(gm.data.gym_id);gym=gm.data.gyms;"
+ new_gate=gate+"const memberAccess=await Promise.resolve(window.HybridMemberAccessReady).catch(()=>null);const guarded=!!(memberAccess&&memberAccess.resolved&&memberAccess.gymId===gym.id&&memberAccess.access!=='none');if(guarded&&memberAccess.blocked)return;const bootAccess=guarded?memberAccess.access:'active';"
+ old_load="await Promise.all([loadClasses(),loadWorkouts(),loadPBs(),refreshClassSettings()])}init()"
+ new_load="await Promise.all(bootAccess==='pending'?[]:bootAccess==='paused'?[loadWorkouts(),loadPBs()]:[loadClasses(),loadWorkouts(),loadPBs(),refreshClassSettings()])}init()"
+ s=replace_exact(s,gate,new_gate,'selected-gym startup gate')
+ s=replace_exact(s,old_lookup,new_lookup,'membership lookup')
+ s=replace_exact(s,old_load,new_load,'startup loading')
+ write('member.html',s)
 def version_admin_frame_assets():
  s=read('admin.html')
  s=re.sub(r'href=["\']\.\/admin-frame\.css(?:\?[^"\']*)?["\']',f'href="./admin-frame.css?v={VERSION}"',s,count=1)
@@ -116,5 +135,5 @@ def finalise_ui_contract():
   write(n,s)
 def write_deployment_manifest():
  (OUT/'deployment.json').write_text(json.dumps({'build_sha':BUILD_SHA,'build_version':VERSION},indent=2)+'\n',encoding='utf-8')
-def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
+def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
 if __name__=='__main__':build()

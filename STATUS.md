@@ -47,6 +47,17 @@ Task 3 is complete on dev.
 - Member Coach membership decision: eligible statuses are `active` + `paused` only. Paused members keep their coaching dashboard and history; `pending`, `cancelled`, and `expired` do not qualify. The invalid legacy `trial` status is being replaced with `paused`, with browser verification requiring the selected-gym membership request to return HTTP 200.
 - No production promotion is implied by Task 3 completion.
 
+### Membership status rules — Stage 1 (UI only), PR pending
+
+Branch `member-access-stage1`, PR to `dev`. Touches no gym data, no database, no live Supabase.
+
+- The newest `memberships` row for the **selected gym** governs (no status filter first, never another gym). Owners, admins, staff and coaches bypass.
+- Active = everything. Paused = account, membership, workouts, PBs and Member Coach with a banner, no classes/booking. Pending = membership page only. Cancelled/expired = message plus sign out only.
+- New `getMembershipAccess` in `gym-context.js`, new `member-access-guard.js`, status-aware `member-coach.js`. `scripts/build_site.py` gains `add_member_access_guard()` (after `harden_member()`), which injects the guard into `member.html`, `social.html`, `groups.html`, `integrations.html` and patches `member.html` by exact string replacement (build fails if the text moves). If the guard cannot resolve, `member.html` falls back to the old lookup.
+- **Not done / known gaps:** database enforcement (separate stage, needs the owner's approval of exact SQL); `member-experience.js` home tiles are not status-aware; `group-join.html` is not guarded.
+- **Before merge:** the Auth journey browser test (`auth-journey-browser.yml`, not edited here) asserts Member Coach makes a `memberships?select=gym_id,created_at&status=in.(active,paused)` request. Member Coach now uses the shared resolver instead, so that assertion will fail on `dev` unless the workflow is updated (owner approval needed). Pending members now also see a restricted member page.
+- Local evidence: `build_site.py`, `smoke_test.py _site`, `ui_consistency_check.py _site`, `project_control_check.py` all pass. No browser test has been run for this change.
+
 ### Live test accounts
 
 Two temporary Puffin Performance test accounts are now present for membership-status verification. Public documentation uses placeholders for account emails and Auth user IDs. No passwords are stored here or committed to the repository.
