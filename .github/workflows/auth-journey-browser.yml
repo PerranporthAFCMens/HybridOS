@@ -558,8 +558,8 @@ jobs:
           JS
           }
 
-          HUB_PASS="$(python3 -c 'import secrets; print("Hub!"+secrets.token_urlsafe(24))')"
-          PUFFIN_PASS="$(python3 -c 'import secrets; print("Puf!"+secrets.token_urlsafe(24))')"
+          HUB_PASS="$(python3 -c 'import secrets; print("Hub1!"+secrets.token_urlsafe(24))')"
+          PUFFIN_PASS="$(python3 -c 'import secrets; print("Puf1!"+secrets.token_urlsafe(24))')"
           echo "::add-mask::$HUB_PASS"
           echo "::add-mask::$PUFFIN_PASS"
 
