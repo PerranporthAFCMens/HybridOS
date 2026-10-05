@@ -47,6 +47,20 @@ Task 3 is complete on dev.
 - Member Coach membership decision: eligible statuses are `active` + `paused` only. Paused members keep their coaching dashboard and history; `pending`, `cancelled`, and `expired` do not qualify. The invalid legacy `trial` status is being replaced with `paused`, with browser verification requiring the selected-gym membership request to return HTTP 200.
 - No production promotion is implied by Task 3 completion.
 
+### Membership status rules — Stage 1 (UI only), PR pending
+
+Branch `member-access-stage1`, PR to `dev`. Touches no gym data, no database, no live Supabase.
+
+- The newest `memberships` row for the **selected gym** governs (no status filter first, never another gym). Owners, admins, staff and coaches bypass.
+- Active = everything. Paused = account, membership, workouts, PBs and Member Coach with a banner, no classes/booking. Pending = membership page only. Cancelled/expired = message plus sign out only.
+- New `getMembershipAccess` in `gym-context.js`, new `member-access-guard.js`, status-aware `member-coach.js`. `scripts/build_site.py` gains `add_member_access_guard()` (after `harden_member()`), which injects the guard into `member.html`, `social.html`, `groups.html`, `integrations.html` and patches `member.html` by exact string replacement (build fails if the text moves). If the guard cannot resolve, `member.html` falls back to the old lookup.
+- **Not done / known gaps:** database enforcement (separate stage, needs the owner's approval of exact SQL); `member-experience.js` home tiles are not status-aware; `group-join.html` is not guarded.
+- **Auth journey test updated in this PR (owner-approved diff):** the Member Coach assertions in `auth-journey-browser.yml` now expect the resolver's requests: a `gym_members` check (`select=gym_id,role,is_active,access_status`, selected gym and user) followed by a `memberships` lookup (selected gym, same user, `order=created_at.desc,id.desc`, `limit=1`, no status filter, HTTP 200). The disposable Auth account is an admin, so only Member Coach makes the memberships request (via `includeMembership`); owners/admins/staff/coaches bypass blocking screens but Member Coach still shows for them by their newest row's effective status. This will be the first browser run of the new code.
+- **Stage 3:** a "Member Coach card renders" assertion is deferred, because we do not control whether the disposable account has a membership row.
+- **Known duplicate request:** for ordinary members the guard and Member Coach each call the same resolver, so `gym_members` and `memberships` are requested twice per page. Harmless; sharing `HybridMemberAccessReady` is a possible follow-up.
+- **Not blocked yet:** nothing stops API reads until Stage 2 (database enforcement). No browser test has run on a paused, cancelled or pending member. A pending member now sees a restricted page.
+- Local evidence: `build_site.py`, `smoke_test.py _site`, `ui_consistency_check.py _site`, `project_control_check.py` pass. No browser test has been run for this change.
+
 ### Live test accounts
 
 Two temporary Puffin Performance test accounts are now present for membership-status verification. Public documentation uses placeholders for account emails and Auth user IDs. No passwords are stored here or committed to the repository.
