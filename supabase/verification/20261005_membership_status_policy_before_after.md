@@ -41,7 +41,7 @@ Rows marked **REMOVED** are the old permissive policies; the persona tests fail 
 | before: unchanged | authenticated users can create gyms | INSERT | {authenticated} | `-` | `(created_by = ( SELECT auth.uid() AS uid))` |
 | before: **REMOVED** | authorized users can read gyms | SELECT | {authenticated} | `((created_by = ( SELECT auth.uid() AS uid)) OR private.is_gym_member(id))` | `-` |
 | before: unchanged | admins can update their gym | UPDATE | {authenticated} | `private.has_gym_role(id, ARRAY['owner'::gym_member_role, 'admin'::gym_member_role])` | `private.has_gym_role(id, ARRAY['owner'::gym_member_role, 'admin'::gym_member_role])` |
-| after: **NEW** | gyms readable by creator and non-ended members | SELECT | {authenticated} | `((created_by = ( SELECT auth.uid() AS uid)) OR private.member_status_allows(id, ARRAY['active'::text, 'paused'::text, 'pending'::text]))` | `-` |
+| after: **NEW** | gyms readable by creator and members of any status | SELECT | {authenticated} | `((created_by = ( SELECT auth.uid() AS uid)) OR private.member_status_allows(id, ARRAY['active'::text, 'paused'::text, 'pending'::text, 'cancelled'::text, 'expired'::text]))` | `-` |
 
 ## public.member_training_preferences
 

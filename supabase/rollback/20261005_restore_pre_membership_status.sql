@@ -7,7 +7,7 @@ begin;
 -- 1. drop the new policies
 drop policy "plans readable by active paused and pending members" on public.membership_plans;
 drop policy "members read own gym member row" on public.gym_members;
-drop policy "gyms readable by creator and non-ended members" on public.gyms;
+drop policy "gyms readable by creator and members of any status" on public.gyms;
 drop policy "own workout sessions readable when active or paused" on public.workout_sessions;
 drop policy "own workout sessions insertable when active" on public.workout_sessions;
 drop policy "own workout sessions updatable when active" on public.workout_sessions;
@@ -220,31 +220,6 @@ begin
   return v_booking;
 end$$;
 
-CREATE OR REPLACE FUNCTION public.cancel_class_booking(p_session_id uuid)
- RETURNS class_bookings
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'private', 'pg_temp'
-AS $$
-declare
-  v_booking public.class_bookings%rowtype;
-  v_gym_id uuid;
-begin
-  if auth.uid() is null then raise exception 'Not authenticated'; end if;
-  select gym_id into v_gym_id from public.class_sessions where id=p_session_id;
-  if v_gym_id is null then raise exception 'Class session not found'; end if;
-  if not private.can_write_gym(v_gym_id) then raise exception 'Read-only access'; end if;
-
-  update public.class_bookings
-  set status='cancelled',cancelled_at=now(),updated_at=now()
-  where session_id=p_session_id and user_id=auth.uid() and status='booked'
-  returning * into v_booking;
-
-  if not found then raise exception 'Active booking not found'; end if;
-  return v_booking;
-end;
-$$;
-
 CREATE OR REPLACE FUNCTION public.member_book_class(p_session_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -291,26 +266,6 @@ begin
 
   return jsonb_build_object('status','booked','booking_id',v_id);
 end$$;
-
-CREATE OR REPLACE FUNCTION public.member_cancel_class(p_session_id uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'private', 'pg_temp'
-AS $$
-declare
-  s public.class_sessions%rowtype;
-begin
-  if auth.uid() is null then raise exception 'Not authenticated'; end if;
-  select * into s from public.class_sessions where id=p_session_id;
-  if not found then raise exception 'Class session not found'; end if;
-  if not private.can_write_gym(s.gym_id) then raise exception 'Read-only access'; end if;
-  if s.starts_at<=now() then raise exception 'This class has already started'; end if;
-
-  delete from public.class_bookings where session_id=p_session_id and user_id=auth.uid();
-  return jsonb_build_object('status','cancelled');
-end;
-$$;
 
 CREATE OR REPLACE FUNCTION public.member_class_schedule(p_gym_id uuid, p_from timestamp with time zone DEFAULT now(), p_to timestamp with time zone DEFAULT (now() + '30 days'::interval))
  RETURNS TABLE(session_id uuid, name text, description text, starts_at timestamp with time zone, ends_at timestamp with time zone, capacity integer, booked_count integer, available_spaces integer, is_booked boolean)
@@ -376,6 +331,222 @@ begin
   return jsonb_build_object(
     'home_layout', coalesce(v_layout, '[]'::jsonb),
     'cta_config', coalesce(v_cta, '{}'::jsonb)
+  );
+end;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_my_training_groups(p_gym_id uuid)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public', 'auth'
+AS $$
+select coalesce(jsonb_agg(jsonb_build_object(
+  'id',g.id,
+  'name',g.name,
+  'description',g.description,
+  'invite_code',g.invite_code,
+  'owner_user_id',g.owner_user_id,
+  'owner_name',coalesce(p.display_name,p.first_name,'Member'),
+  'member_count',(select count(*) from public.training_group_members gm2 where gm2.group_id=g.id),
+  'challenge_count',(select count(*) from public.training_group_challenges c where c.group_id=g.id and (c.ends_at is null or c.ends_at>=now())),
+  'created_at',g.created_at
+) order by g.created_at desc),'[]'::jsonb)
+from public.training_groups g
+join public.training_group_members gm on gm.group_id=g.id and gm.user_id=auth.uid()
+left join public.profiles p on p.id=g.owner_user_id
+where g.gym_id=p_gym_id
+and exists(select 1 from public.gym_members m where m.gym_id=p_gym_id and m.user_id=auth.uid() and m.is_active=true)
+$$;
+
+CREATE OR REPLACE FUNCTION public.preview_training_group_invite(p_code text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public', 'auth'
+AS $$
+declare v jsonb;
+begin
+  if auth.uid() is null then raise exception 'Authentication required'; end if;
+  select jsonb_build_object(
+    'id',g.id,'gym_id',g.gym_id,'name',g.name,'description',g.description,
+    'owner_name',coalesce(p.display_name,p.first_name,'Member'),
+    'member_count',(select count(*) from public.training_group_members x where x.group_id=g.id),
+    'already_member',exists(select 1 from public.training_group_members x where x.group_id=g.id and x.user_id=auth.uid())
+  ) into v
+  from public.training_groups g
+  left join public.profiles p on p.id=g.owner_user_id
+  where upper(g.invite_code)=upper(trim(p_code));
+  if v is null then raise exception 'Invite not found'; end if;
+  if not exists(select 1 from public.gym_members gm where gm.gym_id=(v->>'gym_id')::uuid and gm.user_id=auth.uid() and gm.is_active=true) then
+    raise exception 'You need an active membership at this gym to join this group';
+  end if;
+  return v;
+end$$;
+
+CREATE OR REPLACE FUNCTION public.get_training_group_dashboard(p_group_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public', 'auth'
+AS $$
+declare v_user uuid:=auth.uid(); v_group public.training_groups%rowtype;
+begin
+  if v_user is null then raise exception 'Authentication required'; end if;
+  if not exists(select 1 from public.training_group_members gm where gm.group_id=p_group_id and gm.user_id=v_user) then
+    raise exception 'You are not a member of this group';
+  end if;
+  select * into v_group from public.training_groups where id=p_group_id;
+  return jsonb_build_object(
+    'group',jsonb_build_object(
+      'id',v_group.id,'name',v_group.name,'description',v_group.description,'invite_code',v_group.invite_code,
+      'owner_user_id',v_group.owner_user_id
+    ),
+    'members',coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'user_id',gm.user_id,
+        'name',coalesce(p.display_name,p.first_name,'Member'),
+        'joined_at',gm.joined_at,
+        'recent_workouts',coalesce((
+          select jsonb_agg(wj order by (wj->>'performed_at')::timestamptz desc)
+          from (
+            select jsonb_build_object('title',coalesce(ws.title,'Workout'),'performed_at',ws.performed_at) wj
+            from public.workout_sessions ws
+            where ws.gym_id=v_group.gym_id and ws.user_id=gm.user_id
+            order by ws.performed_at desc limit 3
+          ) q
+        ),'[]'::jsonb),
+        'recent_pbs',coalesce((
+          select jsonb_agg(pj order by (pj->>'achieved_at')::timestamptz desc)
+          from (
+            select jsonb_build_object('exercise_name',pb.exercise_name,'value',pb.value_numeric,'unit',pb.unit,'achieved_at',pb.achieved_at) pj
+            from public.personal_bests pb
+            where pb.gym_id=v_group.gym_id and pb.user_id=gm.user_id
+            order by pb.achieved_at desc limit 3
+          ) q2
+        ),'[]'::jsonb)
+      ) order by coalesce(p.display_name,p.first_name,'Member'))
+      from public.training_group_members gm
+      left join public.profiles p on p.id=gm.user_id
+      where gm.group_id=p_group_id
+    ),'[]'::jsonb),
+    'challenges',coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id',c.id,'name',c.name,'activity_name',c.activity_name,'metric_type',c.metric_type,'unit',c.unit,
+        'comparison_direction',c.comparison_direction,'starts_at',c.starts_at,'ends_at',c.ends_at,
+        'entries',coalesce((
+          select jsonb_agg(jsonb_build_object(
+            'user_id',e.user_id,'name',coalesce(p2.display_name,p2.first_name,'Member'),
+            'value',e.value_numeric,'note',e.note,'submitted_at',e.submitted_at
+          ) order by
+            case when c.comparison_direction='higher' then e.value_numeric end desc nulls last,
+            case when c.comparison_direction='lower' then e.value_numeric end asc nulls last)
+          from public.training_group_challenge_entries e
+          left join public.profiles p2 on p2.id=e.user_id
+          where e.challenge_id=c.id
+        ),'[]'::jsonb)
+      ) order by c.created_at desc)
+      from public.training_group_challenges c
+      where c.group_id=p_group_id
+    ),'[]'::jsonb)
+  );
+end$$;
+
+CREATE OR REPLACE FUNCTION public.join_public_gym_with_membership(p_gym_slug text, p_plan_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'private', 'pg_temp'
+AS $$
+declare
+  v_uid uuid := auth.uid();
+  v_gym_id uuid;
+  v_gym_name text;
+  v_plan public.membership_plans%rowtype;
+  v_membership_id uuid;
+  v_existing_role public.gym_member_role;
+begin
+  if v_uid is null then
+    raise exception 'Not authenticated';
+  end if;
+
+  select id, name into v_gym_id, v_gym_name
+  from public.gyms
+  where slug = p_gym_slug
+  limit 1;
+
+  if v_gym_id is null then
+    raise exception 'Gym not found';
+  end if;
+
+  select * into v_plan
+  from public.membership_plans
+  where id = p_plan_id
+    and gym_id = v_gym_id
+    and is_active = true
+    and is_public = true;
+
+  if not found then
+    raise exception 'Membership plan is not available';
+  end if;
+
+  select role into v_existing_role
+  from public.gym_members
+  where gym_id = v_gym_id
+    and user_id = v_uid
+  limit 1;
+
+  if v_existing_role is null then
+    insert into public.gym_members(gym_id,user_id,role,is_active)
+    values(v_gym_id,v_uid,'member',true);
+  else
+    update public.gym_members
+    set is_active = true, updated_at = now()
+    where gym_id = v_gym_id and user_id = v_uid;
+  end if;
+
+  select id into v_membership_id
+  from public.memberships
+  where gym_id = v_gym_id
+    and user_id = v_uid
+    and status in ('active','pending','paused')
+  order by created_at desc
+  limit 1;
+
+  if v_membership_id is null then
+    insert into public.memberships(
+      gym_id,user_id,plan_id,status,starts_on,payment_provider,payment_status
+    )
+    values(
+      v_gym_id,v_uid,v_plan.id,'active',current_date,'manual','confirmed'
+    )
+    returning id into v_membership_id;
+  else
+    update public.memberships
+    set plan_id = v_plan.id,
+        status = 'active',
+        starts_on = coalesce(starts_on,current_date),
+        ends_on = null,
+        payment_provider = 'manual',
+        payment_status = 'confirmed',
+        provider_customer_id = null,
+        provider_mandate_id = null,
+        provider_subscription_id = null,
+        provider_status = 'test_manual_active',
+        provider_last_synced_at = now(),
+        updated_at = now()
+    where id = v_membership_id;
+  end if;
+
+  return jsonb_build_object(
+    'ok', true,
+    'gym_id', v_gym_id,
+    'gym_name', v_gym_name,
+    'plan_id', v_plan.id,
+    'plan_name', v_plan.name,
+    'membership_id', v_membership_id,
+    'status', 'active',
+    'payment_mode', 'manual_test'
   );
 end;
 $$;

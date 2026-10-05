@@ -19,6 +19,10 @@ with newest as (
   union all select 'member_class_schedule and get_member_home_settings gate on status',
          (select count(*) = 2 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
            where n.nspname='public' and p.proname in ('member_class_schedule','get_member_home_settings') and pg_get_functiondef(p.oid) like '%member_status_allows%')
+  union all select 'training group read RPCs and the public join gate on status',
+         (select count(*) = 4 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+           where n.nspname='public' and p.proname in ('get_my_training_groups','preview_training_group_invite','get_training_group_dashboard','join_public_gym_with_membership')
+             and (pg_get_functiondef(p.oid) like '%member_status_allows%' or pg_get_functiondef(p.oid) like '%You already have a membership at this gym%'))
   union all select 'new helpers are not executable by anon',
          not coalesce((select bool_or(has_function_privilege('anon', p.oid, 'EXECUTE')) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='private' and p.proname in ('current_membership_status','member_status_allows')), false)
   union all select 'current_membership_status is not executable by authenticated (no status oracle)',
@@ -35,7 +39,7 @@ with newest as (
            ('gym_access_settings','gym members can view access settings')))
   union all select 'all 28 new policies are present',
          (select count(*) = 28 from pg_policies where schemaname='public' and policyname in (
-           'plans readable by active paused and pending members','members read own gym member row','gyms readable by creator and non-ended members',
+           'plans readable by active paused and pending members','members read own gym member row','gyms readable by creator and members of any status',
            'own workout sessions readable when active or paused','own workout sessions insertable when active','own workout sessions updatable when active','own workout sessions deletable when active',
            'own workout entries readable when active or paused','own workout entries insertable when active','own workout entries updatable when active','own workout entries deletable when active',
            'own workout sets readable when active or paused','own workout sets insertable when active','own workout sets updatable when active','own workout sets deletable when active',

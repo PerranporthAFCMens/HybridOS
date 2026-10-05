@@ -114,6 +114,15 @@ insert into public.messages(channel_id,sender_id,body) values ('90000000-0000-40
 insert into public.gym_access_settings(gym_id) values (pt.gym_a());
 insert into public.pt_appointments(gym_id,staff_user_id,member_user_id,starts_at,ends_at) select pt.gym_a(),'00000000-0000-4000-8000-000000000003',uid,now()+interval '2 days',now()+interval '2 days 1 hour' from pt.persona where name not in ('owner_a','admin_a','staff_a','coach_a');
 
+-- training group fixtures (group tables have RLS with no policies: reachable only through the RPCs)
+insert into public.training_groups(id,gym_id,owner_user_id,name,invite_code) values ('77000000-0000-4000-8000-000000000001',pt.gym_a(),'00000000-0000-4000-8000-000000000005','Persona group','PERSONA1');
+insert into public.training_group_members(group_id,user_id) select '77000000-0000-4000-8000-000000000001',uid from pt.persona where name in ('active_a','owner_a','staff_a','paused_a','pending_a','cancelled_a');
+insert into public.training_group_challenges(id,group_id,created_by,name,activity_name,metric_type) values ('77000000-0000-4000-8000-0000000000c1','77000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000005','Persona challenge','Rowing','reps');
+-- two extra accounts that are NOT personas: a brand-new user (no gym rows) and a REVOKED staff account (is_active but access_status revoked)
+insert into auth.users(id,email) values ('00000000-0000-4000-8000-0000000000d1','newcomer@persona.invalid'),('00000000-0000-4000-8000-0000000000d2','revoked-staff@persona.invalid');
+insert into public.profiles(id,display_name) values ('00000000-0000-4000-8000-0000000000d1','newcomer'),('00000000-0000-4000-8000-0000000000d2','revoked staff') on conflict (id) do nothing;
+insert into public.gym_members(gym_id,user_id,role,is_active,access_status) values (pt.gym_a(),'00000000-0000-4000-8000-0000000000d2','staff',true,'revoked');
+
 -- ---------- helper to run a probe for every persona with an expectation per class ----------
 -- classes: priv | active | paused | pending | ended   (expected strings in that order)
 create function pt.probe(label text, stmt text, w_priv text, w_active text, w_paused text, w_pending text, w_ended text) returns void language plpgsql as $f$
@@ -127,9 +136,9 @@ end $f$;
 
 -- ===== READS (counts of what each persona can see) =====
 select pt.probe('R own gym_members row','select count(*)::text from public.gym_members where gym_id={A} and user_id={uid}','1','1','1','1','1');
-select pt.probe('R other gym_members rows','select count(*)::text from public.gym_members where gym_id={A} and user_id<>{uid}','11','11','0','0','0');
+select pt.probe('R other gym_members rows','select count(*)::text from public.gym_members where gym_id={A} and user_id<>{uid}','12','12','0','0','0'); -- 11 other personas + the revoked-staff fixture row
 select pt.probe('R membership plans','select count(*)::text from public.membership_plans where gym_id={A}','2','2','2','2','0');
-select pt.probe('R gyms row','select count(*)::text from public.gyms where id={A}','1','1','1','1','0');
+select pt.probe('R gyms row','select count(*)::text from public.gyms where id={A}','1','1','1','1','1');
 select pt.probe('R own workout sessions','select count(*)::text from public.workout_sessions where gym_id={A} and user_id={uid}','1','1','1','0','0');
 select pt.probe('R own workout entries','select count(*)::text from public.workout_entries where gym_id={A} and user_id={uid}','1','1','1','0','0');
 select pt.probe('R own workout sets','select count(*)::text from public.workout_sets s join public.workout_entries e on e.id=s.entry_id where e.gym_id={A} and e.user_id={uid}','1','1','1','0','0');
@@ -164,7 +173,9 @@ select pt.check('X split_a gym A sessions (active in A)', pt.q('00000000-0000-40
 select pt.check('X split_a gym B sessions (cancelled in B)', pt.q('00000000-0000-4000-8000-00000000000c','select count(*)::text from public.class_sessions where gym_id=''b0000000-0000-4000-8000-00000000000b'''),'0');
 select pt.check('X split_a gym B own workouts (cancelled in B)', pt.q('00000000-0000-4000-8000-00000000000c','select count(*)::text from public.workout_sessions where gym_id=''b0000000-0000-4000-8000-00000000000b'''),'0');
 select pt.check('X split_a gym B plans (cancelled in B)', pt.q('00000000-0000-4000-8000-00000000000c','select count(*)::text from public.membership_plans where gym_id=''b0000000-0000-4000-8000-00000000000b'''),'0');
-select pt.check('X split_a gym B gym row (cancelled in B)', pt.q('00000000-0000-4000-8000-00000000000c','select count(*)::text from public.gyms where id=''b0000000-0000-4000-8000-00000000000b'''),'0');
+select pt.check('X split_a gym B gym row (cancelled in B: every status may read its own gym row)', pt.q('00000000-0000-4000-8000-00000000000c','select count(*)::text from public.gyms where id=''b0000000-0000-4000-8000-00000000000b'''),'1');
+select pt.check('X active_a cannot read gym B row (not a member of B)', pt.q('00000000-0000-4000-8000-000000000005','select count(*)::text from public.gyms where id=''b0000000-0000-4000-8000-00000000000b'''),'0');
+select pt.check('X gyms row: a user with no gym_members row at all sees nothing', (select pt.q(u.id,'select count(*)::text from public.gyms') from (select gen_random_uuid() id) u),'0');
 select pt.check('X split_a gym B own gym_members row still visible', pt.q('00000000-0000-4000-8000-00000000000c','select count(*)::text from public.gym_members where gym_id=''b0000000-0000-4000-8000-00000000000b'' and user_id=''00000000-0000-4000-8000-00000000000c'''),'1');
 select pt.check('X active_a is not in gym B', pt.q('00000000-0000-4000-8000-000000000005','select count(*)::text from public.class_sessions where gym_id=''b0000000-0000-4000-8000-00000000000b'''),'0');
 select pt.check('X owner_a (owner of A and a plain member of B) bypass applies to A only: B sessions', pt.q('00000000-0000-4000-8000-000000000001','select count(*)::text from public.class_sessions where gym_id=''b0000000-0000-4000-8000-00000000000b'''),'0');
@@ -234,6 +245,93 @@ do $$ declare p record; begin
   perform pt.check('B split_a member_cancel_class', pt.q('00000000-0000-4000-8000-00000000000c','select ''ok'' from (select public.member_cancel_class(''f0000000-0000-4000-8000-000000000002'')) x'),'ok');
 end $$;
 
+-- ===== GROUP, CALENDAR AND JOIN RPCs (found by the function audit) =====
+-- "allowed" = active member or owner/admin/staff/coach. Group members: active_a, owner_a, staff_a (allowed) and paused_a, pending_a, cancelled_a (members before their status changed).
+create function pt.allowed(p pt.persona) returns boolean language sql immutable as $$ select p.class in ('priv','active') $$;
+create function pt.in_group(p pt.persona) returns boolean language sql immutable as $$ select p.name in ('active_a','owner_a','staff_a','paused_a','pending_a','cancelled_a') $$;
+do $$ declare p pt.persona; want text; ex_not_allowed text;
+begin
+  for p in select * from pt.persona order by name loop
+    perform pt.check('G get_my_training_groups :: '||p.name, pt.q(p.uid,'select jsonb_array_length(public.get_my_training_groups(''a0000000-0000-4000-8000-00000000000a''))::text'),
+      case when pt.allowed(p) and pt.in_group(p) then '1' else '0' end);
+    want := case when pt.allowed(p) and pt.in_group(p) then 'Persona group'
+                 when pt.in_group(p) then 'ERROR:P0001:Active gym membership required'
+                 else 'ERROR:P0001:You are not a member of this group' end;
+    perform pt.check('G get_training_group_dashboard :: '||p.name, pt.q(p.uid,'select (public.get_training_group_dashboard(''77000000-0000-4000-8000-000000000001''))->''group''->>''name'''), want);
+    perform pt.check('G dashboard shows other members workouts only when allowed :: '||p.name, pt.q(p.uid,'select jsonb_array_length((public.get_training_group_dashboard(''77000000-0000-4000-8000-000000000001''))->''members'')::text'),
+      case when pt.allowed(p) and pt.in_group(p) then '6' else 'ERROR:P0001:%' end);
+    perform pt.check('G preview_training_group_invite :: '||p.name, pt.q(p.uid,'select (public.preview_training_group_invite(''PERSONA1''))->>''name'''),
+      case when pt.allowed(p) then 'Persona group' else 'ERROR:P0001:You need an active membership at this gym to join this group' end);
+    perform pt.check('K get_class_calendar :: '||p.name, pt.q(p.uid,'select count(*)::text from public.get_class_calendar(''a0000000-0000-4000-8000-00000000000a'', now(), now()+interval ''30 days'')'),
+      case when pt.allowed(p) then '2' else '0' end);
+  end loop;
+  -- joining a group needs an ACTIVE membership
+  for p in select * from pt.persona order by name loop
+    perform pt.check('G join_training_group_by_code :: '||p.name, pt.q(p.uid,'select (public.join_training_group_by_code(''PERSONA1''))->>''name'''),
+      case when pt.allowed(p) then 'Persona group' else 'ERROR:P0001:You need an active membership at this gym to join this group' end);
+  end loop;
+  for p in select * from pt.persona order by name loop
+    perform pt.check('G create_training_group :: '||p.name, pt.q(p.uid,'select (public.create_training_group(''a0000000-0000-4000-8000-00000000000a'',''Probe group''))->>''name'''),
+      case when pt.allowed(p) then 'Probe group' else 'ERROR:P0001:Active gym membership required' end);
+    perform pt.check('G create_training_group_challenge :: '||p.name, pt.q(p.uid,'select ''ok'' from (select public.create_training_group_challenge(''77000000-0000-4000-8000-000000000001'',''Probe'',''Run'',''reps'',null)) x'),
+      case when pt.allowed(p) then 'ok' else 'ERROR:P0001:Read-only access' end);
+    perform pt.check('G submit_training_group_challenge_result :: '||p.name, pt.q(p.uid,'select ''ok'' from (select public.submit_training_group_challenge_result(''77000000-0000-4000-8000-0000000000c1'', 5, null)) x'),
+      case when pt.allowed(p) then 'ok' else 'ERROR:P0001:Read-only access' end);
+  end loop;
+end $$;
+
+-- the public join must never change an existing membership or reactivate a revoked account
+do $$ declare p pt.persona;
+begin
+  for p in select * from pt.persona where class<>'priv' order by name loop
+    perform pt.check('J join_public_gym_with_membership :: '||p.name, pt.q(p.uid,'select (public.join_public_gym_with_membership(''persona-gym-a'',''c0000000-0000-4000-8000-000000000001''))->>''status'''),
+      case when p.name='norow_a' then 'active' else 'ERROR:P0001:You already have a membership at this gym. Contact your gym to change it.' end);
+  end loop;
+  perform pt.check('J join: membership rows unchanged for paused_a (still paused)', private.current_membership_status(pt.gym_a(),'00000000-0000-4000-8000-000000000006'),'paused');
+  perform pt.check('J join: cancelled_a still cancelled', private.current_membership_status(pt.gym_a(),'00000000-0000-4000-8000-000000000009'),'cancelled');
+  perform pt.check('J join: expired_a still expired', private.current_membership_status(pt.gym_a(),'00000000-0000-4000-8000-00000000000a'),'expired');
+  perform pt.check('J join: pending_a still pending (row untouched)', (select status::text from public.memberships where id='d0000000-0000-4000-8000-000000000105'),'pending');
+  perform pt.check('J join: a brand-new user can still join', pt.q('00000000-0000-4000-8000-0000000000d1','select (public.join_public_gym_with_membership(''persona-gym-a'',''c0000000-0000-4000-8000-000000000001''))->>''status'''),'active');
+  perform pt.check('J join: revoked account cannot reactivate itself', pt.q('00000000-0000-4000-8000-0000000000d2','select (public.join_public_gym_with_membership(''persona-gym-a'',''c0000000-0000-4000-8000-000000000001''))->>''status'''),'ERROR:P0001:This account no longer has access to this gym. Contact your gym.');
+  perform pt.check('J join: revoked staff row still revoked and inactive-equivalent', (select access_status from public.gym_members where user_id='00000000-0000-4000-8000-0000000000d2'),'revoked');
+  -- a revoked staff account does NOT get the role bypass
+  perform pt.check('X revoked staff gets no role bypass (class sessions)', pt.q('00000000-0000-4000-8000-0000000000d2','select count(*)::text from public.class_sessions where gym_id=''a0000000-0000-4000-8000-00000000000a'''),'0');
+  perform pt.check('X revoked staff gets no role bypass (can_write_gym)', pt.q('00000000-0000-4000-8000-0000000000d2','select private.can_write_gym(''a0000000-0000-4000-8000-00000000000a'')::text'),'false');
+end $$;
+
+-- ===== FUNCTION AUDIT: every SECURITY DEFINER function that `authenticated` can execute must gate on a reviewed helper, or be on the explicit allowlist =====
+create table pt.fn_allow(fn text primary key, reason text);
+insert into pt.fn_allow values
+ ('claim_access_invite(text)','invite-token flow: the one-time token is the credential'),
+ ('claim_admin_invite(text)','invite-token flow: the one-time token is the credential'),
+ ('get_access_invite(text)','invite-token flow: the one-time token is the credential'),
+ ('get_admin_invite(text)','invite-token flow: the one-time token is the credential'),
+ ('get_gym_team_accounts(uuid)','inline owner/admin role check (equivalent to has_gym_role); returns staff accounts only'),
+ ('remove_gym_staff_access(uuid,uuid)','inline owner/admin role check (equivalent to has_gym_role)'),
+ ('get_public_gym_join_options(text)','public join page: returns public plans by design (anon callable)'),
+ ('join_public_gym_with_membership(text,uuid)','join for NEW members only: refuses when any membership row exists or the account is revoked (tested above)'),
+ ('private.active_owner_count(uuid)','internal ownership helper; private schema is not exposed over the API'),
+ ('private.has_active_owner(uuid)','internal ownership helper; private schema is not exposed over the API'),
+ ('private.execute_ownership_action(uuid)','internal; called only from the owner-gated approve_ownership_action; private schema not exposed'),
+ ('private.member_has_paid_class(uuid,uuid)','internal helper for the booking RPCs; private schema not exposed');
+create table pt.fn_audit as
+select p.oid::regprocedure::text as fn,
+       case when p.prorettype = 'trigger'::regtype then 'trigger function'
+            when pg_get_functiondef(p.oid) ~ 'member_status_allows|is_gym_member|can_write_gym|has_gym_role|has_gym_staff_permission|staff_has_permission|is_pending_admin|can_manage_gym_member|can_view_profile|member_has_class_access' then 'gates on helper'
+            when exists (select 1 from pt.fn_allow a where a.fn = p.oid::regprocedure::text) then 'allowlisted'
+            else 'NO GATE' end as gate
+from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+where n.nspname in ('public','private') and p.prokind = 'f' and p.prosecdef and has_function_privilege('authenticated', p.oid, 'EXECUTE');
+do $$ declare r record; offenders text; stale text;
+begin
+  for r in select * from pt.fn_audit order by gate, fn loop raise notice 'FUNCTION AUDIT | % | %', rpad(r.gate,16), r.fn; end loop;
+  select coalesce(string_agg(fn, '; ' order by fn),'none') into offenders from pt.fn_audit where gate = 'NO GATE';
+  perform pt.check('F every authenticated SECURITY DEFINER function gates on a helper or is allowlisted', offenders, 'none');
+  select coalesce(string_agg(a.fn, '; ' order by a.fn),'none') into stale from pt.fn_allow a where not exists (select 1 from pt.fn_audit f where f.fn = a.fn);
+  perform pt.check('F allowlist has no stale entries', stale, 'none');
+  perform pt.check('F the three group read RPCs now gate on the helper', (select count(*)::text from pt.fn_audit where gate='gates on helper' and fn in ('get_my_training_groups(uuid)','preview_training_group_invite(text)','get_training_group_dashboard(uuid)')),'3');
+end $$;
+
 -- ===== POLICY AUDIT: no old permissive policy survives =====
 -- 1. every policy this migration replaced is gone (exact old names)
 
@@ -261,7 +359,7 @@ do $$ declare r record; begin
   for r in select * from (values
     ('membership_plans','plans readable by active paused and pending members'),
     ('gym_members','members read own gym member row'),
-    ('gyms','gyms readable by creator and non-ended members'),
+    ('gyms','gyms readable by creator and members of any status'),
     ('workout_sessions','own workout sessions readable when active or paused'),
     ('workout_sessions','own workout sessions insertable when active'),
     ('workout_sessions','own workout sessions updatable when active'),
