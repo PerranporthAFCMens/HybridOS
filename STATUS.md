@@ -1,5 +1,15 @@
 # HybridOne live status
 
+## Current operating state — 5 October 2026 (read this first)
+
+- **Production:** `main` = `538312c56996de115326970f45e42f0fcd841571` (released 2 Oct; Vercel READY; rollback tag `prod-2026-10-02` points at the previous production `94803abaf78b3b994708bbd6c3e8f0f956a91d89`). `PROJECT_STATE.json` on `dev` has `production_hold: true` and `production_promotion_allowed: false`. The "Manual production release" workflow is DISABLED in the Actions tab (enable only to run a release). "HybridOne production routing" is enabled. The `main` ruleset has a temporary repository-admin bypass, pull requests only.
+- **dev:** all four gates were green on the Stage 1 merge (#60, `3681852`) after one Auth re-run for a password-policy flake fixed in #62. Later merges: #61 (working-rules and handover docs), #62 (test password prefixes and a status note), #63 (Stage 2a, repo only; merge commit `e606475`). The two browser gates trigger on any `**.html`, `**.js`, `**.css`, `vercel.json`, `scripts/**`, `PROJECT_STATE.json` or `.github/workflows/**` change (#59).
+- **In flight: membership status rules (Task 6).** Stage 1 UI is merged and verified (paused and cancelled Puffin test accounts tried by hand on dev: passed; pending NOT tried). Stage 2a database SQL is merged to `dev` but **NOT applied to the live Supabase project**. Next: Stage 2b (ChatGPT diffs repo against the live catalog read-only, the owner approves exact SQL, apply as ONE transaction, then a fresh Auth run and a by-hand check with the paused and cancelled accounts and the owner's Hybrid Hub login); Stage 2c (calendar-feed Edge Function status check, a separate live change); Stage 3 (browser tests with disposable per-run personas, which needs an Edge Function change).
+- **Owner decisions:** the newest membership row for the selected gym governs; active = everything; paused = read-only own workouts/PBs/Member Coach plus membership and plans, banner, no booking; pending/no row = membership page and plans only; cancelled and expired = message plus sign out only; owners, admins, staff and coaches bypass. Cancelling an existing booking stays blocked for non-active members. The 19 Puffin members with no membership row stay pending and keep the public self-join route for now.
+- **Added go-live blocker:** `join_public_gym_with_membership` (the public join) gives any signed-in user a free active membership through a manual test payment. It must be replaced by real payment before real customers.
+- **Closed / not issues:** the Supabase egress overage (17 to 21 Sep) was a historic request storm, fixed and flat since. The dashboard grace-period banner lasts until 22 Oct (Supabase's). Log Ingestion usage (109 GB against an "upcoming" 1 GB limit) is unexplained.
+- **How we work:** see `AI_WORKING_RULES.md` (rules 1 to 15 and section 8) and `TASKS/HANDOVER_CLAUDE_CODE.md`. Builder = Claude Code; reviewer = Claude in chat, reading GitHub from a PR number; ChatGPT only for Supabase, Vercel and Actions-result work; the owner merges everything.
+
 ## Authoritative post-regression checkpoint — 28 September 2026
 
 Current `dev` application/state head before this documentation checkpoint:
@@ -63,15 +73,20 @@ PR #60 (`member-access-stage1`) is merged to `dev` at `3681852`. Touches no gym 
 - **Known duplicate request:** for ordinary members the guard and Member Coach each call the same resolver, so `gym_members` and `memberships` are requested twice per page. Harmless; sharing `HybridMemberAccessReady` is a possible follow-up.
 - **Still open:** nothing stops API reads until Stage 2 (database enforcement). The pending case is untested in a browser (needs a pending test account, which needs the owner's approval of exact SQL).
 
-### Membership status rules — Stage 2a (database enforcement, REPO ONLY, not applied)
+### Membership status rules — Stage 2a (database enforcement): MERGED to dev as PR #63; REPO ONLY, NOT applied to live
 
-Branch `feat/membership-status-db`, PR to `dev`. **Nothing was applied to the live Supabase project.** No `supabase db push`, no baseline applied, no migration history touched. Touches no gym data. Calendar-feed Edge Function (Stage 2c) and all locked rendering files untouched.
+PR #63 (`feat/membership-status-db`), merge commit `e606475`. **Nothing was applied to the live Supabase project.** No `supabase db push`, no baseline applied, no migration history touched. Touches no gym data. Calendar-feed Edge Function (Stage 2c) and all locked rendering files untouched.
 
 - New migration `supabase/migrations/20261005120000_membership_status_enforcement.sql`: `private.current_membership_status`, `private.member_status_allows`, status-aware `private.is_gym_member` / `private.can_write_gym` / `private.can_view_profile` / `private.member_has_class_access`, status gates in `book_class_session`, `member_book_class`, `member_class_schedule`, `get_member_home_settings`, the three training-group read RPCs, `join_public_gym_with_membership` (it let paused/pending members flip themselves to active and re-created cancelled/expired ones; it is now for new members only), and 15 permissive policies replaced by 28 narrower ones on 16 tables. Every status can read its own gym's `gyms` row. A CI function audit fails if any SECURITY DEFINER function `authenticated` can run lacks a reviewed gate or an explicit allowlist entry. The paid-drop-in loophole is closed: the status gate runs before any paid check, and class access now uses the newest membership row (not "any active row").
 - Rollback: `supabase/rollback/20261005_restore_pre_membership_status.sql` (definitions copied programmatically from the repo baseline). Read-only checks and the before/after policy listing are in `supabase/verification/`.
 - CI (`database-schema.yml`): expected object counts changed from functions 81 -> 83 and policies 154 -> 167 (tables 62, triggers 25, sequences 1 unchanged; the function audit adds no objects); new steps run the twelve-persona test, the read-only verification query, and prove the rollback restores the pre-migration catalog exactly.
 - **Before Stage 2b:** the repo definitions must be diffed against the live catalog by ChatGPT (the owner approves the exact SQL first). Data warning: Puffin has 19 active members with no membership row; they count as `pending` and would lose class/social/workout access when this is applied until they have a membership row.
-- Local evidence: tests were run on a local PostgreSQL 16 stand-in (no Docker in the build container), not on `supabase db reset --local`; the real CI run is the first run on the Supabase stack.
+- Local evidence: tests were run on a local PostgreSQL 16 stand-in (no Docker in the build container), not on `supabase db reset --local`; the CI run is the first run on the Supabase stack, so confirm the "HybridOne database schema rebuild" result in Actions if it is not recorded here.
+- **Stage 2b (apply to live), not started:** ChatGPT does a READ-ONLY diff of the repo definitions against the live catalog (every function and policy the migration replaces; every `drop policy` name must exist live; list any live policy on the 16 tables the migration does not mention). The owner approves the exact SQL. Apply as ONE transaction with the rollback file ready, run the verification query, then a fresh Auth journey run on the exact `dev` SHA and a by-hand check with the paused and cancelled Puffin accounts and the owner's Hybrid Hub login. Expected effect: Hybrid Hub (24 active members, owner demo account) unchanged; Puffin's 19 no-row members become pending.
+- **Stage 2c (calendar-feed Edge Function), not started:** it uses the service-role key and bypasses RLS, so it must re-check the member's governing status. A separate live deploy needing the owner's approval and a rollback (redeploy the current source).
+- **Stage 3, not started:** browser tests with disposable per-run Puffin personas (active, paused, cancelled, pending), deleted afterwards, plus a "Member Coach card renders" assertion. Needs a change to the `hybridone-auth-journey-setup` Edge Function (live; needs approval and a rollback). Never rotate the real test accounts' passwords.
+- **Known gaps / follow-ups:** `member-experience.js` home tiles not status-aware; `group-join.html` has no UI guard (the database now blocks it); a paused member's "Edit goal" will fail to save after 2b (cosmetic); guard and Member Coach duplicate one resolver request; the pending case needs a test account (owner-approved SQL).
+- **Owner decisions:** non-active members cannot cancel an existing booking (the gym does it); published workout templates, WODs and own payment records are active-only; paused and pending members can read their own gym row (now every status can).
 
 ### Supabase egress incident (17 to 21 Sep 2026) — historic, resolved
 
@@ -123,6 +138,9 @@ Before lifting `PRODUCTION_HOLD`:
 - turn on Supabase leaked-password protection;
 - confirm no disposable/test Auth users remain;
 - enable and verify member email confirmation;
+- replace the public self-join (`join_public_gym_with_membership`, a manual test payment that grants an active membership with no payment) with real payment before real customers;
+- apply and verify the membership status database enforcement (Stage 2b and 2c) and try the pending case by hand;
+- reconcile the Puffin members with no membership row (19) and any other no-row members before enforcement reaches a real gym;
 - run the full Auth journey against the exact release SHA;
 - verify multi-gym switching and per-gym role isolation on the exact release SHA;
 - ensure required release/ruleset checks can report cleanly without a status deadlock;
@@ -134,7 +152,7 @@ Before lifting `PRODUCTION_HOLD`:
 
 - Auth workflow: Playwright install timeout and retry
 - Sidebar active/highlight state quirk in the persistent admin shell (pre-existing; not introduced by Task 3)
-- Membership status rules and banner for paused/cancelled/pending/expired members
+- Membership status rules: Stage 1 merged (#60); Stage 2a merged (#63, not applied); Stage 2b, 2c and 3 open (see above)
 - Member navigation inconsistent across member.html, groups.html and social.html
 - Enable GitHub secret scanning and push protection — **done by owner**
 - Make repo private — **separate infrastructure task before real customers**; requires a paid GitHub plan for private Pages and must first confirm the Vercel GitHub app retains access
@@ -473,12 +491,16 @@ Release / platform backlog:
 3. add a browser test for the `/hybrid-hub` and `/puffin-performance` redirect pages
 4. make the product decision on whether a marketing page should be restored at `/`
 5. enable leaked-password protection before real customers
-6. make the Auth and protected-routing path filters cover each other, so one merge cannot leave a gate missing
-7. delete the old preview branches
-8. replace the temporary main-ruleset bypass with the permanent release/check solution
+6. delete the old preview branches (`preview/release-candidate-*`) and superseded docs branches
+7. replace the temporary main-ruleset bypass with the permanent release/check solution
+8. Supabase: the grace-period banner is Supabase's (lasts to 22 Oct); Log Ingestion usage (109 GB against an "upcoming" 1 GB limit) is unexplained
+9. make the repo private (needs a paid plan for Pages) and run an all-history secret scan
 
 Product / auth backlog:
 
-9. finish the remaining repeatable invite UI journeys and same-user different-role-per-gym browser fixture
-10. enable and verify member email confirmation
+10. membership status rules: Stage 2b (apply Stage 2a SQL to live), Stage 2c (calendar-feed function), Stage 3 (disposable personas), pending test account, `member-experience.js` tiles, `group-join.html` UI guard, shared resolver request, paused "Edit goal"
+11. replace the public self-join (manual test payment) with real payment before real customers
+12. finish the remaining repeatable invite UI journeys and same-user different-role-per-gym browser fixture
+13. enable and verify member email confirmation
 
+Done since the previous list: the Auth and protected-routing path filters now cover each other and all runtime file types (#59); the flaky test password prefixes are fixed (#62).

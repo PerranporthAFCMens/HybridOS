@@ -42,6 +42,8 @@ A change is **not done** until you have shown me:
 - Never remove or loosen an RLS policy to make a feature work. Explain the problem and propose a safe alternative.
 - No service-role keys in frontend code, ever, and none pasted into chat, SQL or the repo.
 - Live Supabase is read-only unless the owner approves the exact SQL. Never run `supabase db push`. Never apply the baseline migration to live. Never mark migration history as applied without explicit approval.
+- Applying an approved migration to live: first a read-only diff of the live definitions against the repo, then the owner approves the exact SQL, then apply as ONE transaction with the rollback file ready, then run the read-only verification query and a fresh Auth journey run on the exact `dev` SHA.
+- SECURITY DEFINER functions bypass RLS. Any function the member pages can call must gate on a reviewed status or role helper (the CI function audit enforces this).
 - Every live change is recorded in `STATUS.md` with its rollback.
 
 ## 4. Multi-gym / multi-team rules
@@ -73,12 +75,13 @@ A change is **not done** until you have shown me:
 - Do not schedule the owner's steps onto days or dates.
 - When the owner says stop, or asks a question, stop and answer before doing more.
 - Keep handling to a minimum: the owner talks to the builder tool directly and does not relay messages between tools.
+- Keep replies short. The owner's usage is limited. Do not ask the owner to paste long reports into another tool: give the PR number and let the reviewer read GitHub directly.
 
 ## 8. Who does what (agreed 5 Oct 2026)
 
-- **Builder (Claude Code):** writes code, runs `python3 scripts/build_site.py` and `python3 scripts/smoke_test.py _site`, opens the PR to `dev`, and updates `STATUS.md`. The owner approves exact text in the builder's own chat.
+- **Builder (Claude Code):** writes code, runs `python3 scripts/build_site.py` and `python3 scripts/smoke_test.py _site`, opens the PR to `dev`, and updates `STATUS.md`. Best for access-control and database code. The owner approves exact text in the builder's own chat.
 - **Reviewer (Claude in chat):** reviews each PR once, from the PR number, by reading the diff, files and checks on GitHub. Says merge or do not merge, with reasons. Does not relay or reword the builder's messages, and does not write to the repo unless the owner asks.
-- **ChatGPT:** only for what needs its connectors: reading Actions run results after a merge, and Supabase or Vercel work, with SQL written for the owner to approve.
+- **ChatGPT:** only for what needs its connectors: reading Actions run results after a merge, and Supabase or Vercel work (read-only live catalog diffs, applying owner-approved SQL). It has hit a safety block writing access-control code, so do not give it that.
 - **Owner:** merges everything, and approves anything touching `main`, rulesets, Vercel settings or the live Supabase project.
 
 ---
@@ -95,7 +98,7 @@ A change is **not done** until you have shown me:
 
 **Task 5: Cut-over of the new login flow to production. DONE (release `538312c`, 2 Oct 2026).** `/hybrid-hub` and `/puffin-performance` are redirect pages to the universal login, and `/` is the sign-in entry page. Production routing run #5 passed. The hold has been put back.
 
-**Task 6: Membership status rules. IN PROGRESS.** Stage 1 (UI only) is PR #60. Stage 2 (database enforcement) and Stage 3 (browser tests with disposable personas) are not started and need the owner's approval of exact SQL.
+**Task 6: Membership status rules. IN PROGRESS.** Stage 1 (UI) merged and verified on dev (PR #60). Stage 2a (database enforcement SQL, rollback, verification, persona tests, function audit) merged to `dev` as PR #63 but NOT applied to the live project. Stage 2b (apply to live), Stage 2c (calendar-feed Edge Function) and Stage 3 (browser tests with disposable personas) are open and each needs the owner's approval of exact text. See `TASKS/HANDOVER_CLAUDE_CODE.md`.
 
 Feature work has resumed under the rules above. The restructuring and redesign track below stays report-first until the owner asks for it.
 
