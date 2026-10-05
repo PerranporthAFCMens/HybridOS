@@ -4,6 +4,9 @@ on:
     paths:
       - 'supabase/migrations/**'
       - 'supabase/migrations-legacy/**'
+      - 'supabase/tests/**'
+      - 'supabase/rollback/**'
+      - 'supabase/verification/**'
       - 'SUPABASE_SCHEMA_RECONCILIATION.md'
       - '.github/workflows/database-schema.yml'
   workflow_dispatch:
@@ -42,14 +45,42 @@ jobs:
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
             if v_tables<>62 then raise exception 'Expected 62 app tables, got %',v_tables; end if;
-            if v_functions<>81 then raise exception 'Expected 81 committed app functions, got %',v_functions; end if;
-            if v_policies<>154 then raise exception 'Expected 154 app/storage policies, got %',v_policies; end if;
+            if v_functions<>83 then raise exception 'Expected 83 committed app functions, got %',v_functions; end if;
+            if v_policies<>167 then raise exception 'Expected 167 app/storage policies, got %',v_policies; end if;
             if v_triggers<>25 then raise exception 'Expected 25 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
             if exists(select 1 from public.profiles) then raise exception 'Baseline must not contain live profile rows'; end if;
           end $$;
           SQL
+      - name: Membership status verification query and persona tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          # read-only verification query: every check must be true
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261005_membership_status_check.sql > /tmp/membership_status_check.txt
+          cat /tmp/membership_status_check.txt
+          if grep -E ' \| f$' /tmp/membership_status_check.txt; then echo 'A membership status verification check is false'; exit 1; fi
+          # twelve personas x two gyms, run as the authenticated role with real JWT claims; rolls itself back
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/membership_status_personas.sql
+      - name: Prove the rollback file restores the pre-migration state exactly
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261005120000_membership_status_enforcement.sql
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/snap_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261005_restore_pre_membership_status.sql
+          snap /tmp/snap_after_rollback.txt
+          # rebuild WITHOUT the new migration to get the true pre-migration catalog
+          mv "$MIG" /tmp/membership_status_enforcement.sql
+          supabase db reset --local
+          snap /tmp/snap_before_migration.txt
+          mv /tmp/membership_status_enforcement.sql "$MIG"
+          if diff -u /tmp/snap_before_migration.txt /tmp/snap_after_rollback.txt; then echo 'Rollback restores the pre-migration catalog exactly'; else echo 'Rollback does NOT restore the pre-migration catalog'; exit 1; fi
+          if diff -q /tmp/snap_before_migration.txt /tmp/snap_after_migration.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
       - name: Stop local Supabase
         if: always()
         run: supabase stop --no-backup

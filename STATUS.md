@@ -63,6 +63,20 @@ PR #60 (`member-access-stage1`) is merged to `dev` at `3681852`. Touches no gym 
 - **Known duplicate request:** for ordinary members the guard and Member Coach each call the same resolver, so `gym_members` and `memberships` are requested twice per page. Harmless; sharing `HybridMemberAccessReady` is a possible follow-up.
 - **Still open:** nothing stops API reads until Stage 2 (database enforcement). The pending case is untested in a browser (needs a pending test account, which needs the owner's approval of exact SQL).
 
+### Membership status rules — Stage 2a (database enforcement, REPO ONLY, not applied)
+
+Branch `feat/membership-status-db`, PR to `dev`. **Nothing was applied to the live Supabase project.** No `supabase db push`, no baseline applied, no migration history touched. Touches no gym data. Calendar-feed Edge Function (Stage 2c) and all locked rendering files untouched.
+
+- New migration `supabase/migrations/20261005120000_membership_status_enforcement.sql`: `private.current_membership_status`, `private.member_status_allows`, status-aware `private.is_gym_member` / `private.can_write_gym` / `private.can_view_profile` / `private.member_has_class_access`, status gates in `book_class_session`, `member_book_class`, `member_class_schedule`, `get_member_home_settings`, the three training-group read RPCs, `join_public_gym_with_membership` (it let paused/pending members flip themselves to active and re-created cancelled/expired ones; it is now for new members only), and 15 permissive policies replaced by 28 narrower ones on 16 tables. Every status can read its own gym's `gyms` row. A CI function audit fails if any SECURITY DEFINER function `authenticated` can run lacks a reviewed gate or an explicit allowlist entry. The paid-drop-in loophole is closed: the status gate runs before any paid check, and class access now uses the newest membership row (not "any active row").
+- Rollback: `supabase/rollback/20261005_restore_pre_membership_status.sql` (definitions copied programmatically from the repo baseline). Read-only checks and the before/after policy listing are in `supabase/verification/`.
+- CI (`database-schema.yml`): expected object counts changed from functions 81 -> 83 and policies 154 -> 167 (tables 62, triggers 25, sequences 1 unchanged; the function audit adds no objects); new steps run the twelve-persona test, the read-only verification query, and prove the rollback restores the pre-migration catalog exactly.
+- **Before Stage 2b:** the repo definitions must be diffed against the live catalog by ChatGPT (the owner approves the exact SQL first). Data warning: Puffin has 19 active members with no membership row; they count as `pending` and would lose class/social/workout access when this is applied until they have a membership row.
+- Local evidence: tests were run on a local PostgreSQL 16 stand-in (no Docker in the build container), not on `supabase db reset --local`; the real CI run is the first run on the Supabase stack.
+
+### Supabase egress incident (17 to 21 Sep 2026) — historic, resolved
+
+About 15 GB of egress and roughly 16.9 million request initialisations over 17 to 21 Sep were a historic request storm. Fixes: the request guard (100 requests per 10 seconds triggers a 60 second block and a banner), social polling reduced from 30 seconds to 5 minutes, and an explicit `hybrid-gym-id` social lookup. The counter has been flat since. Do NOT reset `pg_stat_statements`. The dashboard grace-period banner is Supabase's and lasts until 22 Oct.
+
 ### Live test accounts
 
 Two temporary Puffin Performance test accounts are now present for membership-status verification. Public documentation uses placeholders for account emails and Auth user IDs. No passwords are stored here or committed to the repository.

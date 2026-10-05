@@ -74,7 +74,7 @@ def add_member_access_guard():
  old_lookup="const mr=await supabase.from('memberships').select('id,status,membership_plans(name,description,price_pence,billing_interval)').eq('user_id',session.user.id).eq('gym_id',gym.id).in('status',['active','paused','pending']).order('created_at',{ascending:false}).limit(1);membership=mr.data?.[0]||null;"
  new_lookup="if(guarded&&!memberAccess.privileged){membership=memberAccess.membership}else{"+old_lookup+"}"
  gate="window.HybridGymContext.setGym(gm.data.gym_id);gym=gm.data.gyms;"
- new_gate=gate+"const memberAccess=await Promise.resolve(window.HybridMemberAccessReady).catch(()=>null);const guarded=!!(memberAccess&&memberAccess.resolved&&memberAccess.gymId===gym.id&&memberAccess.access!=='none');if(guarded&&memberAccess.blocked)return;const bootAccess=guarded?memberAccess.access:'active';"
+ new_gate=gate+"const memberAccess=await Promise.resolve(window.HybridMemberAccessReady).catch(()=>null);const sameGym=!!(memberAccess&&memberAccess.resolved&&(!gym||memberAccess.gymId===gym.id));if(sameGym&&memberAccess.blocked)return;const guarded=!!(gym&&sameGym&&memberAccess.access!=='none');const bootAccess=guarded?memberAccess.access:'active';"
  old_load="await Promise.all([loadClasses(),loadWorkouts(),loadPBs(),refreshClassSettings()])}init()"
  new_load="await Promise.all(bootAccess==='pending'?[]:bootAccess==='paused'?[loadWorkouts(),loadPBs()]:[loadClasses(),loadWorkouts(),loadPBs(),refreshClassSettings()])}init()"
  s=replace_exact(s,gate,new_gate,'selected-gym startup gate')
