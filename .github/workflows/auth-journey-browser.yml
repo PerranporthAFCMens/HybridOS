@@ -6,6 +6,7 @@ name: HybridOne Auth journey browser
 # Release-candidate exact-SHA gate trigger.
 # Hold-lift exact-SHA gate trigger.
 # Cross-gate exact-SHA trigger.
+# Post-Stage-2a live database verification trigger.
 
 on:
   workflow_dispatch:
