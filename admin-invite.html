@@ -60,7 +60,7 @@ $('authBtn').onclick=async()=>{
   $('authBtn').disabled=true;message('');
   try{
     const r=mode==='signup'
-      ?await supabase.auth.signUp({email,password,options:{emailRedirectTo:location.href,data:{display_name:name||email.split('@')[0],full_name:name||email.split('@')[0]}}})
+      ?await supabase.auth.signUp({email,password,options:{emailRedirectTo:location.href,data:{display_name:name||email.split('@')[0],full_name:name||email.split('@')[0],signup_type:'staff'}}})
       :await supabase.auth.signInWithPassword({email,password});
     if(r.error)throw r.error;
     if(r.data.session){$('authBox').classList.add('hidden');$('claimBox').classList.remove('hidden');await claim()}
