@@ -148,15 +148,6 @@ html,body{
   margin-left:auto!important;
 }
 
-/* Desktop only: account-menu.js positions the popover with an inline right offset taken from the card, which pushes its
-   300px width past the left edge of the 254px sidebar. Anchor it to the card's left edge instead (the sidebar's 18px
-   padding), so it stays fully on screen. Scoped to .admin-frame-account; mobile (max-width:900px) is untouched. */
-@media(min-width:901px){
-  .admin-frame-account .account-popover{
-    left:18px!important;
-    right:auto!important;
-  }
-}
 
 @media(max-width:900px){
   html,body{

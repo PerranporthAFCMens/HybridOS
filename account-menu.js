@@ -167,7 +167,16 @@
     const right=Math.max(pad,window.innerWidth-r.right);
     let top=r.bottom+gap;
     pop.style.right=right+'px';
+    pop.style.left='';
     pop.style.top=top+'px';
+    /* Desktop: the popover is right-aligned to the card, so beside a narrow sidebar card its width runs past the left edge of the screen.
+       If its left edge would fall inside the padding, anchor it to the card's left edge instead. Phones (900px and under) keep the original placement. */
+    if(window.innerWidth>900){
+      pop.style.visibility='hidden';pop.style.display='block';
+      const w=pop.getBoundingClientRect().width;
+      pop.style.display='';pop.style.visibility='';
+      if(window.innerWidth-right-w<pad){pop.style.left=Math.max(pad,r.left)+'px';pop.style.right='auto'}
+    }
     requestAnimationFrame(()=>{
       const h=pop.getBoundingClientRect().height||0;
       if(h&&top+h>window.innerHeight-pad)pop.style.top=Math.max(pad,r.top-gap-h)+'px';
