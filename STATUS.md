@@ -148,6 +148,16 @@ Before lifting `PRODUCTION_HOLD`:
 - deploy only the exact approved release SHA;
 - browser-test the exact production revision before removing the production hold.
 
+### Admin account popup fix (desktop) — PR pending
+
+Branch `fix/admin-account-popup-desktop`. On a desktop browser (1920 px) the account menu that opens from the dark account card at the bottom of the admin sidebar was clipped off the left edge of the screen (the options were not visible). `account-menu.js` appends the popover to `document.body` and right-aligns it to the card with an inline `right` offset, so its 300 px width ran about 63 px past the left edge beside the 254 px sidebar card. Fixed in JavaScript, in `positionMenu()` of `account-menu.js`: on screens wider than 900 px, if the popover's left edge would fall inside the 14 px padding, it is anchored to the card's left edge (`left:max(14px, card.left)`, `right:auto`); otherwise `left` is cleared. Phones (900 px and under) keep the original placement. No locked rendering file and no smoke fingerprint changed (an earlier CSS attempt in `admin-frame.css` could not match a popover that lives on `body`, and was reverted). Verified by running the real `account-menu.js` in a browser harness at 1920, 1440 and 390 px (see the PR). No gym data, database or workflow touched.
+
+### Membership status backlog (follow-ups, not started)
+
+1. **Ended-member Renew/Rejoin.** The ended-member screen needs a Renew/Rejoin action once real payment exists. That needs database changes: ended (cancelled/expired) members must be able to read plans, and there must be a renewal path, because the public join now refuses anyone who already has a membership row.
+2. **Paused-member card.** Paused members currently get only a banner. The owner may want a more prominent card on My membership with a Resume button once payments exist.
+3. **Dashboard and reporting double counting.** Dashboard and reporting count every membership row, so Puffin shows 8 active memberships and £240 a month for one user with eight rows. They should count each member's newest row only (the same "newest row governs" rule as the access rules).
+
 ### Workflow backlog
 
 - Auth workflow: Playwright install timeout and retry
