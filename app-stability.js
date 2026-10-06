@@ -22,6 +22,25 @@
     if(document.body)document.body.style.backgroundColor=mobileChromeColor;
   }
 
+  /* iOS Safari tints its top/bottom bars grey while an overlay (menu, popup) is open and can leave them grey
+     after it closes. When the last overlay closes, re-assert the page colour and re-create the theme-color tag. */
+  var overlaySel='.account-modal.open,.modal:not(.hidden),body.mobile-nav-open,body.admin-mobile-open,body.staff-mobile-open,body.admin-frame-menu-open';
+  var overlayWas=false,chromeTimer=null;
+  function refreshChrome(){
+    if(!mobileViewport.matches)return;
+    var old=document.querySelector('meta[name="theme-color"]');
+    if(old)old.parentNode.removeChild(old);
+    syncMobileBrowserChrome();
+  }
+  function watchOverlays(){
+    if(!window.MutationObserver||!document.body)return;
+    new MutationObserver(function(){
+      var now=!!document.querySelector(overlaySel);
+      if(overlayWas&&!now){clearTimeout(chromeTimer);chromeTimer=setTimeout(refreshChrome,320)}
+      overlayWas=now;
+    }).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['class','hidden']});
+  }
+
   function beginNavigation(){
     syncMobileBrowserChrome();
     if(mobileViewport.matches)return;
@@ -101,6 +120,7 @@
   },true);
 
   document.addEventListener('DOMContentLoaded',function(){
+    watchOverlays();
     syncMobileBrowserChrome();
     requestAnimationFrame(syncMobileBrowserChrome);
     connectionBanner();
