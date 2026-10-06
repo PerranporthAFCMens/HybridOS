@@ -1,6 +1,7 @@
 // Stage 3 test harness: disposable per-run Puffin Performance member personas for the membership-status browser test.
 // Gym touched: Puffin Performance (test gym) ONLY. Never Hybrid Hub.
 // Auth: GitHub Actions OIDC, locked to this repo, the dev branch, a GitHub-hosted runner and ONE workflow file.
+// Table writes go through public.hybridone_membership_persona_setup/cleanup (migration 20261006120000).
 // Deploy with verify_jwt=false (authorisation is the OIDC check below). Rollback = delete this function.
 import { createClient } from 'jsr:@supabase/supabase-js@2.116.0'
 import { createRemoteJWKSet, jwtVerify } from 'npm:jose@6.1.0'
@@ -19,22 +20,6 @@ async function check(req:Request){
  const {payload}=await jwtVerify(token,JWKS,{issuer:'https://token.actions.githubusercontent.com',audience:AUD,algorithms:['RS256']})
  if(String(payload.repository||'')!==REPO||String(payload.repository_id||'')!==REPO_ID||String(payload.ref||'')!=='refs/heads/dev'||String(payload.runner_environment||'')!=='github-hosted'||!String(payload.workflow_ref||'').endsWith(SUFFIX)) throw new Error('OIDC rejected')
 }
-const iso=(offsetDays:number)=>new Date(Date.now()+offsetDays*86400000).toISOString()
-const day=(offsetDays:number)=>iso(offsetDays).slice(0,10)
-
-// Rows to create per persona. Newest created_at governs.
-function membershipRows(key:string){
- switch(key){
-  case 'active': return [{status:'active',starts_on:day(-30),ends_on:null,created_at:iso(0)}]
-  case 'paused': return [{status:'paused',starts_on:day(-30),ends_on:null,created_at:iso(0)}]
-  case 'cancelled': return [{status:'cancelled',starts_on:day(-60),ends_on:day(-1),created_at:iso(0)}]
-  case 'pending': return [{status:'pending',starts_on:null,ends_on:null,created_at:iso(0)}]
-  case 'expired': return [{status:'active',starts_on:day(-60),ends_on:day(-1),created_at:iso(0)}]
-  case 'superseded': return [{status:'active',starts_on:day(-90),ends_on:null,created_at:iso(-2)},{status:'cancelled',starts_on:day(-90),ends_on:day(-1),created_at:iso(0)}]
- }
- throw new Error('Unknown persona')
-}
-
 async function findPersonaUsers(admin:any){
  const out:any[]=[]
  for(let p=1;p<=10;p++){
@@ -45,10 +30,7 @@ async function findPersonaUsers(admin:any){
  return out
 }
 async function wipeUser(admin:any,id:string){
- for(const t of ['calendar_feed_tokens','class_bookings','memberships','gym_members']){
-  const {error}=await admin.from(t).delete().eq('user_id',id).eq('gym_id',PUFFIN); if(error) throw new Error(t+': '+error.message)
- }
- const {error:pe}=await admin.from('profiles').delete().eq('id',id); if(pe) throw new Error('profiles: '+pe.message)
+ const {error}=await admin.rpc('hybridone_membership_persona_cleanup',{target_user_id:id}); if(error) throw new Error('cleanup rpc: '+error.message)
 }
 
 Deno.serve(async req=>{
@@ -80,15 +62,9 @@ Deno.serve(async req=>{
     const {data,error}=await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{display_name:'Persona '+key}})
     if(error||!data.user) throw error||new Error('User creation failed')
     const uid=data.user.id
-    const {error:pe}=await admin.from('profiles').upsert({id:uid,display_name:'Persona '+key,first_name:'Persona',last_name:key,updated_at:new Date().toISOString()},{onConflict:'id'}); if(pe) throw new Error('profiles: '+pe.message)
-    // Clear anything a signup trigger may have created for this user in Puffin, then insert exactly what the persona needs.
-    for(const t of ['memberships','gym_members']){ const {error:de}=await admin.from(t).delete().eq('user_id',uid).eq('gym_id',PUFFIN); if(de) throw new Error(t+': '+de.message) }
-    const {error:ge}=await admin.from('gym_members').insert({gym_id:PUFFIN,user_id:uid,role:'member',is_active:true,access_status:'active'}); if(ge) throw new Error('gym_members: '+ge.message)
-    for(const row of membershipRows(key)){
-     const {error:me}=await admin.from('memberships').insert({gym_id:PUFFIN,user_id:uid,...row}); if(me) throw new Error('memberships: '+me.message)
-    }
-    const {data:tok,error:te}=await admin.from('calendar_feed_tokens').insert({gym_id:PUFFIN,user_id:uid,is_active:true}).select('token').single(); if(te) throw new Error('calendar_feed_tokens: '+te.message)
-    personas[key]={email,token:String(tok.token)}
+    // All table writes happen inside a locked SECURITY DEFINER helper (the service role has no direct write grants).
+    const {data:token,error:re}=await admin.rpc('hybridone_membership_persona_setup',{target_user_id:uid,persona:key}); if(re||!token) throw new Error('setup rpc: '+(re?.message||'no token'))
+    personas[key]={email,token:String(token)}
    }
    return new Response(JSON.stringify({ok:true,personas}),{headers:{'content-type':'application/json'}})
   }
