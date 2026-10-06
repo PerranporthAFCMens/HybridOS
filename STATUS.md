@@ -569,3 +569,5 @@ Product / auth backlog:
 13. enable and verify member email confirmation
 
 Done since the previous list: the Auth and protected-routing path filters now cover each other and all runtime file types (#59); the flaky test password prefixes are fixed (#62).
+
+Workout logger redesign (dev): the manual logger is now `workout-logger.js` — mobile sheet, min:sec time entry, distance units, runs stored as distance + duration, one batched save, first log of any exercise registers a PB (time PBs are fastest/longest by type), PB times shown as m:ss.

@@ -62,7 +62,7 @@ function getPBGrid(){ return document.querySelector('.pb-grid') || document.getE
 
 function cardHTML(pb){
   const date=pb.achieved_at ? new Date(pb.achieved_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
-  return `<div class="pb-card" data-key="${esc(pb.exercise_key || normalise(pb.exercise_name))}" data-metric="${esc(pb.metric_type)}"><div class="pb-icon">${iconFor(pb.metric_type)}</div><div class="eyebrow" style="margin-top:8px">${esc(pb.metric_type)}</div><h3 style="margin:5px 0 0">${esc(pb.exercise_name)}</h3><div class="pb-value">${esc(pb.value_numeric)}${pb.unit?' <span style="font-size:14px;color:#667085">'+esc(pb.unit)+'</span>':''}</div><div class="muted" style="margin-top:6px">${date}${pb.notes?' · '+esc(pb.notes):''}</div></div>`;
+  return `<div class="pb-card" data-key="${esc(pb.exercise_key || normalise(pb.exercise_name))}" data-metric="${esc(pb.metric_type)}"><div class="pb-icon">${iconFor(pb.metric_type)}</div><div class="eyebrow" style="margin-top:8px">${esc(pb.metric_type)}</div><h3 style="margin:5px 0 0">${esc(pb.exercise_name)}</h3><div class="pb-value">${esc(window.HybridWorkoutLogger?.pbValue?window.HybridWorkoutLogger.pbValue(pb):pb.value_numeric+(pb.unit?' '+pb.unit:''))}</div><div class="muted" style="margin-top:6px">${date}${pb.notes?' · '+esc(pb.notes):''}</div></div>`;
 }
 
 function renderPreviewPBs(){
