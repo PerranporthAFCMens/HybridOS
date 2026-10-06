@@ -1,5 +1,10 @@
 # HybridOne live status
 
+### Marketing page at the root (PR open)
+- Cause: `index.html` ran the universal-login redirect before the marketing-page redirect, so `https://www.hybridone.co.uk/` always went to the sign-in page (this predates the 6 October release). There was also no `/login` address (404).
+- Fix: at `/` the entry script now leaves the visitor on the marketing page (`landing.html`, shown at `/`); `/login` now routes to `login.html`; the marketing page has a Sign in link (`/login` on the live site, `login.html` on the dev Pages site). The routing check now also verifies `/login`. Dev Pages (`/HybridOS/`) is unchanged.
+- The release workflow allows one promotion per UTC date (rollback tag `prod-2026-10-06` already exists), so this goes live in the next release.
+
 > **6 October 2026 — release in progress.** The production hold is lifted in `PROJECT_STATE.json` by the owner's approval to release the membership-status rules, member-page tabs and consistency fixes to `main`. Steps: all four gates green on this exact commit, enable "Manual production release", run it with the exact SHA, verify the live site, disable the workflow, then a follow-up PR restores the hold.
 
 ## Current operating state — 5 October 2026 (read this first)
