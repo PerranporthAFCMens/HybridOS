@@ -649,3 +649,10 @@ body:has(#reportSearch) .report-card{
   .mobile-nav-backdrop,.admin-mobile-backdrop,.staff-mobile-backdrop,.admin-frame-backdrop{visibility:hidden!important;transition:opacity .2s ease,visibility 0s linear .2s!important}
   body.mobile-nav-open .mobile-nav-backdrop,body.admin-mobile-open .admin-mobile-backdrop,body.staff-mobile-open .staff-mobile-backdrop,body.admin-frame-menu-open .admin-frame-backdrop{visibility:visible!important;transition:opacity .2s ease,visibility 0s!important}
 }
+
+
+/* iPhone Safari also tints its bars from the dark side panel that waits off-screen. Hide it fully while closed. */
+@media(max-width:900px){
+  .side,.admin-frame-shell>.side{visibility:hidden!important;transition:transform .22s ease,visibility 0s linear .22s!important}
+  body.mobile-nav-open .side,body.admin-mobile-open .side,body.staff-mobile-open .side,body.admin-frame-menu-open .admin-frame-shell>.side,body.admin-frame-menu-open .side{visibility:visible!important;transition:transform .22s ease,visibility 0s!important}
+}

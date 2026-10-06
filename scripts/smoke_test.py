@@ -89,7 +89,7 @@ for brand_page in ROOT.glob('*.html'):
 # Core rendering assets are intentionally locked to the last known-good mobile/admin baseline.
 # Any deliberate change to these files must update this list as part of the same reviewed change.
 RENDER_BASELINE={
- 'app-consistency.css':'973dd735b34b8637566fa6db1d2a29a22e3d6f3c',
+ 'app-consistency.css':'7389663d39ec26ccdf2ed62b5b7c6db59647ded6',
  'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'ae4dce7b74216da5b5f0a840c53a541c468ce534',
