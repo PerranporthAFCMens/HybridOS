@@ -8,7 +8,8 @@
 
 - Release workflow change (6 Oct): the rollback tag is now `prod-<UTC date>-<time>` so more than one release can run on the same date. Existing tags (`prod-2026-10-02`, `prod-2026-10-06`) are untouched.
 
-> **6 October 2026 — release in progress.** The production hold is lifted in `PROJECT_STATE.json` by the owner's approval to release the membership-status rules, member-page tabs and consistency fixes to `main`. Steps: all four gates green on this exact commit, enable "Manual production release", run it with the exact SHA, verify the live site, disable the workflow, then a follow-up PR restores the hold.
+> **6 October 2026 — release COMPLETE.** `main` = `05b1f5545aefccce754e56879c51d14abe1eafcf` (deployed by Vercel, live routing check passed including `/login`). Rollback tags: `prod-2026-10-06` (before the first release today), `prod-2026-10-06-195042`, `prod-2026-10-06-200508` (the version immediately before the current one). The production hold is restored in `PROJECT_STATE.json`; the "Manual production release" workflow must be disabled in the Actions tab. Released today: membership-status rules for members, calendar feed rules, Social/Groups/Integrations as member-page tabs, view-as-member link fix, admin consistency fix, marketing page at `/` with Sign in and `/login`, timestamped rollback tags. Strava is parked (needs a Strava subscription to create the API app).
+
 
 ## Current operating state — 5 October 2026 (read this first)
 
