@@ -148,6 +148,16 @@ Before lifting `PRODUCTION_HOLD`:
 - deploy only the exact approved release SHA;
 - browser-test the exact production revision before removing the production hold.
 
+### Admin account popup fix (desktop) — PR pending
+
+Branch `fix/admin-account-popup-desktop`. On a desktop browser (1920 px) the account menu that opens from the dark account card at the bottom of the admin sidebar was clipped off the left edge of the screen (the options were not visible): `account-menu.js` sets an inline `right` offset taken from the card, so the 300 px popover ran about 63 px past the left edge. Fixed with CSS only, scoped to `.admin-frame-account` and to `min-width:901px` (mobile unchanged), anchoring the popover to the card's left edge. This changes the locked `admin-frame.css` (owner explicitly authorised) and its rendering-lock hash in `scripts/smoke_test.py`. Verified in a browser harness at 1920, 1440 and 390 px (see the PR). No gym data, database or workflow touched.
+
+### Membership status backlog (follow-ups, not started)
+
+1. **Ended-member Renew/Rejoin.** The ended-member screen needs a Renew/Rejoin action once real payment exists. That needs database changes: ended (cancelled/expired) members must be able to read plans, and there must be a renewal path, because the public join now refuses anyone who already has a membership row.
+2. **Paused-member card.** Paused members currently get only a banner. The owner may want a more prominent card on My membership with a Resume button once payments exist.
+3. **Dashboard and reporting double counting.** Dashboard and reporting count every membership row, so Puffin shows 8 active memberships and £240 a month for one user with eight rows. They should count each member's newest row only (the same "newest row governs" rule as the access rules).
+
 ### Workflow backlog
 
 - Auth workflow: Playwright install timeout and retry
