@@ -32,7 +32,7 @@ html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView
 html.admin-embedded .main{min-height:100%!important;background:#f5f7fb!important}
 html.admin-embedded .admin-mobile-menu-btn,html.admin-embedded .admin-mobile-backdrop{display:none!important}
 @media(max-width:900px){html.admin-hot-nav #app.hidden{display:block!important}html.admin-embedded #loading::after{left:14px!important}}
-</style><script src="./gym-context.js?v=c70df6c3add0"></script><script src="./app-stability.js?v=c70df6c3add0"></script><link rel="stylesheet" href="./admin-shell.css?v=c70df6c3add0"><link rel="stylesheet" href="./admin-pages.css?v=c70df6c3add0"><link rel="stylesheet" href="./app-consistency.css?v=c70df6c3add0"></head>
+</style><script src="./gym-context.js?v=05b1f5545aef"></script><script src="./app-stability.js?v=05b1f5545aef"></script><link rel="stylesheet" href="./admin-shell.css?v=05b1f5545aef"><link rel="stylesheet" href="./admin-pages.css?v=05b1f5545aef"><link rel="stylesheet" href="./app-consistency.css?v=05b1f5545aef"></head>
 <body>
 <div id="loading" style="padding:28px">Loading community…</div>
 <div id="app" class="shell hidden">
@@ -109,5 +109,5 @@ async function removeComment(id,btn){if(!confirm('Delete this comment?'))return;
 $('postBtn').onclick=async()=>{const body=$('postBody').value.trim();if(!body)return;const b=$('postBtn');b.disabled=true;b.textContent='Posting…';const{error}=await sb.from('social_posts').insert({gym_id:gymId,user_id:userId,body});b.disabled=false;b.textContent='Post to community';if(error){$('postMsg').textContent=error.message;$('postMsg').className='msg bad';return}$('postBody').value='';$('postMsg').textContent='';await loadFeed()};
 init();
 </script>
-<script src="./shared-shell.js?v=c70df6c3add0" defer></script><script src="./gym-switcher.js?v=c70df6c3add0" defer></script><script src="./account-menu.js?v=c70df6c3add0" defer></script><script src="./admin-embed.js?v=c70df6c3add0" defer></script><script src="./shared-admin-nav.js?v=c70df6c3add0" defer></script><script src="./admin-access-guard.js?v=c70df6c3add0" defer></script><script src="./admin-transition-diagnostics.js?v=c70df6c3add0" defer></script><script type="module" src="./social-notifications.js?v=c70df6c3add0"></script></body>
+<script src="./shared-shell.js?v=05b1f5545aef" defer></script><script src="./gym-switcher.js?v=05b1f5545aef" defer></script><script src="./account-menu.js?v=05b1f5545aef" defer></script><script src="./admin-embed.js?v=05b1f5545aef" defer></script><script src="./shared-admin-nav.js?v=05b1f5545aef" defer></script><script src="./admin-access-guard.js?v=05b1f5545aef" defer></script><script src="./admin-transition-diagnostics.js?v=05b1f5545aef" defer></script><script type="module" src="./social-notifications.js?v=05b1f5545aef"></script></body>
 </html>
