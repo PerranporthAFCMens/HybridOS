@@ -1,0 +1,94 @@
+/* Staff & Resources page-specific responsive contract.
+   Loaded after the shared admin cascade so generic dashboard/mobile rules
+   cannot distort this page. */
+.operations-page .toolbar > div:first-child,
+.operations-page .rowtop > div:first-child{
+  min-width:0;
+}
+.operations-page .rowtop .muted,
+.operations-page .toolbar .muted{
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+@media(max-width:700px){
+  .operations-page .main{
+    padding:16px 12px 72px!important;
+    min-width:0!important;
+    overflow-x:hidden!important;
+  }
+  .operations-page .card{
+    padding:16px!important;
+    border-radius:18px!important;
+  }
+  .operations-page .toolbar{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    grid-template-columns:none!important;
+    gap:12px!important;
+    margin-bottom:14px!important;
+  }
+  .operations-page .toolbar > .btn,
+  .operations-page .toolbar > a.btn{
+    width:100%!important;
+    max-width:none!important;
+    align-self:stretch!important;
+    text-align:center!important;
+    justify-content:center!important;
+  }
+  .operations-page .list{
+    gap:10px!important;
+  }
+  .operations-page .row{
+    padding:14px!important;
+    min-width:0!important;
+    overflow:hidden!important;
+  }
+  .operations-page .rowtop{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:12px!important;
+    align-items:start!important;
+  }
+  .operations-page .rowtop > div{
+    min-width:0!important;
+    max-width:100%!important;
+  }
+  .operations-page .rowtop > div:last-child{
+    width:100%!important;
+    justify-content:flex-start!important;
+    align-items:stretch!important;
+    gap:8px!important;
+  }
+  .operations-page .rowtop > div:last-child .btn{
+    flex:1 1 140px!important;
+    min-width:0!important;
+    max-width:100%!important;
+    white-space:normal!important;
+    text-align:center!important;
+  }
+  .operations-page .rowtop b{
+    display:block;
+    line-height:1.25;
+  }
+  .operations-page .rowtop .muted{
+    line-height:1.35;
+    overflow-wrap:anywhere;
+  }
+}
+@media(max-width:420px){
+  .operations-page .top h1{font-size:28px!important}
+  .operations-page .tabs{gap:6px!important}
+  .operations-page .tab{
+    flex:1 1 auto;
+    min-width:0;
+    padding:9px 10px!important;
+  }
+  .operations-page .rowtop > div:last-child{
+    flex-direction:column!important;
+  }
+  .operations-page .rowtop > div:last-child .btn{
+    width:100%!important;
+    flex-basis:auto!important;
+  }
+}
