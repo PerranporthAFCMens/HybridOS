@@ -1,0 +1,177 @@
+name: HybridOne membership personas browser
+
+# Stage 3 of the membership status rules. Disposable per-run Puffin Performance members
+# (active, paused, cancelled, pending, expired, superseded) are created, checked in a real
+# browser and in the calendar feed, then deleted. Hybrid Hub is never touched.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - '**.html'
+      - '**.js'
+      - '**.css'
+      - 'vercel.json'
+      - 'scripts/**'
+      - 'PROJECT_STATE.json'
+      - '.github/workflows/**'
+      - 'supabase/functions/class-calendar/**'
+      - 'supabase/functions/hybridone-membership-personas/**'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: hybridone-membership-personas
+  cancel-in-progress: false
+
+jobs:
+  personas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FN_BASE: https://mzgnhmeydhhpzgxlgudh.supabase.co/functions/v1
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v6
+
+      - name: Record exact dev SHA
+        shell: bash
+        run: echo "HYBRID_BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Wait for exact public Pages revision
+        env:
+          PAGES_URL: https://perranporthafcmens.github.io/HybridOS/
+        run: python3 scripts/runtime_pages_check.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Create disposable Puffin personas
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUN_ID="$(python3 -c 'import secrets; print(secrets.token_hex(5))')"
+          PASS="$(python3 -c 'import secrets; print("Per1!"+secrets.token_urlsafe(24))')"
+          echo "::add-mask::$PASS"
+          echo "PERSONA_RUN=$RUN_ID" >> "$GITHUB_ENV"
+          echo "PERSONA_PASSWORD=$PASS" >> "$GITHUB_ENV"
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-membership-personas" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          BODY="$(RUN_ID="$RUN_ID" PASS="$PASS" python3 -c 'import json,os; print(json.dumps({"action":"setup","run":os.environ["RUN_ID"],"password":os.environ["PASS"]}))')"
+          curl --fail-with-body -sS -H "Authorization: Bearer $OIDC" -H "Content-Type: application/json" --data "$BODY" "$FN_BASE/hybridone-membership-personas" -o /tmp/personas.json
+          python3 - <<'PY'
+          import json,os
+          d=json.load(open('/tmp/personas.json'))
+          assert d.get('ok') is True,d
+          env=open(os.environ['GITHUB_ENV'],'a')
+          for k,v in d['personas'].items():
+              print('::add-mask::'+v['token'])
+              env.write('PERSONA_%s_EMAIL=%s\nPERSONA_%s_TOKEN=%s\n'%(k.upper(),v['email'],k.upper(),v['token']))
+          print('Created personas:',', '.join(d['personas']))
+          PY
+
+      - name: Verify each persona in the browser (Puffin Performance)
+        env:
+          DEV_BASE: https://perranporthafcmens.github.io/HybridOS/
+          PUFFIN_GYM_ID: aec16956-3793-4543-873b-4412646ca1eb
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const assert = require('node:assert/strict');
+          const base=process.env.DEV_BASE, puffin=process.env.PUFFIN_GYM_ID, password=process.env.PERSONA_PASSWORD;
+          // key -> expected data-member-access, and what the member page must show
+          const cases=[
+            {key:'active',access:'active',banner:null,block:null},
+            {key:'paused',access:'paused',banner:/membership is paused/i,block:null},
+            {key:'pending',access:'pending',banner:/has not started yet/i,block:null},
+            {key:'cancelled',access:'ended',banner:null,block:/Your membership has ended/i},
+            {key:'expired',access:'ended',banner:null,block:/Your membership has ended/i},
+            {key:'superseded',access:'ended',banner:null,block:/Your membership has ended/i}
+          ];
+          async function settled(page,access){
+            await page.waitForFunction(a=>document.documentElement.getAttribute('data-member-access')===a,access,{timeout:30000});
+            await page.waitForTimeout(600);
+          }
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const failures=[];
+            try{
+              for(const c of cases){
+                const context=await browser.newContext({viewport:{width:1440,height:1000}});
+                const page=await context.newPage();
+                try{
+                  const email=process.env['PERSONA_'+c.key.toUpperCase()+'_EMAIL'];
+                  await page.goto(base+'login.html',{waitUntil:'domcontentloaded',timeout:30000});
+                  await page.locator('#email').fill(email);
+                  await page.locator('#password').fill(password);
+                  await page.locator('#signIn').click();
+                  await page.waitForURL(url=>!url.pathname.endsWith('/login.html'),{timeout:30000});
+                  await page.goto(base+'member.html?view=member&gym_id='+puffin,{waitUntil:'domcontentloaded',timeout:30000});
+                  await settled(page,c.access);
+                  const banner=await page.locator('#hybridMemberStatusBanner').count()?await page.locator('#hybridMemberStatusBanner').innerText():null;
+                  const block=await page.locator('#hybridMemberAccessBlock').count()?await page.locator('#hybridMemberAccessBlock').innerText():null;
+                  if(c.banner){assert.ok(banner&&c.banner.test(banner),c.key+': expected status banner, got '+JSON.stringify(banner));assert.equal(block,null,c.key+': must not be blocked on member.html')}
+                  else if(c.block){assert.ok(block&&c.block.test(block),c.key+': expected ended screen, got '+JSON.stringify(block));assert.match(block,/Sign out/i);assert.doesNotMatch(block,/My membership/i,c.key+': ended screen must offer sign out only')}
+                  else{assert.equal(banner,null,c.key+': active member must see no banner');assert.equal(block,null,c.key+': active member must not be blocked')}
+                  if(c.key==='paused'||c.key==='pending'){
+                    await page.goto(base+'social.html?gym_id='+puffin,{waitUntil:'domcontentloaded',timeout:30000});
+                    await settled(page,c.access);
+                    const b=await page.locator('#hybridMemberAccessBlock').innerText();
+                    assert.match(b,c.key==='paused'?/membership is paused/i:/has not started yet/i,c.key+': social.html not blocked with the right message');
+                  }
+                  console.log('Persona passed:',c.key,'->',c.access);
+                }catch(err){failures.push(c.key+': '+(err?.message||err));console.error('Persona FAILED:',c.key,err?.message||err);try{await page.screenshot({path:'persona-fail-'+c.key+'.png',fullPage:true})}catch{}}
+                finally{await context.close()}
+              }
+            }finally{await browser.close()}
+            if(failures.length){console.error('FAILURES:\n'+failures.join('\n'));process.exit(1)}
+          })().catch(err=>{console.error(err);process.exit(1)});
+          JS
+
+      - name: Verify calendar feed respects membership status
+        shell: bash
+        run: |
+          set -euo pipefail
+          check() {
+            local name="$1" token="$2" want="$3"
+            code="$(curl -sS -o /tmp/feed.out -w '%{http_code}' "$FN_BASE/class-calendar?token=$token")"
+            if [ "$code" != "$want" ]; then echo "Calendar feed for $name returned $code, expected $want"; exit 1; fi
+            if [ "$want" = "200" ]; then grep -q 'BEGIN:VCALENDAR' /tmp/feed.out || { echo "Feed for $name is not a calendar"; exit 1; }; fi
+            echo "Calendar feed $name -> $code (expected)"
+          }
+          check active     "$PERSONA_ACTIVE_TOKEN"     200
+          check paused     "$PERSONA_PAUSED_TOKEN"     403
+          check pending    "$PERSONA_PENDING_TOKEN"    403
+          check cancelled  "$PERSONA_CANCELLED_TOKEN"  403
+          check expired    "$PERSONA_EXPIRED_TOKEN"    403
+          check superseded "$PERSONA_SUPERSEDED_TOKEN" 403
+
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: persona-failures-${{ github.sha }}
+          path: persona-fail-*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Delete disposable personas
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=hybridone-membership-personas" | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$OIDC"
+          curl --fail-with-body -sS -H "Authorization: Bearer $OIDC" -H "Content-Type: application/json" --data '{"action":"cleanup"}' "$FN_BASE/hybridone-membership-personas" -o /tmp/personas-cleanup.json
+          python3 -c "import json; d=json.load(open('/tmp/personas-cleanup.json')); assert d.get('ok') is True and d.get('cleaned') is True, d; print('Disposable personas removed:',d.get('count'))"
