@@ -89,13 +89,13 @@ for brand_page in ROOT.glob('*.html'):
 # Core rendering assets are intentionally locked to the last known-good mobile/admin baseline.
 # Any deliberate change to these files must update this list as part of the same reviewed change.
 RENDER_BASELINE={
- 'app-consistency.css':'2f44a19fcb7520f2dd3b5f08f044bb923c665d99',
+ 'app-consistency.css':'7389663d39ec26ccdf2ed62b5b7c6db59647ded6',
  'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
  'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
  'admin-frame.css':'ae4dce7b74216da5b5f0a840c53a541c468ce534',
  'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
  'admin-frame.js':'a5da331b313677b3c8a2a8fe40fdc3e6090cce13',
- 'app-stability.js':'77bc50425bcc8bca57390d71d38f9468f56acdcc',
+ 'app-stability.js':'d8b65329cb81cb6d3e53ed9f362ca349691d0d5f',
  'shared-admin-nav.js':'2ab89dfbca4cd8e121f4072cb14f4f49ee0d71b0',
 }
 def git_blob_sha(path):

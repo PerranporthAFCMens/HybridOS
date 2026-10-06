@@ -13,6 +13,7 @@
   .mobile-menu-close{display:grid;place-items:center;position:absolute;top:14px;right:14px;width:38px;height:38px;border:1px solid rgba(255,255,255,.15);border-radius:11px;background:rgba(255,255,255,.08);color:#fff;font-size:24px;cursor:pointer}
   .mobile-nav-backdrop{display:block;position:fixed;inset:0;background:rgba(11,16,32,.48);z-index:65;opacity:0;pointer-events:none;transition:opacity .2s ease}
   body.mobile-nav-open .mobile-nav-backdrop{opacity:1;pointer-events:auto}
+  .mobile-nav-backdrop{visibility:hidden;transition:opacity .2s ease,visibility 0s linear .2s}body.mobile-nav-open .mobile-nav-backdrop{visibility:visible;transition:opacity .2s ease,visibility 0s}
   .top{padding:0;margin:0 0 14px;min-height:unset;display:flex;align-items:flex-end;gap:10px}
   .top>div:first-child{min-width:0;flex:1}
   .top .eyebrow{font-size:10px;letter-spacing:.08em}
