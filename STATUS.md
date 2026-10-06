@@ -162,7 +162,7 @@ Branch `member-side-consistency`. Found by rendering the built pages (desktop 14
 - Groups now has a Sign out link (it had none).
 - Social: small label and description above the title like the other pages; feed column is left-aligned instead of centred.
 - Integrations: content uses the full width instead of a 980 px cap; the Strava "S" tile class was clashing with the shared sidebar logo class and painted a pink box over the HybridOne logo (renamed to `svc-logo`).
-- Not changed (by design or later): the 54 px heading indent on phones is the shared rule that clears the menu button. The account chip is still missing on Groups and Integrations (needs the account menu wired in; follow-up). Three hero colours (admin purple, staff green, member navy) and 32 slightly different corner radii left alone.
+- Not changed (by design or later): the 54 px heading indent on phones is the shared rule that clears the menu button. The account chip was missing on Groups and Integrations; added in the follow-up PR `member-chip` (same chip and account menu as Home and Social; avatar-only top-right on phones). Three hero colours (admin purple, staff green, member navy) and 32 slightly different corner radii left alone.
 
 ### Membership status backlog (follow-ups, not started)
 
