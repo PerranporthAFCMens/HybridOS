@@ -154,6 +154,11 @@ Before lifting `PRODUCTION_HOLD`:
 
 Branch `fix/admin-account-popup-desktop`. On a desktop browser (1920 px) the account menu that opens from the dark account card at the bottom of the admin sidebar was clipped off the left edge of the screen (the options were not visible). `account-menu.js` appends the popover to `document.body` and right-aligns it to the card with an inline `right` offset, so its 300 px width ran about 63 px past the left edge beside the 254 px sidebar card. Fixed in JavaScript, in `positionMenu()` of `account-menu.js`: on screens wider than 900 px, if the popover's left edge would fall inside the 14 px padding, it is anchored to the card's left edge (`left:max(14px, card.left)`, `right:auto`); otherwise `left` is cleared. Phones (900 px and under) keep the original placement. No locked rendering file and no smoke fingerprint changed (an earlier CSS attempt in `admin-frame.css` could not match a popover that lives on `body`, and was reverted). Verified by running the real `account-menu.js` in a browser harness at 1920, 1440 and 390 px (see the PR). No gym data, database or workflow touched.
 
+### View-as-member navigation fix (PR open)
+- Owner/admin "View as member" bounced back to the admin dashboard when clicking Home, Social, etc., because links dropped the `view=member` flag.
+- New `member-view-links.js` (loaded on member, social, groups, integrations) adds the flag to links between those pages only while the flag is present. Normal members and admin pages are unaffected.
+- Not covered: group.js-built links and member-preview.html. The "Back to Owner/Admin" banner still goes to admin on purpose.
+
 ### Member-side consistency pass (PR open)
 
 Branch `member-side-consistency`. Found by rendering the built pages (desktop 1440 and phone 390) with a stand-in database and comparing them. Fixed in page-level files only; no locked rendering asset changed, so no smoke-test lock was touched. Gyms touched: none (UI only).
