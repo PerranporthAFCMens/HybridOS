@@ -154,6 +154,10 @@ Before lifting `PRODUCTION_HOLD`:
 
 Branch `fix/admin-account-popup-desktop`. On a desktop browser (1920 px) the account menu that opens from the dark account card at the bottom of the admin sidebar was clipped off the left edge of the screen (the options were not visible). `account-menu.js` appends the popover to `document.body` and right-aligns it to the card with an inline `right` offset, so its 300 px width ran about 63 px past the left edge beside the 254 px sidebar card. Fixed in JavaScript, in `positionMenu()` of `account-menu.js`: on screens wider than 900 px, if the popover's left edge would fall inside the 14 px padding, it is anchored to the card's left edge (`left:max(14px, card.left)`, `right:auto`); otherwise `left` is cleared. Phones (900 px and under) keep the original placement. No locked rendering file and no smoke fingerprint changed (an earlier CSS attempt in `admin-frame.css` could not match a popover that lives on `body`, and was reverted). Verified by running the real `account-menu.js` in a browser harness at 1920, 1440 and 390 px (see the PR). No gym data, database or workflow touched.
 
+### Admin-side consistency check (PR open)
+- Checked all 15 admin pages plus Staff at desktop and phone width: title size, radii, colours and spacing already match. One real bug fixed: the Member home layout title was pushed to the far right.
+- Left alone on purpose: Admin access keeps its own Sign out (smoke-tested for the owner-only error state); the Classes phone header is a purpose-built mobile calendar bar; the account chip appears only on the Dashboard.
+
 ### Integrations as a member-page tab (PR open)
 - Integrations is now a tab in `member.html` (embedded `integrations.html?embed=1`). All member nav items except the sign-out now switch in place with no reload.
 - Strava connect now redirects the whole window (not the frame) and returns to the member page, because Strava cannot be shown inside a frame. Strava is not configured yet, so this path is untested end to end.
