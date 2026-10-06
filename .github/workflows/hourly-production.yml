@@ -165,11 +165,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TAG="prod-$(date -u +%F)"
+          TAG="prod-$(date -u +%F-%H%M%S)"
 
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Release refused: rollback tag $TAG already exists."
-            echo "Only one production promotion per UTC date is allowed by this workflow."
+            echo "A rollback tag with this exact UTC timestamp already exists; wait a second and retry."
             exit 1
           fi
 
