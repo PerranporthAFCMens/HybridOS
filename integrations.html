@@ -44,4 +44,4 @@ $('logoutBtn').onclick=async()=>{sessionStorage.removeItem('hybrid-gym-id');awai
 $('connectBtn').onclick=async()=>{if(preview)return;const {data,error}=await supabase.functions.invoke('strava-connect',{body:{gym_id:gym.gym_id,redirect_to:location.href}});if(error){$('message').textContent='Could not start Strava connection.';return}if(!data.configured){$('message').textContent='Strava is fully scaffolded and ready; API credentials still need to be added to Supabase secrets.';return}location.href=data.authorize_url;};
 $('syncBtn').onclick=async()=>{if(preview){$('message').textContent='Preview sync complete — in production this calls Strava and imports new activities.';return}const b=$('syncBtn');b.disabled=true;b.textContent='Syncing…';const {data,error}=await supabase.functions.invoke('strava-sync',{body:{gym_id:gym.gym_id}});b.disabled=false;b.textContent='Sync now';$('message').textContent=error?'Sync failed.':data?.configured===false?data.message:`Imported/updated ${data?.imported||0} activities.`;if(!error&&data?.configured!==false)load();};
 load();
-</script></body></html>
+</script><script src="./member-view-links.js" defer></script></body></html>
