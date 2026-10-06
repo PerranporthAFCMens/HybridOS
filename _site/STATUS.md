@@ -4,6 +4,7 @@
 - Cause: `index.html` ran the universal-login redirect before the marketing-page redirect, so `https://www.hybridone.co.uk/` always went to the sign-in page (this predates the 6 October release). There was also no `/login` address (404).
 - Fix: at `/` the entry script now leaves the visitor on the marketing page (`landing.html`, shown at `/`); `/login` now routes to `login.html`; the marketing page has a Sign in link (`/login` on the live site, `login.html` on the dev Pages site). The routing check now also verifies `/login`. Dev Pages (`/HybridOS/`) is unchanged.
 - This goes live in the next release (the workflow was changed on 6 Oct so a second release the same day is possible).
+- Follow-up (6 Oct): the Sign in link was hidden on phones by the existing mobile menu rule; it now shows beside Book a demo at phone widths.
 
 - Release workflow change (6 Oct): the rollback tag is now `prod-<UTC date>-<time>` so more than one release can run on the same date. Existing tags (`prod-2026-10-02`, `prod-2026-10-06`) are untouched.
 
