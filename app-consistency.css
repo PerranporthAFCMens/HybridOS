@@ -642,3 +642,10 @@ body:has(#reportSearch) .report-card{
 .hybrid-gym-switch-note{margin-top:9px;color:#64f0cf;font-size:11px;font-weight:850;letter-spacing:.02em}
 .side .hybrid-shell-gym.hybrid-gym-switchable:focus-visible{outline:2px solid #64f0cf;outline-offset:3px}
 
+
+/* iPhone Safari can keep tinting its top/bottom bars from a full-screen dark overlay that is only faded out with opacity.
+   Closed menu backdrops are now truly hidden, and only become visible while the menu is open. */
+@media(max-width:900px){
+  .mobile-nav-backdrop,.admin-mobile-backdrop,.staff-mobile-backdrop,.admin-frame-backdrop{visibility:hidden!important;transition:opacity .2s ease,visibility 0s linear .2s!important}
+  body.mobile-nav-open .mobile-nav-backdrop,body.admin-mobile-open .admin-mobile-backdrop,body.staff-mobile-open .staff-mobile-backdrop,body.admin-frame-menu-open .admin-frame-backdrop{visibility:visible!important;transition:opacity .2s ease,visibility 0s!important}
+}
