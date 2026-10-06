@@ -153,16 +153,6 @@ Before lifting `PRODUCTION_HOLD`:
 
 Branch `fix/admin-account-popup-desktop`. On a desktop browser (1920 px) the account menu that opens from the dark account card at the bottom of the admin sidebar was clipped off the left edge of the screen (the options were not visible). `account-menu.js` appends the popover to `document.body` and right-aligns it to the card with an inline `right` offset, so its 300 px width ran about 63 px past the left edge beside the 254 px sidebar card. Fixed in JavaScript, in `positionMenu()` of `account-menu.js`: on screens wider than 900 px, if the popover's left edge would fall inside the 14 px padding, it is anchored to the card's left edge (`left:max(14px, card.left)`, `right:auto`); otherwise `left` is cleared. Phones (900 px and under) keep the original placement. No locked rendering file and no smoke fingerprint changed (an earlier CSS attempt in `admin-frame.css` could not match a popover that lives on `body`, and was reverted). Verified by running the real `account-menu.js` in a browser harness at 1920, 1440 and 390 px (see the PR). No gym data, database or workflow touched.
 
-### Member-side consistency pass (PR open)
-
-Branch `member-side-consistency`. Found by rendering the built pages (desktop 1440 and phone 390) with a stand-in database and comparing them. Fixed in page-level files only; no locked rendering asset changed, so no smoke-test lock was touched. Gyms touched: none (UI only).
-
-- One menu list on every member page: Home, Classes, Social, Workouts, PBs, My membership, Training groups, Integrations, Profile (Social had no Training groups; Groups said "Member home" and "Community" and was missing five items; Integrations had no Social).
-- Groups now has a Sign out link (it had none).
-- Social: small label and description above the title like the other pages; feed column is left-aligned instead of centred.
-- Integrations: content uses the full width instead of a 980 px cap; the Strava "S" tile class was clashing with the shared sidebar logo class and painted a pink box over the HybridOne logo (renamed to `svc-logo`).
-- Not changed (by design or later): the 54 px heading indent on phones is the shared rule that clears the menu button. The account chip is still missing on Groups and Integrations (needs the account menu wired in; follow-up). Three hero colours (admin purple, staff green, member navy) and 32 slightly different corner radii left alone.
-
 ### Membership status backlog (follow-ups, not started)
 
 1. **Ended-member Renew/Rejoin.** The ended-member screen needs a Renew/Rejoin action once real payment exists. That needs database changes: ended (cancelled/expired) members must be able to read plans, and there must be a renewal path, because the public join now refuses anyone who already has a membership row.
