@@ -19,7 +19,7 @@
   <small>One account</small><h1>Your gyms.<br>One login.</h1><p>Sign in once. If your account has access to more than one gym, choose where you want to go next.</p>
 </section>
 <section class="panel"><div class="box">
-  <div class="eyebrow">HybridOne</div><h2>Sign in</h2><div class="muted">Use the email address and password linked to your HybridOne account.</div>
+  <img id="gymLogo" alt="" style="display:none;max-width:200px;max-height:80px;object-fit:contain;margin-bottom:14px"><div class="eyebrow" id="loginEyebrow">HybridOne</div><h2>Sign in</h2><div class="muted">Use the email address and password linked to your HybridOne account.</div>
   <div id="gymHint" class="hint"><b id="gymHintTitle"></b><span id="gymHintText"></span></div>
   <label for="email">Email</label><input id="email" type="email" autocomplete="email">
   <label for="password">Password</label><input id="password" type="password" autocomplete="current-password">
@@ -38,6 +38,7 @@ const SLUGS={'242f57c2-6e37-4977-b3c5-1c87de7d0b98':'hybrid-hub-demo','aec16956-
 const KNOWN={'242f57c2-6e37-4977-b3c5-1c87de7d0b98':'Hybrid Hub','aec16956-3793-4543-873b-4412646ca1eb':'Puffin Performance'};
 if(hintGymId){$('gymHint').classList.add('show');$('gymHintTitle').textContent=KNOWN[hintGymId]||'Gym link';$('gymHintText').textContent='This link will open that gym if your account has access.'}
 if(SLUGS[hintGymId]){const a=$('joinLink');a.href='./join.html?gym='+SLUGS[hintGymId];a.textContent='New member? Join '+KNOWN[hintGymId];a.style.display='block'}
+if(hintGymId){supabase.rpc('get_public_gym_brand',{p_gym_id:hintGymId}).then(function(r){var b=r&&r.data;if(!b)return;if(b.name){$('loginEyebrow').textContent=b.name;$('gymHintTitle').textContent=b.name}if(b.logo_url){var i=$('gymLogo');i.src=b.logo_url;i.alt=b.name||'';i.style.display='block'}}).catch(function(){})}
 function emailValue(){return $('email').value.trim().toLowerCase()}
 function show(text,good=false){msg.textContent=text;msg.className='msg'+(good?' good':'')}
 async function memberships(userId){const{data,error}=await supabase.from('gym_members').select('gym_id,role,access_status,gyms(id,name,slug,logo_url)').eq('user_id',userId).eq('is_active',true).eq('access_status','active').order('created_at');if(error)throw error;return data||[]}

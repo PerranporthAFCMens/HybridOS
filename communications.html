@@ -27,6 +27,10 @@
 <section id="transactional" class="pane">
 <div class="grid">
 <div>
+<section class="card" id="logoCard"><div class="eyebrow">Brand</div><h3>Gym logo</h3><div class="muted" style="margin-bottom:12px">Upload once. It appears on your sign-in and join pages, the member portal, the gym chooser and your emails.</div>
+<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div id="logoPreview" style="width:150px;height:84px;border:1px dashed #cbd2dc;border-radius:12px;display:grid;place-items:center;background:#fff;color:#98a2b3;font-size:12px;overflow:hidden">No logo yet</div>
+<div><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp" style="display:none"><button id="logoPick" class="btn secondary" type="button">Choose image…</button> <button id="logoRemove" class="btn secondary hidden" type="button">Remove</button><div class="muted" style="font-size:12px;margin-top:6px">PNG, JPG or WebP, up to 2 MB. A wide logo on a transparent or white background works best.</div></div></div>
+<div id="logoMsg" class="msg"></div></section>
 <section class="card">
 <div class="eyebrow">Member email identity</div><h2>Gym sender details</h2><div class="muted">These details are for customer and member-facing emails. The gym remains the primary brand, with only a discreet “Powered by HybridOne” attribution.</div>
 <div class="field"><label>Email brand name</label><input id="senderName" maxlength="100"></div><div class="row2"><div class="field"><label>From email</label><input id="senderEmail" type="email" maxlength="254" placeholder="noreply@hybridone.co.uk"></div><div class="field"><label>Reply-to email <span class="muted">(optional)</span></label><input id="replyTo" type="email" maxlength="254" placeholder="Leave blank for no replies"></div></div><div id="senderStatus" class="locked">HybridOne-managed sender ready to use.</div>
@@ -93,9 +97,9 @@ async function init(){
  const{data:{session}}=await sb.auth.getSession();if(!session){location.replace(window.HybridGymContext.loginUrl({gymId:new URLSearchParams(location.search).get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||'',returnTo:location.href}));return}
  const params=new URLSearchParams(location.search),gymId=params.get('gym_id')||sessionStorage.getItem('hybrid-gym-id')||'';
  if(!gymId){location.replace(window.HybridGymContext.chooserUrl({returnTo:location.href}));return}
- const{data:gm,error}=await sb.from('gym_members').select('gym_id,role,access_status,gyms(id,name)').eq('user_id',session.user.id).eq('gym_id',gymId).eq('is_active',true).maybeSingle();
+ const{data:gm,error}=await sb.from('gym_members').select('gym_id,role,access_status,gyms(id,name,logo_url)').eq('user_id',session.user.id).eq('gym_id',gymId).eq('is_active',true).maybeSingle();
  if(error||!gm||gm.access_status!=='active'){location.replace(window.HybridGymContext.chooserUrl({returnTo:location.href}));return}if(!['owner','admin'].includes(gm.role)){location.replace(window.HybridGymContext.destination(gm));return}
- gym=gm.gyms;window.HybridGymContext.setGym(gm.gym_id);$('gymName').textContent=gym.name;
+ gym=gm.gyms;window.HybridGymContext.setGym(gm.gym_id);$('gymName').textContent=gym.name;showLogo(gym.logo_url);
  const[{data:settings},{data:template}]=await Promise.all([
    sb.from('gym_communication_settings').select('*').eq('gym_id',gym.id).maybeSingle(),
    sb.from('gym_email_templates').select('*').eq('gym_id',gym.id).eq('template_key','access_invite').maybeSingle()
@@ -105,6 +109,30 @@ async function init(){
  updateSenderStatus(settings?.sender_domain_status||'unverified');preview();$('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true;
 }
 ['senderName','replyTo','accent','logoUrl','footerText','subject','preheader','heading','bodyText','buttonLabel'].forEach(id=>$(id).addEventListener('input',preview));$('senderEmail').addEventListener('input',()=>{updateSenderStatus('unverified');preview()});
+
+function showLogo(url){const box=$('logoPreview');box.innerHTML=url?'<img src="'+url.replace(/"/g,'&quot;')+'" alt="Gym logo" style="max-width:100%;max-height:100%;object-fit:contain">':'No logo yet';$('logoRemove').classList.toggle('hidden',!url);$('logoPick').textContent=url?'Replace image…':'Choose image…'}
+async function applyLogo(url){
+ const u=await sb.from('gyms').update({logo_url:url}).eq('id',gym.id);if(u.error)throw u.error;
+ gym.logo_url=url;showLogo(url);
+ try{await sb.from('gym_communication_settings').update({logo_url:url}).eq('gym_id',gym.id)}catch(_){}
+ $('logoUrl').value=url||'';if(typeof preview==='function')preview();
+ try{sessionStorage.removeItem('hybrid-gym-brand:'+gym.id)}catch(_){}
+}
+$('logoPick').onclick=()=>$('logoFile').click();
+$('logoFile').onchange=async()=>{
+ const f=$('logoFile').files[0];if(!f)return;setMsg('logoMsg','');
+ try{
+  if(!['image/png','image/jpeg','image/webp'].includes(f.type))throw new Error('Use a PNG, JPG or WebP image.');
+  if(f.size>2*1024*1024)throw new Error('That image is over 2 MB. Please use a smaller file.');
+  const ext=f.type==='image/png'?'png':f.type==='image/webp'?'webp':'jpg',path=gym.id+'/logo-'+Date.now()+'.'+ext;
+  $('logoPick').disabled=true;$('logoPick').textContent='Uploading…';
+  const up=await sb.storage.from('gym-logos').upload(path,f,{contentType:f.type,upsert:false});if(up.error)throw up.error;
+  const url=sb.storage.from('gym-logos').getPublicUrl(path).data.publicUrl;
+  await applyLogo(url);setMsg('logoMsg','Logo saved. It now shows across your gym.',true);
+ }catch(e){setMsg('logoMsg',e.message||'Could not upload the logo.')}
+ finally{$('logoPick').disabled=false;$('logoPick').textContent=gym.logo_url?'Replace image…':'Choose image…';$('logoFile').value=''}
+};
+$('logoRemove').onclick=async()=>{if(!confirm('Remove your gym logo?'))return;try{await applyLogo(null);setMsg('logoMsg','Logo removed.',true)}catch(e){setMsg('logoMsg',e.message||'Could not remove the logo.')}};
 $('saveIdentity').onclick=async()=>{const btn=$('saveIdentity');btn.disabled=true;setMsg('identityMsg','');try{const senderEmail=$('senderEmail').value.trim()||'noreply@hybridone.co.uk',replyTo=$('replyTo').value.trim();const domain=(senderEmail.split('@')[1]||'').toLowerCase();if(!domain)throw new Error('Enter a valid From email address.');const senderDomainStatus=domain==='hybridone.co.uk'?'verified':'unverified';const payload={gym_id:gym.id,sender_name:$('senderName').value.trim()||gym.name,sender_email:senderEmail,reply_to_email:replyTo||null,sender_domain_status:senderDomainStatus,accent_color:$('accent').value||'#0b1020',logo_url:$('logoUrl').value.trim()||null,footer_text:$('footerText').value.trim()||null,updated_at:new Date().toISOString()};const{error}=await sb.from('gym_communication_settings').upsert(payload,{onConflict:'gym_id'});if(error)throw error;updateSenderStatus(senderDomainStatus);setMsg('identityMsg',senderDomainStatus==='verified'?'Sender details saved and ready to use.':'Sender details saved. This sending domain still needs verification.',true)}catch(e){setMsg('identityMsg',e.message||'Could not save sender details.')}finally{btn.disabled=false}};
 $('saveTemplate').onclick=async()=>{const btn=$('saveTemplate');btn.disabled=true;setMsg('templateMsg','');try{const payload={gym_id:gym.id,template_key:'access_invite',category:'transactional',template_name:'Access invitation',subject:$('subject').value.trim(),preheader:$('preheader').value.trim()||null,heading:$('heading').value.trim(),body_text:$('bodyText').value.trim(),button_label:$('buttonLabel').value.trim()||'Accept invitation',enabled:true,updated_at:new Date().toISOString()};if(!payload.subject||!payload.heading||!payload.body_text)throw new Error('Subject, heading and body are required.');const{error}=await sb.from('gym_email_templates').upsert(payload,{onConflict:'gym_id,template_key'});if(error)throw error;setMsg('templateMsg','Access invitation template saved.',true)}catch(e){setMsg('templateMsg',e.message||'Could not save template.')}finally{btn.disabled=false}};
 $('resetTemplate').onclick=()=>{if(confirm('Restore the HybridOne default wording in the editor? You can review it before saving.'))applyDefaults()};
