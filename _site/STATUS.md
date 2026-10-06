@@ -8,7 +8,7 @@
 
 - Release workflow change (6 Oct): the rollback tag is now `prod-<UTC date>-<time>` so more than one release can run on the same date. Existing tags (`prod-2026-10-02`, `prod-2026-10-06`) are untouched.
 
-> **6 October 2026 — release in progress.** The production hold is lifted in `PROJECT_STATE.json` by the owner's approval to release the membership-status rules, member-page tabs and consistency fixes to `main`. Steps: all four gates green on this exact commit, enable "Manual production release", run it with the exact SHA, verify the live site, disable the workflow, then a follow-up PR restores the hold.
+> **6 October 2026 — release COMPLETE.** Production `main` = `05b1f5545aefccce754e56879c51d14abe1eafcf` (membership-status rules, member-page tabs, consistency fixes, marketing page at `/`, `/login`). Rollback tags: `prod-2026-10-06` (before the first release today), `prod-2026-10-06-195042`, `prod-2026-10-06-200508` (the version just before the final one). The production hold is restored in `PROJECT_STATE.json` and the "Manual production release" workflow is disabled. Live checks: Vercel READY on the exact SHA and the production routing workflow passed (includes `/login`). Stage 1 is now live, so the known gap about an ended member seeing a broken app is closed.
 
 ## Current operating state — 5 October 2026 (read this first)
 
