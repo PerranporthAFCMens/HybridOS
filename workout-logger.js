@@ -44,8 +44,8 @@ function css(){
 .wl-dist{display:flex;gap:6px}.wl-dist select{flex:0 0 66px;padding:10px 4px}
 .wl-pace{flex:1 1 100%;font-size:12px;color:#667085;margin:-2px 0 0 2px;min-height:0}
 .wl-addset{margin-top:10px;border:1px dashed #98a2b3;background:transparent;border-radius:10px;padding:10px;width:100%;cursor:pointer;color:#344054;font-size:14px}
-.wl-addex{width:100%;margin:6px 0 4px}
-.wl-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0b1020;color:#fff;padding:12px 16px;border-radius:14px;z-index:10050;max-width:90vw;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);line-height:1.4}
+.wl-label{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7a8494;margin:14px 0 2px}.wl-cardact{display:flex;gap:10px;margin-top:12px}.wl-cardact .btn{flex:1;padding:13px}.wl-cardact .wl-clear{flex:0 0 90px}.wl-done{display:flex;align-items:center;gap:10px;border:1px solid #abefc6;background:#f6fef9;border-radius:14px;padding:10px 12px;margin:8px 0}.wl-done b{color:#067647}.wl-done .t{flex:1;min-width:0}.wl-done .t strong{display:block;font-size:15px}.wl-done .t span{font-size:13px;color:#667085}.wl-link{border:0;background:none;color:#344054;text-decoration:underline;font-size:13px;cursor:pointer;padding:6px}
+.wl-toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#0b1020;color:#fff;padding:12px 16px;border-radius:14px;z-index:10050;max-width:90vw;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);line-height:1.4}
 @media(max-width:640px){
 #workoutModal.wl-modal{padding:0;align-items:end}
 #workoutModal .wl-sheet{max-width:none;max-height:100dvh;height:100dvh;border-radius:0}
@@ -59,20 +59,20 @@ function shell(){
   if(built)return m;
   m.classList.add('wl-modal');
   m.innerHTML=`<div class="modal-card wl-sheet" role="dialog" aria-modal="true" aria-label="Log workout">
-<div class="wl-top"><h3>Log workout</h3><button id="closeWorkout" class="btn secondary" type="button">Close</button></div>
+<div class="wl-top"><h3>Log workout</h3><button id="closeWorkout" class="btn secondary" type="button">Done</button></div>
 <div class="wl-body">
 <div class="wl-meta"><div class="field"><label>Workout name</label><input id="workoutTitle" placeholder="e.g. Upper body, Easy run" autocomplete="off"></div><div class="field"><label>Date</label><input id="workoutDate" type="date"></div></div>
 <details class="wl-notes"><summary>+ Add notes</summary><div class="field"><textarea id="workoutNotes" placeholder="How did it feel?" rows="2"></textarea></div></details>
+<div id="wlLogged"></div>
+<div class="wl-label" id="wlLabel">Add an exercise</div>
 <div id="exerciseBuilder"></div>
-<button id="addExercise" class="btn secondary wl-addex" type="button">+ Add exercise</button>
 </div>
-<div class="wl-foot"><div id="workoutMsg" class="msg" role="status"></div><button id="saveWorkout" class="btn primary" type="button">Save workout</button></div>
+<div class="wl-foot"><div id="workoutMsg" class="msg" role="status"></div><button id="saveWorkout" class="btn primary" type="button">Finish workout</button></div>
 </div>`;
-  $('closeWorkout').onclick=close;
-  $('addExercise').onclick=()=>{const c=addExercise();c.querySelector('.exerciseName').focus()};
-  $('saveWorkout').onclick=save;
-  m.addEventListener('mousedown',e=>{if(e.target===m)close()});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!m.classList.contains('hidden'))close()});
+  $('closeWorkout').onclick=finish;
+  $('saveWorkout').onclick=finish;
+  m.addEventListener('mousedown',e=>{if(e.target===m)finish()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!m.classList.contains('hidden'))finish()});
   built=true;return m;
 }
 
@@ -106,15 +106,16 @@ function setType(card,type,manual){
 function hasValues(card){return [...card.querySelectorAll('.wl-sets input')].some(i=>i.value.trim()!=='')}
 function addExercise(){
   const card=document.createElement('div');card.className='wl-card';card.dataset.type='strength';card.dataset.id=String(++cardSeq);
-  card.innerHTML=`<div class="wl-head"><div class="wl-namewrap"><input class="exerciseName" placeholder="Search exercise or activity" autocomplete="off" aria-label="Exercise"></div><button class="wl-x remove-ex" type="button" aria-label="Remove exercise">×</button></div>
+  card.innerHTML=`<div class="wl-head"><div class="wl-namewrap"><input class="exerciseName" placeholder="Search exercise or activity" autocomplete="off" aria-label="Exercise"></div></div>
 <div class="wl-types">${TYPES.map(t=>`<button type="button" class="wl-chip" data-t="${t[0]}" aria-pressed="${t[0]==='strength'}">${t[1]}</button>`).join('')}</div>
-<div class="wl-sets"></div><button class="wl-addset" type="button">+ Add set</button>`;
+<div class="wl-sets"></div><button class="wl-addset" type="button">+ Add set</button><div class="wl-cardact"><button class="btn secondary wl-clear" type="button">Clear</button><button class="btn primary wl-saveex" type="button">Save exercise</button></div>`;
   const name=card.querySelector('.exerciseName');
   const detect=()=>{if(card.dataset.manual||hasValues(card))return;const g=guessType(name.value);if(g!==card.dataset.type)setType(card,g,false)};
   name.addEventListener('change',detect);name.addEventListener('blur',()=>setTimeout(detect,200));
   card.querySelector('.wl-types').addEventListener('click',e=>{const b=e.target.closest('.wl-chip');if(b&&b.dataset.t!==card.dataset.type)setType(card,b.dataset.t,true)});
   card.querySelector('.wl-addset').onclick=()=>{const rows=card.querySelectorAll('.wl-set');const r=addSet(card,rows[rows.length-1]);const f=r.querySelector('input');f&&f.focus()};
-  card.querySelector('.remove-ex').onclick=()=>{card.remove();if(!$('exerciseBuilder').children.length)addExercise()};
+  card.querySelector('.wl-clear').onclick=()=>{card.querySelector('.exerciseName').value='';delete card.dataset.manual;setType(card,'strength',false);setMsg('')};
+  card.querySelector('.wl-saveex').onclick=saveExercise;
   card.addEventListener('input',e=>{const r=e.target.closest('.wl-set');if(r&&card.dataset.type==='cardio')updatePace(r)});
   card.addEventListener('change',e=>{const r=e.target.closest('.wl-set');if(r&&card.dataset.type==='cardio')updatePace(r)});
   $('exerciseBuilder').appendChild(card);addSet(card);return card;
@@ -193,44 +194,119 @@ function pbText(w){return w.metric==='time'?`${w.name} ${fmtTime(w.value)}`:w.me
 function toast(html){const t=document.createElement('div');t.className='wl-toast';t.innerHTML=html;document.body.appendChild(t);setTimeout(()=>t.remove(),5200)}
 
 function setMsg(text,bad){const el=$('workoutMsg');el.textContent=text||'';el.className='msg'+(bad?' bad':'')}
+const S={sessionId:null,entries:[],busy:false};
+function activeCard(){return $('exerciseBuilder').querySelector('.wl-card')}
+function freshCard(){$('exerciseBuilder').innerHTML='';cardSeq=0;return addExercise()}
+function setSummary(e){
+  const sets=e.sets,n=sets.length,t=e.type,mx=k=>Math.max(...sets.map(x=>Number(x[k])||0));
+  if(t==='strength'){const w=mx('weight_kg'),r=sets.map(x=>x.reps).filter(v=>v!=null);return `${n} set${n>1?'s':''} · ${r.length?r.join('/')+' reps':''}${w?` @ ${w} kg`:''}`}
+  if(t==='cardio'){const d=sets.reduce((a,x)=>a+(x.distance_m||0),0),tm=sets.reduce((a,x)=>a+(x.duration_seconds||0),0);return [d?fmtDist(d):'',tm?fmtTime(tm):''].filter(Boolean).join(' in ')}
+  if(t==='time')return fmtTime(sets.reduce((a,x)=>a+(x.duration_seconds||0),0));
+  if(t==='calories')return `${mx('calories')} kcal`;
+  return `${mx('custom_value')} ${sets[0].custom_unit||''}`.trim();
+}
+function renderLogged(){
+  const box=$('wlLogged');
+  box.innerHTML=S.entries.map((e,i)=>`<div class="wl-done"><b>✓</b><div class="t"><strong>${esc(e.name)}</strong><span>${esc(setSummary(e))}</span></div><button class="wl-link" data-edit="${i}" type="button">Edit</button><button class="wl-link" data-del="${i}" type="button">Remove</button></div>`).join('');
+  box.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editEntry(Number(b.dataset.edit)));
+  box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>removeEntry(Number(b.dataset.del)));
+  $('wlLabel').textContent=S.entries.length?'Add another exercise':'Add an exercise';
+  $('saveWorkout').textContent=S.entries.length?`Finish workout (${S.entries.length})`:'Finish workout';
+}
+async function ensureSession(){
+  if(S.sessionId)return;
+  const sb=ctx.supabase,gym=ctx.gym(),uid=ctx.session().user.id,first=activeCard().querySelector('.exerciseName').value.trim();
+  const performed=new Date(($('workoutDate').value||new Date().toISOString().slice(0,10))+'T12:00:00').toISOString();
+  const r=await sb.from('workout_sessions').insert({gym_id:gym.id,user_id:uid,title:$('workoutTitle').value.trim()||first||'Workout',performed_at:performed,notes:$('workoutNotes').value.trim()||null}).select('id').single();
+  if(r.error)throw r.error;S.sessionId=r.data.id;S.performed=performed;
+}
+async function saveExercise(){
+  if(S.busy)return;ctx=ctx||window.HybridWorkoutLoggerCtx;
+  const card=activeCard(),ex=collect()[0];
+  if(!ex||(!ex.name&&!ex.sets.length)){setMsg('Add an exercise first.',true);return false}
+  if(!ex.name){setMsg('Give the exercise a name.',true);return false}
+  if(!ex.sets.length){setMsg(`Add some numbers for ${ex.name}.`,true);return false}
+  S.busy=true;const btn=card.querySelector('.wl-saveex');btn.disabled=true;btn.textContent='Saving…';setMsg('');
+  try{
+    const sb=ctx.supabase,gym=ctx.gym(),uid=ctx.session().user.id;
+    await ensureSession();
+    const e=await sb.from('workout_entries').insert({session_id:S.sessionId,gym_id:gym.id,user_id:uid,exercise_name:ex.name,tracking_type:ex.type==='cardio'?'distance':ex.type,position:S.entries.length}).select('id').single();
+    if(e.error)throw e.error;
+    const ins=await sb.from('workout_sets').insert(ex.sets.map((st,j)=>({entry_id:e.data.id,set_number:j+1,...st})));
+    if(ins.error){await sb.from('workout_entries').delete().eq('id',e.data.id);throw ins.error}
+    S.entries.push({id:e.data.id,...ex});
+    let won=[];try{won=await registerPBs([ex],S.performed,gym.id,uid)}catch(err){console.warn('PB check failed',err)}
+    renderLogged();const c=freshCard();
+    if(won.length)toast(`🏆 ${won.every(w=>w.first)?(won.length>1?'First PBs logged':'First PB logged'):(won.length>1?'New PBs':'New PB')}: ${won.slice(0,3).map(pbText).map(esc).join(', ')}${won.length>3?` +${won.length-3} more`:''}`);
+    const body=$('workoutModal').querySelector('.wl-body');if(body)body.scrollTop=body.scrollHeight;
+    return true;
+  }catch(err){setMsg(err.message||'Could not save exercise',true);return false}
+  finally{S.busy=false;const b=card.querySelector('.wl-saveex');if(b){b.disabled=false;b.textContent='Save exercise'}}
+}
+async function dropEntry(i){
+  const sb=ctx.supabase,e=S.entries[i];
+  const a=await sb.from('workout_sets').delete().eq('entry_id',e.id);if(a.error)throw a.error;
+  const b=await sb.from('workout_entries').delete().eq('id',e.id);if(b.error)throw b.error;
+  S.entries.splice(i,1);
+  // keep positions tidy
+  for(let k=i;k<S.entries.length;k++)await sb.from('workout_entries').update({position:k}).eq('id',S.entries[k].id);
+}
+async function removeEntry(i){
+  if(S.busy)return;S.busy=true;
+  try{await dropEntry(i);renderLogged();setMsg('')}catch(err){setMsg(err.message||'Could not remove',true)}finally{S.busy=false}
+}
+function fillCard(card,e){
+  card.querySelector('.exerciseName').value=e.name;setType(card,e.type,true);card.querySelector('.wl-sets').innerHTML='';
+  e.sets.forEach(st=>{
+    const r=addSet(card),set=(k,v)=>{const el=r.querySelector('.'+k);if(el&&v!=null)el.value=v};
+    if(e.type==='strength'){set('v-reps',st.reps);set('v-kg',st.weight_kg)}
+    else if(e.type==='cardio'||e.type==='time'){
+      if(st.distance_m!=null){if(st.distance_m>=1000&&st.distance_m%100===0){set('v-dist',st.distance_m/1000);set('v-unit','km')}else{set('v-dist',st.distance_m);set('v-unit','m')}}
+      if(st.duration_seconds!=null){set('v-min',Math.floor(st.duration_seconds/60));set('v-sec',st.duration_seconds%60)}
+      updatePace(r)}
+    else if(e.type==='calories')set('v-cal',st.calories);
+    else{set('v-cv',st.custom_value);set('v-cu',st.custom_unit)}
+  });
+}
+async function editEntry(i){
+  if(S.busy)return;
+  if(hasValues(activeCard())){setMsg('Save or clear the exercise you are adding first.',true);return}
+  S.busy=true;
+  try{const e=S.entries[i];await dropEntry(i);renderLogged();fillCard(activeCard(),e);setMsg('Editing — save the exercise again when done.')}
+  catch(err){setMsg(err.message||'Could not edit',true)}finally{S.busy=false}
+}
 function close(){$('workoutModal').classList.add('hidden');document.documentElement.style.overflow=''}
 function open(){
   if(!ctx)ctx=window.HybridWorkoutLoggerCtx;
   css();const m=shell();if(!m)return;
+  S.sessionId=null;S.entries=[];S.busy=false;
   $('workoutTitle').value='';$('workoutNotes').value='';$('workoutDate').value=new Date().toISOString().slice(0,10);
-  $('exerciseBuilder').innerHTML='';cardSeq=0;addExercise();setMsg('');
+  freshCard();renderLogged();setMsg('');
   m.querySelector('.wl-notes').open=false;
   m.classList.remove('hidden');document.documentElement.style.overflow='hidden';
   const sheetBody=m.querySelector('.wl-body');if(sheetBody)sheetBody.scrollTop=0;
 }
-
-let saving=false;
-async function save(){
-  if(saving)return;ctx=ctx||window.HybridWorkoutLoggerCtx;
-  const sb=ctx.supabase,gym=ctx.gym(),session=ctx.session();
-  const exercises=collect();
-  if(!exercises.length){setMsg('Add an exercise and at least one set.',true);return}
-  const unnamed=exercises.find(e=>!e.name);if(unnamed){setMsg('Give each exercise a name.',true);return}
-  const empty=exercises.find(e=>!e.sets.length);if(empty){setMsg(`Add some numbers for ${empty.name}, or remove it.`,true);return}
-  saving=true;const btn=$('saveWorkout');btn.disabled=true;btn.textContent='Saving…';setMsg('');
+async function finish(){
+  if(S.busy)return;ctx=ctx||window.HybridWorkoutLoggerCtx;
+  const card=activeCard();
+  if(card&&(card.querySelector('.exerciseName').value.trim()||hasValues(card))){
+    const ok=await saveExercise();if(!ok)return;
+  }
+  if(!S.sessionId||!S.entries.length){
+    if(S.sessionId){try{await ctx.supabase.from('workout_sessions').delete().eq('id',S.sessionId)}catch(_){}S.sessionId=null}
+    close();return;
+  }
+  const btn=$('saveWorkout');btn.disabled=true;
   try{
-    const uid=session.user.id,performed=new Date(($('workoutDate').value||new Date().toISOString().slice(0,10))+'T12:00:00').toISOString();
-    const s=await sb.from('workout_sessions').insert({gym_id:gym.id,user_id:uid,title:$('workoutTitle').value.trim()||exercises[0].name||'Workout',performed_at:performed,notes:$('workoutNotes').value.trim()||null}).select('id').single();
-    if(s.error)throw s.error;
-    const entryRows=exercises.map((e,i)=>({session_id:s.data.id,gym_id:gym.id,user_id:uid,exercise_name:e.name,tracking_type:e.type==='cardio'?'distance':e.type,position:i}));
-    const e=await sb.from('workout_entries').insert(entryRows).select('id,position');
-    if(e.error)throw e.error;
-    const idByPos={};for(const r of e.data)idByPos[r.position]=r.id;
-    const setRows=[];
-    exercises.forEach((ex,i)=>ex.sets.forEach((st,j)=>setRows.push({entry_id:idByPos[i],set_number:j+1,...st})));
-    const ins=await sb.from('workout_sets').insert(setRows);
-    if(ins.error)throw ins.error;
-    let won=[];try{won=await registerPBs(exercises,performed,gym.id,uid)}catch(err){console.warn('PB check failed',err)}
+    const gym=ctx.gym(),uid=ctx.session().user.id;
+    const performed=new Date(($('workoutDate').value||new Date().toISOString().slice(0,10))+'T12:00:00').toISOString();
+    const u=await ctx.supabase.from('workout_sessions').update({title:$('workoutTitle').value.trim()||S.entries[0].name||'Workout',performed_at:performed,notes:$('workoutNotes').value.trim()||null}).eq('id',S.sessionId);
+    if(u.error)throw u.error;
+    const detail={gymId:gym.id,userId:uid,sessionId:S.sessionId};
     close();
-    try{await ctx.afterSave({gymId:gym.id,userId:uid,sessionId:s.data.id})}catch(err){console.warn(err)}
-    if(won.length)toast(`🏆 ${won.every(w=>w.first)?(won.length>1?'First PBs logged':'First PB logged'):(won.length>1?'New PBs':'New PB')}: ${won.slice(0,3).map(pbText).map(esc).join(', ')}${won.length>3?` +${won.length-3} more`:''}`);
-  }catch(err){setMsg(err.message||'Could not save workout',true)}
-  finally{saving=false;btn.disabled=false;btn.textContent='Save workout'}
+    try{await ctx.afterSave(detail)}catch(err){console.warn(err)}
+  }catch(err){setMsg(err.message||'Could not finish workout',true)}
+  finally{btn.disabled=false}
 }
 
 /* One-line summary of a logged exercise for the history list. */
