@@ -66,7 +66,7 @@ html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView
 html.admin-embedded .main{min-height:100%!important;background:#f5f7fb!important}
 html.admin-embedded .admin-mobile-menu-btn,html.admin-embedded .admin-mobile-backdrop{display:none!important}
 @media(max-width:900px){html.admin-hot-nav #app.hidden{display:block!important}html.admin-embedded #loading::after{left:14px!important}}
-</style><script src="./gym-context.js?v=46181f3f068d"></script><script src="./app-stability.js?v=46181f3f068d"></script><link rel="stylesheet" href="./admin-shell.css?v=46181f3f068d"><link rel="stylesheet" href="./admin-pages.css?v=46181f3f068d"><link rel="stylesheet" href="./app-consistency.css?v=46181f3f068d"></head>
+</style><script src="./gym-context.js?v=cc1e38fde1ab"></script><script src="./app-stability.js?v=cc1e38fde1ab"></script><link rel="stylesheet" href="./admin-shell.css?v=cc1e38fde1ab"><link rel="stylesheet" href="./admin-pages.css?v=cc1e38fde1ab"><link rel="stylesheet" href="./app-consistency.css?v=cc1e38fde1ab"></head>
 <body>
 <div class="shell gym-layout-shell">
 <main class="main">
@@ -421,4 +421,4 @@ document.querySelectorAll('[data-find]').forEach(b=>b.onclick=()=>highlight(b.da
 $('undoBtn').onclick=undoLast;$('resetBtn').onclick=()=>{if(!confirm('Clear the entire gym layout? You can undo this immediately afterwards.'))return;remember();state={background:'',zones:[],items:[],outline:[],rooms:[],walls:[],doors:[]};selected=null;pendingPoint=null;draftOutline=[];setTool('select');setWizardStep(1);save(true);render();toast('Layout cleared')};
 renderCatalog();load();syncUndo();
 </script>
-<script src="./shared-shell.js?v=46181f3f068d" defer></script><script src="./gym-switcher.js?v=46181f3f068d" defer></script><script src="./account-menu.js?v=46181f3f068d" defer></script><script src="./admin-embed.js?v=46181f3f068d" defer></script><script src="./shared-admin-nav.js?v=46181f3f068d" defer></script><script src="./admin-access-guard.js?v=46181f3f068d" defer></script><script src="./admin-transition-diagnostics.js?v=46181f3f068d" defer></script></body></html>
+<script src="./shared-shell.js?v=cc1e38fde1ab" defer></script><script src="./gym-switcher.js?v=cc1e38fde1ab" defer></script><script src="./account-menu.js?v=cc1e38fde1ab" defer></script><script src="./admin-embed.js?v=cc1e38fde1ab" defer></script><script src="./shared-admin-nav.js?v=cc1e38fde1ab" defer></script><script src="./admin-access-guard.js?v=cc1e38fde1ab" defer></script><script src="./admin-transition-diagnostics.js?v=cc1e38fde1ab" defer></script></body></html>
