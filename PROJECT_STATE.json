@@ -14,9 +14,9 @@
     "note": "Production release completed at 538312c56996de115326970f45e42f0fcd841571. Dev has since advanced with test/docs-only routing verification updates."
   },
   "release_gate": {
-    "production_hold": true,
-    "production_promotion_allowed": false,
-    "reason": "Production release 538312c56996de115326970f45e42f0fcd841571 is complete and verified. Promotion is re-held until a future release is deliberately prepared and re-authorised."
+    "production_hold": false,
+    "production_promotion_allowed": true,
+    "reason": "Owner authorised a release of the membership-status rules, member-page tabs and consistency fixes on 6 October 2026. The hold must be restored in a follow-up PR once the release is verified."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
