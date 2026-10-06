@@ -1,5 +1,7 @@
 # HybridOne live status
 
+> **6 October 2026 — release in progress.** The production hold is lifted in `PROJECT_STATE.json` by the owner's approval to release the membership-status rules, member-page tabs and consistency fixes to `main`. Steps: all four gates green on this exact commit, enable "Manual production release", run it with the exact SHA, verify the live site, disable the workflow, then a follow-up PR restores the hold.
+
 ## Current operating state — 5 October 2026 (read this first)
 
 - **Production:** `main` = `538312c56996de115326970f45e42f0fcd841571` (released 2 Oct; Vercel READY; rollback tag `prod-2026-10-02` points at the previous production `94803abaf78b3b994708bbd6c3e8f0f956a91d89`). `PROJECT_STATE.json` on `dev` has `production_hold: true` and `production_promotion_allowed: false`. The "Manual production release" workflow is DISABLED in the Actions tab (enable only to run a release). "HybridOne production routing" is enabled. The `main` ruleset has a temporary repository-admin bypass, pull requests only.
