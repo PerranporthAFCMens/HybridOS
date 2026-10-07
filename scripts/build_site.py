@@ -134,7 +134,11 @@ def finalise_ui_contract():
   s=re.sub(r'<link[^>]+href=["\']\.\/app-consistency\.css(?:\?[^"\']*)?["\'][^>]*>','',s,flags=re.I)
   s=s.replace('</head>',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}"></head>',1)
   write(n,s)
+def add_viewport_fit_to_admin_frame():
+ for n in ('admin.html',):
+  if (OUT/n).exists():
+   write(n,re.sub(r'(name="viewport" content="[^"]*?)"',lambda m:m.group(1)+('' if 'viewport-fit' in m.group(1) else ',viewport-fit=cover')+'"',read(n),count=1))
 def write_deployment_manifest():
  (OUT/'deployment.json').write_text(json.dumps({'build_sha':BUILD_SHA,'build_version':VERSION},indent=2)+'\n',encoding='utf-8')
-def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
+def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();add_viewport_fit_to_admin_frame();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
 if __name__=='__main__':build()
