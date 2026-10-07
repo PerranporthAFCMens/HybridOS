@@ -30,13 +30,13 @@
   if(document.getElementById('hybridMemberAccessStyle'))return;
   const st=document.createElement('style');st.id='hybridMemberAccessStyle';
   st.textContent=[
-   '#hybridMemberStatusBanner{margin:0 0 14px;padding:12px 14px;border-radius:10px;background:rgba(255,122,69,.12);border:1px solid #FF7A45;color:var(--hybrid-ember);font-size:14px;line-height:1.45;font-weight:600}',
-   '#hybridMemberAccessBlock{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:24px;background:var(--hybrid-bg);color:var(--hybrid-ink);font-family:var(--hybrid-font)}',
-   '#hybridMemberAccessBlock .hmab-card{max-width:440px;width:100%;background:var(--hybrid-panel);border:1px solid var(--hybrid-line);border-radius:16px;padding:26px;box-shadow:none;text-align:center}',
+   '#hybridMemberStatusBanner{margin:0 0 14px;padding:12px 14px;border-radius:14px;background:#fffaeb;border:1px solid #fedf89;color:#93370d;font-size:14px;line-height:1.45;font-weight:600}',
+   '#hybridMemberAccessBlock{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:24px;background:#f5f7fb;color:#101828;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}',
+   '#hybridMemberAccessBlock .hmab-card{max-width:440px;width:100%;background:#fff;border:1px solid #e7ebf2;border-radius:20px;padding:26px;box-shadow:0 14px 34px rgba(16,24,40,.08);text-align:center}',
    '#hybridMemberAccessBlock h1{font-size:22px;margin:0 0 10px}',
-   '#hybridMemberAccessBlock p{margin:0 0 18px;color:var(--hybrid-muted);line-height:1.5}',
+   '#hybridMemberAccessBlock p{margin:0 0 18px;color:#667085;line-height:1.5}',
    '#hybridMemberAccessBlock .hmab-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}',
-   '#hybridMemberAccessBlock a{display:inline-block;padding:11px 16px;border-radius:10px;font-weight:600;text-decoration:none;border:1px solid var(--hybrid-line);color:var(--hybrid-ink);background:var(--hybrid-panel)}',
+   '#hybridMemberAccessBlock a{display:inline-block;padding:11px 16px;border-radius:12px;font-weight:800;text-decoration:none;border:1px solid #e7ebf2;color:#101828;background:#fff}',
    '#hybridMemberAccessBlock a.hmab-primary{background:#0b1020;color:#fff;border-color:#0b1020}',
    'html[data-member-access="paused"] [data-page="classes"],html[data-member-access="paused"] .nav a,html[data-member-access="paused"] #classes,html[data-member-access="paused"] .card:has(#nextClasses),html[data-member-access="paused"] .card:has(#upcomingCount),html[data-member-access="paused"] #newWorkoutBtn,html[data-member-access="paused"] #newPbBtn,html[data-member-access="paused"] [data-del-workout],html[data-member-access="paused"] [data-del-pb]{display:none!important}',
    'html[data-member-access="pending"] .nav>*:not([data-page="membership"]),html[data-member-access="pending"] .bottom{display:none!important}'

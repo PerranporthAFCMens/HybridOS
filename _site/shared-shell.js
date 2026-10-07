@@ -25,7 +25,7 @@
   };
 
   function icon(name,cls='hybrid-nav-icon'){
-    return '<svg class="'+cls+'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||'')+'</svg>';
+    return '<svg class="'+cls+'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||'')+'</svg>';
   }
 
   function normaliseChrome(side){
@@ -33,7 +33,7 @@
     let brand=side.querySelector('.brand-logo,.brand,.logo');
     if(!brand){brand=document.createElement('div');side.prepend(brand)}
     brand.className='logo brand-logo hybrid-shell-brand';
-    brand.innerHTML='<img class="hybrid-logo-img" src="./assets/brand/logo/svg/hybridone-logo-on-dark.svg" alt="HybridOne" height="34">';
+    brand.innerHTML='<svg class="brand-mark" viewBox="0 0 54 48" aria-hidden="true"><path d="M6 42 L27 6 M12 42 L30 11 M18 42 L33 16 M48 42 L27 6 M42 42 L24 11 M36 42 L21 16"/></svg><span class="brand-word" aria-label="HybridOne"><span>Hybrid</span><b>One</b></span>';
 
     const gym=side.querySelector('.gym');
     if(gym){

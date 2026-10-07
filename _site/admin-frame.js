@@ -12,14 +12,18 @@ function gymLoginUrl(returnHere=true){
 }
 const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html']);
 const routes=[
- {key:'dashboard',label:'Today',icon:'home',view:'index.html'},
+ {key:'dashboard',label:'Dashboard',icon:'dashboard',view:'index.html'},
+ {key:'community',label:'Community',icon:'community',view:'community.html'},
+ {key:'classes',label:'Classes',icon:'classes',view:'classes.html'},
+ {key:'workouts',label:'Workouts',icon:'workouts',view:'workout-builder.html'},
+ {key:'services',label:'Services & resources',icon:'services',view:'admin-operations.html#resources'},
+ {key:'staff',label:'Staff management',icon:'staff',view:'admin-operations.html#staff'},
  {key:'members',label:'Members',icon:'members',view:'index.html#members'},
- {key:'classes',label:'Classes and workouts',icon:'classes',view:'classes.html'},
- {key:'community',label:'Messages and community',icon:'community',view:'communications.html'},
- {key:'reporting',label:'Reports',icon:'reporting',view:'reporting.html'},
- {key:'settings',label:'Settings and staff',icon:'admin',view:'admin-operations.html#staff'},
- {key:'member-view',label:'Preview as member',icon:'profile',href:'./member.html?view=member',section:'Preview'},
- {key:'staff-view',label:'Preview as staff',icon:'staff',href:'./staff.html?view=staff'}
+ {key:'communications',label:'Communications',icon:'community',view:'communications.html'},
+ {key:'reporting',label:'Reporting',icon:'reporting',view:'reporting.html'},
+ {key:'member-experience',label:'Member experience',icon:'profile',view:'member-view-settings.html'},
+ {key:'member-view',label:'Member',icon:'profile',href:'./member.html?view=member',section:'View as'},
+ {key:'staff-view',label:'Staff',icon:'staff',href:'./staff.html?view=staff'}
 ];
 const frameA=document.getElementById('adminContentFrameA'),frameB=document.getElementById('adminContentFrameB'),nav=document.getElementById('adminFrameNav'),gymName=document.getElementById('adminFrameGym'),frameMain=document.querySelector('.admin-frame-main');
 let activeFrame=frameA,inactiveFrame=frameB,currentView='',loadSeq=0,pendingSwap=null,initialReadyFallback=null;
@@ -43,12 +47,16 @@ function embeddedUrl(view){
 }
 function keyFor(view){
  const v=cleanView(view),[file,hash='']=v.split('#');
- if(file==='community.html'||file==='communications.html')return'community';
- if(file==='classes.html'||file==='class-setup.html'||file==='workout-builder.html')return'classes';
- if(['admin-operations.html','staff-permissions.html','admin-access.html','resource-availability.html','gym-layout.html','access-settings.html','member-view-settings.html'].includes(file))return'settings';
+ if(file==='community.html')return'community';
+ if(file==='classes.html'||file==='class-setup.html')return'classes';
+ if(file==='workout-builder.html')return'workouts';
+ if(file==='admin-operations.html')return hash==='staff'?'staff':'services';
+ if(file==='staff-permissions.html'||file==='admin-access.html')return'staff';
+ if(file==='resource-availability.html'||file==='gym-layout.html')return'services';
  if(file==='reporting.html')return'reporting';
- if(file==='index.html'&&(hash==='members'||hash==='memberships'))return'members';
- if(file==='index.html'&&hash==='community')return'community';
+ if(file==='communications.html')return'communications';
+ if(file==='member-view-settings.html')return'member-experience';
+ if(file==='index.html'&&hash==='members')return'members';
  if(file==='index.html')return'dashboard';
  return '';
 }
@@ -95,7 +103,7 @@ function navigate(view,push){
 }
 function closeMenu(){document.body.classList.remove('admin-frame-menu-open')}
 function mobile(){
- const b=document.createElement('button');b.className='admin-frame-mobile';b.type='button';b.setAttribute('aria-label','Open admin menu');b.innerHTML='<i class="hi hi-menu" aria-hidden="true"></i>';
+ const b=document.createElement('button');b.className='admin-frame-mobile';b.type='button';b.setAttribute('aria-label','Open admin menu');b.textContent='☰';
  const d=document.createElement('div');d.className='admin-frame-backdrop';d.onclick=closeMenu;
  b.onclick=()=>document.body.classList.toggle('admin-frame-menu-open');
  document.body.append(b,d);

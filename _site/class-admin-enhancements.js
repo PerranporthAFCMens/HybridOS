@@ -21,7 +21,7 @@
   document.head.appendChild(style);
 
   const topActions=document.querySelector('.top .actions'); if(!topActions) return;
-  const setupBtn=document.createElement('button'); setupBtn.className='btn secondary'; setupBtn.innerHTML='<i class="hi hi-sliders" aria-hidden="true"></i> Class setup'; setupBtn.onclick=()=>location.href='./class-setup.html'; topActions.insertBefore(setupBtn,topActions.firstChild);
+  const setupBtn=document.createElement('button'); setupBtn.className='btn secondary'; setupBtn.textContent='⚙ Class setup'; setupBtn.onclick=()=>location.href='./class-setup.html'; topActions.insertBefore(setupBtn,topActions.firstChild);
 
   async function loadData(){
     const [tr,rr,reqr]=await Promise.all([

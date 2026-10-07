@@ -13,7 +13,7 @@ Give this file to whichever AI is working on the repo. These rules apply to ever
 4. **Read before you edit.** Open the actual current file. Do not work from memory of what it "probably" contains.
 5. **Do not touch unrelated code**, including formatting, renaming and "quick clean-ups". Log them as suggestions instead.
 6. **Never edit protected areas** (listed in the project's change-control file) without an explicit instruction from the owner in the current task.
-7. **You open PRs. The owner merges, except the narrow case in rule 16. You never merge anything else.**
+7. **You open PRs. The owner merges. You never merge.**
 8. **Nothing touches `main`, rulesets, Vercel settings or the live Supabase project without the owner's explicit approval of the exact text** (the exact SQL, the exact command, the exact setting). No exceptions for "small" changes. See rule 15 for the one narrow exception for workflow files on a PR branch.
 9. **Stop at the first problem and report.** Do not fix forward. If a check fails after a merge or a live change, roll back first and investigate second.
 10. **Update `STATUS.md` in every PR.** At the start of every chat, read `STATUS.md` and this file and summarise where we are before doing anything. Anything not in `STATUS.md` counts as forgotten.
@@ -22,14 +22,6 @@ Give this file to whichever AI is working on the repo. These rules apply to ever
 13. **The repository is public.** Never put secrets, tokens, passwords, personal emails or user IDs in it. Use placeholders.
 14. **Do not weaken a test to make it pass.** Change a test only when the test is wrong, and show the evidence.
 15. **Workflow files on a PR branch (owner-approved, 5 Oct 2026).** A workflow change that belongs to the task (for example a browser-test assertion that must change together with the code it checks) may be committed to the task's PR branch without separate prior approval. It only takes effect on `dev` when the owner merges the PR, so the owner's review of the PR diff is the approval. The PR description must list every workflow file changed and show each change. This does NOT cover: the release workflow (`hourly-production.yml`), anything that changes `permissions`, secrets, tokens, OIDC or who can deploy, a change made directly on `dev` or `main`, or loosening any assertion. Those still need the owner's approval of the exact text first.
-16. **Builder may merge safe PRs into `dev` (owner-approved, 7 Oct 2026, on trial).** The builder may merge a PR itself only when ALL of these are true:
-    - the PR's base is `dev` (never `main`);
-    - every check on the PR head is green and the PR has no conflicts;
-    - every file the PR changes is inside the allow-list: `web/**` (the new app), `REBUILD_PLAN.md`, `STATUS.md`;
-    - the PR does not change a test to make it pass, and does not touch the old pages or shells, locked rendering assets, `.github/**`, `scripts/**`, `vercel.json`, `PROJECT_STATE.json`, `supabase/**`, or any rules or handover file (`AI_WORKING_RULES.md`, `HANDOVER.md`, `TASKS/**`, `PROJECT_CONTROL.md`, `ENVIRONMENT.md`). Those always need the owner.
-    Before merging, the builder lists the PR's changed files and checks each against the allow-list. The PR description says it was merged under this rule.
-    After merging, the builder reads the checks on the new `dev` commit, including the Auth journey, and tells the owner the result. If anything fails, the builder stops starting new work, reports it, and opens a revert PR; the revert of its own merge may also be merged by the builder. Auto-merge may be used only once the owner has confirmed that "Allow auto-merge" is on and that `dev` requires the checks to pass; until then the builder merges directly.
-    Never `main`, production releases, rulesets, Vercel settings or the live Supabase project. Trial: for the first three PRs merged under this rule, the builder tells the owner straight after each merge. If the owner says stop, the rule ends and rule 7 applies in full.
 
 ## 2. Definition of done
 
@@ -90,7 +82,7 @@ A change is **not done** until you have shown me:
 - **Builder (Claude Code):** writes code, runs `python3 scripts/build_site.py` and `python3 scripts/smoke_test.py _site`, opens the PR to `dev`, and updates `STATUS.md`. Best for access-control and database code. The owner approves exact text in the builder's own chat.
 - **Reviewer (Claude in chat):** reviews each PR once, from the PR number, by reading the diff, files and checks on GitHub. Says merge or do not merge, with reasons. Does not relay or reword the builder's messages, and does not write to the repo unless the owner asks.
 - **ChatGPT:** only for what needs its connectors: reading Actions run results after a merge, and Supabase or Vercel work (read-only live catalog diffs, applying owner-approved SQL). It has hit a safety block writing access-control code, so do not give it that.
-- **Owner:** merges everything except safe PRs the builder may merge under rule 16, and approves anything touching `main`, rulesets, Vercel settings or the live Supabase project.
+- **Owner:** merges everything, and approves anything touching `main`, rulesets, Vercel settings or the live Supabase project.
 
 ---
 

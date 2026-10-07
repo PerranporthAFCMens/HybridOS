@@ -39,6 +39,3 @@
     max-width:132px!important;
   }
 }
-
-.tenant-gym-logo.uploaded,.side .tenant-gym-logo.uploaded{filter:none;background:#fff;padding:8px 10px;border-radius:12px;box-sizing:border-box;max-height:76px;object-fit:contain}
-.tenant-top-brand img[src^=http]{max-height:90px;object-fit:contain}

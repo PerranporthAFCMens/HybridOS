@@ -7,8 +7,8 @@ const supabase = isPreview ? null : createClient(
 );
 
 const iconFor = type => ({
-  weight:'<i class="hi hi-dumbbell" aria-hidden="true"></i>', reps:'<i class="hi hi-repeat" aria-hidden="true"></i>', time:'<i class="hi hi-timer" aria-hidden="true"></i>', distance:'<i class="hi hi-ruler" aria-hidden="true"></i>', calories:'<i class="hi hi-flame" aria-hidden="true"></i>', custom:'<i class="hi hi-star" aria-hidden="true"></i>'
-}[type] || '<i class="hi hi-trophy" aria-hidden="true"></i>');
+  weight:'🏋️', reps:'🔁', time:'⏱️', distance:'📏', calories:'🔥', custom:'⭐'
+}[type] || '🏆');
 
 const unitFor = type => ({
   weight:'kg', reps:'reps', time:'sec', distance:'m', calories:'kcal'
@@ -25,8 +25,8 @@ function injectStyles(){
   const style=document.createElement('style');
   style.textContent=`
   .pb-modal{position:fixed;inset:0;background:rgba(11,16,32,.66);display:grid;place-items:center;padding:18px;z-index:9999}
-  .pb-modal.hidden{display:none}.pb-modal-card{width:min(560px,100%);background:var(--hybrid-panel);border-radius:16px;padding:20px;box-shadow:none}
-  .pb-modal-card h3{margin:0 0 4px}.pb-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.pb-field{margin-top:12px}.pb-field label{display:block;font-size:12px;font-weight:600;margin-bottom:5px}.pb-field input,.pb-field select,.pb-field textarea{width:100%;padding:11px;border:1px solid var(--hybrid-line);border-radius:10px;background:var(--hybrid-panel);font:inherit}.pb-field textarea{min-height:72px;resize:vertical}.pb-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.pb-toast{position:fixed;right:16px;bottom:18px;background:#0b1020;color:#fff;padding:11px 14px;border-radius:10px;z-index:10000;font-weight:600;box-shadow:none}
+  .pb-modal.hidden{display:none}.pb-modal-card{width:min(560px,100%);background:#fff;border-radius:20px;padding:20px;box-shadow:0 28px 80px rgba(0,0,0,.28)}
+  .pb-modal-card h3{margin:0 0 4px}.pb-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.pb-field{margin-top:12px}.pb-field label{display:block;font-size:12px;font-weight:800;margin-bottom:5px}.pb-field input,.pb-field select,.pb-field textarea{width:100%;padding:11px;border:1px solid #e7ebf2;border-radius:12px;background:#fff;font:inherit}.pb-field textarea{min-height:72px;resize:vertical}.pb-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.pb-toast{position:fixed;right:16px;bottom:18px;background:#0b1020;color:#fff;padding:11px 14px;border-radius:12px;z-index:10000;font-weight:800;box-shadow:0 14px 36px rgba(0,0,0,.2)}
   @media(max-width:640px){.pb-form-grid{grid-template-columns:1fr}}
   `;
   document.head.appendChild(style);
@@ -39,7 +39,7 @@ function toast(msg){
 function ensureModal(){
   if(document.getElementById('pbModal')) return;
   const wrap=document.createElement('div'); wrap.id='pbModal'; wrap.className='pb-modal hidden';
-  wrap.innerHTML=`<div class="pb-modal-card"><h3>Add a PB</h3><div style="color:var(--hybrid-muted)">Record a personal best manually.</div>
+  wrap.innerHTML=`<div class="pb-modal-card"><h3>Add a PB</h3><div style="color:#667085">Record a personal best manually.</div>
     <div class="pb-form-grid"><div class="pb-field"><label>Exercise / event</label><input id="pbExercise" placeholder="e.g. Deadlift or 5K"></div><div class="pb-field"><label>PB type</label><select id="pbMetric"><option value="weight">Weight</option><option value="reps">Reps</option><option value="time">Time</option><option value="distance">Distance</option><option value="calories">Calories</option><option value="custom">Custom</option></select></div></div>
     <div class="pb-form-grid"><div class="pb-field"><label>Value</label><input id="pbValue" type="number" step="any" placeholder="0"></div><div class="pb-field"><label>Unit</label><input id="pbUnit" placeholder="kg"></div></div>
     <div class="pb-form-grid"><div class="pb-field"><label>Better result</label><select id="pbDirection"><option value="higher">Higher is better</option><option value="lower">Lower is better</option></select></div><div class="pb-field"><label>Date</label><input id="pbDate" type="date"></div></div>
@@ -62,7 +62,7 @@ function getPBGrid(){ return document.querySelector('.pb-grid') || document.getE
 
 function cardHTML(pb){
   const date=pb.achieved_at ? new Date(pb.achieved_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
-  return `<div class="pb-card" data-key="${esc(pb.exercise_key || normalise(pb.exercise_name))}" data-metric="${esc(pb.metric_type)}"><div class="pb-icon">${iconFor(pb.metric_type)}</div><div class="eyebrow" style="margin-top:8px">${esc(pb.metric_type)}</div><h3 style="margin:5px 0 0">${esc(pb.exercise_name)}</h3><div class="pb-value">${esc(window.HybridWorkoutLogger?.pbValue?window.HybridWorkoutLogger.pbValue(pb):pb.value_numeric+(pb.unit?' '+pb.unit:''))}</div><div class="muted" style="margin-top:6px">${date}${pb.notes?' · '+esc(pb.notes):''}</div></div>`;
+  return `<div class="pb-card" data-key="${esc(pb.exercise_key || normalise(pb.exercise_name))}" data-metric="${esc(pb.metric_type)}"><div class="pb-icon">${iconFor(pb.metric_type)}</div><div class="eyebrow" style="margin-top:8px">${esc(pb.metric_type)}</div><h3 style="margin:5px 0 0">${esc(pb.exercise_name)}</h3><div class="pb-value">${esc(pb.value_numeric)}${pb.unit?' <span style="font-size:14px;color:#667085">'+esc(pb.unit)+'</span>':''}</div><div class="muted" style="margin-top:6px">${date}${pb.notes?' · '+esc(pb.notes):''}</div></div>`;
 }
 
 function renderPreviewPBs(){
@@ -88,7 +88,6 @@ async function upsertPB(pb){
   const better=!existing || (pb.comparison_direction==='lower'?Number(pb.value_numeric)<Number(existing.value_numeric):Number(pb.value_numeric)>Number(existing.value_numeric));
   if(!better) return false;
   const payload={...pb,gym_id:gymId,user_id:authUser.id};
-  delete payload.exercise_key; /* generated by the database */
   let error;
   if(existing?.id) ({error}=await supabase.from('personal_bests').update(payload).eq('id',existing.id));
   else ({error}=await supabase.from('personal_bests').insert(payload));
@@ -100,7 +99,7 @@ async function saveManualPB(){
   if(!exercise||!Number.isFinite(value)){toast('Add an exercise and value');return}
   const metric=m.querySelector('#pbMetric').value, unit=m.querySelector('#pbUnit').value.trim()||unitFor(metric), direction=m.querySelector('#pbDirection').value;
   const pb={exercise_name:exercise,exercise_key:normalise(exercise),metric_type:metric,comparison_direction:direction,value_numeric:value,unit,achieved_at:new Date((m.querySelector('#pbDate').value||new Date().toISOString().slice(0,10))+'T12:00:00').toISOString(),notes:m.querySelector('#pbNotes').value.trim()||null,workout_set_id:null};
-  const saved=await upsertPB(pb); m.classList.add('hidden'); toast(saved?'PB saved':'That did not beat your current PB');
+  const saved=await upsertPB(pb); m.classList.add('hidden'); toast(saved?'PB saved 🏆':'That did not beat your current PB');
 }
 
 function readNumber(input){const n=Number(input?.value);return Number.isFinite(n)?n:null}
@@ -130,7 +129,7 @@ async function capturePBsFromWorkout(){
       const did=await upsertPB({exercise_name:name,exercise_key:key,metric_type:c.metric_type,comparison_direction:'higher',value_numeric:c.value_numeric,unit:c.unit,achieved_at:new Date(date).toISOString(),notes:'From workout',workout_set_id:null}); if(did) improved++;
     }
   }
-  if(improved) toast(`${improved} new PB${improved===1?'':'s'} from this workout`);
+  if(improved) toast(`${improved} new PB${improved===1?'':'s'} from this workout 🏆`);
 }
 
 async function init(){

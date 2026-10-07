@@ -15,7 +15,7 @@
     if(!gym.querySelector('.hybrid-gym-switch-note')){
       const note=document.createElement('div');
       note.className='hybrid-gym-switch-note';
-      note.innerHTML='<i class="hi hi-repeat" aria-hidden="true"></i><span>Switch gym</span>';
+      note.textContent='Switch gym';
       gym.appendChild(note);
     }
     const open=e=>{e?.preventDefault();location.href='./choose-gym.html?switch=1'};
