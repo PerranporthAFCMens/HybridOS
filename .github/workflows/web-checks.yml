@@ -36,12 +36,28 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
 
+      # The Ubuntu package server sometimes stalls for many minutes. Make apt give up on a stalled
+      # download quickly and retry it, instead of hanging until our own time limit.
+      - name: Make apt retry a stalled download
+        run: |
+          sudo tee /etc/apt/apt.conf.d/99-ci-network >/dev/null <<'EOF'
+          Acquire::Retries "5";
+          Acquire::http::Timeout "20";
+          Acquire::https::Timeout "20";
+          DPkg::Lock::Timeout "120";
+          EOF
+
       # The download has hung for 5+ minutes on some runs. Give each attempt 3 minutes, try 3 times.
+      # After a timed-out attempt, stop its leftover apt process, which would otherwise hold the lock
+      # and make every later attempt fail instantly.
       - name: Install browser (retries a stuck download)
         run: |
           for attempt in 1 2 3; do
             if timeout 180 npx playwright install --with-deps chromium; then exit 0; fi
             echo "browser install attempt $attempt failed or timed out"
+            sudo pkill -9 -x apt-get || true
+            sudo pkill -9 -x apt || true
+            sleep 3
           done
           exit 1
         working-directory: web
@@ -80,11 +96,25 @@ jobs:
       - name: Build the whole site (includes web/ -> _site/next/)
         run: python3 scripts/build_site.py
 
+      # The Ubuntu package server sometimes stalls for many minutes. Make apt give up on a stalled
+      # download quickly and retry it, instead of hanging until our own time limit.
+      - name: Make apt retry a stalled download
+        run: |
+          sudo tee /etc/apt/apt.conf.d/99-ci-network >/dev/null <<'EOF'
+          Acquire::Retries "5";
+          Acquire::http::Timeout "20";
+          Acquire::https::Timeout "20";
+          DPkg::Lock::Timeout "120";
+          EOF
+
       - name: Install the Safari-style browser and its Linux packages
         run: |
-          for attempt in 1 2; do
-            if timeout 600 npx playwright install --with-deps webkit; then exit 0; fi
+          for attempt in 1 2 3; do
+            if timeout 420 npx playwright install --with-deps webkit; then exit 0; fi
             echo "webkit install attempt $attempt failed or timed out"
+            sudo pkill -9 -x apt-get || true
+            sudo pkill -9 -x apt || true
+            sleep 3
           done
           exit 1
         working-directory: web
