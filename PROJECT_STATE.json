@@ -5,7 +5,7 @@
   "branches": {
     "production_source": "main",
     "development_source": "dev",
-    "production_main_sha": "05b1f5545aefccce754e56879c51d14abe1eafcf",
+    "production_main_sha": "cef17ce3d3aa591531c5aead61d8cbd97a965bd2",
     "verified_dev_application_sha": "db125d7e0f024ec5a828a3930c89ec3fa385fd29",
     "relationship": "main_is_ancestor_of_dev",
     "dev_ahead_by": 281,
@@ -14,15 +14,15 @@
     "note": "Production release completed at 538312c56996de115326970f45e42f0fcd841571. Dev has since advanced with test/docs-only routing verification updates."
   },
   "release_gate": {
-    "production_hold": false,
-    "production_promotion_allowed": true,
-    "reason": "Owner authorised a production release on 7 October 2026 (workout logger, member sign-up, gym logo branding, swipe menu, marketing video, iPhone bar fixes). The hold is cleared only for this release and is restored straight after it."
+    "production_hold": true,
+    "production_promotion_allowed": false,
+    "reason": "Production release cef17ce3d3aa591531c5aead61d8cbd97a965bd2 (7 October 2026) is complete and verified. Promotion is re-held until a future release is deliberately prepared and re-authorised."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
     "hybrid_hub_login": "https://www.hybridone.co.uk/hybrid-hub",
     "puffin_performance_login": "https://www.hybridone.co.uk/puffin-performance",
-    "deployed_source_sha": "05b1f5545aefccce754e56879c51d14abe1eafcf",
+    "deployed_source_sha": "cef17ce3d3aa591531c5aead61d8cbd97a965bd2",
     "deployment_state": "READY",
     "auth_model": "universal login in production; / is the sign-in entry, with gym-specific /hybrid-hub and /puffin-performance redirect shims",
     "canonical_routes": {
