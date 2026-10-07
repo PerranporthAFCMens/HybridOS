@@ -6,8 +6,8 @@ import {
   listChannels,
   listClassSessions,
   listGymMembers,
-  listPlans,
 } from '../data/today';
+import { listPlans } from '../data/plans';
 
 /** All data for the Today screen, one cached query per source. */
 export function useToday(gymId: string, userId: string, email: string) {

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { Card, Empty, SectionTitle } from '../ui/Card';
 import { LinkButton } from '../ui/Button';
-import { legacyRoutes } from '../shell/legacy';
+import { links } from '../shell/legacy';
 import { MemberTrend } from './MemberTrend';
 import {
   activePlans,
@@ -57,8 +57,8 @@ export function Today() {
         <Card className="full today-head">
           <p className="muted">{needs ? summaryLine(needs.length) : 'Checking what needs you…'}</p>
           <div className="today-actions">
-            <LinkButton href={legacyRoutes['class-setup']}>Add a class</LinkButton>
-            <LinkButton variant="primary" href={legacyRoutes.members}>Invite members</LinkButton>
+            <LinkButton href={links['class-setup']}>Add a class</LinkButton>
+            <LinkButton variant="primary" href={links.members}>Invite members</LinkButton>
           </div>
         </Card>
 
@@ -75,7 +75,7 @@ export function Today() {
                     <b>{n.title}</b>
                     <span>{n.sub}</span>
                   </div>
-                  <LinkButton href={legacyRoutes[n.to]}>{n.button}</LinkButton>
+                  <LinkButton href={links[n.to]}>{n.button}</LinkButton>
                 </div>
               ))}
             </div>
@@ -110,7 +110,7 @@ export function Today() {
         />
 
         <Card className="wide">
-          <SectionTitle title="Classes today" action={<a className="muted-link" href={legacyRoutes.classes}>Open timetable</a>} />
+          <SectionTitle title="Classes today" action={<a className="muted-link" href={links.classes}>Open timetable</a>} />
           {!q.sessions.data ? (
             <Empty>Loading classes…</Empty>
           ) : todays.length ? (
@@ -135,7 +135,7 @@ export function Today() {
         </Card>
 
         <Card className="wide">
-          <SectionTitle title="Membership plans" action={<a className="btn secondary" href={legacyRoutes.plans}>Manage</a>} />
+          <SectionTitle title="Membership plans" action={<a className="btn secondary" href={links.plans}>Manage</a>} />
           {!plans ? (
             <Empty>Loading plans…</Empty>
           ) : activePlans(plans).length ? (
@@ -151,7 +151,7 @@ export function Today() {
         </Card>
 
         <Card className="narrow">
-          <SectionTitle title="Community" action={<a className="muted-link" href={legacyRoutes.community}>Open</a>} />
+          <SectionTitle title="Community" action={<a className="muted-link" href={links.community}>Open</a>} />
           {!q.channels.data ? (
             <Empty>Loading channels…</Empty>
           ) : q.channels.data.length ? (

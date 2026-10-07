@@ -1,7 +1,6 @@
 import { supabase } from './client';
 import type { Database } from './database.types';
 
-export type BillingInterval = string;
 
 export interface GymMemberRow {
   userId: string;
@@ -11,16 +10,7 @@ export interface GymMemberRow {
 
 export interface ActiveMembershipValue {
   priceInPence: number;
-  interval: BillingInterval;
-}
-
-export interface PlanRow {
-  id: string;
-  name: string;
-  priceInPence: number;
-  interval: BillingInterval;
-  accessType: string;
-  isActive: boolean;
+  interval: string;
 }
 
 export interface ChannelRow {
@@ -65,23 +55,6 @@ export async function countPendingPayments(gymId: string): Promise<number> {
     .eq('payment_status', 'pending');
   if (error) throw error;
   return count ?? 0;
-}
-
-export async function listPlans(gymId: string): Promise<PlanRow[]> {
-  const { data, error } = await supabase
-    .from('membership_plans')
-    .select('id, name, price_pence, billing_interval, access_type, is_active')
-    .eq('gym_id', gymId)
-    .order('price_pence');
-  if (error) throw error;
-  return (data ?? []).map((p) => ({
-    id: p.id,
-    name: p.name,
-    priceInPence: p.price_pence,
-    interval: p.billing_interval,
-    accessType: p.access_type,
-    isActive: p.is_active,
-  }));
 }
 
 export async function listChannels(gymId: string): Promise<ChannelRow[]> {

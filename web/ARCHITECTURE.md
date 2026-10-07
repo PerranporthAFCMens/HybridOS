@@ -9,11 +9,12 @@ The new app described in `REBUILD_PLAN.md`. TypeScript (strict), React, Vite, Ta
 | `src/data/` | The only code that talks to Supabase: the client, generated `database.types.ts`, one file per area (`memberships.ts`, `auth.ts`, ...) returning plain typed objects | nothing app-level |
 | `src/auth/` | The one owner of sign-in and gym context (`AuthProvider`), pure access rules (`access.ts`), selected-gym storage | `data/` |
 | `src/shell/` | Sidebar and page frame (`Shell`), and `legacy.ts` (links into old pages not yet moved) | `auth/`, `ui/` |
+| `src/members/` | The Members screen: `Members.tsx` (directory), `MemberRecord.tsx` (record and writes), `useMembers.ts` (queries and mutations), `calc.ts` (pure rules, unit tested) | `auth/`, `ui/`, `data/` |
 | `src/today/` | The Today screen: `Today.tsx`, `useToday.ts` (queries), `calc.ts` (pure rules, unit tested), `MemberTrend.tsx` | `auth/`, `ui/`, `data/` |
 | `src/ui/` | Brand tokens (`tokens.css`) and shared components (Button, Card, ...) | nothing |
 | `src/app/` | Router and the sign-in / gym gate | everything |
 | `tests/` | Vitest unit and component tests | |
-| `browser/` | Playwright browser checks (phone 390px and desktop 1280px) run in CI. `today.mjs` signs in with a fake session and mocks Supabase at the network layer | |
+| `browser/` | Playwright browser checks (phone 390px and desktop 1280px) run in CI. `today.mjs` and `members.mjs` sign in with a fake session (`mock.mjs`) and mock Supabase at the network layer; `members.mjs` also asserts the exact request of every write | |
 
 ## Rules
 
