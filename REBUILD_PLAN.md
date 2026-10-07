@@ -48,7 +48,7 @@ The new app lives in `web/` and is built to `_site/next/` by `scripts/build_site
 **Next, in this order (recommended):**
 1. **Membership plans** (create, edit, activate/deactivate a plan). *Built on branch `rebuild-plans`, awaiting acceptance.* Small, finishes the Members area, and Today's "Manage" and "Add a plan" buttons currently still open the old page.
 2. **Classes** (timetable view first, then class setup and booking admin). Larger; split into read-only timetable, then writes. *Read-only timetable merged (#129); Add class form built on branch `rebuild-class-form`, awaiting the owner's merge. Class setup (class types, resources, capabilities) is a separate old page, still to move.*
-3. **Reports**, then **Settings and staff**, then the **member app**.
+3. **Reports** (5a Overview built on branch `rebuild-reports`; 5b Memberships, Classes and Members tabs; 5c Payments, report library and exports), then **Settings and staff**, then the **member app**.
 4. Retire each old page as its replacement ships (starting with Today and Members once accepted).
 5. A signed-in browser test against real data (needs a disposable test persona and an Edge Function change, which needs the owner's approval of the exact text).
 

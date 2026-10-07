@@ -6,6 +6,7 @@ import { Today } from '../today/Today';
 import { Members } from '../members/Members';
 import { Plans } from '../plans/Plans';
 import { Classes } from '../classes/Classes';
+import { Reports } from '../reports/Reports';
 import { homeFor } from '../auth/access';
 
 function Leave({ to }: { to: string }) {
@@ -43,6 +44,7 @@ export function App() {
             <Route path="/members" element={<Members />} />
             <Route path="/plans" element={<Plans />} />
             <Route path="/classes" element={<Classes />} />
+            <Route path="/reports" element={<Reports />} />
             <Route path="*" element={<Navigate to="/today" replace />} />
           </Route>
         </Routes>
