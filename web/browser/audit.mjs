@@ -24,7 +24,7 @@ const handle = async ({ route, url, path, select }) => {
   }
   if (path.endsWith('/memberships') && select.includes('starts_on')) return reply(route, [{ id: 'm1', status: 'active', starts_on: '2026-03-01', ends_on: null, payment_provider: 'manual', payment_status: 'confirmed', membership_plans: { name: 'Hybrid Monthly with a long plan name', price_pence: 4500, billing_interval: 'monthly' } }]);
   if (path.endsWith('/memberships') && select.includes('membership_plans')) return reply(route, [{ user_id: ADA, status: 'active', membership_plans: { name: 'Hybrid Monthly' } }]);
-  if (path.endsWith('/membership_plans')) return reply(route, [{ id: 'p1', name: 'Hybrid Monthly with a long plan name', price_pence: 4500, billing_interval: 'monthly', access_type: 'hybrid', is_active: true }]);
+  if (path.endsWith('/membership_plans')) return reply(route, [{ id: 'p1', name: 'Hybrid Monthly with a long plan name', price_pence: 4500, billing_interval: 'monthly', access_type: 'hybrid', is_active: true, description: 'Everything included, with a longer description to wrap over a few lines on a narrow phone screen', joining_fee_pence: 1000, classes_per_week: null, includes_open_gym: true, includes_classes: true, includes_pt: false, is_public: true }]);
   if (path.endsWith('/channels')) return reply(route, [{ id: 'c1', name: 'general', description: 'Everyone' }]);
   if (path.endsWith('/rpc/get_class_calendar')) return reply(route, [{ session_id: 's1', name: 'Strength and conditioning with a long name', starts_at: at(7, 30), ends_at: at(8, 30), booked_count: 9, capacity: 12, is_cancelled: false, spaces_left: 3, description: '', availability_note: '', bookable_for_me: true, my_booking_status: '', reserved_capacity: 0, reserved_eligible: false, reserved_plan_names: [], reserved_release_minutes_before: 0 }]);
   return false;
@@ -34,6 +34,8 @@ const handle = async ({ route, url, path, select }) => {
 const STATES = {
   today: async (page) => { await page.goto(`${base}/next/#/today`); await page.getByText('Active members', { exact: true }).waitFor(); await page.getByText('Strength and conditioning').first().waitFor(); },
   members: async (page) => { await page.goto(`${base}/next/#/members`); await page.locator('.member-row').first().waitFor(); },
+  plans: async (page) => { await page.goto(`${base}/next/#/plans`); await page.getByRole('heading', { name: /Hybrid Monthly/ }).waitFor(); },
+  'plan form': async (page) => { await page.goto(`${base}/next/#/plans`); await page.getByRole('button', { name: 'New plan' }).click(); await page.getByRole('dialog').getByLabel('Name').waitFor(); },
   'member record': async (page) => { await page.goto(`${base}/next/#/members`); await page.locator('.member-row').first().click(); await page.getByRole('dialog').getByText('Customer lifecycle').waitFor(); await page.getByRole('dialog').getByRole('heading', { name: /Hybrid Monthly/ }).waitFor(); },
   menu: async (page, size) => { await page.goto(`${base}/next/#/today`); await page.getByText('Active members', { exact: true }).waitFor(); if (size.width < 900) { await page.getByRole('button', { name: 'Open menu' }).click(); await page.waitForTimeout(350); } },
 };
