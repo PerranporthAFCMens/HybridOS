@@ -53,3 +53,18 @@ The new app lives in `web/` and is built to `_site/next/` by `scripts/build_site
 5. A signed-in browser test against real data (needs a disposable test persona and an Edge Function change, which needs the owner's approval of the exact text).
 
 Every new screen follows `web/UI_RULES.md` and is added to `web/browser/audit.mjs`.
+
+## Reports: what a gym owner needs to see (agreed direction, 7 October 2026)
+
+The owner wants Reports to show everything needed to run the business, and will write the full report set on 8 October. Until then this is the builder's gap list against the old Reports page, to be reconciled with the owner's list.
+
+**Behaviour for every report (owner request):**
+- Click into any chart bar or figure to see the rows behind it.
+- Download any report as PDF, Excel or CSV.
+- An export for accounting in **Xero**, as files to import (owner confirmed, 7 October: file first, and both kinds: a payments-received list to match against the bank feed, and sales invoices, one per payment). Xero's sales invoice import needs the gym's own sales account code and tax type, so those are boxes in the export (remembered in the browser), and the owner or their accountant supplies the values. A live Xero connection needs a Xero developer app, owner-held credentials and an Edge Function, so it is a separate, owner-approved step, not planned yet.
+
+**Gaps to add (builder's list):** income actually collected per month and its trend; revenue by plan and drop-in income; average income per member; churn, retention and average time a member stays; net growth chart; members at risk (no attendance in 14 or 30 days); new members who have not come back; memberships ending soon, paused or with a payment problem; strongest and weakest classes and times; coach view; every figure compared with the previous period; charts for age and gender; multi-gym roll-up.
+
+**Not possible with today's data (needs new data capture first):** profit (no costs, rent or wages), enquiries and lead conversion, door check-ins that are not class bookings, class waiting lists.
+
+**Order:** 5a Overview (built); 5b comparison with the previous period, churn and retention, income collected and trend, plus the click-through and PDF/Excel/CSV download framework; 5c members at risk, ending soon and payment problems, class and coach views; 5d the full library, Xero export and the multi-gym roll-up.
