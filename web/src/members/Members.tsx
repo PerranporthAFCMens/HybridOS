@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { Card, Empty } from '../ui/Card';
+import { Input, Select } from '../ui/Field';
 import { availableLetters, filterAndSort, formatRegistered, initials, jumpLetter, labelStatus, nameOf, summaryText, type SortMode } from './calc';
 import { MemberRecord } from './MemberRecord';
 import { useMemberDirectory } from './useMembers';
@@ -35,9 +36,8 @@ export function Members() {
 
       <Card>
         <div className="member-directory-tools">
-          <input
+          <Input
             type="search"
-            className="control"
             placeholder="Search members by name…"
             autoComplete="off"
             aria-label="Search members by name"
@@ -49,8 +49,7 @@ export function Members() {
           />
           <label className="member-sort">
             <span className="muted">Sort by</span>
-            <select
-              className="control"
+            <Select
               value={sort}
               onChange={(e) => {
                 setSort(e.target.value as SortMode);
@@ -61,12 +60,12 @@ export function Members() {
               <option value="surname">Surname</option>
               <option value="registered_desc">Date registered · newest</option>
               <option value="registered_asc">Date registered · oldest</option>
-            </select>
+            </Select>
           </label>
         </div>
 
         {!byDate && (
-          <div className="member-jump" aria-label="Jump to letter">
+          <div className="member-jump" data-dense aria-label="Jump to letter">
             {LETTERS.map((l) => (
               <button
                 type="button"

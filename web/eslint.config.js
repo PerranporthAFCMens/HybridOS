@@ -19,6 +19,20 @@ export default tseslint.config(
     },
   },
   {
+    // UI rule 1 (UI_RULES.md): form boxes come from ui/Field so they are iPhone-safe and consistent.
+    files: ['src/**/*.tsx'],
+    ignores: ['src/ui/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...['input', 'select', 'textarea'].map((tag) => ({
+          selector: `JSXOpeningElement[name.name='${tag}']`,
+          message: `Do not use a raw <${tag}>. Use Input, DateInput or Select from ui/Field (UI_RULES.md rule 1).`,
+        })),
+      ],
+    },
+  },
+  {
     // Playwright script: runs in Node, and page.evaluate() bodies run in the browser.
     files: ['browser/**/*.mjs'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
