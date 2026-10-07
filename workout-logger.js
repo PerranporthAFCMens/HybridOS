@@ -184,9 +184,10 @@ async function registerPBs(exercises,performed,gym,uid){
     const oldV=old?(c.metric==='time'?legacySeconds(old):Number(old.value_numeric)):null;
     const better=!old||(c.dir==='lower'?c.value<oldV:c.value>oldV);
     if(!better)continue;
-    const row={gym_id:gym,user_id:uid,exercise_name:c.name,exercise_key:c.key,metric_type:c.metric,comparison_direction:c.dir,value_numeric:c.value,unit:c.unit,achieved_at:performed,notes:c.metric==='time'?fmtTime(c.value):null};
+    const row={gym_id:gym,user_id:uid,exercise_name:c.name,metric_type:c.metric,comparison_direction:c.dir,value_numeric:c.value,unit:c.unit,achieved_at:performed,notes:c.metric==='time'?fmtTime(c.value):null};
     const r=await sb.from('personal_bests').upsert(row,{onConflict:'gym_id,user_id,exercise_key,metric_type'});
-    if(!r.error)won.push({...c,first:!old});
+    if(r.error)throw r.error;
+    won.push({...c,first:!old});
   }
   return won;
 }
@@ -235,7 +236,7 @@ async function saveExercise(){
     const ins=await sb.from('workout_sets').insert(ex.sets.map((st,j)=>({entry_id:e.data.id,set_number:j+1,...st})));
     if(ins.error){await sb.from('workout_entries').delete().eq('id',e.data.id);throw ins.error}
     S.entries.push({id:e.data.id,...ex});
-    let won=[];try{won=await registerPBs([ex],S.performed,gym.id,uid)}catch(err){console.warn('PB check failed',err)}
+    let won=[];try{won=await registerPBs([ex],S.performed,gym.id,uid)}catch(err){console.warn('PB check failed',err);toast('Exercise saved, but the personal best could not be saved: '+esc(err.message||'unknown error'))}
     renderLogged();const c=freshCard();
     if(won.length)toast(`🏆 ${won.every(w=>w.first)?(won.length>1?'First PBs logged':'First PB logged'):(won.length>1?'New PBs':'New PB')}: ${won.slice(0,3).map(pbText).map(esc).join(', ')}${won.length>3?` +${won.length-3} more`:''}`);
     const body=$('workoutModal').querySelector('.wl-body');if(body)body.scrollTop=body.scrollHeight;
