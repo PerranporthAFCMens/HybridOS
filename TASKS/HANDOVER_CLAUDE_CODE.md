@@ -13,10 +13,10 @@ Repo: PerranporthAFCMens/HybridOS (public). Read `STATUS.md` and `AI_WORKING_RUL
 - Builder (Claude Code): writes code, runs the build and smoke test, opens the PR to `dev`, updates `STATUS.md`. Best for access-control and database code (it can run the build and tests).
 - Reviewer (Claude in chat): reviews each PR once from its number, reading GitHub directly, and says merge or do not merge with reasons. Short answers.
 - ChatGPT: only for what needs its connectors: reading Actions run results after a merge, and Supabase or Vercel work (live catalog diffs, applying approved SQL). It has hit a safety block when writing access-control code, so do not give it that.
-- Owner: merges everything and approves anything touching `main`, rulesets, Vercel settings or the live Supabase project.
+- Owner: merges everything except safe PRs the builder may merge under rule 16 of `AI_WORKING_RULES.md`, and approves anything touching `main`, rulesets, Vercel settings or the live Supabase project.
 
 ## Hard rules (the owner approved these; they have prevented real incidents)
-1. You open PRs to `dev`. The owner merges. Never merge.
+1. You open PRs to `dev`. The owner merges. Never merge, except the narrow case in rule 16 of `AI_WORKING_RULES.md` (safe PRs to `dev` inside an allow-list, all checks green, on trial).
 2. Never change `main`, rulesets, Vercel settings or the LIVE Supabase project without the owner approving the exact text (the exact SQL, command or setting). Workflow files: a task-related change may be committed to the PR branch without prior approval and is reviewed at the PR (rule 15 in `AI_WORKING_RULES.md`). That does not cover the release workflow, `permissions`, secrets, OIDC, anything that changes who can deploy, direct pushes to `dev` or `main`, or loosening an assertion.
 3. Live Supabase is read-only unless the owner approves exact SQL. Never run `supabase db push`. Never apply the baseline migration. Never mark migration history as applied. Apply an approved migration as ONE transaction.
 4. Stop at the first problem and report. Do not fix forward. After any live change, a fresh Auth journey run on the exact resulting `dev` SHA must pass, or roll back first.
