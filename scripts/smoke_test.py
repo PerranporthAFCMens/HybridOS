@@ -92,7 +92,7 @@ RENDER_BASELINE={
  'app-consistency.css':'10d2bf33b6fc9266deba217b1480bda3d28d6273',
  'admin-pages.css':'fe5f058ea31a9279a39f1d51a9ee35d010e91bda',
  'admin-shell.css':'ec3d5ab0faee0b01d383fbea29183e604430a53e',
- 'admin-frame.css':'7710473a3237d154886fa23001ab10c47896a0bd',
+ 'admin-frame.css':'4af4cf23fa071d5fb4324bac9a12929428ee316b',
  'admin-embed.js':'73920d3e75684542819929736e15613d1d95c24e',
  'admin-frame.js':'026048c0f55afe7bb4c5cc7b4cf0046f3fbacaae',
  'app-stability.js':'661d84d7129dad37a84978f940b5995625bf1c75',
