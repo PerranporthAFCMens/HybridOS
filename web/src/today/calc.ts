@@ -1,4 +1,5 @@
-import type { ActiveMembershipValue, ChannelRow, ClassSession, GymMemberRow, PlanRow } from '../data/today';
+import type { PlanRow } from '../data/plans';
+import type { ActiveMembershipValue, ChannelRow, ClassSession, GymMemberRow } from '../data/today';
 
 // Pure calculations behind the Today screen. Same rules as the legacy dashboard.
 

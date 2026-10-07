@@ -4,7 +4,8 @@ import {
   monthlyValue, money, sessionsOnDay, summaryLine, upcomingSessions,
 } from '../src/today/calc';
 import { homeFor } from '../src/auth/access';
-import type { ClassSession, GymMemberRow, PlanRow } from '../src/data/today';
+import type { PlanRow } from '../src/data/plans';
+import type { ClassSession, GymMemberRow } from '../src/data/today';
 
 const NOW = new Date(2026, 9, 7, 10, 0, 0); // 7 Oct 2026, 10:00 local
 const member = (joinedAt: string, attritionOn: string | null = null): GymMemberRow => ({ userId: 'u', joinedAt, attritionOn });

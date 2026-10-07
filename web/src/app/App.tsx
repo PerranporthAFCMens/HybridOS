@@ -3,6 +3,7 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { LEGACY_CHOOSER, LEGACY_LOGIN, useAuth } from '../auth/AuthProvider';
 import { Shell } from '../shell/Shell';
 import { Today } from '../today/Today';
+import { Members } from '../members/Members';
 import { homeFor } from '../auth/access';
 
 function Leave({ to }: { to: string }) {
@@ -37,6 +38,7 @@ export function App() {
         <Routes>
           <Route element={<Shell />}>
             <Route path="/today" element={<Today />} />
+            <Route path="/members" element={<Members />} />
             <Route path="*" element={<Navigate to="/today" replace />} />
           </Route>
         </Routes>

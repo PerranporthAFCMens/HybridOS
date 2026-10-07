@@ -2,16 +2,15 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { Button } from '../ui/Button';
-import { legacyRoutes } from './legacy';
+import { links } from './legacy';
 import './shell.css';
 
 // Screens not yet moved open their old page inside the old Admin shell.
 const OLD_SCREENS = [
-  { label: 'Members', href: legacyRoutes.members },
-  { label: 'Classes and workouts', href: legacyRoutes.classes },
-  { label: 'Messages and community', href: legacyRoutes.communications },
-  { label: 'Reports', href: legacyRoutes.reports },
-  { label: 'Settings and staff', href: legacyRoutes.settings },
+  { label: 'Classes and workouts', href: links.classes },
+  { label: 'Messages and community', href: links.communications },
+  { label: 'Reports', href: links.reports },
+  { label: 'Settings and staff', href: links.settings },
 ] as const;
 
 export function Shell() {
@@ -35,6 +34,7 @@ export function Shell() {
         </div>
         <nav className="nav" aria-label="Main">
           <NavLink to="/today" onClick={close}>Today</NavLink>
+          <NavLink to="/members" onClick={close}>Members</NavLink>
           {OLD_SCREENS.map((s) => (
             <a key={s.label} href={s.href}>{s.label}</a>
           ))}

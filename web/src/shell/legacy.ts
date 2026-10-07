@@ -4,7 +4,6 @@ export function legacyAdminUrl(file: string, hash = ''): string {
 }
 
 export const legacyRoutes = {
-  members: legacyAdminUrl('index.html', 'members'),
   plans: legacyAdminUrl('index.html', 'memberships'),
   channels: legacyAdminUrl('index.html', 'community'),
   classes: legacyAdminUrl('classes.html'),
@@ -16,3 +15,11 @@ export const legacyRoutes = {
 } as const;
 
 export type LegacyRoute = keyof typeof legacyRoutes;
+
+/** Screens already moved to the new app (hash routes). */
+export const appLinks = { members: '#/members' } as const;
+
+/** Every link target a screen may use: moved screens first, old pages for the rest. */
+export const links = { ...legacyRoutes, ...appLinks } as const;
+
+export type LinkKey = keyof typeof links;
