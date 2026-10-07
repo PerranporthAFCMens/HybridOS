@@ -45,6 +45,7 @@ export function Shell() {
         <nav className="nav" aria-label="Main">
           <NavLink to="/today" onClick={close}>Today</NavLink>
           <NavLink to="/members" onClick={close}>Members</NavLink>
+          <NavLink to="/plans" onClick={close}>Membership plans</NavLink>
           {OLD_SCREENS.map((s) => (
             <a key={s.label} href={s.href}>{s.label}</a>
           ))}

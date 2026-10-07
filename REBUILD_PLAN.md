@@ -46,7 +46,7 @@ The new app lives in `web/` and is built to `_site/next/` by `scripts/build_site
 - The first complete run of the WebKit job in CI (it may need fixing; it cannot block merges).
 
 **Next, in this order (recommended):**
-1. **Membership plans** (create, edit, activate/deactivate a plan). Small, finishes the Members area, and Today's "Manage" and "Add a plan" buttons currently still open the old page.
+1. **Membership plans** (create, edit, activate/deactivate a plan). *Built on branch `rebuild-plans`, awaiting acceptance.* Small, finishes the Members area, and Today's "Manage" and "Add a plan" buttons currently still open the old page.
 2. **Classes** (timetable view first, then class setup and booking admin). Larger; split into read-only timetable, then writes.
 3. **Reports**, then **Settings and staff**, then the **member app**.
 4. Retire each old page as its replacement ships (starting with Today and Members once accepted).
