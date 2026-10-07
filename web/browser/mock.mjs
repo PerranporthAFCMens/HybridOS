@@ -8,7 +8,8 @@ export const shots = process.env.SHOTS_DIR;
 if (shots) mkdirSync(shots, { recursive: true });
 export const sizes = { phone: { width: 390, height: 844 }, desktop: { width: 1280, height: 800 } };
 
-export const GYM = '11111111-1111-4111-8111-111111111111';
+// MOCK_GYM / MOCK_LOGO let a one-off visual check use another gym id or no logo ('none').
+export const GYM = process.env.MOCK_GYM ?? '11111111-1111-4111-8111-111111111111';
 export const USER = '22222222-2222-4222-8222-222222222222';
 export const session = {
   access_token: 'x.y.z', refresh_token: 'r', token_type: 'bearer', expires_in: 3600,
@@ -48,7 +49,7 @@ export async function mockSupabase(page, handle) {
     let body = null;
     try { body = req.postDataJSON(); } catch { /* no body */ }
     if (path.includes('/auth/v1/')) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(session.user) });
-    if (path.endsWith('/gym_members') && select.includes('gyms(')) return reply(route, [{ gym_id: GYM, role: 'owner', gyms: { name: 'Puffin Performance', logo_url: 'https://logos.example.test/puffin.png' } }]);
+    if (path.endsWith('/gym_members') && select.includes('gyms(')) return reply(route, [{ gym_id: GYM, role: 'owner', gyms: { name: 'Puffin Performance', logo_url: process.env.MOCK_LOGO === 'none' ? null : 'https://logos.example.test/puffin.png' } }]);
     if (await handle({ route, url, path, select, method, body })) return undefined;
     if (method === 'HEAD') return route.fulfill({ status: 200, headers: { 'content-range': '*/0' } });
     if (['PATCH', 'POST', 'DELETE'].includes(method)) return route.fulfill({ status: 204, body: '' });

@@ -47,8 +47,15 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
   c.ok('navigation', name === 'desktop' ? await page.getByRole('navigation', { name: 'Main' }).isVisible() : await page.getByRole('button', { name: 'Open menu' }).isVisible());
   c.ok('no horizontal overflow', !overflow);
-  const logoOk = await page.evaluate(() => { const i = document.querySelector('.side .gym-logo'); return !!i && i.complete && i.naturalWidth > 0 && i.getAttribute('src') === 'https://logos.example.test/puffin.png' && i.classList.contains('uploaded'); });
-  c.ok('gym logo shown in the sidebar', logoOk);
+  const logo = await page.evaluate(() => {
+    const i = document.querySelector('.side .gym-tile');
+    const card = document.querySelector('.side .gym');
+    if (!i || !card) return null;
+    const r = i.getBoundingClientRect();
+    return { loaded: i.complete && i.naturalWidth > 0, src: i.getAttribute('src'), w: Math.round(r.width), h: Math.round(r.height), cardH: Math.round(card.getBoundingClientRect().height) };
+  });
+  c.ok('gym logo is a small tile that loads', !!logo && logo.loaded && logo.src === 'https://logos.example.test/puffin.png' && logo.w <= 64 && logo.h <= 64);
+  c.ok('gym card stays compact', !!logo && logo.cardH <= 130);
   c.ok('no page errors', errors.length === 0);
   if (shots) await page.screenshot({ path: `${shots}/today-${name}.png`, fullPage: true });
   if (name === 'phone' && shots) { await page.getByRole('button', { name: 'Open menu' }).click(); await page.waitForTimeout(300); await page.screenshot({ path: `${shots}/menu-phone.png` }); }
