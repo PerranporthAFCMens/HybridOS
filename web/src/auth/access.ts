@@ -26,3 +26,10 @@ export function resolveAccess(role: GymRole, membership: MembershipRow | null, t
   if (status === 'pending') return 'pending';
   return 'ended';
 }
+
+/** Where each role lands. Only owners and admins use the new Admin shell; others go to their own (old) app. */
+export function homeFor(role: GymRole, gymId: string): 'admin' | string {
+  if (role === 'owner' || role === 'admin') return 'admin';
+  const page = role === 'staff' || role === 'coach' ? 'staff.html' : 'member.html';
+  return `../${page}?gym_id=${encodeURIComponent(gymId)}`;
+}
