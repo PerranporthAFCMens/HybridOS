@@ -34,7 +34,7 @@
 
 .modal { position: fixed; inset: 0; background: rgba(11, 16, 32, .78); display: grid; place-items: center; padding: 20px; z-index: 100; }
 .modal-card {
-  width: min(720px, 100%); max-height: 90dvh; overflow: auto; padding: 20px;
+  width: min(720px, 100%); max-height: 90dvh; overflow-y: auto; overflow-x: hidden; padding: 20px;
   background: var(--hybrid-panel); border: 1px solid var(--hybrid-line); border-radius: 16px;
 }
 .modal-card:focus { outline: none; }
@@ -45,6 +45,11 @@
 .record-section h3 { margin: 0 0 4px; font-size: 16px; }
 .small { font-size: 12px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
+/* Form boxes may shrink below their built-in width. iPhone date boxes are wide by default and
+   otherwise stretch the column past the card edge. */
+.form-grid > *, .field { min-width: 0; }
+.field input, .field select { max-width: 100%; }
+.field input[type='date'] { -webkit-appearance: none; appearance: none; text-align: left; display: block; }
 .field { margin: 10px 0; }
 .field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
 .membership-card { border: 1px solid var(--hybrid-line); border-radius: 10px; background: var(--hybrid-panel); padding: 15px; margin-top: 10px; }
@@ -68,7 +73,7 @@
   .member-directory-tools { grid-template-columns: 1fr; }
   .member-sort { justify-content: space-between; }
   .member-sort select { flex: 1; }
-  .form-grid, .profile { grid-template-columns: 1fr; }
+  .form-grid, .profile { grid-template-columns: minmax(0, 1fr); }
   .modal { padding: 0; align-items: end; }
   .modal-card { max-height: 94dvh; border-radius: 16px 16px 0 0; }
 }

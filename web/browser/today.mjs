@@ -3,7 +3,8 @@
 // the typed data layer's requests and the layout, not live data.
 import { base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
 
-const at = (h, m = 0) => { const d = new Date(); d.setHours(h, m, 0, 0); return d.toISOString(); };
+// `daysAhead` matters: a class later today would be in the past when the test runs in the evening.
+const at = (h, m = 0, daysAhead = 0) => { const d = new Date(); d.setDate(d.getDate() + daysAhead); d.setHours(h, m, 0, 0); return d.toISOString(); };
 const day = (n) => new Date(Date.now() - n * 86400000).toISOString();
 
 const handle = async ({ route, path, select, method }) => {
@@ -23,7 +24,7 @@ const handle = async ({ route, path, select, method }) => {
   if (path.endsWith('/profiles')) return reply(route, { display_name: 'Josh Owner', first_name: 'Josh' });
   if (path.endsWith('/rpc/get_class_calendar')) {
     const s = (id, name, start, booked, cap) => ({ session_id: id, name, starts_at: start, ends_at: start, booked_count: booked, capacity: cap, is_cancelled: false, spaces_left: cap - booked, description: '', availability_note: '', bookable_for_me: true, my_booking_status: '', reserved_capacity: 0, reserved_eligible: false, reserved_plan_names: [], reserved_release_minutes_before: 0 });
-    return reply(route, [s('s1', 'Strength', at(7, 30), 9, 12), s('s2', 'Hybrid WOD', at(18, 0), 1, 12), s('s3', 'Yoga', at(19, 30), 6, 10)]);
+    return reply(route, [s('s1', 'Strength', at(7, 30), 9, 12), s('s2', 'Hybrid WOD', at(18, 0, 1), 1, 12), s('s3', 'Yoga', at(19, 30), 6, 10)]);
   }
   return false;
 };
