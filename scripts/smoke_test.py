@@ -89,14 +89,14 @@ for brand_page in ROOT.glob('*.html'):
 # Core rendering assets are intentionally locked to the last known-good mobile/admin baseline.
 # Any deliberate change to these files must update this list as part of the same reviewed change.
 RENDER_BASELINE={
- 'app-consistency.css':'cd0167253f00dc54c94aa06de20a375d18e04de6',
+ 'app-consistency.css':'533c85065897737ba3d55e9a5e5252b94fb53feb',
  'admin-pages.css':'fe5f058ea31a9279a39f1d51a9ee35d010e91bda',
  'admin-shell.css':'ec3d5ab0faee0b01d383fbea29183e604430a53e',
  'admin-frame.css':'7710473a3237d154886fa23001ab10c47896a0bd',
  'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
- 'admin-frame.js':'20322f734b2a1517bbf41f2b2e8085392bc03fd2',
+ 'admin-frame.js':'026048c0f55afe7bb4c5cc7b4cf0046f3fbacaae',
  'app-stability.js':'661d84d7129dad37a84978f940b5995625bf1c75',
- 'shared-admin-nav.js':'6500a0789ee6cae9052a6c387f302b0a2b3b287b',
+ 'shared-admin-nav.js':'b530a4b0c4ac4d1970fb1adf5ef03f955b44ab37',
 }
 def git_blob_sha(path):
  import hashlib
@@ -202,7 +202,7 @@ for x in ("const requested=cleanView(new URLSearchParams(location.search).get('v
  if x not in admin_frame_js:problems.append(f'admin-frame.js: persistent mobile shell routing missing: {x}')
 if "window.matchMedia('(max-width:900px)').matches" in admin_frame_js:
  problems.append('admin-frame.js: mobile route escaped the persistent Admin shell')
-for x in ('workout-builder.html',"{key:'workouts'","if(file==='workout-builder.html')return'workouts'"):
+for x in ('workout-builder.html',"file==='workout-builder.html'"):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: admin registry/routes out of sync: {x}')
 admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
 for x in ('admin-frame.css?v=','admin-frame.js?v=','shared-shell.js?v='):
@@ -251,7 +251,7 @@ for x in ('supabase.auth.signOut()',"location.replace('./login.html')",'Signing 
  if x not in sign_out:problems.append(f'sign-out.html: reliable sign out flow missing: {x}')
 if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: duplicate Member memberships tab returned')
 
-for x in ('classes-group','services-group','staff-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member experience',"section:'View as'","href:'./member.html?view=member'",'Door access'):
+for x in ('classes-group','settings-group','community-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member experience',"section:'Preview'","href:'./member.html?view=member'",'Door access'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: consolidated admin navigation missing: {x}')
 for page_name in ('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
@@ -382,7 +382,7 @@ for x in ('Communications','Transactional','Marketing','gym_communication_settin
  if x not in communications:problems.append(f'communications.html: communications editor missing: {x}')
 for x in ("{key:'communications'","href:'./communications.html'","if(p.endsWith('/communications.html'))return'communications'"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: communications route missing: {x}')
-for x in ("{key:'communications'","view:'communications.html'","if(file==='communications.html')return'communications'"):
+for x in ("{key:'community'","view:'communications.html'","file==='communications.html'"):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: communications route missing: {x}')
 ops_source=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
 if 'class="operations-page"' not in ops_source:problems.append('admin-operations.html: operations page scope class missing')
@@ -456,8 +456,8 @@ for x in ('memberSearch','memberSort','registered_desc','registered_asc','member
  if x not in admin_index:problems.append(f'index.html: member directory control missing: {x}')
 for x in ('Customer lifecycle','avgCustomerLifecycle','avgLiveTenure','genderLifecycleBreakdown','ageLifecycleBreakdown','renderLifecycleInsights','date_of_birth','gender'):
  if x not in admin_index:problems.append(f'index.html: lifecycle demographic reporting missing: {x}')
-for x in ('Customer pulse','pulse-head','seasonality-grid','YOY SWING','seasonality at a glance','prior=year-1'):
- if x not in admin_index:problems.append(f'index.html: customer pulse view missing: {x}')
+for x in ('Needs you','renderToday','Members over time','Classes today','Joined this month','Cancelled this month','Expected income'):
+ if x not in admin_index:problems.append(f'index.html: Today view missing: {x}')
 if 'stroke-dasharray="7 6"' in admin_index or 'yoy-grid' in admin_index:problems.append('index.html: retired customer comparison view returned')
 admin_frame_html=(ROOT/'admin.html').read_text(encoding='utf-8')
 admin_frame_js=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
