@@ -39,7 +39,7 @@ const META={
  booked_classes:{label:'My booked classes',desc:'Member class bookings'},
  pt:{label:'PT appointments',desc:'Upcoming PT sessions'}
 };
-const DEFAULT=['goal','progress','activity','hero','upcoming_count','next_classes','membership','booked_classes','pt'].map(key=>({key,visible:true}));
+const DEFAULT=['next_classes','goal','progress','activity','upcoming_count','hero','membership','booked_classes','pt'].map(key=>({key,visible:true}));
 const DEFAULT_CTA={enabled:true,eyebrow:'YOUR TRAINING HUB',title:'Keep your training moving',body:'Track your week, log workouts and keep your progress in one place.',primary_label:'Log workout',primary_target:'workouts',primary_url:'',secondary_label:'View classes',secondary_target:'classes',secondary_url:''};
 let gymId=null,userId=null,layout=[],cta={...DEFAULT_CTA};
 function normaliseCta(raw){return {...DEFAULT_CTA,...(raw&&typeof raw==='object'?raw:{})}}
