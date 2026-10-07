@@ -79,3 +79,71 @@ export function weekSummary(sessions: TimetableSession[]): string {
   const base = `${live} ${live === 1 ? 'class' : 'classes'}`;
   return cancelled ? `${base} · ${cancelled} cancelled` : base;
 }
+
+/** What the Add class form holds. */
+export interface ClassForm {
+  name: string;
+  date: string;
+  start: string;
+  duration: string;
+  capacity: string;
+  reserved: string;
+  release: string;
+  description: string;
+}
+
+export const RELEASE_OPTIONS = [
+  ['', 'Keep reserved until class starts'],
+  ['1440', '24 hours before'],
+  ['720', '12 hours before'],
+  ['120', '2 hours before'],
+  ['60', '1 hour before'],
+  ['30', '30 minutes before'],
+] as const;
+
+export function emptyClassForm(today: Date): ClassForm {
+  return { name: '', date: dayKey(today), start: '18:00', duration: '60', capacity: '20', reserved: '0', release: '', description: '' };
+}
+
+export interface ClassValues {
+  name: string;
+  description: string | null;
+  startsAt: string;
+  endsAt: string;
+  capacity: number;
+  reservedCapacity: number;
+  releaseMinutesBefore: number | null;
+}
+
+export type ClassCheck = { ok: true; values: ClassValues } | { ok: false; message: string };
+
+export const CLASS_FORM_ERROR = 'Check the class name, date, duration and capacity values.';
+
+/** Same rules as the old timetable's Add class form. Duration 5 to 480 minutes, as its box said. */
+export function validateClass(form: ClassForm): ClassCheck {
+  const name = form.name.trim();
+  const duration = Number(form.duration);
+  const capacity = Number(form.capacity);
+  const reserved = Number(form.reserved);
+  if (
+    !name || !form.date || !form.start ||
+    form.duration.trim() === '' || !Number.isFinite(duration) || duration < 5 || duration > 480 ||
+    !Number.isInteger(capacity) || capacity < 1 ||
+    !Number.isInteger(reserved) || reserved < 0 || reserved > capacity
+  ) return { ok: false, message: CLASS_FORM_ERROR };
+  const starts = new Date(`${form.date}T${form.start}:00`);
+  if (Number.isNaN(starts.getTime())) return { ok: false, message: CLASS_FORM_ERROR };
+  const ends = new Date(starts.getTime() + duration * 60000);
+  return {
+    ok: true,
+    values: {
+      name, description: form.description.trim() || null, startsAt: starts.toISOString(), endsAt: ends.toISOString(),
+      capacity, reservedCapacity: reserved, releaseMinutesBefore: form.release === '' ? null : Number(form.release),
+    },
+  };
+}
+
+/** The old page's worked example, shown under the reserved-spaces boxes. */
+export function reservedExample(capacity: number, reserved: number): string {
+  return `Example: capacity ${capacity} + ${reserved} reserved means standard members can fill up to ${capacity - reserved} places, while eligible premium plans can still book into the final ${reserved}.`;
+}
