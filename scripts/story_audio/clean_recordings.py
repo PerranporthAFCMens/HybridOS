@@ -20,6 +20,7 @@ for i in range(1,7):
     while len(keep)>1 and dur(keep[-1])<0.35:keep.pop()
     drop=[(round(r[0]*.02,2),round(r[1]*.02,2)) for r in m if r not in keep]
     st=keep[0][0]*0.02;en=keep[-1][1]*0.02
+    st=max(st,{4:0.59}.get(i,0))  # 0.41-0.50s is a button tap in recording 4
     print(i,'runs',[(round(r[0]*.02,2),round(r[1]*.02,2)) for r in m],'dropped',drop,'keep',round(st,2),round(en,2))
     seg=x[max(0,int((st-0.06)*sr)):min(len(x),int((en+0.12)*sr))]
     f=int(0.02*sr);seg[:f]*=np.linspace(0,1,f);seg[-f:]*=np.linspace(1,0,f)
