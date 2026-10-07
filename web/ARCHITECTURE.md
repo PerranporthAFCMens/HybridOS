@@ -11,10 +11,10 @@ The new app described in `REBUILD_PLAN.md`. TypeScript (strict), React, Vite, Ta
 | `src/shell/` | Sidebar and page frame (`Shell`), and `legacy.ts` (links into old pages not yet moved) | `auth/`, `ui/` |
 | `src/members/` | The Members screen: `Members.tsx` (directory), `MemberRecord.tsx` (record and writes), `useMembers.ts` (queries and mutations), `calc.ts` (pure rules, unit tested) | `auth/`, `ui/`, `data/` |
 | `src/today/` | The Today screen: `Today.tsx`, `useToday.ts` (queries), `calc.ts` (pure rules, unit tested), `MemberTrend.tsx` | `auth/`, `ui/`, `data/` |
-| `src/ui/` | Brand tokens (`tokens.css`) and shared components (Button, Card, ...) | nothing |
+| `src/ui/` | Brand tokens (`tokens.css`) and shared components (Button, Card, Modal, and the form boxes in `Field.tsx`). The only place a raw `<input>`/`<select>` may appear. | nothing |
 | `src/app/` | Router and the sign-in / gym gate | everything |
 | `tests/` | Vitest unit and component tests | |
-| `browser/` | Playwright browser checks (phone 390px and desktop 1280px) run in CI. `today.mjs` and `members.mjs` sign in with a fake session (`mock.mjs`) and mock Supabase at the network layer; `members.mjs` also asserts the exact request of every write | |
+| `browser/` | Playwright browser checks (phone 390px and desktop 1280px) run in CI. `audit.mjs` is the generic layout audit; `today.mjs` and `members.mjs` sign in with a fake session (`mock.mjs`) and mock Supabase at the network layer; `members.mjs` also asserts the exact request of every write | |
 
 ## Rules
 
@@ -24,6 +24,10 @@ The new app described in `REBUILD_PLAN.md`. TypeScript (strict), React, Vite, Ta
 - Person first: session, then active memberships, then one selected gym that must match an active membership. Never infer a gym from email, take the first row, or use last-used gym as permission. Newest membership row for the selected gym governs (`auth/access.ts`).
 - Shared look lives in `ui/`. No copy-pasted screens; build it once and reuse.
 - A screen is moved fully, then its old page is deleted.
+
+## UI rules
+
+Layout and control rules, and the checklist for adding a screen, are in [UI_RULES.md](./UI_RULES.md). `browser/audit.mjs` checks every screen and pop-up at 320, 390 and 1280px; a new screen must be added to it.
 
 ## Look
 

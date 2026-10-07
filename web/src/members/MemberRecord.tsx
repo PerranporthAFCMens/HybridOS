@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { MemberRow } from '../data/members';
 import { Button } from '../ui/Button';
 import { Empty, SectionTitle } from '../ui/Card';
+import { DateInput, Field, FieldRow, Select } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import { money } from '../today/calc';
 import { dateInputValue, formatDate, formatRegistered, labelStatus, nameOf, nameParts, paymentHint, validateLifecycle } from './calc';
@@ -86,17 +87,14 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
       <section className="record-section">
         <h3>Customer lifecycle</h3>
         <div className="muted small">Joined date drives new customer reporting. Add an attrition date when they leave.</div>
-        <div className="form-grid">
-          <div className="field">
-            <label htmlFor="joinedDate">Joined date</label>
-            <input id="joinedDate" type="date" value={joined} onChange={(e) => setJoined(e.target.value)} />
-          </div>
-          <div className="field">
-            <label htmlFor="attritionDate">Attrition date</label>
-            <input id="attritionDate" type="date" value={attrition} onChange={(e) => setAttrition(e.target.value)} />
-            <div className="muted small">Leave blank while the customer is live.</div>
-          </div>
-        </div>
+        <FieldRow>
+          <Field label="Joined date" htmlFor="joinedDate">
+            <DateInput id="joinedDate" value={joined} onChange={(e) => setJoined(e.target.value)} />
+          </Field>
+          <Field label="Attrition date" htmlFor="attritionDate" hint="Leave blank while the customer is live.">
+            <DateInput id="attritionDate" value={attrition} onChange={(e) => setAttrition(e.target.value)} />
+          </Field>
+        </FieldRow>
         <Button onClick={saveLifecycle} disabled={writes.saveLifecycle.isPending}>
           {writes.saveLifecycle.isPending ? 'Saving…' : 'Save lifecycle dates'}
         </Button>{' '}
@@ -140,9 +138,8 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
 
       <hr className="rule" />
       <h3>Assign membership</h3>
-      <div className="field">
-        <label htmlFor="planSelect">Membership plan</label>
-        <select id="planSelect" value={chosenPlan} onChange={(e) => setPlanId(e.target.value)}>
+      <Field label="Membership plan" htmlFor="planSelect">
+        <Select id="planSelect" value={chosenPlan} onChange={(e) => setPlanId(e.target.value)}>
           {activePlans.length ? (
             activePlans.map((p) => (
               <option key={p.id} value={p.id}>{p.name} — {money(p.priceInPence)} / {p.interval}</option>
@@ -150,29 +147,26 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
           ) : (
             <option value="">No active plans</option>
           )}
-        </select>
-      </div>
-      <div className="form-grid">
-        <div className="field">
-          <label htmlFor="startDate">Start date</label>
-          <input id="startDate" type="date" value={startsOn} onChange={(e) => setStartsOn(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="statusSelect">Status</label>
-          <select id="statusSelect" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+        </Select>
+      </Field>
+      <FieldRow>
+        <Field label="Start date" htmlFor="startDate">
+          <DateInput id="startDate" value={startsOn} onChange={(e) => setStartsOn(e.target.value)} />
+        </Field>
+        <Field label="Status" htmlFor="statusSelect">
+          <Select id="statusSelect" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
             <option value="active">Active</option>
             <option value="pending">Pending</option>
             <option value="paused">Paused</option>
-          </select>
-        </div>
-      </div>
-      <div className="field">
-        <label htmlFor="paymentSelect">Payment method</label>
-        <select id="paymentSelect" value={payment} onChange={(e) => setPayment(e.target.value as typeof payment)}>
+          </Select>
+        </Field>
+      </FieldRow>
+      <Field label="Payment method" htmlFor="paymentSelect">
+        <Select id="paymentSelect" value={payment} onChange={(e) => setPayment(e.target.value as typeof payment)}>
           <option value="manual">Manual / recorded outside HybridOne</option>
           <option value="gocardless">GoCardless ready — connect later</option>
-        </select>
-      </div>
+        </Select>
+      </Field>
       <div className="notice">{paymentHint(payment)}</div>
       <div className="assign-msg"><Msg m={assignMsg} /></div>
       <Button variant="primary" className="wide-btn" onClick={assign} disabled={writes.assign.isPending}>

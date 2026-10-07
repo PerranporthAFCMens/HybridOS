@@ -5,6 +5,7 @@ import { AuthProvider } from './auth/AuthProvider';
 import { App } from './app/App';
 import './ui/tokens.css';
 import './ui/ui.css';
+import './ui/forms.css';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, refetchOnWindowFocus: false, retry: 1 } },

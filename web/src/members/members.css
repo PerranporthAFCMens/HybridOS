@@ -1,12 +1,7 @@
-.control, .field input, .field select, .modal select, .modal input[type='date'] {
-  width: 100%; min-height: 44px; padding: 10px 12px; color: var(--hybrid-ink);
-  background: var(--hybrid-bg); border: 1px solid var(--hybrid-line-strong); border-radius: var(--hybrid-control-radius);
-}
-.control:focus, .field input:focus, .field select:focus { border-color: var(--hybrid-pulse); outline: none; }
 
 .member-directory-tools { display: grid; grid-template-columns: minmax(220px, 1fr) auto; gap: 12px; align-items: end; margin-bottom: 14px; }
 .member-sort { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; font-weight: 600; }
-.member-sort select { width: auto; }
+.member-sort .ctl { width: auto; }
 .member-jump { display: flex; gap: 5px; flex-wrap: wrap; margin: 0 0 14px; }
 .member-jump button {
   border: 1px solid var(--hybrid-line-strong); background: var(--hybrid-panel); color: var(--hybrid-muted);
@@ -43,15 +38,6 @@
 .profile b { color: var(--hybrid-ink); }
 .record-section { border: 1px solid var(--hybrid-line); border-radius: var(--hybrid-radius-sm); padding: 14px; margin-bottom: 16px; }
 .record-section h3 { margin: 0 0 4px; font-size: 16px; }
-.small { font-size: 12px; }
-.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
-/* Form boxes may shrink below their built-in width. iPhone date boxes are wide by default and
-   otherwise stretch the column past the card edge. */
-.form-grid > *, .field { min-width: 0; }
-.field input, .field select { max-width: 100%; }
-.field input[type='date'] { -webkit-appearance: none; appearance: none; text-align: left; display: block; }
-.field { margin: 10px 0; }
-.field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
 .membership-card { border: 1px solid var(--hybrid-line); border-radius: 10px; background: var(--hybrid-panel); padding: 15px; margin-top: 10px; }
 .membership-card:first-child { margin-top: 0; }
 .membership-card h4 { margin: 0 0 5px; font-size: 14px; color: var(--hybrid-ink); }
@@ -72,8 +58,8 @@
 @media (max-width: 900px) {
   .member-directory-tools { grid-template-columns: 1fr; }
   .member-sort { justify-content: space-between; }
-  .member-sort select { flex: 1; }
-  .form-grid, .profile { grid-template-columns: minmax(0, 1fr); }
+  .member-sort .ctl { flex: 1; }
+  .profile { grid-template-columns: minmax(0, 1fr); }
   .modal { padding: 0; align-items: end; }
   .modal-card { max-height: 94dvh; border-radius: 16px 16px 0 0; }
 }
