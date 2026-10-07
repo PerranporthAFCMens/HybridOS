@@ -201,6 +201,10 @@ html,body{
     box-shadow:none;
     font-size:24px;
   }
+  body.admin-frame-menu-open .admin-frame-mobile{
+    opacity:0;
+    pointer-events:none;
+  }
   .admin-frame-backdrop{
     display:block;
     position:fixed;
