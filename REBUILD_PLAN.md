@@ -32,5 +32,7 @@ The new app lives in `web/` and is built to `_site/next/` by `scripts/build_site
 4. Retire each old page as its replacement ships.
 
 ## Status
-- Blocked at start: the build environment returned `403 Forbidden` from `registry.npmjs.org` (organisation policy), so packages cannot be installed. Owner is updating the cloud environment's network access (Custom, default package-manager list on, add `registry.npmjs.org`); applies to new sessions only. First action of the next session: check `npm view react version` works, then start step 1.
+- Step 1 (Foundation) built on `dev` (7 Oct 2026): `web/` scaffold (strict TypeScript, React, Vite, TanStack Query, hash routing), generated Supabase types and a single typed data layer, `AuthProvider` as the one owner of session and gym context (rules mirror the legacy `getMembershipAccess`, with unit tests), brand tokens and Button/Card, a placeholder shell and Today, `scripts/build_site.py` builds it to `_site/next/`, CI workflow "HybridOne web app checks" (type check, lint, unit tests, build, phone and desktop browser check), and `web/ARCHITECTURE.md`. Nothing visible changes for existing routes. A signed-in browser check of `/next/` is not yet written (needs a test persona), so the signed-in path is covered by unit tests only.
+- npm access to `registry.npmjs.org` now works in the build environment.
+- Next: step 2, Shell and Today.
 - Interim patches already merged: #109 (shared database reads, pre-connect).

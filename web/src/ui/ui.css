@@ -1,0 +1,16 @@
+.btn { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--deep); color: var(--white); border-radius: var(--radius); padding: var(--space-2) var(--space-4); min-height: 40px; }
+.btn.primary { background: var(--volt); color: var(--midnight); border-color: var(--volt); font-weight: 600; }
+.card { background: var(--deep); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-4); }
+.muted { color: var(--slate); }
+.shell { display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); min-height: 100dvh; }
+.side { border-right: 1px solid var(--line); padding: var(--space-6) var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); }
+.side nav { display: grid; gap: var(--space-1); }
+.side nav a { color: var(--fog); text-decoration: none; padding: var(--space-3); border-radius: 10px; }
+.side nav a.active { background: var(--deep); color: var(--white); }
+.main { padding: var(--space-6); min-width: 0; }
+.center { min-height: 100dvh; display: grid; place-items: center; padding: var(--space-4); text-align: center; }
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .side { border-right: 0; border-bottom: 1px solid var(--line); padding: var(--space-3) var(--space-4); }
+  .main { padding: var(--space-4); }
+}
