@@ -1,0 +1,17 @@
+.week-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+.weekbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.week-title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.week-title strong { font-size: 18px; color: var(--hybrid-ink); }
+.calendar { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 10px; align-items: start; }
+.day { min-width: 0; background: var(--hybrid-panel); border: 1px solid var(--hybrid-line); border-radius: 16px; padding: 12px; }
+.day.today { border-color: rgba(198, 241, 53, .4); }
+.dayhead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.dayhead b { font-size: 13px; color: var(--hybrid-ink); }
+.datebubble { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--hybrid-bg); font-weight: 600; font-size: 12px; }
+.today .datebubble { background: rgba(198, 241, 53, .12); color: var(--hybrid-volt); }
+.session { border: 1px solid var(--hybrid-line); border-radius: 10px; padding: 11px; margin-top: 9px; background: var(--hybrid-panel); min-width: 0; overflow-wrap: anywhere; }
+.session.cancelled { opacity: .55; }
+.session .time { font-size: 12px; font-weight: 600; color: var(--hybrid-ink); }
+.session h3 { font-size: 15px; margin: 5px 0; color: var(--hybrid-ink); }
+.session .meta { font-size: 12px; color: var(--hybrid-muted); line-height: 1.45; margin-top: 3px; }
+.session .tag { margin-top: 8px; font-size: 11px; font-weight: 600; padding: 4px 7px; }
