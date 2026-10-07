@@ -61,7 +61,7 @@ The owner wants Reports to show everything needed to run the business, and will 
 **Behaviour for every report (owner request):**
 - Click into any chart bar or figure to see the rows behind it.
 - Download any report as PDF, Excel or CSV.
-- An export for accounting in Xero (to be confirmed with the owner: a file in Xero's import format first; a live Xero connection needs a Xero developer app, owner-held credentials and an Edge Function, so it is a separate, owner-approved step).
+- An export for accounting in **Xero**, as a file to import (owner confirmed, 7 October: file first). Xero's sales invoice import needs the gym's own sales account code and tax type, so those are boxes in the export (remembered in the browser), and the owner or their accountant supplies the values. A live Xero connection needs a Xero developer app, owner-held credentials and an Edge Function, so it is a separate, owner-approved step, not planned yet.
 
 **Gaps to add (builder's list):** income actually collected per month and its trend; revenue by plan and drop-in income; average income per member; churn, retention and average time a member stays; net growth chart; members at risk (no attendance in 14 or 30 days); new members who have not come back; memberships ending soon, paused or with a payment problem; strongest and weakest classes and times; coach view; every figure compared with the previous period; charts for age and gender; multi-gym roll-up.
 
