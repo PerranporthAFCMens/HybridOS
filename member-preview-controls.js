@@ -117,7 +117,7 @@
       localStorage.setItem(ACCOUNT_KEY,JSON.stringify(next));
       applyAccount(next);
       const msg=profile.querySelector('#previewAccountMsg');
-      msg.textContent='Saved ✓';
+      msg.textContent='Saved';
       setTimeout(function(){msg.textContent=''},1800);
     };
   }
@@ -155,13 +155,13 @@
       .field select,.pb-field select{pointer-events:auto!important;touch-action:manipulation;position:relative;z-index:1;-webkit-appearance:auto;appearance:auto}
       .side .nav button,[data-page]{pointer-events:auto!important;touch-action:manipulation}
       .member-account-trigger{cursor:pointer;user-select:none;transition:border-color .15s ease,box-shadow .15s ease}
-      .member-account-trigger:hover,.member-account-trigger:focus-visible{border-color:#cfd6e2;box-shadow:0 8px 24px rgba(16,24,40,.1);outline:none}
-      .member-account-menu{position:absolute;right:0;top:calc(100% + 8px);width:180px;background:#fff;border:1px solid #e7ebf2;border-radius:14px;padding:6px;box-shadow:0 18px 45px rgba(16,24,40,.16);z-index:120}
-      .member-account-menu button{display:block;width:100%;border:0;background:transparent;text-align:left;padding:10px 11px;border-radius:10px;font:inherit;font-weight:750;color:#101828;cursor:pointer}
-      .member-account-menu button:hover{background:#f5f7fb}
+      .member-account-trigger:hover,.member-account-trigger:focus-visible{border-color:var(--hybrid-line-strong);box-shadow:none;outline:none}
+      .member-account-menu{position:absolute;right:0;top:calc(100% + 8px);width:180px;background:var(--hybrid-panel);border:1px solid var(--hybrid-line);border-radius:10px;padding:6px;box-shadow:none;z-index:120}
+      .member-account-menu button{display:block;width:100%;border:0;background:transparent;text-align:left;padding:10px 11px;border-radius:10px;font:inherit;font-weight:600;color:var(--hybrid-ink);cursor:pointer}
+      .member-account-menu button:hover{background:var(--hybrid-bg)}
       .member-account-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px;max-width:760px}
       .member-account-heading{margin-bottom:16px}.member-account-heading h2{margin:4px 0 6px}.member-account-heading p{margin:0}
-      .member-account-card .actions{align-items:center}.member-account-card #previewAccountMsg{font-size:13px;font-weight:750}
+      .member-account-card .actions{align-items:center}.member-account-card #previewAccountMsg{font-size:13px;font-weight:600}
       @media(max-width:700px){.member-account-menu{position:fixed;right:14px;top:70px;width:min(220px,calc(100vw - 28px))}.member-account-form{grid-template-columns:1fr}}
     `;
     document.head.appendChild(style);

@@ -17,11 +17,11 @@
 
   const style=document.createElement('style');
   style.textContent=`
-    #scheduleCheck{margin:12px 0;padding:12px 13px;border-radius:12px;background:#f8fafc;border:1px solid #e7ebf2;font-size:13px}
-    #scheduleCheck.good{background:#ecfdf3;border-color:#abefc6;color:#067647}
-    #scheduleCheck.bad{background:#fef3f2;border-color:#fecdca;color:#b42318}
+    #scheduleCheck{margin:12px 0;padding:12px 13px;border-radius:10px;background:var(--hybrid-bg);border:1px solid var(--hybrid-line);font-size:13px}
+    #scheduleCheck.good{background:rgba(198,241,53,.12);border-color:rgba(198,241,53,.4);color:var(--hybrid-volt)}
+    #scheduleCheck.bad{background:rgba(255,122,69,.12);border-color:rgba(255,122,69,.45);color:var(--hybrid-ember)}
     #scheduleCheck ul{margin:7px 0 0;padding-left:18px}
-    .check.schedule-unavailable{opacity:.48}.check.schedule-unavailable span{font-size:11px;color:#b42318;margin-left:auto}
+    .check.schedule-unavailable{opacity:.48}.check.schedule-unavailable span{font-size:11px;color:var(--hybrid-ember);margin-left:auto}
   `;
   document.head.appendChild(style);
 
@@ -80,7 +80,7 @@
     const {data,error}=await sb.rpc('validate_class_schedule',{p_gym_id:gymId,p_class_type_id:typeId,p_starts_at:range.start.toISOString(),p_ends_at:range.end.toISOString(),p_capacity:capacity,p_staff_ids:staff,p_exclude_session_id:null});
     if(error){panel.className='bad';panel.textContent=error.message;return{ok:false}}
     if(!data?.ok){panel.className='bad';panel.innerHTML='<b>Cannot schedule this class yet:</b><ul>'+(data?.errors||[]).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';return{ok:false}}
-    panel.className='good';panel.textContent='✓ Staff, working hours, resources, capacity and clashes all check out.';
+    panel.className='good';panel.textContent='Staff, working hours, resources, capacity and clashes all check out.';
     return{ok:true,typeId,range,staff};
   }
 

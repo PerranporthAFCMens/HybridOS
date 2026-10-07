@@ -25,24 +25,24 @@ def inject_body(t,a,m):
  return t.replace('</body>',m+'</body>',1)
 
 CRITICAL_SHELL_STYLE='''<style id="hybrid-critical-shell">
-html,body{margin:0;min-height:100%;background:#f5f7fb}
-#loading{position:fixed;inset:0;z-index:9998;min-height:100vh;color:transparent!important;background:linear-gradient(90deg,#0b1020 0 254px,#f5f7fb 254px 100%);overflow:hidden}
-#loading::before{content:"HybridOne";position:absolute;left:24px;top:26px;color:#fff;font:900 18px/1 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.08em}
-#loading::after{content:"";position:absolute;left:284px;right:30px;top:30px;height:190px;border-radius:22px;background:linear-gradient(100deg,#e9edf3 20%,#f7f8fa 36%,#e9edf3 52%);background-size:220% 100%;animation:hybridCriticalShimmer 1.05s linear infinite;box-shadow:0 220px 0 #fff,0 430px 0 #fff}
-#hybridNavigationMask{position:fixed;inset:0;z-index:9999;display:grid;grid-template-columns:254px minmax(0,1fr);background:#f5f7fb;opacity:0;pointer-events:none;transition:opacity .08s linear}
+html,body{margin:0;min-height:100%;background:#0B1020}
+#loading{position:fixed;inset:0;z-index:9998;min-height:100vh;color:transparent!important;background:linear-gradient(90deg,#0B1020 0 253px,#232C44 253px 254px,#0B1020 254px 100%);overflow:hidden}
+#loading::before{content:"";position:absolute;left:24px;top:24px;width:132px;height:33px;background:url(./assets/brand/logo/svg/hybridone-logo-on-dark.svg) left center/contain no-repeat}
+#loading::after{content:"";position:absolute;left:284px;right:30px;top:30px;height:190px;border-radius:16px;background:linear-gradient(100deg,#121A2E 20%,#1A2338 36%,#121A2E 52%);background-size:220% 100%;animation:hybridCriticalShimmer 1.05s linear infinite;box-shadow:0 220px 0 #121A2E,0 430px 0 #121A2E}
+#hybridNavigationMask{position:fixed;inset:0;z-index:9999;display:grid;grid-template-columns:254px minmax(0,1fr);background:#0B1020;opacity:0;pointer-events:none;transition:opacity .08s linear}
 #hybridNavigationMask.show{opacity:1}
-.hybrid-nav-mask-side{background:#0b1020;padding:26px 18px}.hybrid-nav-mask-brand{color:#fff;font:900 18px/1 Inter,system-ui,sans-serif;letter-spacing:.08em}.hybrid-nav-mask-gym{height:138px;margin-top:24px;border-radius:17px;background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.10)}.hybrid-nav-mask-lines{display:grid;gap:9px;margin-top:18px}.hybrid-nav-mask-lines i{display:block;height:45px;border-radius:12px;background:rgba(255,255,255,.06)}.hybrid-nav-mask-main{padding:30px}.hybrid-nav-mask-bar{width:46%;height:34px;border-radius:12px;background:#e9edf3}.hybrid-nav-mask-card{height:190px;margin-top:22px;border-radius:22px;background:linear-gradient(100deg,#e9edf3 20%,#f7f8fa 36%,#e9edf3 52%);background-size:220% 100%;animation:hybridCriticalShimmer 1.05s linear infinite}.hybrid-nav-mask-card.short{height:150px}
+.hybrid-nav-mask-side{background:#0B1020;border-right:1px solid #232C44;padding:26px 18px}.hybrid-nav-mask-brand{width:132px;height:33px;background:url(./assets/brand/logo/svg/hybridone-logo-on-dark.svg) left center/contain no-repeat;font-size:0;color:transparent}.hybrid-nav-mask-gym{height:138px;margin-top:24px;border-radius:16px;background:#121A2E;border:1px solid #232C44}.hybrid-nav-mask-lines{display:grid;gap:9px;margin-top:18px}.hybrid-nav-mask-lines i{display:block;height:45px;border-radius:10px;background:#121A2E}.hybrid-nav-mask-main{padding:30px}.hybrid-nav-mask-bar{width:46%;height:34px;border-radius:10px;background:#121A2E}.hybrid-nav-mask-card{height:190px;margin-top:22px;border-radius:16px;background:linear-gradient(100deg,#121A2E 20%,#1A2338 36%,#121A2E 52%);background-size:220% 100%;animation:hybridCriticalShimmer 1.05s linear infinite}.hybrid-nav-mask-card.short{height:150px}
 @keyframes hybridCriticalShimmer{to{background-position:-220% 0}}
-@media(max-width:900px){#loading{background:#f5f7fb}#loading::before{display:none}#loading::after{left:14px;right:14px;top:20px;height:150px}#hybridNavigationMask{grid-template-columns:1fr}.hybrid-nav-mask-side{display:none}.hybrid-nav-mask-main{padding:20px 14px}.hybrid-nav-mask-bar{width:62%}}
+@media(max-width:900px){#loading{background:#0B1020}#loading::before{display:none}#loading::after{left:14px;right:14px;top:20px;height:150px}#hybridNavigationMask{grid-template-columns:1fr}.hybrid-nav-mask-side{display:none}.hybrid-nav-mask-main{padding:20px 14px}.hybrid-nav-mask-bar{width:62%}}
 @media(prefers-reduced-motion:reduce){#loading::after,.hybrid-nav-mask-card{animation:none}#hybridNavigationMask{transition:none}}
 html.admin-hot-nav #loading{display:none!important}
 html.admin-hot-nav #app.hidden,html.admin-hot-nav #appView.hidden{display:grid!important}
-html.admin-embedded #loading{background:#f5f7fb!important}
+html.admin-embedded #loading{background:#0B1020!important}
 html.admin-embedded #loading::before{display:none!important}
 html.admin-embedded #loading::after{left:30px!important}
 html.admin-embedded .side{display:none!important}
 html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView{display:block!important;grid-template-columns:1fr!important}
-html.admin-embedded .main{min-height:100%!important;background:#f5f7fb!important}
+html.admin-embedded .main{min-height:100%!important;background:#0B1020!important}
 html.admin-embedded .admin-mobile-menu-btn,html.admin-embedded .admin-mobile-backdrop{display:none!important}
 @media(max-width:900px){html.admin-hot-nav #app.hidden{display:block!important}html.admin-embedded #loading::after{left:14px!important}}
 </style>'''
@@ -134,7 +134,24 @@ def finalise_ui_contract():
   s=re.sub(r'<link[^>]+href=["\']\.\/app-consistency\.css(?:\?[^"\']*)?["\'][^>]*>','',s,flags=re.I)
   s=s.replace('</head>',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}"></head>',1)
   write(n,s)
+BRAND_HEAD='<meta name="theme-color" content="#0B1020"><link rel="icon" href="./assets/brand/icons/favicon.ico" sizes="any"><link rel="icon" href="./assets/brand/icons/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./assets/brand/icons/apple-touch-icon.png"><link rel="manifest" href="./assets/brand/icons/site.webmanifest">'
+BRAND_SOCIAL='<meta property="og:title" content="HybridOne"><meta property="og:description" content="Your gym. Your members. One operating system."><meta property="og:image" content="https://www.hybridone.co.uk/assets/brand/social/og-image-1200x630.png"><meta name="twitter:card" content="summary_large_image">'
+def add_brand_layer():
+ # One brand layer on every built page: tab icon, app icon, manifest, theme colour, fonts and tokens (BRAND.md).
+ for f in sorted(OUT.glob('*.html')):
+  s=f.read_text(encoding='utf-8')
+  if '</head>' not in s:continue
+  s=re.sub(r'<meta[^>]+name=["\']theme-color["\'][^>]*>','',s,flags=re.I)
+  s=re.sub(r'<link[^>]+rel=["\'](?:shortcut )?icon["\'][^>]*>','',s,flags=re.I)
+  s=re.sub(r'<link[^>]+rel=["\']apple-touch-icon["\'][^>]*>','',s,flags=re.I)
+  s=re.sub(r'<link[^>]+rel=["\']manifest["\'][^>]*>','',s,flags=re.I)
+  extra=BRAND_SOCIAL if f.name in ('landing.html','index.html','login.html','join.html') and 'og:title' not in s else ''
+  css=f'<link rel="preload" href="./assets/brand/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="./assets/brand/brand.css?v={VERSION}">' if 'assets/brand/brand.css' not in s else ''
+  # App pages load the shared stylesheet last, so brand tokens go first; standalone pages (sign-in, join, invites) take them last.
+  if 'app-consistency.css' in s:s=s.replace('</head>',BRAND_HEAD+extra+'</head>',1);s=(re.sub(r'(<meta[^>]+charset[^>]*>)',lambda m:m.group(1)+css,s,count=1) if re.search(r'<meta[^>]+charset',s,flags=re.I) else s.replace('<head>','<head>'+css,1)) if css else s
+  else:s=s.replace('</head>',BRAND_HEAD+extra+css+'</head>',1)
+  f.write_text(s,encoding='utf-8')
 def write_deployment_manifest():
  (OUT/'deployment.json').write_text(json.dumps({'build_sha':BUILD_SHA,'build_version':VERSION},indent=2)+'\n',encoding='utf-8')
-def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
+def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();add_brand_layer();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
 if __name__=='__main__':build()

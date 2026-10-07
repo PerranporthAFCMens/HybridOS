@@ -6,10 +6,10 @@ const TYPES=['social_comment','social_reply','social_reaction'];
 function style(){
  if(document.getElementById('hybridSocialNoticeStyle'))return;
  const s=document.createElement('style');s.id='hybridSocialNoticeStyle';s.textContent=`
- .hybrid-social-badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ff3b30;color:#fff;font-size:10px;font-weight:900;line-height:1;margin-left:auto}
+ .hybrid-social-badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#FF7A45;color:#0B1020;font-size:10px;font-weight:600;line-height:1;margin-left:auto}
  .hybrid-social-badge.hidden{display:none!important}
- .hybrid-social-toast{position:fixed;right:18px;top:18px;z-index:10050;width:min(360px,calc(100vw - 36px));background:#fff;color:#101828;border:1px solid #e7ebf2;border-radius:16px;padding:14px 15px;box-shadow:0 18px 45px rgba(16,24,40,.18);display:flex;gap:12px;align-items:flex-start}
- .hybrid-social-toast.hidden{display:none!important}.hybrid-social-toast b{display:block;margin-bottom:3px}.hybrid-social-toast small{color:#667085}.hybrid-social-toast button{border:0;background:#0b1020;color:#fff;border-radius:10px;padding:8px 10px;font-weight:800;cursor:pointer;margin-left:auto;white-space:nowrap}
+ .hybrid-social-toast{position:fixed;right:18px;top:18px;z-index:10050;width:min(360px,calc(100vw - 36px));background:var(--hybrid-panel);color:var(--hybrid-ink);border:1px solid var(--hybrid-line);border-radius:10px;padding:14px 15px;box-shadow:none;display:flex;gap:12px;align-items:flex-start}
+ .hybrid-social-toast.hidden{display:none!important}.hybrid-social-toast b{display:block;margin-bottom:3px}.hybrid-social-toast small{color:var(--hybrid-muted)}.hybrid-social-toast button{border:0;background:#0b1020;color:#fff;border-radius:10px;padding:8px 10px;font-weight:600;cursor:pointer;margin-left:auto;white-space:nowrap}
  @media(max-width:700px){.hybrid-social-toast{top:auto;right:12px;left:12px;bottom:calc(env(safe-area-inset-bottom) + 14px);width:auto}}
  `;document.head.appendChild(s);
 }

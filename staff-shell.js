@@ -4,9 +4,9 @@
   function init(){
     if(document.querySelector('.staff-mobile-menu-btn'))return;
     const side=document.querySelector('.side');if(!side)return;
-    const btn=document.createElement('button');btn.type='button';btn.className='staff-mobile-menu-btn';btn.setAttribute('aria-label','Open staff menu');btn.setAttribute('aria-expanded','false');btn.textContent='☰';
+    const btn=document.createElement('button');btn.type='button';btn.className='staff-mobile-menu-btn';btn.setAttribute('aria-label','Open staff menu');btn.setAttribute('aria-expanded','false');btn.innerHTML='<i class="hi hi-menu" aria-hidden="true"></i>';
     const backdrop=document.createElement('div');backdrop.className='staff-mobile-backdrop';
-    const x=document.createElement('button');x.type='button';x.className='staff-mobile-menu-close';x.setAttribute('aria-label','Close staff menu');x.textContent='×';x.onclick=close;side.prepend(x);
+    const x=document.createElement('button');x.type='button';x.className='staff-mobile-menu-close';x.setAttribute('aria-label','Close staff menu');x.innerHTML='<i class="hi hi-x" aria-hidden="true"></i>';x.onclick=close;side.prepend(x);
     document.body.append(btn,backdrop);
     btn.onclick=function(){const open=!document.body.classList.contains('staff-mobile-open');document.body.classList.toggle('staff-mobile-open',open);btn.setAttribute('aria-expanded',open?'true':'false')};
     backdrop.onclick=close;
