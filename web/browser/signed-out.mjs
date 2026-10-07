@@ -1,12 +1,11 @@
 // Browser gate: the new app, served from the built _site, sends a signed-out
 // visitor to the universal login at phone and desktop widths, with no overflow.
-import { chromium } from 'playwright';
+import { launch } from './mock.mjs';
 
 const base = process.env.SITE_URL ?? 'http://127.0.0.1:4173';
-const executablePath = process.env.CHROMIUM_PATH || undefined;
 const sizes = { phone: { width: 390, height: 844 }, desktop: { width: 1280, height: 800 } };
 
-const browser = await chromium.launch({ executablePath });
+const browser = await launch();
 let failed = false;
 for (const [name, viewport] of Object.entries(sizes)) {
   const page = await browser.newPage({ viewport });
