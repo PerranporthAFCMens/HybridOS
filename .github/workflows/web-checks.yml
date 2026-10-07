@@ -33,9 +33,10 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: web
 
-      - name: Browser check at phone and desktop width
+      - name: Browser checks at phone (390px) and desktop (1280px) width
         run: |
           python3 -m http.server 4173 --directory ../_site &
           sleep 2
           node browser/signed-out.mjs
+          node browser/today.mjs
         working-directory: web

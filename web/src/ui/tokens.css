@@ -1,27 +1,17 @@
-/* Brand tokens (BRAND.md). One file: a redesign changes values here only. */
+/* Shared brand tokens live in ../assets/brand/brand.css (the --hybrid-* variables and the Geist fonts),
+   loaded by index.html. This file only adds what the new app needs on top, so a redesign stays a
+   one-file change. */
 :root {
-  --midnight: #0b1020;
-  --deep: #121a2e;
-  --line: #232c44;
-  --raised: #2b3550;
-  --slate: #8b95ab;
-  --fog: #c9cfdc;
-  --white: #fff;
-  --volt: #c6f135;
-  --pulse: #6c8cff;
-  --ember: #ff7a45;
-
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-6: 24px;
-  --radius: 12px;
   --sidebar: 254px;
-  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --page-x: 30px;
 }
 * { box-sizing: border-box; }
 html, body, #root { min-height: 100dvh; margin: 0; }
-body { background: var(--midnight); color: var(--fog); font-family: var(--font); -webkit-font-smoothing: antialiased; }
-h1, h2, h3 { color: var(--white); font-weight: 550; letter-spacing: -0.02em; }
-:focus-visible { outline: 2px solid var(--pulse); outline-offset: 2px; }
+body {
+  background: var(--hybrid-bg);
+  color: var(--hybrid-text);
+  font-family: var(--hybrid-font);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { font-weight: 550; letter-spacing: -0.02em; }
+button { font: inherit; }

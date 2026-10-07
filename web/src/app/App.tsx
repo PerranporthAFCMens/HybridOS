@@ -2,7 +2,8 @@ import { useEffect, type ReactNode } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { LEGACY_CHOOSER, LEGACY_LOGIN, useAuth } from '../auth/AuthProvider';
 import { Shell } from '../shell/Shell';
-import { Today } from '../shell/Today';
+import { Today } from '../today/Today';
+import { homeFor } from '../auth/access';
 
 function Leave({ to }: { to: string }) {
   useEffect(() => {
@@ -22,8 +23,10 @@ function Gate({ children }: { children: ReactNode }) {
       return <Leave to={`${LEGACY_CHOOSER}`} />;
     case 'no-access':
       return <div className="center">You do not have access to a gym yet.</div>;
-    case 'ready':
-      return <>{children}</>;
+    case 'ready': {
+      const home = homeFor(auth.gym.role, auth.gym.gymId);
+      return home === 'admin' ? <>{children}</> : <Leave to={home} />;
+    }
   }
 }
 
