@@ -42,7 +42,7 @@ for k in range(int(DUR/beat)):
 music=pad+bass+arp*(t>2)+drum
 music/=np.abs(music).max()
 # voice
-sched=[('l1',0.4),('l2',4.9),('l3',8.7),('l4',11.4),('l6',19.6),('l7',25.9)]
+sched=[('l1',0.4),('l2',4.6),('l3',9.5),('l4',13.0),('l6',19.8),('l7',25.6)]
 voice=np.zeros(N);duck=np.ones(N)
 for k,st in sched:
     sr,a=wavfile.read(k+'.wav');a=rs(a.astype(np.float32)/32767,sr)
