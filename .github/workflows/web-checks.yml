@@ -10,6 +10,7 @@ on:
 jobs:
   web:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v5
@@ -29,15 +30,43 @@ jobs:
       - name: Build the whole site (includes web/ -> _site/next/)
         run: python3 scripts/build_site.py
 
-      - name: Install browser
-        run: npx playwright install --with-deps chromium
+      - name: Cache the browser download
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
+
+      # The download has hung for 5+ minutes on some runs. Give each attempt 3 minutes, try 3 times.
+      - name: Install browser (retries a stuck download)
+        run: |
+          for attempt in 1 2 3; do
+            if timeout 180 npx playwright install --with-deps chromium; then exit 0; fi
+            echo "browser install attempt $attempt failed or timed out"
+          done
+          exit 1
         working-directory: web
 
-      - name: Browser checks at phone (390px) and desktop (1280px) width
+      - name: Browser checks at phone (390px) and desktop (1280px) width, and the layout audit
         run: |
           python3 -m http.server 4173 --directory ../_site &
           sleep 2
           node browser/signed-out.mjs
           node browser/today.mjs
           node browser/members.mjs
+          node browser/audit.mjs
+        working-directory: web
+
+      # Safari-style engine (WebKit). Reports only: a failure here shows as a failed step but does not
+      # block the merge, until we have seen it behave. Remove continue-on-error to make it required.
+      - name: Safari-style (WebKit) browser checks (reporting only)
+        continue-on-error: true
+        run: |
+          timeout 300 npx playwright install --with-deps webkit
+          python3 -m http.server 4174 --directory ../_site &
+          sleep 2
+          export SITE_URL=http://127.0.0.1:4174 BROWSER=webkit
+          node browser/signed-out.mjs
+          node browser/today.mjs
+          node browser/members.mjs
+          node browser/audit.mjs
         working-directory: web

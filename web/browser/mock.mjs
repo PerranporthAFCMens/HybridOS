@@ -1,6 +1,6 @@
 // Shared helpers for the signed-in browser checks: a fake owner session and a mocked Supabase.
 // No real account or data is used. Each check passes its own handlers for the tables it cares about.
-import { chromium } from 'playwright';
+import { chromium, webkit } from 'playwright';
 import { mkdirSync } from 'node:fs';
 
 export const base = process.env.SITE_URL ?? 'http://127.0.0.1:4173';
@@ -17,7 +17,8 @@ export const session = {
   user: { id: USER, aud: 'authenticated', role: 'authenticated', email: 'owner@example.test', app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' },
 };
 
-export const launch = () => chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+// BROWSER=webkit runs the checks in the Safari-style engine; the default is Chromium.
+export const launch = () => (process.env.BROWSER === 'webkit' ? webkit.launch() : chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined }));
 
 export async function signedInPage(browser, viewport) {
   const ctx = await browser.newContext({ viewport });
