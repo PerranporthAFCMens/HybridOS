@@ -4,15 +4,24 @@
 //   - anything sticks out past its parent's edge or off the screen,
 //   - a button, link-button or form box is shorter than 40px (the tap-target rule).
 // Add a new screen or pop-up to STATES below; no per-screen layout check needs writing.
-import { base, launch, mockSupabase, reply, runChecks, shots, signedInPage } from './mock.mjs';
+import { USER, base, launch, mockSupabase, reply, runChecks, shots, signedInPage } from './mock.mjs';
 
 const ADA = '33333333-3333-4333-8333-333333333333';
 const at = (h, m = 0, d = 0) => { const x = new Date(); x.setDate(x.getDate() + d); x.setHours(h, m, 0, 0); return x.toISOString(); };
 const SIZES = { phone320: { width: 320, height: 640 }, phone390: { width: 390, height: 844 }, desktop: { width: 1280, height: 800 } };
 
-const handle = async ({ route, path, select }) => {
+const handle = async ({ route, url, path, select }) => {
   if (path.endsWith('/gym_members')) return reply(route, [{ user_id: ADA, joined_at: '2026-03-01T00:00:00', attrition_on: null }, { user_id: 'b', joined_at: '2026-05-01T00:00:00', attrition_on: null }]);
-  if (path.endsWith('/profiles')) return reply(route, [{ id: ADA, display_name: null, first_name: 'Adam', last_name: 'Turner-With-A-Very-Long-Surname' }, { id: 'b', display_name: 'Bob Adams', first_name: null, last_name: null }]);
+  if (path.endsWith('/profiles')) {
+    // Like the real database: a request for one person (id=eq.X) gets only that person.
+    const rows = [
+      { id: USER, display_name: null, first_name: 'Alexandra', last_name: 'Montgomery-Featherstonehaugh' },
+      { id: ADA, display_name: null, first_name: 'Adam', last_name: 'Turner-With-A-Very-Long-Surname' },
+      { id: 'b', display_name: 'Bob Adams', first_name: null, last_name: null },
+    ];
+    const eq = (url.searchParams.get('id') ?? '').replace(/^eq\./, '');
+    return reply(route, url.searchParams.get('id')?.startsWith('eq.') ? rows.filter((r) => r.id === eq) : rows);
+  }
   if (path.endsWith('/memberships') && select.includes('starts_on')) return reply(route, [{ id: 'm1', status: 'active', starts_on: '2026-03-01', ends_on: null, payment_provider: 'manual', payment_status: 'confirmed', membership_plans: { name: 'Hybrid Monthly with a long plan name', price_pence: 4500, billing_interval: 'monthly' } }]);
   if (path.endsWith('/memberships') && select.includes('membership_plans')) return reply(route, [{ user_id: ADA, status: 'active', membership_plans: { name: 'Hybrid Monthly' } }]);
   if (path.endsWith('/membership_plans')) return reply(route, [{ id: 'p1', name: 'Hybrid Monthly with a long plan name', price_pence: 4500, billing_interval: 'monthly', access_type: 'hybrid', is_active: true }]);
@@ -79,6 +88,8 @@ for (const [sizeName, viewport] of Object.entries(SIZES)) {
   });
   for (const [stateName, go] of Object.entries(STATES)) {
     try { await go(page, viewport); } catch (e) { c.ok(`${sizeName} / ${stateName}: could not open (${String(e).split('\n')[0].slice(0, 80)})`, false); continue; }
+    // the menu's name loads separately; audit with it in place (the test person has a very long surname)
+    await page.locator('.account .who-name').waitFor({ state: 'attached', timeout: 15000 }).catch(() => undefined);
     await page.waitForTimeout(150);
     const problems = await page.evaluate(audit);
     if (shots) await page.screenshot({ path: `${shots}/audit-${sizeName}-${stateName.replace(/ /g, '-')}.png`, fullPage: false });

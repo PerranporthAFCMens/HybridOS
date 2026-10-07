@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
+import { getProfileNames } from '../data/profile';
 import { Button } from '../ui/Button';
+import { fullName, roleLabel } from './account';
 import { gymLogo } from './gymBrand';
 import { links } from './legacy';
 import './shell.css';
@@ -19,6 +22,7 @@ export function Shell() {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
   const logo = gymLogo(auth.gym.gymId, auth.gym.logoUrl);
+  const profile = useQuery({ queryKey: ['profile', auth.userId], queryFn: () => getProfileNames(auth.userId) });
   return (
     <div className={`shell${open ? ' open' : ''}`}>
       <button type="button" className="menu-btn" aria-label="Open menu" onClick={() => setOpen(true)}>
@@ -49,7 +53,10 @@ export function Shell() {
           <a href="../staff.html?view=staff">Preview as staff</a>
         </nav>
         <div className="account">
-          <span className="email">{auth.email}</span>
+          <div className="who" title={auth.email}>
+            {profile.isSuccess && <b className="who-name">{fullName(profile.data, auth.email)}</b>}
+            <span className="who-role">{roleLabel(auth.gym.role)}</span>
+          </div>
           <Button
             onClick={() => {
               void auth.signOut().then(() => window.location.assign('../login.html'));
