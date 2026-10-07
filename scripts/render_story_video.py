@@ -1,4 +1,5 @@
-"""Render assets/video/story.html to assets/video/hybridone-story.mp4 (30s, 1280x720, 30fps).
+"""Render assets/video/story.html to assets/video/hybridone-story.mp4 (30s, 1280x720, 30fps), with the voiceover and music
+from assets/video/hybridone-story-audio.m4a (see scripts/make_story_audio.py).
 Usage: python3 scripts/render_story_video.py [frames_dir]   (needs Playwright + ffmpeg)"""
 import os,subprocess,sys,tempfile
 from pathlib import Path
@@ -15,5 +16,6 @@ with sync_playwright() as p:
         pg.evaluate('t=>window.seek(t)',f/FPS);pg.screenshot(path=str(frames/f'f{f:04d}.jpg'),type='jpeg',quality=92)
     pg.evaluate('t=>window.seek(t)',16.9);pg.screenshot(path=str(poster),type='jpeg',quality=85)
     b.close()
-subprocess.run(['ffmpeg','-y','-loglevel','error','-framerate',str(FPS),'-i',str(frames/'f%04d.jpg'),'-c:v','libx264','-preset','slow','-crf','27','-pix_fmt','yuv420p','-movflags','+faststart',str(out)],check=True)
+audio=ROOT/'assets/video/hybridone-story-audio.m4a'
+subprocess.run(['ffmpeg','-y','-loglevel','error','-framerate',str(FPS),'-i',str(frames/'f%04d.jpg')]+(['-i',str(audio),'-c:a','copy','-shortest'] if audio.exists() else [])+['-c:v','libx264','-preset','slow','-crf','27','-pix_fmt','yuv420p','-movflags','+faststart',str(out)],check=True)
 print(out,out.stat().st_size)
