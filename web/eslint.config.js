@@ -18,4 +18,9 @@ export default tseslint.config(
       '@typescript-eslint/no-non-null-assertion': 'error',
     },
   },
+  {
+    // Playwright script: runs in Node, and page.evaluate() bodies run in the browser.
+    files: ['browser/**/*.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
 );
