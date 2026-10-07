@@ -30,10 +30,13 @@ export function Shell() {
           <img src="../assets/brand/logo/svg/hybridone-logo-on-dark.svg" alt="HybridOne" height={34} />
         </div>
         <div className="gym">
-          {logo && <img className={`gym-logo${logo.uploaded ? ' uploaded' : ''}`} src={logo.src} alt={auth.gym.gymName} />}
-          <small>Current gym</small>
-          <b>{auth.gym.gymName}</b>
-          {auth.gyms.length > 1 && <a href="../choose-gym.html?switch=1">Switch gym</a>}
+          {logo?.uploaded && <img className="gym-tile" src={logo.src} alt="" />}
+          <div className="gym-text">
+            {logo && !logo.uploaded && <img className="gym-wordmark" src={logo.src} alt="" />}
+            <small>Current gym</small>
+            <b>{auth.gym.gymName}</b>
+            {auth.gyms.length > 1 && <a href="../choose-gym.html?switch=1">Switch gym</a>}
+          </div>
         </div>
         <nav className="nav" aria-label="Main">
           <NavLink to="/today" onClick={close}>Today</NavLink>
