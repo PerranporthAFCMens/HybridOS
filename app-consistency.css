@@ -662,7 +662,8 @@ input[type=checkbox],input[type=radio]{accent-color:var(--hybrid-pulse)}
 .ct-bar i{display:block;height:6px;border-radius:3px;background:var(--hybrid-pulse)}
 .ct-count{font-family:var(--hybrid-mono);font-size:13px;color:var(--hybrid-ink);width:92px;text-align:right;flex:0 0 auto}
 .trend-svg{display:block;width:100%;height:auto}
-@media(max-width:900px){.grid .card.stat.kpi{grid-column:span 12!important}.ct-bar{display:none}}
+@media(max-width:900px){.grid .card.stat.kpi{grid-column:1!important}
+ html body:has(.mobile-menu-btn,.admin-mobile-menu-btn,.staff-mobile-menu-btn) .top,html body .top{padding-left:0!important;margin-left:0!important;flex-wrap:nowrap!important}.top>div:first-child{min-width:0}.ct-bar{display:none}}
 
 /* Member home and tab bar */
 .member-tabbar{display:none}
