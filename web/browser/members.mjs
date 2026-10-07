@@ -75,6 +75,16 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('plan option', (await dialog.locator('option', { hasText: 'Hybrid Monthly — £45.00 / monthly' }).count()) === 1);
   if (shots) await page.screenshot({ path: `${shots}/member-record-${name}.png` });
 
+  // iPhone date boxes have a wide built-in minimum width. Fake that here and check the boxes
+  // stay inside the lifecycle card instead of spilling past its edge.
+  await page.addStyleTag({ content: 'input[type=date]::-webkit-datetime-edit{display:inline-block;min-width:330px}' });
+  const spill = await page.evaluate(() => {
+    const card = document.querySelector('.record-section').getBoundingClientRect();
+    const modal = document.querySelector('.modal-card');
+    return { worst: Math.max(...[...document.querySelectorAll('.record-section input[type=date]')].map((i) => i.getBoundingClientRect().right - card.right)), scrolls: modal.scrollWidth > modal.clientWidth + 1 };
+  });
+  c.ok('date boxes stay inside the card with wide built-in width', spill.worst <= 0 && !spill.scrolls);
+
   // Lifecycle validation, then a real save
   await dialog.getByLabel('Attrition date').fill('2026-02-01');
   await dialog.getByRole('button', { name: 'Save lifecycle dates' }).click();
