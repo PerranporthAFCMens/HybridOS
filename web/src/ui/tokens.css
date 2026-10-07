@@ -1,0 +1,27 @@
+/* Brand tokens (BRAND.md). One file: a redesign changes values here only. */
+:root {
+  --midnight: #0b1020;
+  --deep: #121a2e;
+  --line: #232c44;
+  --raised: #2b3550;
+  --slate: #8b95ab;
+  --fog: #c9cfdc;
+  --white: #fff;
+  --volt: #c6f135;
+  --pulse: #6c8cff;
+  --ember: #ff7a45;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --radius: 12px;
+  --sidebar: 254px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100dvh; margin: 0; }
+body { background: var(--midnight); color: var(--fog); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { color: var(--white); font-weight: 550; letter-spacing: -0.02em; }
+:focus-visible { outline: 2px solid var(--pulse); outline-offset: 2px; }

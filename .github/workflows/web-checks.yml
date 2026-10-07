@@ -1,0 +1,41 @@
+name: HybridOne web app checks
+
+on:
+  push:
+    branches: [main, dev]
+    paths: ['web/**', 'scripts/build_site.py', '.github/workflows/web-checks.yml']
+  pull_request:
+    paths: ['web/**', 'scripts/build_site.py', '.github/workflows/web-checks.yml']
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+        working-directory: web
+
+      - name: Type check, lint, unit tests
+        run: npm run typecheck && npm run lint && npm run test
+        working-directory: web
+
+      - name: Build the whole site (includes web/ -> _site/next/)
+        run: python3 scripts/build_site.py
+
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+        working-directory: web
+
+      - name: Browser check at phone and desktop width
+        run: |
+          python3 -m http.server 4173 --directory ../_site &
+          sleep 2
+          node browser/signed-out.mjs
+        working-directory: web
