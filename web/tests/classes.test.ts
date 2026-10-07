@@ -36,8 +36,8 @@ describe('weekColumns', () => {
     expect(cols.filter((c) => c.isToday).map((c) => c.key)).toEqual(['2026-10-07']);
   });
   it('puts each class on its day in start order and ignores other weeks', () => {
-    expect(cols[2]!.sessions.map((x) => x.session_id)).toEqual(['early', 'late']);
-    expect(cols[6]!.sessions.map((x) => x.session_id)).toEqual(['sun']);
+    expect(cols[2]?.sessions.map((x) => x.session_id)).toEqual(['early', 'late']);
+    expect(cols[6]?.sessions.map((x) => x.session_id)).toEqual(['sun']);
     expect(cols.flatMap((c) => c.sessions).length).toBe(3);
   });
 });
