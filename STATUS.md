@@ -1,5 +1,12 @@
 # HybridOne live status
 
+### 7 October 2026: UX work, Name on invites, speed, rebuild plan (dev only, nothing released)
+- Merged to `dev`: #102 Switch gym control, #103 Today + simplified navigation, #104 member home rework, #105 double-sidebar self-heal, #106 Today phone layout, #107 Name on Admin access invites, #108 Reports opens on Overview, #109 shared database reads and pre-connect. Live (`main` = `cef17ce`) has none of these yet; release only on the owner's say-so.
+- **Live database change (owner-approved, run by the owner in the SQL editor):** `gym_admin_invites.invitee_name text` added; `create_email_access_invite` and `create_shareable_access_invite` replaced with versions that take an optional fifth argument `invitee_name` (old four-argument calls still work). File: `supabase/migrations/20261007120000_invite_name.sql`. Rollback: `alter table public.gym_admin_invites drop column invitee_name;` and recreate the previous four-argument functions from the earlier migration files that define them.
+- Seeded demo data was removed from the live database by the owner earlier the same day (the owner's own, Josh's and Luke's accounts kept).
+- Next: the app rebuild in `REBUILD_PLAN.md`. Blocked until the cloud environment can reach `registry.npmjs.org` (see that file).
+- Still to do from the UX report: first-run setup screen, plain-language pass on Reports, light mode (awaiting the owner's answer on a dark sidebar with light content).
+
 ### Marketing page at the root (PR open)
 - Cause: `index.html` ran the universal-login redirect before the marketing-page redirect, so `https://www.hybridone.co.uk/` always went to the sign-in page (this predates the 6 October release). There was also no `/login` address (404).
 - Fix: at `/` the entry script now leaves the visitor on the marketing page (`landing.html`, shown at `/`); `/login` now routes to `login.html`; the marketing page has a Sign in link (`/login` on the live site, `login.html` on the dev Pages site). The routing check now also verifies `/login`. Dev Pages (`/HybridOS/`) is unchanged.
