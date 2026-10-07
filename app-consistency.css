@@ -663,3 +663,25 @@ input[type=checkbox],input[type=radio]{accent-color:var(--hybrid-pulse)}
 .ct-count{font-family:var(--hybrid-mono);font-size:13px;color:var(--hybrid-ink);width:92px;text-align:right;flex:0 0 auto}
 .trend-svg{display:block;width:100%;height:auto}
 @media(max-width:900px){.grid .card.stat.kpi{grid-column:span 12!important}.ct-bar{display:none}}
+
+/* Member home and tab bar */
+.member-tabbar{display:none}
+.next-class{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-top:1px solid var(--hybrid-line)}
+.next-class:first-child{border-top:0}
+.next-class-lead{padding:6px 0 18px}
+.next-class-lead h3{margin:0 0 4px;font-size:24px;line-height:30px;font-weight:600;letter-spacing:-.02em;color:#fff}
+.next-class .btn{min-height:48px;display:inline-flex;align-items:center;white-space:nowrap}
+.next-class-lead .btn{padding:0 22px;font-size:16px}
+@media(max-width:900px){
+ .member-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--hybrid-bg);border-top:1px solid var(--hybrid-line);padding:6px 6px calc(10px + env(safe-area-inset-bottom))}
+ .member-tabbar button{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent;border:0;color:var(--hybrid-muted);font:inherit;font-size:12px;cursor:pointer;border-radius:10px}
+ .member-tabbar button .hi{width:22px;height:22px}
+ .member-tabbar button.active{color:#fff;font-weight:500}
+ .member-tabbar button:focus-visible{outline:2px solid var(--hybrid-pulse);outline-offset:-2px}
+ body:has(.member-tabbar) .main{padding-bottom:104px}
+ body.mobile-nav-open .member-tabbar{display:none}
+ .next-class{flex-wrap:wrap}
+}
+.next-class .btn[disabled]{background:transparent!important;border:1px solid var(--hybrid-line)!important;color:var(--hybrid-muted)!important;opacity:1!important;cursor:default}
+#home .member-home-tile[data-home-key="next_classes"]{grid-column:1/-1;width:auto;max-width:none}
+#nextClasses .next-class{padding-left:16px;padding-right:16px}
