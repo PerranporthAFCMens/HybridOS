@@ -23,8 +23,8 @@ h2{font-size:58px;line-height:1.05;letter-spacing:-.02em;font-weight:850}
 /* scene 2 */
 .apps{position:relative;width:1000px;height:300px;margin-top:40px}
 .appw{position:absolute;top:0}
-.app{width:170px;height:170px;border-radius:30px;display:grid;place-items:center;font-size:64px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
-.app small{display:block;font-size:19px;font-weight:700;margin-top:-6px;color:#fff}
+.app{width:170px;height:170px;border-radius:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:64px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.app small{display:block;font-size:19px;font-weight:700;margin:0;color:#e6ecf5}
 @keyframes collapse{0%{transform:none;opacity:1}100%{transform:translate(var(--cx),0) scale(.15);opacity:0}}
 .col{animation:collapse .8s 7.6s cubic-bezier(.6,0,.4,1) both}
 .one{position:absolute;left:50%;top:10px;width:230px;height:230px;margin-left:-115px;border-radius:44px;background:linear-gradient(135deg,#00d9a6,#6d5dfc);display:grid;place-items:center;font-size:30px;font-weight:850;text-align:center;box-shadow:0 30px 80px rgba(0,217,166,.35);animation:pop .7s 8.2s cubic-bezier(.2,1.2,.4,1) both}
@@ -70,11 +70,11 @@ h2{font-size:58px;line-height:1.05;letter-spacing:-.02em;font-weight:850}
 <section class="scene" style="--start:4.4s;--dur:6s"><div class="center">
  <h2 class="u" style="--d:4.7s">Five apps. Five logins.<br><span class="accent">One headache.</span></h2>
  <div class="apps">
-  <div class="appw u" style="--d:5.4s;left:30px"><div class="app col" style="--cx:410px;background:#2b6cb0">📊<small>Sheets</small></div></div>
-  <div class="appw u" style="--d:5.6s;left:225px"><div class="app col" style="--cx:215px;background:#9f7aea">📅<small>Bookings</small></div></div>
-  <div class="appw u" style="--d:5.8s;left:420px"><div class="app col" style="--cx:20px;background:#2f855a">💬<small>Chat</small></div></div>
-  <div class="appw u" style="--d:6s;left:615px"><div class="app col" style="--cx:-175px;background:#dd6b20">💳<small>Payments</small></div></div>
-  <div class="appw u" style="--d:6.2s;left:810px"><div class="app col" style="--cx:-370px;background:#718096">🔑<small>Door</small></div></div>
+  <div class="appw u" style="--d:5.4s;left:30px"><div class="app col" style="--cx:410px;background:#161e30;border:1px solid rgba(255,255,255,.16)"><svg viewBox="0 0 48 48" width="72" height="72" fill="none" stroke="#c9d3e3" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="6" width="38" height="36" rx="4"/><path d="M5 18h38M5 30h38M19 6v36"/></svg><small>Sheets</small></div></div>
+  <div class="appw u" style="--d:5.6s;left:225px"><div class="app col" style="--cx:215px;background:#161e30;border:1px solid rgba(255,255,255,.16)"><svg viewBox="0 0 48 48" width="72" height="72" fill="none" stroke="#c9d3e3" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="38" height="34" rx="4"/><path d="M5 20h38M15 4v10M33 4v10"/></svg><small>Bookings</small></div></div>
+  <div class="appw u" style="--d:5.8s;left:420px"><div class="app col" style="--cx:20px;background:#161e30;border:1px solid rgba(255,255,255,.16)"><svg viewBox="0 0 48 48" width="72" height="72" fill="none" stroke="#c9d3e3" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9h34a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H22l-9 8v-8H7a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2z"/><path d="M14 19h20M14 26h12"/></svg><small>Chat</small></div></div>
+  <div class="appw u" style="--d:6s;left:615px"><div class="app col" style="--cx:-175px;background:#161e30;border:1px solid rgba(255,255,255,.16)"><svg viewBox="0 0 48 48" width="72" height="72" fill="none" stroke="#c9d3e3" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="40" height="30" rx="4"/><path d="M4 18h40M11 31h10"/></svg><small>Payments</small></div></div>
+  <div class="appw u" style="--d:6.2s;left:810px"><div class="app col" style="--cx:-370px;background:#161e30;border:1px solid rgba(255,255,255,.16)"><svg viewBox="0 0 48 48" width="72" height="72" fill="none" stroke="#c9d3e3" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="24" r="9"/><path d="M25 24h19M38 24v8M44 24v6"/></svg><small>Door</small></div></div>
   <div class="one">Hybrid<br>One</div>
  </div>
 </div></section>
@@ -92,7 +92,7 @@ h2{font-size:58px;line-height:1.05;letter-spacing:-.02em;font-weight:850}
   <div class="pane" style="--start:16.5s;--dur:2.7s"><div class="sbar">Personal bests</div>
    <div class="card u" style="--d:16.8s"><div class="m">WEIGHT</div><h4 style="font-size:24px">Bench Press</h4><div style="font-size:38px;font-weight:850;margin-top:6px">60 kg</div></div>
    <div class="card u" style="--d:17s"><div class="m">TIME · 5 KM</div><h4 style="font-size:24px">Easy run</h4><div style="font-size:38px;font-weight:850;margin-top:6px">27:30</div></div>
-   <div class="toast p" style="--d:17.4s">🏆 New PB: Bench Press 60 kg</div></div>
+   <div class="toast p" style="--d:17.4s">New PB: Bench Press 60 kg</div></div>
  </div>
  <div class="cap"><div class="sbar u" style="--d:10.4s;color:#00d9a6">For members</div><h2 class="u" style="--d:10.6s;margin-top:12px">Book, train and track — <span class="accent">in one app.</span></h2><div class="sub u" style="--d:11.2s">Classes, workouts and personal bests, always up to date.</div></div>
 </div></section>
@@ -102,7 +102,7 @@ h2{font-size:58px;line-height:1.05;letter-spacing:-.02em;font-weight:850}
  <div class="sbar u" style="--d:19.2s;color:#00d9a6;font-size:16px">For gyms</div><h2 class="u" style="--d:19.4s;margin-top:8px;font-size:50px">Run it your way. <span class="accent">With your brand.</span></h2>
  <div class="admin u" style="--d:19.9s;margin-top:34px;height:470px">
   <div class="side"><div class="logo">YOUR GYM</div><span class="on">Overview</span><span>Members</span><span>Classes</span><span>Settings</span></div>
-  <div class="dash"><h3>Good morning 👋</h3>
+  <div class="dash"><h3>Good morning</h3>
    <div class="grid3"><div class="stat"><small>Members</small><div id="c1">0</div></div><div class="stat"><small>Classes this week</small><div id="c2">0</div></div><div class="stat"><small>PBs this month</small><div id="c3">0</div></div></div>
    <div class="bar"><i></i></div>
    <div class="logoup"><div class="tile">Your logo<em>YOUR GYM</em></div><div class="t">Upload once, brand everywhere<span>Sign-in, join page, member app and emails</span></div></div>
