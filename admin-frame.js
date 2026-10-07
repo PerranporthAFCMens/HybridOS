@@ -103,7 +103,7 @@ function navigate(view,push){
 }
 function closeMenu(){document.body.classList.remove('admin-frame-menu-open')}
 function mobile(){
- const b=document.createElement('button');b.className='admin-frame-mobile';b.type='button';b.setAttribute('aria-label','Open admin menu');b.textContent='☰';
+ const b=document.createElement('button');b.className='admin-frame-mobile';b.type='button';b.setAttribute('aria-label','Open admin menu');b.innerHTML='<i class="hi hi-menu" aria-hidden="true"></i>';
  const d=document.createElement('div');d.className='admin-frame-backdrop';d.onclick=closeMenu;
  b.onclick=()=>document.body.classList.toggle('admin-frame-menu-open');
  document.body.append(b,d);

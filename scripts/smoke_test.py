@@ -72,7 +72,7 @@ landing=ROOT/'landing.html'
 if not landing.exists():problems.append('landing.html: HybridOne marketing homepage missing')
 else:
  lt=landing.read_text(encoding='utf-8')
- for x in ('HybridOne','The operating system for hybrid gyms','LOGO PLACEHOLDER','Book a demo'):
+ for x in ('HybridOne','One operating system','assets/brand/logo/svg/hybridone-logo-on-dark.svg','Book a demo'):
   if x not in lt:problems.append(f'landing.html: marketing content missing: {x}')
 vercel=ROOT/'vercel.json'
 if not vercel.exists():problems.append('vercel.json: HybridOne routes missing')
@@ -89,14 +89,14 @@ for brand_page in ROOT.glob('*.html'):
 # Core rendering assets are intentionally locked to the last known-good mobile/admin baseline.
 # Any deliberate change to these files must update this list as part of the same reviewed change.
 RENDER_BASELINE={
- 'app-consistency.css':'7389663d39ec26ccdf2ed62b5b7c6db59647ded6',
- 'admin-pages.css':'b1eaff4b6188ca6d7554c777e4f87aade8c43fd7',
- 'admin-shell.css':'c1009ad391e60ef38aad690f81653027ef78bbe9',
- 'admin-frame.css':'ae4dce7b74216da5b5f0a840c53a541c468ce534',
+ 'app-consistency.css':'7e8480eea165b57f24c19a2f15914404e38c511b',
+ 'admin-pages.css':'fe5f058ea31a9279a39f1d51a9ee35d010e91bda',
+ 'admin-shell.css':'ec3d5ab0faee0b01d383fbea29183e604430a53e',
+ 'admin-frame.css':'7710473a3237d154886fa23001ab10c47896a0bd',
  'admin-embed.js':'d5f4f78aa65561794e82bb2ca8e1d7b8e56a1c24',
- 'admin-frame.js':'a5da331b313677b3c8a2a8fe40fdc3e6090cce13',
- 'app-stability.js':'d8b65329cb81cb6d3e53ed9f362ca349691d0d5f',
- 'shared-admin-nav.js':'2ab89dfbca4cd8e121f4072cb14f4f49ee0d71b0',
+ 'admin-frame.js':'20322f734b2a1517bbf41f2b2e8085392bc03fd2',
+ 'app-stability.js':'661d84d7129dad37a84978f940b5995625bf1c75',
+ 'shared-admin-nav.js':'6500a0789ee6cae9052a6c387f302b0a2b3b287b',
 }
 def git_blob_sha(path):
  import hashlib
@@ -160,7 +160,7 @@ if '\\n<script type="module" src="./member-workouts-v2.js' in member:problems.ap
 for x in ('member-view-banner','member-view-mobile-label'):
  if x not in member:problems.append(f'member.html: owner-as-member banner contract missing: {x}')
 member_experience_css=(ROOT/'member-experience.css').read_text(encoding='utf-8')
-for x in ('Member mobile polish: content-first header','position:static!important','#memberHomeCanvas>.member-home-tile[data-home-key="hero"].hero','background:linear-gradient(135deg,#08111f'):
+for x in ('Member mobile polish: content-first header','position:static!important','#memberHomeCanvas>.member-home-tile[data-home-key="hero"].hero','background:var(--hybrid-panel)!important'):
  if x not in member_experience_css:problems.append(f'member-experience.css: mobile member polish missing: {x}')
 if "const membershipShort=$('membershipShort');if(membershipShort)membershipShort.textContent=" not in member:problems.append('member.html: safe membership summary missing')
 if "?.textContent=" in member:problems.append('member.html: invalid optional-chain assignment present')
@@ -363,13 +363,13 @@ shared_shell=(ROOT/'shared-shell.js').read_text(encoding='utf-8')
 for x in ('HybridShell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','dashboard','workouts','pbs','membership','social:','groups:'):
  if x not in shared_shell:problems.append(f'shared-shell.js: central shell capability missing: {x}')
 app_css=(ROOT/'app-consistency.css').read_text(encoding='utf-8')
-for x in ('Centralised Hybrid OS sidebar shell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','grid-template-columns:254px'):
+for x in ('Centralised HybridOne sidebar shell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','grid-template-columns:254px'):
  if x not in app_css:problems.append(f'app-consistency.css: central shell styling missing: {x}')
 
 admin_pages=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html')
 for page_name in admin_pages:
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
- for x in ('html.admin-embedded .side{display:none!important}','html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView{display:block!important;grid-template-columns:1fr!important}','html.admin-embedded .main{min-height:100%!important;background:#f5f7fb!important}'):
+ for x in ('html.admin-embedded .side{display:none!important}','html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView{display:block!important;grid-template-columns:1fr!important}','html.admin-embedded .main{min-height:100%!important;background:#0B1020!important}'):
   if x not in page_text:problems.append(f'{page_name}: original embedded admin shell guard missing: {x}')
  if 'html.admin-embedded .main{min-height:100dvh!important}' in page_text:problems.append(f'{page_name}: embedded child must not own 100dvh')
  if 'admin-mobile-contract.css' in page_text:problems.append(f'{page_name}: duplicate admin mobile contract returned')
@@ -402,7 +402,7 @@ for x in ('showOpsTab','location.hash.replace','history.replaceState','resources
 stability=(ROOT/'app-stability.js').read_text(encoding='utf-8')
 for x in ('hybridNavigationMask','beginNavigation','HybridNavigation','adminFiles.indexOf(currentFile)','adminFiles.indexOf(targetFile)'):
  if x not in stability:problems.append(f'app-stability.js: admin navigation transition rule missing: {x}')
-for x in ("syncMobileBrowserChrome","mobileViewport.matches)return","meta[name=\"theme-color\"]","pageshow","visibilitychange","#f5f7fb"):
+for x in ("syncMobileBrowserChrome","mobileViewport.matches)return","meta[name=\"theme-color\"]","pageshow","visibilitychange","#0B1020"):
  if x not in stability:problems.append(f'app-stability.js: mobile Safari chrome reset missing: {x}')
 for x in ("document.documentElement.classList.contains('admin-embedded')","'workout-builder.html'","'gym-layout.html'"):
  if x not in stability:problems.append(f'app-stability.js: embedded admin transition isolation missing: {x}')

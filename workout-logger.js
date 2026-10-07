@@ -21,31 +21,31 @@ function css(){
 .wl-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px 10px}
 .wl-top h3{margin:0;font-size:20px}
 .wl-body{overflow-y:auto;padding:0 18px 12px;flex:1;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-.wl-foot{padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #e7ebf2;background:#fff;display:flex;gap:10px;align-items:center}
+.wl-foot{padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--hybrid-line);background:var(--hybrid-panel);display:flex;gap:10px;align-items:center}
 .wl-foot .btn{flex:1}.wl-foot .msg{margin:0}
 .wl-meta{display:grid;grid-template-columns:1fr 150px;gap:10px;margin-bottom:8px}
 .wl-meta input,.wl-card input,.wl-card select,.wl-notes textarea{font-size:16px}
-.wl-notes{margin:0 0 12px}.wl-notes summary{cursor:pointer;color:#667085;font-size:14px;padding:4px 0}
-.wl-card{border:1px solid #e7ebf2;border-radius:16px;padding:12px;margin:10px 0;background:#fbfcfe}
+.wl-notes{margin:0 0 12px}.wl-notes summary{cursor:pointer;color:var(--hybrid-muted);font-size:14px;padding:4px 0}
+.wl-card{border:1px solid var(--hybrid-line);border-radius:10px;padding:12px;margin:10px 0;background:var(--hybrid-panel)}
 .wl-head{display:flex;gap:8px;align-items:center}
-.wl-namewrap{flex:1;min-width:0}.wl-namewrap .hybrid-activity-hint{display:none}.wl-namewrap .hybrid-activity-menu{max-height:220px}.wl-head .exerciseName{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #d0d5dd;border-radius:10px;min-height:44px;font-weight:600;background:#fff}
-.wl-x{border:0;background:#f2f4f7;border-radius:10px;width:40px;height:40px;font-size:20px;color:#667085;cursor:pointer;flex:none}
+.wl-namewrap{flex:1;min-width:0}.wl-namewrap .hybrid-activity-hint{display:none}.wl-namewrap .hybrid-activity-menu{max-height:220px}.wl-head .exerciseName{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--hybrid-line-strong);border-radius:10px;min-height:44px;font-weight:600;background:var(--hybrid-panel)}
+.wl-x{border:0;background:var(--hybrid-bg);border-radius:10px;width:40px;height:40px;font-size:20px;color:var(--hybrid-muted);cursor:pointer;flex:none}
 .wl-types{display:flex;gap:6px;overflow-x:auto;padding:10px 0 4px;scrollbar-width:none}
 .wl-types::-webkit-scrollbar{display:none}
-.wl-chip{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:7px 12px;font-size:13px;white-space:nowrap;cursor:pointer;color:#344054;flex:none}
+.wl-chip{border:1px solid var(--hybrid-line-strong);background:var(--hybrid-panel);border-radius:999px;padding:7px 12px;font-size:13px;white-space:nowrap;cursor:pointer;color:var(--hybrid-text);flex:none}
 .wl-chip[aria-pressed=true]{background:#0b1020;border-color:#0b1020;color:#fff}
 .wl-set{display:grid;grid-template-columns:26px 1fr 40px;gap:8px;align-items:center;margin-top:8px}
-.wl-n{font-weight:700;color:#98a2b3;text-align:center;font-size:14px}
+.wl-n{font-weight:600;color:var(--hybrid-muted);text-align:center;font-size:14px}
 .wl-fields{display:flex;gap:8px;flex-wrap:wrap}
 .wl-f{flex:1 1 84px;min-width:0;display:flex;flex-direction:column}
-.wl-f small{font-size:11px;color:#667085;margin:0 0 2px 2px}
-.wl-f input,.wl-f select{width:100%;box-sizing:border-box;padding:10px;border:1px solid #d0d5dd;border-radius:10px;background:#fff;min-height:44px}
-.wl-wide{flex:1 1 140px}.wl-time{display:flex;gap:6px;align-items:center}.wl-time span{color:#667085;font-size:13px}
+.wl-f small{font-size:11px;color:var(--hybrid-muted);margin:0 0 2px 2px}
+.wl-f input,.wl-f select{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--hybrid-line-strong);border-radius:10px;background:var(--hybrid-panel);min-height:44px}
+.wl-wide{flex:1 1 140px}.wl-time{display:flex;gap:6px;align-items:center}.wl-time span{color:var(--hybrid-muted);font-size:13px}
 .wl-dist{display:flex;gap:6px}.wl-dist select{flex:0 0 66px;padding:10px 4px}
-.wl-pace{flex:1 1 100%;font-size:12px;color:#667085;margin:-2px 0 0 2px;min-height:0}
-.wl-addset{margin-top:10px;border:1px dashed #98a2b3;background:transparent;border-radius:10px;padding:10px;width:100%;cursor:pointer;color:#344054;font-size:14px}
-.wl-label{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7a8494;margin:14px 0 2px}.wl-cardact{display:flex;gap:10px;margin-top:12px}.wl-cardact .btn{flex:1;padding:13px}.wl-cardact .wl-clear{flex:0 0 90px}.wl-done{display:flex;align-items:center;gap:10px;border:1px solid #abefc6;background:#f6fef9;border-radius:14px;padding:10px 12px;margin:8px 0}.wl-done b{color:#067647}.wl-done .t{flex:1;min-width:0}.wl-done .t strong{display:block;font-size:15px}.wl-done .t span{font-size:13px;color:#667085}.wl-link{border:0;background:none;color:#344054;text-decoration:underline;font-size:13px;cursor:pointer;padding:6px}
-.wl-toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#0b1020;color:#fff;padding:12px 16px;border-radius:14px;z-index:10050;max-width:90vw;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);line-height:1.4}
+.wl-pace{flex:1 1 100%;font-size:12px;color:var(--hybrid-muted);margin:-2px 0 0 2px;min-height:0}
+.wl-addset{margin-top:10px;border:1px dashed #98a2b3;background:transparent;border-radius:10px;padding:10px;width:100%;cursor:pointer;color:var(--hybrid-text);font-size:14px}
+.wl-label{font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--hybrid-muted);margin:14px 0 2px;font-family:var(--hybrid-mono)}.wl-cardact{display:flex;gap:10px;margin-top:12px}.wl-cardact .btn{flex:1;padding:13px}.wl-cardact .wl-clear{flex:0 0 90px}.wl-done{display:flex;align-items:center;gap:10px;border:1px solid rgba(198,241,53,.4);background:var(--hybrid-bg);border-radius:10px;padding:10px 12px;margin:8px 0}.wl-done b{color:var(--hybrid-volt)}.wl-done .t{flex:1;min-width:0}.wl-done .t strong{display:block;font-size:15px}.wl-done .t span{font-size:13px;color:var(--hybrid-muted)}.wl-link{border:0;background:none;color:var(--hybrid-text);text-decoration:underline;font-size:13px;cursor:pointer;padding:6px}
+.wl-toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#0b1020;color:#fff;padding:12px 16px;border-radius:10px;z-index:10050;max-width:90vw;font-size:14px;box-shadow:none;line-height:1.4}
 @media(max-width:640px){
 #workoutModal.wl-modal{padding:0;align-items:end}
 #workoutModal .wl-sheet{max-width:none;max-height:100dvh;height:100dvh;border-radius:0}
@@ -87,7 +87,7 @@ function setHTML(type,n){
   else if(type==='time')f=field('Time (min : sec)',`<div class="wl-time"><input class="v-min" inputmode="numeric" placeholder="min" aria-label="Minutes" autocomplete="off"><span>:</span><input class="v-sec" inputmode="numeric" placeholder="sec" aria-label="Seconds" autocomplete="off"></div>`);
   else if(type==='calories')f=field('Calories (kcal)',`<input class="v-cal" inputmode="decimal" placeholder="0" autocomplete="off">`);
   else f=field('Value',`<input class="v-cv" inputmode="decimal" placeholder="0" autocomplete="off">`)+field('Unit',`<input class="v-cu" placeholder="e.g. laps" autocomplete="off">`);
-  return `<div class="wl-n">${n}</div><div class="wl-fields">${f}</div><button class="wl-x remove-set" type="button" aria-label="Remove set">×</button>`;
+  return `<div class="wl-n">${n}</div><div class="wl-fields">${f}</div><button class="wl-x remove-set" type="button" aria-label="Remove set"><i class="hi hi-x" aria-hidden="true"></i></button>`;
 }
 function renumber(card){[...card.querySelectorAll('.wl-set')].forEach((r,i)=>r.querySelector('.wl-n').textContent=i+1)}
 function addSet(card,copyFrom){
@@ -208,7 +208,7 @@ function setSummary(e){
 }
 function renderLogged(){
   const box=$('wlLogged');
-  box.innerHTML=S.entries.map((e,i)=>`<div class="wl-done"><b>✓</b><div class="t"><strong>${esc(e.name)}</strong><span>${esc(setSummary(e))}</span></div><button class="wl-link" data-edit="${i}" type="button">Edit</button><button class="wl-link" data-del="${i}" type="button">Remove</button></div>`).join('');
+  box.innerHTML=S.entries.map((e,i)=>`<div class="wl-done"><b><i class="hi hi-check" aria-hidden="true"></i></b><div class="t"><strong>${esc(e.name)}</strong><span>${esc(setSummary(e))}</span></div><button class="wl-link" data-edit="${i}" type="button">Edit</button><button class="wl-link" data-del="${i}" type="button">Remove</button></div>`).join('');
   box.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editEntry(Number(b.dataset.edit)));
   box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>removeEntry(Number(b.dataset.del)));
   $('wlLabel').textContent=S.entries.length?'Add another exercise':'Add an exercise';
@@ -238,7 +238,7 @@ async function saveExercise(){
     S.entries.push({id:e.data.id,...ex});
     let won=[];try{won=await registerPBs([ex],S.performed,gym.id,uid)}catch(err){console.warn('PB check failed',err);toast('Exercise saved, but the personal best could not be saved: '+esc(err.message||'unknown error'))}
     renderLogged();const c=freshCard();
-    if(won.length)toast(`🏆 ${won.every(w=>w.first)?(won.length>1?'First PBs logged':'First PB logged'):(won.length>1?'New PBs':'New PB')}: ${won.slice(0,3).map(pbText).map(esc).join(', ')}${won.length>3?` +${won.length-3} more`:''}`);
+    if(won.length)toast(`<i class="hi hi-trophy" aria-hidden="true"></i> ${won.every(w=>w.first)?(won.length>1?'First PBs logged':'First PB logged'):(won.length>1?'New PBs':'New PB')}: ${won.slice(0,3).map(pbText).map(esc).join(', ')}${won.length>3?` +${won.length-3} more`:''}`);
     const body=$('workoutModal').querySelector('.wl-body');if(body)body.scrollTop=body.scrollHeight;
     return true;
   }catch(err){setMsg(err.message||'Could not save exercise',true);return false}
