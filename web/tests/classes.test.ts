@@ -57,3 +57,44 @@ describe('status wording', () => {
     expect(weekSummary([])).toBe('0 classes');
   });
 });
+
+import { CLASS_FORM_ERROR, RELEASE_OPTIONS, emptyClassForm, reservedExample, validateClass } from '../src/classes/calc';
+
+describe('validateClass', () => {
+  const good = { ...emptyClassForm(new Date(2026, 9, 7)), name: ' Hybrid Conditioning ', date: '2026-10-10', start: '09:30', duration: '45', capacity: '10', reserved: '4', description: ' Bring water ' };
+  it('starts from the old page defaults', () => {
+    const f = emptyClassForm(new Date(2026, 9, 7));
+    expect([f.date, f.start, f.duration, f.capacity, f.reserved, f.release]).toEqual(['2026-10-07', '18:00', '60', '20', '0', '']);
+  });
+  it('builds the exact values to save', () => {
+    const r = validateClass({ ...good, release: '120' });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const starts = new Date(2026, 9, 10, 9, 30);
+    expect(r.values).toEqual({
+      name: 'Hybrid Conditioning', description: 'Bring water', startsAt: starts.toISOString(), endsAt: new Date(starts.getTime() + 45 * 60000).toISOString(),
+      capacity: 10, reservedCapacity: 4, releaseMinutesBefore: 120,
+    });
+  });
+  it('keeps reserved spaces until the start when no release time is chosen; blank description is null', () => {
+    const r = validateClass({ ...good, release: '', description: '  ' });
+    expect(r.ok && [r.values.releaseMinutesBefore, r.values.description]).toEqual([null, null]);
+  });
+  it.each([
+    ['no name', { name: '  ' }], ['no date', { date: '' }], ['no start', { start: '' }],
+    ['duration too short', { duration: '4' }], ['duration too long', { duration: '481' }], ['duration blank', { duration: '' }], ['duration not a number', { duration: 'abc' }],
+    ['capacity zero', { capacity: '0' }], ['capacity fraction', { capacity: '2.5' }], ['reserved negative', { reserved: '-1' }],
+    ['reserved fraction', { reserved: '1.5' }], ['reserved above capacity', { reserved: '11' }],
+  ])('refuses %s', (_label, over) => {
+    expect(validateClass({ ...good, ...over })).toEqual({ ok: false, message: CLASS_FORM_ERROR });
+  });
+  it('allows reserved equal to capacity and the 5 and 480 minute limits', () => {
+    expect(validateClass({ ...good, reserved: '10' }).ok).toBe(true);
+    expect(validateClass({ ...good, duration: '5' }).ok).toBe(true);
+    expect(validateClass({ ...good, duration: '480' }).ok).toBe(true);
+  });
+  it('words the example and lists the release choices as before', () => {
+    expect(reservedExample(20, 5)).toBe('Example: capacity 20 + 5 reserved means standard members can fill up to 15 places, while eligible premium plans can still book into the final 5.');
+    expect(RELEASE_OPTIONS.map(([v]) => v)).toEqual(['', '1440', '720', '120', '60', '30']);
+  });
+});

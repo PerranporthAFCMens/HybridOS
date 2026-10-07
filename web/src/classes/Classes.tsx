@@ -3,6 +3,7 @@ import { useReadyAuth } from '../auth/AuthProvider';
 import { links } from '../shell/legacy';
 import { Button, LinkButton } from '../ui/Button';
 import { Card, Empty } from '../ui/Card';
+import { ClassForm } from './ClassForm';
 import { addDays, bookedText, sessionStatus, startOfWeek, timeRange, weekColumns, weekdayName, weekLabel, weekSummary } from './calc';
 import { useTimetable } from './useClasses';
 import '../members/members.css';
@@ -11,6 +12,7 @@ import './classes.css';
 export function Classes() {
   const { gym } = useReadyAuth();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+  const [adding, setAdding] = useState(false);
   const q = useTimetable(gym.gymId, weekStart);
   const columns = weekColumns(weekStart, q.data ?? [], new Date());
 
@@ -23,7 +25,8 @@ export function Classes() {
         </div>
         <div className="week-actions">
           <Button onClick={() => setWeekStart(startOfWeek(new Date()))}>Today</Button>
-          <LinkButton variant="primary" href={links['class-setup']}>Add a class</LinkButton>
+          <Button variant="primary" onClick={() => setAdding(true)}>Add class</Button>
+          <LinkButton href={links['class-setup']}>Class setup</LinkButton>
         </div>
       </header>
 
@@ -69,6 +72,16 @@ export function Classes() {
             </section>
           ))}
         </div>
+      )}
+
+      {adding && (
+        <ClassForm
+          onClose={() => setAdding(false)}
+          onSaved={(startsAt) => {
+            setWeekStart(startOfWeek(startsAt));
+            setAdding(false);
+          }}
+        />
       )}
     </>
   );
