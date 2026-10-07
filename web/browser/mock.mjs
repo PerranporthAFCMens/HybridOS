@@ -37,6 +37,8 @@ export async function reply(route, body, count) {
 
 /** Mock Supabase. `handle({route, url, path, select, method, body})` returns true when it answered; otherwise a default applies. */
 export async function mockSupabase(page, handle) {
+  // The uploaded gym logo: answer with a 1x1 png so the image loads.
+  await page.route('https://logos.example.test/**', (route) => route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64') }));
   await page.route('**/*.supabase.co/**', async (route) => {
     const req = route.request();
     const url = new URL(req.url());
@@ -46,7 +48,7 @@ export async function mockSupabase(page, handle) {
     let body = null;
     try { body = req.postDataJSON(); } catch { /* no body */ }
     if (path.includes('/auth/v1/')) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(session.user) });
-    if (path.endsWith('/gym_members') && select.includes('gyms(')) return reply(route, [{ gym_id: GYM, role: 'owner', gyms: { name: 'Puffin Performance', logo_url: null } }]);
+    if (path.endsWith('/gym_members') && select.includes('gyms(')) return reply(route, [{ gym_id: GYM, role: 'owner', gyms: { name: 'Puffin Performance', logo_url: 'https://logos.example.test/puffin.png' } }]);
     if (await handle({ route, url, path, select, method, body })) return undefined;
     if (method === 'HEAD') return route.fulfill({ status: 200, headers: { 'content-range': '*/0' } });
     if (['PATCH', 'POST', 'DELETE'].includes(method)) return route.fulfill({ status: 204, body: '' });

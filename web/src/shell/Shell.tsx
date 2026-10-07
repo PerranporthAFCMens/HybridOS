@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { Button } from '../ui/Button';
+import { gymLogo } from './gymBrand';
 import { links } from './legacy';
 import './shell.css';
 
@@ -17,6 +18,7 @@ export function Shell() {
   const auth = useReadyAuth();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
+  const logo = gymLogo(auth.gym.gymId, auth.gym.logoUrl);
   return (
     <div className={`shell${open ? ' open' : ''}`}>
       <button type="button" className="menu-btn" aria-label="Open menu" onClick={() => setOpen(true)}>
@@ -28,6 +30,7 @@ export function Shell() {
           <img src="../assets/brand/logo/svg/hybridone-logo-on-dark.svg" alt="HybridOne" height={34} />
         </div>
         <div className="gym">
+          {logo && <img className={`gym-logo${logo.uploaded ? ' uploaded' : ''}`} src={logo.src} alt={auth.gym.gymName} />}
           <small>Current gym</small>
           <b>{auth.gym.gymName}</b>
           {auth.gyms.length > 1 && <a href="../choose-gym.html?switch=1">Switch gym</a>}

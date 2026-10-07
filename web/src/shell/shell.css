@@ -9,6 +9,8 @@
 .side .gym small { color: var(--hybrid-muted); display: block; }
 .side .gym b { display: block; margin-top: 4px; font-weight: 600; }
 .side .gym a { display: inline-block; margin-top: 8px; font-size: 13px; color: var(--hybrid-pulse); text-decoration: none; }
+.side .gym-logo { display: block; width: 100%; max-width: 175px; height: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1); }
+.side .gym-logo.uploaded { filter: none; background: #fff; padding: 8px 10px; border-radius: 12px; box-sizing: border-box; max-height: 76px; }
 .nav { display: grid; gap: 6px; }
 .nav a {
   display: flex; align-items: center; min-height: 44px; padding: 12px; border-radius: var(--hybrid-control-radius);
