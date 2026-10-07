@@ -57,6 +57,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
   });
   c.ok('gym logo is a small tile that loads', !!logo && logo.loaded && logo.src === 'https://logos.example.test/puffin.png' && logo.w <= 64 && logo.h <= 64);
   c.ok('gym card stays compact', !!logo && logo.cardH <= 130);
+  await page.locator('.account .who-name').waitFor({ state: 'attached', timeout: 15000 }).catch(() => undefined);
+  const acct = await page.evaluate(() => ({ name: document.querySelector('.account .who-name')?.textContent ?? '', role: document.querySelector('.account .who-role')?.textContent ?? '', text: document.querySelector('.account')?.textContent ?? '' }));
+  c.ok('menu shows the person\'s name and position, not their email', acct.name === 'Josh Owner' && acct.role === 'Owner' && !acct.text.includes('@'));
   c.ok('no page errors', errors.length === 0);
   if (shots) await page.screenshot({ path: `${shots}/today-${name}.png`, fullPage: true });
   if (name === 'phone' && shots) { await page.getByRole('button', { name: 'Open menu' }).click(); await page.waitForTimeout(300); await page.screenshot({ path: `${shots}/menu-phone.png` }); }
