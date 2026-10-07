@@ -1,0 +1,129 @@
+/* HybridOne brand layer. Source of truth: BRAND.md in the repo root.
+   Fonts are self-hosted (Geist and Geist Mono, SIL Open Font Licence, see fonts/OFL.txt). */
+@font-face{font-family:'Geist';src:url('./fonts/Geist-Variable.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Geist Mono';src:url('./fonts/GeistMono-Variable.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+
+:root {
+  /* HybridOne brand tokens. Dark is the default theme. */
+  --h1-midnight: #0B1020;
+  --h1-deep: #121A2E;
+  --h1-line: #232C44;
+  --h1-raised: #2B3550;
+  --h1-slate: #8B95AB;
+  --h1-fog: #C9CFDC;
+  --h1-mist: #EEF1F6;
+  --h1-graphite: #4A5368;
+  --h1-white: #FFFFFF;
+  --h1-volt: #C6F135;
+  --h1-pulse: #6C8CFF;
+  --h1-ember: #FF7A45;
+
+  --font-sans: 'Geist', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --radius-control: 10px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+  --h1-pulse-ring: 2px solid var(--h1-pulse);
+}
+
+/* App tokens used by every page (shared stylesheet, landing, sign-in, join and email-style pages). */
+:root{
+  /* HybridOne brand tokens (BRAND.md). Dark is the default: Midnight ground, Deep panels. */
+  --hybrid-bg:#0B1020;
+  --hybrid-panel:#121A2E;
+  --hybrid-ink:#FFFFFF;
+  --hybrid-text:#C9CFDC;
+  --hybrid-muted:#8B95AB;
+  --hybrid-line:#232C44;
+  --hybrid-line-strong:#2B3550;
+  --hybrid-dark:#0B1020;
+  --hybrid-raised:#2B3550;
+  --hybrid-volt:#C6F135;
+  --hybrid-pulse:#6C8CFF;
+  --hybrid-ember:#FF7A45;
+  --hybrid-accent:#C6F135;
+  --hybrid-accent-dark:#6C8CFF;
+  --hybrid-good:#C6F135;
+  --hybrid-warn:#FF7A45;
+  --hybrid-bad:#FF7A45;
+  --hybrid-radius:16px;
+  --hybrid-control-radius:10px;
+  --hybrid-shadow:none;
+  --hybrid-control-shadow:none;
+  --hybrid-page-x:30px;
+  --hybrid-page-y:28px;
+  --hybrid-gap:16px;
+  --hybrid-surface-soft:#0F1629;
+  --hybrid-radius-sm:10px;
+  --hybrid-radius-md:16px;
+  --hybrid-radius-lg:16px;
+  --hybrid-space-1:4px;
+  --hybrid-space-2:8px;
+  --hybrid-space-3:12px;
+  --hybrid-space-4:16px;
+  --hybrid-space-5:20px;
+  --hybrid-space-6:24px;
+  --hybrid-font:'Geist','Helvetica Neue',Arial,sans-serif;
+  --hybrid-mono:'Geist Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+}
+
+/* Legacy variable names still used by older page styles. App pages get the same mapping,
+   with !important, from app-consistency.css; standalone pages (sign-in, join, invites) get it here. */
+:root{
+  --bg:var(--hybrid-bg);
+  --panel:var(--hybrid-panel);
+  --ink:var(--hybrid-ink);
+  --muted:var(--hybrid-muted);
+  --line:var(--hybrid-line-strong);
+  --dark:var(--hybrid-dark);
+  --accent:var(--hybrid-pulse);
+  --good:var(--hybrid-volt);
+  --warn:var(--hybrid-ember);
+  --bad:var(--hybrid-ember);
+  --shadow:none;
+}
+.hybrid-logo-img{display:block;height:34px;width:auto;max-width:100%}
+html{color-scheme:dark}
+body{font-family:var(--hybrid-font);color:var(--hybrid-text);-webkit-font-smoothing:antialiased}
+input,select,textarea{color:var(--hybrid-ink)}
+input::placeholder,textarea::placeholder{color:var(--hybrid-muted);opacity:1}
+:focus-visible{outline:2px solid var(--hybrid-pulse);outline-offset:2px}
+input,select,textarea{background:var(--hybrid-bg);border:1px solid var(--hybrid-line-strong);border-radius:var(--hybrid-control-radius)}
+h1,h2,h3,h4{color:var(--hybrid-ink)}
+.eyebrow{font-family:var(--hybrid-mono);font-weight:500;letter-spacing:.08em}
+a{color:var(--hybrid-pulse)}
+
+/* Brand icon set: one stroke style (1.75px on a 24px grid, Lucide-style shapes). Use <i class="hi hi-NAME"></i>; colour follows the text colour. */
+.hi{display:inline-block;flex:0 0 auto;width:1.2em;height:1.2em;vertical-align:-.22em;background:currentColor;-webkit-mask:var(--hi) center/contain no-repeat;mask:var(--hi) center/contain no-repeat;font-style:normal}
+.hi-lg{width:20px;height:20px}.hi-xl{width:28px;height:28px}
+.hi-menu{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M4 6h16M4 12h16M4 18h16%22/%3E%3C/svg%3E")}
+.hi-x{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M18 6 6 18M6 6l12 12%22/%3E%3C/svg%3E")}
+.hi-check{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M20 6 9 17l-5-5%22/%3E%3C/svg%3E")}
+.hi-sliders{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4%22/%3E%3C/svg%3E")}
+.hi-trophy{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M8 21h8M12 17v4%22/%3E%3Cpath d=%22M7 4h10v4a5 5 0 0 1-10 0V4z%22/%3E%3Cpath d=%22M7 6H4v1a4 4 0 0 0 4 4M17 6h3v1a4 4 0 0 1-4 4%22/%3E%3C/svg%3E")}
+.hi-dumbbell{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 7v10M18 7v10M3 9v6M21 9v6M6 12h12%22/%3E%3C/svg%3E")}
+.hi-flame{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z%22/%3E%3C/svg%3E")}
+.hi-bell{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9%22/%3E%3Cpath d=%22M10.3 21a1.94 1.94 0 0 0 3.4 0%22/%3E%3C/svg%3E")}
+.hi-bell-off{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7M10.3 21a1.94 1.94 0 0 0 3.4 0M2 2l20 20%22/%3E%3C/svg%3E")}
+.hi-calendar{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%223%22 y=%225%22 width=%2218%22 height=%2216%22 rx=%222%22/%3E%3Cpath d=%22M16 3v4M8 3v4M3 10h18%22/%3E%3C/svg%3E")}
+.hi-clock{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%229%22/%3E%3Cpath d=%22M12 7v5l3 2%22/%3E%3C/svg%3E")}
+.hi-repeat{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22m17 2 4 4-4 4%22/%3E%3Cpath d=%22M3 11v-1a4 4 0 0 1 4-4h14%22/%3E%3Cpath d=%22m7 22-4-4 4-4%22/%3E%3Cpath d=%22M21 13v1a4 4 0 0 1-4 4H3%22/%3E%3C/svg%3E")}
+.hi-ruler{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0z%22/%3E%3Cpath d=%22m14.5 12.5 2-2M11.5 9.5l2-2M8.5 6.5l2-2M17.5 15.5l2-2%22/%3E%3C/svg%3E")}
+.hi-key{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%227.5%22 cy=%2215.5%22 r=%224.5%22/%3E%3Cpath d=%22m10.5 12.5 9-9M16 7l3 3M14 9l2 2%22/%3E%3C/svg%3E")}
+.hi-star{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z%22/%3E%3C/svg%3E")}
+.hi-heart{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z%22/%3E%3C/svg%3E")}
+.hi-arrow-left{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M19 12H5M12 19l-7-7 7-7%22/%3E%3C/svg%3E")}
+.hi-arrow-right{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M5 12h14M12 5l7 7-7 7%22/%3E%3C/svg%3E")}
+.hi-arrow-up-right{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M7 17 17 7M8 7h9v9%22/%3E%3C/svg%3E")}
+.hi-message{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z%22/%3E%3C/svg%3E")}
+.hi-smile{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%229%22/%3E%3Cpath d=%22M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01%22/%3E%3C/svg%3E")}
+.hi-grip{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%229%22 cy=%226%22 r=%221%22/%3E%3Ccircle cx=%2215%22 cy=%226%22 r=%221%22/%3E%3Ccircle cx=%229%22 cy=%2212%22 r=%221%22/%3E%3Ccircle cx=%2215%22 cy=%2212%22 r=%221%22/%3E%3Ccircle cx=%229%22 cy=%2218%22 r=%221%22/%3E%3Ccircle cx=%2215%22 cy=%2218%22 r=%221%22/%3E%3C/svg%3E")}
+.hi-check-circle{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%229%22/%3E%3Cpath d=%22m8 12 3 3 5-6%22/%3E%3C/svg%3E")}
+.hi-timer{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2212%22 cy=%2213%22 r=%228%22/%3E%3Cpath d=%22M12 9v4l2 2M9 2h6%22/%3E%3C/svg%3E")}
+.hi-circle-dot{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%229%22/%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%223%22/%3E%3C/svg%3E")}
+.hi-grid{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%223%22 y=%223%22 width=%227%22 height=%227%22 rx=%221.5%22/%3E%3Crect x=%2214%22 y=%223%22 width=%227%22 height=%227%22 rx=%221.5%22/%3E%3Crect x=%223%22 y=%2214%22 width=%227%22 height=%227%22 rx=%221.5%22/%3E%3Crect x=%2214%22 y=%2214%22 width=%227%22 height=%227%22 rx=%221.5%22/%3E%3C/svg%3E")}
+.hi-users{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2%22/%3E%3Ccircle cx=%229%22 cy=%227%22 r=%224%22/%3E%3Cpath d=%22M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75%22/%3E%3C/svg%3E")}
+.hi-bar-chart{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M4 19V9M10 19V5M16 19v-7M22 19V3%22/%3E%3Cpath d=%22M2 21h22%22/%3E%3C/svg%3E")}
+.hi-home{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M3 11.5 12 4l9 7.5%22/%3E%3Cpath d=%22M5 10.5V20h5v-5h4v5h5v-9.5%22/%3E%3C/svg%3E")}
+.hi-card{--hi:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%221.75%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%223%22 y=%225%22 width=%2218%22 height=%2214%22 rx=%222%22/%3E%3Cpath d=%22M3 10h18M7 15h4%22/%3E%3C/svg%3E")}

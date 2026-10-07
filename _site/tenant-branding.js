@@ -3,7 +3,22 @@
   const TENANT_BRANDS={
     [HYBRID_HUB_ID]:{name:'Hybrid Hub',logo:'./assets/hybrid-hub-logo-horizontal.svg'}
   };
-  const activeTenant=()=>TENANT_BRANDS[sessionStorage.getItem('hybrid-gym-id')||'']||null;
+  const API='https://mzgnhmeydhhpzgxlgudh.supabase.co',KEY='sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD';
+  let remote=null;
+  const gymId=()=>{try{return sessionStorage.getItem('hybrid-gym-id')||''}catch(_){return ''}};
+  const activeTenant=()=>{const id=gymId();if(remote&&remote.id===id&&remote.logo)return remote;return TENANT_BRANDS[id]||null};
+  const isUploaded=t=>!!t&&/^https?:/i.test(t.logo||'');
+  async function loadBrand(){
+    const id=gymId();if(!id)return;
+    const key='hybrid-gym-brand:'+id;
+    try{const c=JSON.parse(sessionStorage.getItem(key)||'null');if(c&&Date.now()-c.t<600000){remote=c.b;return}}catch(_){}
+    try{
+      const r=await fetch(API+'/rest/v1/rpc/get_public_gym_brand',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify({p_gym_id:id})});
+      if(!r.ok)return;const d=await r.json();
+      remote={id:id,name:(d&&d.name)||'',logo:(d&&d.logo_url)||null};
+      try{sessionStorage.setItem(key,JSON.stringify({t:Date.now(),b:remote}))}catch(_){}
+    }catch(_){}
+  }
 
   function addLogoToGymCards(){
     const tenant=activeTenant();
@@ -16,7 +31,7 @@
       const img=existing||document.createElement('img');
       img.src=tenant.logo;
       img.alt=tenant.name;
-      img.className='tenant-gym-logo';
+      img.className='tenant-gym-logo'+(isUploaded(tenant)?' uploaded':'');
       img.dataset.hybridTenantLogo='1';
       if(!existing) card.insertBefore(img,card.firstChild);
     });
@@ -29,7 +44,9 @@
     if(!tenant){document.querySelector('.tenant-top-brand')?.remove();return}
     const main=document.querySelector('.main');
     const top=document.querySelector('.main .top');
-    if(!main||!top||document.querySelector('.tenant-top-brand')||document.querySelector('.member-gym-logo')) return;
+    const have=document.querySelector('.tenant-top-brand img');
+    if(have){have.src=tenant.logo;have.alt=tenant.name;return}
+    if(!main||!top||document.querySelector('.member-gym-logo')) return;
     const wrap=document.createElement('div');
     wrap.className='tenant-top-brand';
     const img=document.createElement('img');
@@ -61,7 +78,7 @@
       const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
       const card=document.createElement('div');
       card.className='door-access-card';
-      card.innerHTML='<div class="door-access-head"><span class="door-key-icon" aria-hidden="true">🔑</span><div><small>'+esc(settings.member_label||'Door access')+'</small><strong>Gym PIN</strong></div></div><button type="button" class="door-code-reveal" aria-expanded="false">Tap to reveal</button><div class="door-code-value" hidden>'+esc(settings.access_code)+'</div><div class="door-code-note">'+esc(settings.member_note||'Set by your gym.')+'</div>';
+      card.innerHTML='<div class="door-access-head"><span class="door-key-icon" aria-hidden="true"><i class="hi hi-key" aria-hidden="true"></i></span><div><small>'+esc(settings.member_label||'Door access')+'</small><strong>Gym PIN</strong></div></div><button type="button" class="door-code-reveal" aria-expanded="false">Tap to reveal</button><div class="door-code-value" hidden>'+esc(settings.access_code)+'</div><div class="door-code-note">'+esc(settings.member_note||'Set by your gym.')+'</div>';
       gym.insertAdjacentElement('afterend',card);
       const reveal=card.querySelector('.door-code-reveal');
       const value=card.querySelector('.door-code-value');
@@ -80,6 +97,7 @@
     addLogoToGymCards();
     addTopBrand();
     addDoorAccessCard();
+    loadBrand().then(function(){addLogoToGymCards();addTopBrand()});
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);

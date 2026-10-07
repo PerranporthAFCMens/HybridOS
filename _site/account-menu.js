@@ -9,40 +9,40 @@
   const style=document.createElement('style');
   style.textContent=`
     .userchip{position:relative;cursor:pointer;user-select:none;transition:border-color .15s ease,box-shadow .15s ease,transform .12s ease}
-    .userchip:hover{border-color:#d0d5dd;box-shadow:0 8px 24px rgba(16,24,40,.07)}
+    .userchip:hover{border-color:var(--hybrid-line-strong);box-shadow:none}
     .userchip:active{transform:scale(.99)}
     .userchip:after{content:"";width:7px;height:7px;border-right:1.8px solid #667085;border-bottom:1.8px solid #667085;transform:rotate(45deg) translateY(-2px);margin-left:3px}
-    .account-popover{position:fixed;right:14px;top:72px;width:min(300px,calc(100vw - 28px));background:#fff;border:1px solid #e7ebf2;border-radius:18px;box-shadow:0 22px 60px rgba(16,24,40,.17);padding:8px;z-index:2147483001;display:none}
+    .account-popover{position:fixed;right:14px;top:72px;width:min(300px,calc(100vw - 28px));background:var(--hybrid-panel);border:1px solid var(--hybrid-line);border-radius:16px;box-shadow:none;padding:8px;z-index:2147483001;display:none}
     .account-popover.open{display:block}
     .userchip.account-menu-open{z-index:2147483000!important}
     .userchip.account-menu-open>.who,.userchip.account-menu-open>.avatar{pointer-events:none}
     .userchip.account-menu-open>.account-popover{z-index:2147483001!important;pointer-events:auto}
-    .account-popover-head{padding:10px 11px 12px;border-bottom:1px solid #eef1f5;margin-bottom:6px}
-    .account-popover-head b{display:block;font-size:14px;color:#101828}.account-popover-head span{display:block;font-size:12px;color:#667085;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .account-menu-action{width:100%;border:0;background:transparent;border-radius:12px;padding:11px 12px;text-align:left;color:#344054;font-weight:750;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .account-menu-action:hover{background:#f7f8fa}.account-menu-action.danger{color:#b42318}
-    .account-menu-context{padding:8px 11px 6px;color:#667085;font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
-    .account-menu-divider{height:1px;background:#eef1f5;margin:6px 4px}
+    .account-popover-head{padding:10px 11px 12px;border-bottom:1px solid var(--hybrid-line);margin-bottom:6px}
+    .account-popover-head b{display:block;font-size:14px;color:var(--hybrid-ink)}.account-popover-head span{display:block;font-size:12px;color:var(--hybrid-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .account-menu-action{width:100%;border:0;background:transparent;border-radius:10px;padding:11px 12px;text-align:left;color:var(--hybrid-text);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .account-menu-action:hover{background:var(--hybrid-bg)}.account-menu-action.danger{color:var(--hybrid-ember)}
+    .account-menu-context{padding:8px 11px 6px;color:var(--hybrid-muted);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;font-family:var(--hybrid-mono)}
+    .account-menu-divider{height:1px;background:var(--hybrid-bg);margin:6px 4px}
     .account-modal{position:fixed;inset:0;background:rgba(11,16,32,.55);display:none;place-items:center;padding:18px;z-index:130;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
     .account-modal.open{display:grid}
-    .account-modal-card{width:min(620px,100%);max-height:min(88vh,760px);overflow:auto;background:#fff;border:1px solid #e7ebf2;border-radius:24px;box-shadow:0 30px 90px rgba(0,0,0,.25);padding:22px}
-    .account-modal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}.account-modal-top h2{margin:4px 0 0;font-size:25px}.account-close{width:38px;height:38px;border:1px solid #e7ebf2;border-radius:12px;background:#fff;color:#344054;font-size:22px;cursor:pointer}
-    .account-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.account-field{margin:11px 0}.account-field.full{grid-column:1/-1}.account-field label{display:block;font-size:12px;font-weight:850;color:#344054;margin:0 0 6px}.account-field input,.account-field select{width:100%;padding:12px 13px;border:1px solid #d9dee7;border-radius:13px;background:#fff;color:#101828;outline:none}.account-field input:focus,.account-field select:focus{border-color:#a9a1ff;box-shadow:0 0 0 3px rgba(109,93,252,.09)}
-    .account-divider{height:1px;background:#eef1f5;margin:15px 0}.account-help{font-size:12px;color:#667085;line-height:1.45;margin-top:5px}.account-msg{font-size:13px;min-height:20px;margin:10px 0}.account-msg.good{color:#067647}.account-msg.error{color:#b42318}.account-save{width:100%;border:0;background:#0b1020;color:#fff;border-radius:13px;padding:13px 15px;font-weight:850;cursor:pointer}.account-save:disabled{opacity:.55;cursor:not-allowed}
-    .account-avatar-row{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid #e7ebf2;border-radius:16px;background:#fafbfc}.account-avatar-preview{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:#e9e7ff;font-weight:900;font-size:20px;overflow:hidden;flex:0 0 64px}.account-avatar-preview img{width:100%;height:100%;object-fit:cover}.account-avatar-copy{min-width:0;flex:1}.account-avatar-copy b{display:block}.account-avatar-copy input{margin-top:8px;width:100%;font-size:12px}
-    @media(max-width:900px){.userchip .who{display:block!important}.userchip{padding:6px 8px}.userchip #userEmail{display:none}.userchip:after{display:none}.account-popover{.account-modal-card{padding:18px;border-radius:20px}.account-grid{grid-template-columns:1fr}.account-field.full{grid-column:auto}}
+    .account-modal-card{width:min(620px,100%);max-height:min(88vh,760px);overflow:auto;background:var(--hybrid-panel);border:1px solid var(--hybrid-line);border-radius:16px;box-shadow:none;padding:22px}
+    .account-modal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}.account-modal-top h2{margin:4px 0 0;font-size:25px}.account-close{width:38px;height:38px;border:1px solid var(--hybrid-line);border-radius:10px;background:var(--hybrid-panel);color:var(--hybrid-text);font-size:22px;cursor:pointer}
+    .account-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 12px}.account-field{margin:11px 0;min-width:0}.account-field input,.account-field select{min-width:0;max-width:100%;box-sizing:border-box;min-height:46px;font-size:16px}.account-field input[type=date]{-webkit-appearance:none;appearance:none;display:block;text-align:left}.account-field.full{grid-column:1/-1}.account-field label{display:block;font-size:12px;font-weight:600;color:var(--hybrid-text);margin:0 0 6px}.account-field input,.account-field select{width:100%;padding:12px 13px;border:1px solid var(--hybrid-line-strong);border-radius:10px;background:var(--hybrid-panel);color:var(--hybrid-ink);outline:none}.account-field input:focus,.account-field select:focus{border-color:rgba(108,140,255,.45);box-shadow:none}
+    .account-divider{height:1px;background:var(--hybrid-bg);margin:15px 0}.account-help{font-size:12px;color:var(--hybrid-muted);line-height:1.45;margin-top:5px}.account-msg{font-size:13px;min-height:20px;margin:10px 0}.account-msg.good{color:var(--hybrid-volt)}.account-msg.error{color:var(--hybrid-ember)}.account-save{width:100%;border:0;background:#0b1020;color:#fff;border-radius:10px;padding:13px 15px;font-weight:600;cursor:pointer}.account-save:disabled{opacity:.55;cursor:not-allowed}
+    .account-avatar-row{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid var(--hybrid-line);border-radius:10px;background:var(--hybrid-bg)}.account-avatar-preview{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--hybrid-bg);font-weight:600;font-size:20px;overflow:hidden;flex:0 0 64px}.account-avatar-preview img{width:100%;height:100%;object-fit:cover}.account-avatar-copy{min-width:0;flex:1}.account-avatar-copy b{display:block}.account-avatar-copy input{margin-top:8px;width:100%;font-size:12px}
+    @media(max-width:900px){.userchip .who{display:block!important}.userchip{padding:6px 8px}.userchip #userEmail{display:none}.userchip:after{display:none}.account-popover{.account-modal-card{padding:18px;border-radius:16px}.account-grid{grid-template-columns:1fr}.account-field.full{grid-column:auto}}
   `;
   document.head.appendChild(style);
 
   const pop=document.createElement('div');
   pop.className='account-popover';
-  pop.innerHTML=`<div class="account-popover-head"><b id="accountMenuName">My account</b><span id="accountMenuEmail"></span></div><div id="accountGymContext" class="account-menu-context hidden"></div><div id="accountGymActions"></div><div id="accountGymDivider" class="account-menu-divider hidden"></div><div id="accountPortalContext" class="account-menu-context hidden"></div><div id="accountPortalActions"></div><div id="accountPortalDivider" class="account-menu-divider hidden"></div><button type="button" class="account-menu-action" id="accountEditBtn"><span>Account settings</span><span>›</span></button><button type="button" class="account-menu-action danger" id="accountSignOutBtn"><span>Sign out</span><span>↗</span></button>`;
+  pop.innerHTML=`<div class="account-popover-head"><b id="accountMenuName">My account</b><span id="accountMenuEmail"></span></div><div id="accountGymContext" class="account-menu-context hidden"></div><div id="accountGymActions"></div><div id="accountGymDivider" class="account-menu-divider hidden"></div><div id="accountPortalContext" class="account-menu-context hidden"></div><div id="accountPortalActions"></div><div id="accountPortalDivider" class="account-menu-divider hidden"></div><button type="button" class="account-menu-action" id="accountEditBtn"><span>Account settings</span><span>›</span></button><button type="button" class="account-menu-action danger" id="accountSignOutBtn"><span>Sign out</span><span><i class="hi hi-arrow-up-right" aria-hidden="true"></i></span></button>`;
   document.body.appendChild(pop);
 
   const modal=document.createElement('div');
   modal.className='account-modal';
   modal.innerHTML=`<div class="account-modal-card" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
-    <div class="account-modal-top"><div><div class="eyebrow">Personal account</div><h2 id="accountModalTitle">Account settings</h2><div class="muted" style="font-size:13px;margin-top:4px">Update your own HybridOne sign-in and profile details.</div></div><button type="button" class="account-close" id="accountCloseBtn" aria-label="Close">×</button></div>
+    <div class="account-modal-top"><div><div class="eyebrow">Personal account</div><h2 id="accountModalTitle">Account settings</h2><div class="muted" style="font-size:13px;margin-top:4px">Update your own HybridOne sign-in and profile details.</div></div><button type="button" class="account-close" id="accountCloseBtn" aria-label="Close"><i class="hi hi-x" aria-hidden="true"></i></button></div>
     <div class="account-avatar-row"><div id="accountAvatarPreview" class="account-avatar-preview">H</div><div class="account-avatar-copy"><b>Profile photo</b><div class="account-help">JPEG, PNG or WebP up to 5 MB.</div><input id="accountAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></div></div>
     <div class="account-grid">
       <div class="account-field full"><label>Display name</label><input id="accountDisplayName" autocomplete="name" placeholder="Your name"></div>
@@ -120,7 +120,7 @@
     const currentId=sessionStorage.getItem('hybrid-gym-id')||'',current=allMemberships.find(x=>x.gym_id===currentId)||null;
     context.textContent=current?.gyms?.name?'Current gym · '+current.gyms.name:'Gym access';
     context.classList.toggle('hidden',allMemberships.length===0);
-    wrap.innerHTML=allMemberships.length>1?'<button type="button" class="account-menu-action" id="accountSwitchGymBtn"><span>Switch gym</span><span>↗</span></button>':'';
+    wrap.innerHTML=allMemberships.length>1?'<button type="button" class="account-menu-action" id="accountSwitchGymBtn"><span>Switch gym</span><span><i class="hi hi-arrow-up-right" aria-hidden="true"></i></span></button>':'';
     divider.classList.toggle('hidden',allMemberships.length<2);
     const b=q('#accountSwitchGymBtn');if(b)b.onclick=e=>{e.stopPropagation();navigateAccountTarget('./choose-gym.html?switch=1')};
   }
@@ -134,7 +134,7 @@
     const currentName=current==='member'?'Member':portalLabel(current);
     context.textContent='Viewing '+currentName;
     context.classList.toggle('hidden',targets.length<2);
-    wrap.innerHTML=available.map(p=>{const label=p==='member'?'View as Member':p==='staff'?'View as Staff/Employee':'Return to Owner/Admin';return `<button type="button" class="account-menu-action account-portal-action" data-portal="${p}"><span>${label}</span><span>↗</span></button>`}).join('');
+    wrap.innerHTML=available.map(p=>{const label=p==='member'?'View as Member':p==='staff'?'View as Staff/Employee':'Return to Owner/Admin';return `<button type="button" class="account-menu-action account-portal-action" data-portal="${p}"><span>${label}</span><span><i class="hi hi-arrow-up-right" aria-hidden="true"></i></span></button>`}).join('');
     divider.classList.toggle('hidden',available.length===0);
     wrap.querySelectorAll('.account-portal-action').forEach(btn=>btn.onclick=e=>{e.stopPropagation();navigateAccountTarget(portalHref(btn.dataset.portal))});
   }

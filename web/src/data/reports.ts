@@ -52,9 +52,34 @@ export async function listReportBookings(sessionIds: string[]): Promise<ReportBo
   return out;
 }
 
-/** Plan of every active membership (an empty text for one with no plan, so it still counts). */
-export async function listActiveMembershipPlans(gymId: string): Promise<string[]> {
-  const { data, error } = await supabase.from('memberships').select('plan_id').eq('gym_id', gymId).eq('status', 'active');
+export interface ActiveMembership {
+  userId: string;
+  /** Empty text when the membership has no plan. */
+  planId: string;
+}
+
+/** Who holds each active membership, and on which plan. */
+export async function listActiveMemberships(gymId: string): Promise<ActiveMembership[]> {
+  const { data, error } = await supabase.from('memberships').select('user_id, plan_id').eq('gym_id', gymId).eq('status', 'active');
   if (error) throw error;
-  return (data ?? []).map((m) => m.plan_id ?? '');
+  return (data ?? []).map((m) => ({ userId: m.user_id ?? '', planId: m.plan_id ?? '' }));
+}
+
+const PEOPLE_PER_REQUEST = 80;
+
+/** Display names for the given people (display name, else first and last name, else "Member"). */
+export async function listPersonNames(userIds: string[]): Promise<Map<string, string>> {
+  const names = new Map<string, string>();
+  const unique = [...new Set(userIds)];
+  for (let i = 0; i < unique.length; i += PEOPLE_PER_REQUEST) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, display_name, first_name, last_name')
+      .in('id', unique.slice(i, i + PEOPLE_PER_REQUEST));
+    if (error) throw error;
+    for (const p of data ?? []) {
+      names.set(p.id, p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Member');
+    }
+  }
+  return names;
 }
