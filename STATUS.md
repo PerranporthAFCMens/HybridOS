@@ -8,6 +8,8 @@
 
 - Release workflow change (6 Oct): the rollback tag is now `prod-<UTC date>-<time>` so more than one release can run on the same date. Existing tags (`prod-2026-10-02`, `prod-2026-10-06`) are untouched.
 
+> **7 October 2026 — release COMPLETE.** Production `main` = `cef17ce3d3aa591531c5aead61d8cbd97a965bd2` (workout logger redesign and save-as-you-go, member sign-up and celebration, swipe-to-open menu, gym logo upload and branding, marketing video with voiceover, iPhone bar fixes). Rollback tag: `prod-2026-10-07-081514` (the previous production, `05b1f55`). Vercel deployment READY; the production routing workflow passed on the exact SHA. The production hold is restored in `PROJECT_STATE.json`; the "Manual production release" workflow is to be disabled by the owner.
+
 > **6 October 2026 — release COMPLETE.** Production `main` = `05b1f5545aefccce754e56879c51d14abe1eafcf` (membership-status rules, member-page tabs, consistency fixes, marketing page at `/`, `/login`). Rollback tags: `prod-2026-10-06` (before the first release today), `prod-2026-10-06-195042`, `prod-2026-10-06-200508` (the version just before the final one). The production hold is restored in `PROJECT_STATE.json` and the "Manual production release" workflow is disabled. Live checks: Vercel READY on the exact SHA and the production routing workflow passed (includes `/login`). Stage 1 is now live, so the known gap about an ended member seeing a broken app is closed.
 
 ## Current operating state — 5 October 2026 (read this first)
