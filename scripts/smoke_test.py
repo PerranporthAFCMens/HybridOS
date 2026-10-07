@@ -353,7 +353,7 @@ for x in ('admin-access.html',):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: Admin access route missing: {x}')
 
 reporting=(ROOT/'reporting.html').read_text(encoding='utf-8')
-for x in ('Report library','reportSearch','XLSX.writeFile','membership_register','member_lifecycle','joins_attrition_monthly','class_sessions','attendance_log','failed_payments','drop_in_sales','workout_assignments','pt_appointments'):
+for x in ('All reports','reportSearch','XLSX.writeFile','membership_register','member_lifecycle','joins_attrition_monthly','class_sessions','attendance_log','failed_payments','drop_in_sales','workout_assignments','pt_appointments'):
  if x not in reporting:problems.append(f'reporting.html: report library/export workflow missing: {x}')
 if 'data-fmt="xls"' in reporting:problems.append('reporting.html: legacy fake Excel export returned')
 social_nav=(ROOT/'social-nav.js').read_text(encoding='utf-8')
