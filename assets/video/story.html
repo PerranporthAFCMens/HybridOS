@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>HybridOne story (video source)</title>
+<style>
+/* Source for assets/video/hybridone-story.mp4 — a 30s, 1280x720 animation. Frames are rendered by scripts/render_story_video.py */
+*{box-sizing:border-box;margin:0}
+html,body{width:1280px;height:720px;overflow:hidden;background:#0b1020;font-family:Inter,system-ui,sans-serif;color:#fff}
+.stage{position:relative;width:1280px;height:720px;background:radial-gradient(900px 600px at 80% 0%,#1b3a5c 0%,transparent 60%),radial-gradient(700px 500px at 0% 100%,#0f4a45 0%,transparent 60%),#0b1020;overflow:hidden}
+*{animation-play-state:paused!important}
+.scene{position:absolute;inset:0;opacity:0;animation:scene var(--dur) var(--start) linear both}
+@keyframes scene{0%{opacity:0}6%{opacity:1}94%{opacity:1}100%{opacity:0}}
+@keyframes up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.7)}70%{transform:scale(1.06)}100%{opacity:1;transform:none}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.u{animation:up .7s var(--d) cubic-bezier(.2,.8,.2,1) both}
+.p{animation:pop .6s var(--d) cubic-bezier(.2,1.2,.4,1) both}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;height:100%}
+.brand{font-size:30px;font-weight:850;letter-spacing:.06em}.brand b{color:#00d9a6}
+h1{font-size:92px;line-height:1;letter-spacing:-.03em;font-weight:850}
+h2{font-size:58px;line-height:1.05;letter-spacing:-.02em;font-weight:850}
+.sub{font-size:28px;color:#aab6c8;margin-top:22px}
+.accent{color:#00d9a6}
+.chips{display:flex;gap:14px;margin-top:34px}.chip{padding:12px 20px;border:1px solid rgba(255,255,255,.2);border-radius:999px;font-size:22px;color:#d6deeb;background:rgba(255,255,255,.05)}
+/* scene 2 */
+.apps{position:relative;width:1000px;height:300px;margin-top:40px}
+.appw{position:absolute;top:0}
+.app{width:170px;height:170px;border-radius:30px;display:grid;place-items:center;font-size:64px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.app small{display:block;font-size:19px;font-weight:700;margin-top:-6px;color:#fff}
+@keyframes collapse{0%{transform:none;opacity:1}100%{transform:translate(var(--cx),0) scale(.15);opacity:0}}
+.col{animation:collapse .8s 7.6s cubic-bezier(.6,0,.4,1) both}
+.one{position:absolute;left:50%;top:10px;width:230px;height:230px;margin-left:-115px;border-radius:44px;background:linear-gradient(135deg,#00d9a6,#6d5dfc);display:grid;place-items:center;font-size:30px;font-weight:850;text-align:center;box-shadow:0 30px 80px rgba(0,217,166,.35);animation:pop .7s 8.2s cubic-bezier(.2,1.2,.4,1) both}
+/* phone */
+.wrap3{display:grid;grid-template-columns:420px 1fr;gap:70px;align-items:center;height:100%;padding:0 110px}
+.phone{width:340px;height:640px;border-radius:50px;background:#101828;border:10px solid #1d2939;position:relative;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.5);margin:auto}
+.screen{position:absolute;inset:0;background:#f5f7fb;color:#101828;padding:54px 18px 18px}
+.pane{color:#101828;text-align:left;position:absolute;inset:54px 18px 18px;opacity:0;animation:scene var(--dur) var(--start) linear both}
+.sbar{font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}
+.card{background:#fff;border:1px solid #e7ebf2;border-radius:18px;padding:16px;margin-top:12px;box-shadow:0 8px 20px rgba(16,24,40,.06)}
+.card h4{font-size:19px}.card .m{font-size:14px;color:#667085;margin-top:4px}
+.btn{margin-top:14px;display:block;text-align:center;padding:13px;border-radius:13px;font-weight:800;font-size:16px;background:#0b1020;color:#fff}
+.btn.ok{background:#12b76a}
+@keyframes swapA{0%,100%{opacity:1}}
+.b1{animation:swapOut .01s 12.6s both}.b2{animation:swapIn .3s 12.6s both}
+@keyframes swapOut{to{opacity:0;height:0;padding:0;margin:0;overflow:hidden;font-size:0}}
+@keyframes swapIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+.done{display:flex;gap:10px;align-items:center;border:1px solid #abefc6;background:#f6fef9;border-radius:14px;padding:12px;margin-top:10px}.done b{color:#067647}.done strong{display:block;font-size:16px}.done span{font-size:13px;color:#667085}
+.toast{position:absolute;left:0;right:0;bottom:12px;background:#0b1020;color:#fff;border-radius:16px;padding:14px;font-size:15px;font-weight:700;text-align:center}
+.cap{max-width:560px}.cap h2{font-size:54px}
+/* scene 4 admin */
+.admin{text-align:left;width:1060px;height:560px;margin:80px auto 0;border-radius:26px;background:#f5f7fb;color:#101828;box-shadow:0 50px 120px rgba(0,0,0,.5);display:grid;grid-template-columns:210px 1fr;overflow:hidden}
+.side{background:#0b1020;padding:26px 20px;display:flex;flex-direction:column;gap:14px;font-size:17px;color:#aab6c8}.side .logo{width:150px;height:62px;border-radius:12px;background:#fff;display:grid;place-items:center;color:#0b1020;font-weight:850;font-size:15px;margin-bottom:10px}
+.side .on{color:#fff;font-weight:700}
+.dash{padding:28px 30px}.dash h3{font-size:26px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}
+.stat{background:#fff;border:1px solid #e7ebf2;border-radius:18px;padding:18px}.stat small{font-size:13px;color:#667085;font-weight:700;text-transform:uppercase;letter-spacing:.06em}.stat div{font-size:42px;font-weight:850;margin-top:8px}
+.bar{height:12px;border-radius:99px;background:#e9edf5;margin-top:22px;overflow:hidden}.bar i{display:block;height:100%;width:72%;background:linear-gradient(90deg,#00d9a6,#6d5dfc);transform-origin:left;animation:grow 1.6s 21.2s cubic-bezier(.3,.8,.3,1) both}
+.logoup{margin-top:22px;display:flex;align-items:center;gap:16px;background:#fff;border:1px solid #e7ebf2;border-radius:18px;padding:16px}.logoup .tile{width:150px;height:64px;border:2px dashed #cbd2dc;border-radius:12px;display:grid;place-items:center;color:#98a2b3;font-size:13px;position:relative}
+.logoup .tile em{position:absolute;inset:0;border-radius:10px;background:linear-gradient(135deg,#00d9a6,#6d5dfc);display:grid;place-items:center;color:#fff;font-style:normal;font-weight:850;animation:pop .6s 23.1s cubic-bezier(.2,1.2,.4,1) both}
+.logoup .t{font-size:16px;font-weight:700}.logoup .t span{display:block;font-size:13px;color:#667085;font-weight:500;margin-top:3px}
+.pill{display:inline-block;margin-top:34px;padding:18px 40px;border-radius:999px;background:linear-gradient(135deg,#00d9a6,#6d5dfc);font-weight:850;font-size:28px}
+</style></head><body>
+<div class="stage">
+
+<!-- 1: intro -->
+<section class="scene" style="--start:0s;--dur:4.6s"><div class="center">
+ <div class="brand u" style="--d:.2s">Hybrid<b>One</b></div>
+ <h1 class="u" style="--d:.7s;margin-top:26px">Your whole gym.<br><span class="accent">One place.</span></h1>
+ <div class="chips"><span class="chip p" style="--d:1.6s">Members</span><span class="chip p" style="--d:1.8s">Classes</span><span class="chip p" style="--d:2s">Workouts</span><span class="chip p" style="--d:2.2s">Billing</span></div>
+</div></section>
+
+<!-- 2: five apps -> one -->
+<section class="scene" style="--start:4.4s;--dur:6s"><div class="center">
+ <h2 class="u" style="--d:4.7s">Five apps. Five logins.<br><span class="accent">One headache.</span></h2>
+ <div class="apps">
+  <div class="appw u" style="--d:5.4s;left:30px"><div class="app col" style="--cx:410px;background:#2b6cb0">📊<small>Sheets</small></div></div>
+  <div class="appw u" style="--d:5.6s;left:225px"><div class="app col" style="--cx:215px;background:#9f7aea">📅<small>Bookings</small></div></div>
+  <div class="appw u" style="--d:5.8s;left:420px"><div class="app col" style="--cx:20px;background:#2f855a">💬<small>Chat</small></div></div>
+  <div class="appw u" style="--d:6s;left:615px"><div class="app col" style="--cx:-175px;background:#dd6b20">💳<small>Payments</small></div></div>
+  <div class="appw u" style="--d:6.2s;left:810px"><div class="app col" style="--cx:-370px;background:#718096">🔑<small>Door</small></div></div>
+  <div class="one">Hybrid<br>One</div>
+ </div>
+</div></section>
+
+<!-- 3: member app -->
+<section class="scene" style="--start:10s;--dur:9.2s"><div class="wrap3">
+ <div class="phone"><div class="screen"></div>
+  <div class="pane" style="--start:10.3s;--dur:3.4s"><div class="sbar">Classes</div>
+   <div class="card"><h4>HYROX Prep</h4><div class="m">Today · 18:00 · Coach Sam</div><div class="m">6 spots left</div><div class="btn b1">Book class</div><div class="btn ok b2">Booked ✓</div></div>
+   <div class="card"><h4>Strength Foundations</h4><div class="m">Tomorrow · 07:00</div></div></div>
+  <div class="pane" style="--start:13.6s;--dur:3s"><div class="sbar">Log workout</div>
+   <div class="done u" style="--d:13.9s"><b>✓</b><div><strong>Bicep Curl</strong><span>3 sets · 10 reps @ 12 kg</span></div></div>
+   <div class="done u" style="--d:14.6s"><b>✓</b><div><strong>Easy run</strong><span>5 km in 27:30</span></div></div>
+   <div class="card u" style="--d:15.2s"><h4>Bench Press</h4><div class="m">8 reps × 60 kg</div><div class="btn">Save exercise</div></div></div>
+  <div class="pane" style="--start:16.5s;--dur:2.7s"><div class="sbar">Personal bests</div>
+   <div class="card u" style="--d:16.8s"><div class="m">WEIGHT</div><h4 style="font-size:24px">Bench Press</h4><div style="font-size:38px;font-weight:850;margin-top:6px">60 kg</div></div>
+   <div class="card u" style="--d:17s"><div class="m">TIME · 5 KM</div><h4 style="font-size:24px">Easy run</h4><div style="font-size:38px;font-weight:850;margin-top:6px">27:30</div></div>
+   <div class="toast p" style="--d:17.4s">🏆 New PB: Bench Press 60 kg</div></div>
+ </div>
+ <div class="cap"><div class="sbar u" style="--d:10.4s;color:#00d9a6">For members</div><h2 class="u" style="--d:10.6s;margin-top:12px">Book, train and track — <span class="accent">in one app.</span></h2><div class="sub u" style="--d:11.2s">Classes, workouts and personal bests, always up to date.</div></div>
+</div></section>
+
+<!-- 4: owner -->
+<section class="scene" style="--start:19s;--dur:6.4s"><div class="center" style="justify-content:flex-start;padding-top:44px">
+ <div class="sbar u" style="--d:19.2s;color:#00d9a6;font-size:16px">For gyms</div><h2 class="u" style="--d:19.4s;margin-top:8px;font-size:50px">Run it your way. <span class="accent">With your brand.</span></h2>
+ <div class="admin u" style="--d:19.9s;margin-top:34px;height:470px">
+  <div class="side"><div class="logo">YOUR GYM</div><span class="on">Overview</span><span>Members</span><span>Classes</span><span>Settings</span></div>
+  <div class="dash"><h3>Good morning 👋</h3>
+   <div class="grid3"><div class="stat"><small>Members</small><div id="c1">0</div></div><div class="stat"><small>Classes this week</small><div id="c2">0</div></div><div class="stat"><small>PBs this month</small><div id="c3">0</div></div></div>
+   <div class="bar"><i></i></div>
+   <div class="logoup"><div class="tile">Your logo<em>YOUR GYM</em></div><div class="t">Upload once, brand everywhere<span>Sign-in, join page, member app and emails</span></div></div>
+  </div></div>
+</div></section>
+
+<!-- 5: CTA -->
+<section class="scene" style="--start:25s;--dur:5s"><div class="center">
+ <div class="brand u" style="--d:25.3s">Hybrid<b>One</b></div>
+ <h1 class="u" style="--d:25.7s;margin-top:22px;font-size:80px">Run your gym<br><span class="accent">from one place.</span></h1>
+ <div class="pill p" style="--d:26.8s">hybridone.co.uk</div>
+</div></section>
+</div>
+<script>
+const ease=x=>1-Math.pow(1-Math.min(1,Math.max(0,x)),3);
+window.tick=function(t){
+  const c=(id,from,to,v)=>{document.getElementById(id).textContent=Math.round(v*to).toLocaleString('en-GB')};
+  const e=ease((t-20.6)/1.6);c('c1',0,248,e);c('c2',0,36,e);c('c3',0,127,e);
+};
+window.seek=function(t){document.getAnimations().forEach(a=>{a.pause();a.currentTime=t*1000});window.tick(t)};
+</script></body></html>

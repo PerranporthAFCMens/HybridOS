@@ -67,6 +67,7 @@ a{color:inherit}
 .footer-inner{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 @media(max-width:900px){.nav a:not(.cta):not(#signInLink){display:none}.nav{gap:12px}.nav a{white-space:nowrap}.nav .cta{padding:10px 12px}.brand span{font-size:19px}.hero{padding:62px 0}.hero-grid,.split{grid-template-columns:1fr}.product-card{max-width:620px}.features{grid-template-columns:1fr 1fr}.cta-band{align-items:flex-start;flex-direction:column}}@media(max-width:360px){.brand span{display:none}}
 @media(max-width:620px){.shell{width:min(100% - 28px,1180px)}.header-inner{height:66px}.hero h1{font-size:52px}.hero p{font-size:18px}.features{grid-template-columns:1fr}.mock-grid{grid-template-columns:1fr}.mock.big{grid-column:auto}.section{padding:68px 0}.cta-band{padding:26px}.cta-band h2{font-size:30px}}
+.video-frame{margin:26px auto 0;max-width:960px;border-radius:22px;overflow:hidden;box-shadow:0 30px 80px rgba(16,24,40,.22);background:#0b1020;aspect-ratio:16/9}.video-frame video{display:block;width:100%;height:100%;object-fit:cover}.video-sec .section-head{text-align:center;margin-inline:auto}
 </style>
 </head>
 <body>
@@ -111,6 +112,12 @@ a{color:inherit}
   </div>
 </section>
 
+<section class="section video-sec" id="watch">
+  <div class="shell">
+    <div class="section-head"><div class="eyebrow">See it in 30 seconds</div><h2>Your whole gym, in one place.</h2></div>
+    <div class="video-frame"><video controls playsinline preload="metadata" poster="./assets/video/hybridone-story-poster.jpg" aria-label="HybridOne in 30 seconds"><source src="./assets/video/hybridone-story.mp4" type="video/mp4"></video></div>
+  </div>
+</section>
 <section class="section" id="features">
   <div class="shell">
     <div class="section-head"><div class="eyebrow">One platform</div><h2>Everything you need to run the gym.</h2><p>HybridOne is designed around the way hybrid gyms actually operate, from the first membership enquiry to classes, coaching, workouts and retention.</p></div>
