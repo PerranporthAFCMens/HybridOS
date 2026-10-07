@@ -134,7 +134,13 @@ def finalise_ui_contract():
   s=re.sub(r'<link[^>]+href=["\']\.\/app-consistency\.css(?:\?[^"\']*)?["\'][^>]*>','',s,flags=re.I)
   s=s.replace('</head>',f'<link rel="stylesheet" href="./app-consistency.css?v={VERSION}"></head>',1)
   write(n,s)
+def add_brand_icons():
+ link='<link rel="icon" type="image/svg+xml" href="./assets/brand/favicon.svg"><link rel="apple-touch-icon" href="./assets/brand/apple-touch-icon.png">'
+ for f in sorted(OUT.glob('*.html')):
+  t=f.read_text(encoding='utf-8')
+  if 'rel="icon"' in t or '</head>' not in t:continue
+  f.write_text(t.replace('</head>',link+'</head>',1),encoding='utf-8')
 def write_deployment_manifest():
  (OUT/'deployment.json').write_text(json.dumps({'build_sha':BUILD_SHA,'build_version':VERSION},indent=2)+'\n',encoding='utf-8')
-def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
+def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();add_brand_icons();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
 if __name__=='__main__':build()

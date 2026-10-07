@@ -72,7 +72,7 @@ landing=ROOT/'landing.html'
 if not landing.exists():problems.append('landing.html: HybridOne marketing homepage missing')
 else:
  lt=landing.read_text(encoding='utf-8')
- for x in ('HybridOne','The operating system for hybrid gyms','LOGO PLACEHOLDER','Book a demo'):
+ for x in ('HybridOne','The operating system for hybrid gyms','assets/brand/hybridone-logo-horizontal-black.svg','Book a demo'):
   if x not in lt:problems.append(f'landing.html: marketing content missing: {x}')
 vercel=ROOT/'vercel.json'
 if not vercel.exists():problems.append('vercel.json: HybridOne routes missing')

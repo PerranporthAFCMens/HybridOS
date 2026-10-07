@@ -3,7 +3,7 @@
      member (join page), staff (staff invite), anything else (owner / default).
      Subject (Supabase has one subject line, so keep it neutral): Confirm your HybridOne account -->
 <div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:auto;padding:28px;color:#101828">
-  <div style="font-size:20px;font-weight:800;letter-spacing:.04em">Hybrid<b>One</b></div>
+  <img src="https://www.hybridone.co.uk/assets/brand/hybridone-logo-horizontal-black.png" alt="HybridOne" width="190" style="display:block;width:190px;height:auto;border:0">
 {{ if .Data.signup_type }}{{ if eq .Data.signup_type "member" }}
   {{ if .Data.gym_logo_url }}<div style="margin-top:18px"><img src="{{ .Data.gym_logo_url }}" alt="{{ .Data.gym_name }}" style="max-width:200px;max-height:80px"></div>{{ end }}
   <h2 style="margin:24px 0 8px">Welcome{{ if .Data.gym_name }} to {{ .Data.gym_name }}{{ end }} 🎉</h2>
