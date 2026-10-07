@@ -69,15 +69,15 @@ jobs:
           npm run browser
         working-directory: web
 
-  # Safari-style engine (WebKit), in its OWN job so the slow install of its Linux packages (about
-  # 170 of them, 5+ minutes) never delays the main check above. Reporting only for now: a failure
-  # here shows as a failed job but does not block a merge, because this job is not a required check
-  # and has continue-on-error. Remove `continue-on-error` and add it to the required checks once we
-  # have seen it behave.
-  webkit:
+  # Safari-style engine (WebKit), in its OWN job so it never delays the main check above. Reporting
+  # only for now: a failure here shows as a failed job but does not block a merge, because this job is
+  # not a required check and has continue-on-error. Remove `continue-on-error` and add it to the
+  # required checks once we have seen it behave.
+  # The built site, made once on a normal runner and handed to the Safari-style job below (that job
+  # runs inside a container that is not guaranteed to have Python).
+  site:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-    continue-on-error: true
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v5
@@ -85,41 +85,47 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
+      - name: Build the whole site (includes web/ -> _site/next/)
+        run: python3 scripts/build_site.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: _site
+          retention-days: 1
+
+  # Runs inside Microsoft's Playwright image, which already contains the Safari-style browser and every
+  # Linux package it needs. That replaces a 2 to 14 minute download of about 170 packages (which stalled
+  # when the Ubuntu server was slow) with a one-off image pull. The image tag MUST match the Playwright
+  # version in web/package-lock.json (1.63.0): change both together.
+  webkit:
+    needs: site
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: _site
 
       - name: Install
         run: npm ci --no-audit --no-fund
         working-directory: web
-
-      - name: Build the whole site (includes web/ -> _site/next/)
-        run: python3 scripts/build_site.py
-
-      # The Ubuntu package server sometimes stalls for many minutes. Make apt give up on a stalled
-      # download quickly and retry it, instead of hanging until our own time limit.
-      - name: Make apt retry a stalled download
-        run: |
-          sudo tee /etc/apt/apt.conf.d/99-ci-network >/dev/null <<'EOF'
-          Acquire::Retries "5";
-          Acquire::http::Timeout "20";
-          Acquire::https::Timeout "20";
-          DPkg::Lock::Timeout "120";
-          EOF
-
-      - name: Install the Safari-style browser and its Linux packages
-        run: |
-          for attempt in 1 2 3; do
-            if timeout 420 npx playwright install --with-deps webkit; then exit 0; fi
-            echo "webkit install attempt $attempt failed or timed out"
-            sudo pkill -9 -x apt-get || true
-            sudo pkill -9 -x apt || true
-            sleep 3
-          done
-          exit 1
-        working-directory: web
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
 
       - name: Browser checks in WebKit
         run: |
-          python3 -m http.server 4174 --directory ../_site &
-          sleep 2
+          npx --yes http-server ../_site -p 4174 -s &
+          for i in $(seq 1 30); do
+            node -e "fetch('http://127.0.0.1:4174/').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))" && break
+            sleep 1
+          done
           export SITE_URL=http://127.0.0.1:4174 BROWSER=webkit
           npm run browser
         working-directory: web
