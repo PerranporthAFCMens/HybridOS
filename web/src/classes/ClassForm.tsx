@@ -7,7 +7,7 @@ import { SectionTitle } from '../ui/Card';
 import { Checkbox, DateInput, Field, FieldRow, Input, Select, Textarea } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import {
-  MAX_WEEKS, MIN_WEEKS, RELEASE_OPTIONS, WEEKS_ERROR, STAFF_STATUS_TEXT, emptyClassForm, occurrenceLabel, requirementsText, reservedExample, seriesSummary, staffStatus,
+  MAX_REASON, MAX_WEEKS, MIN_REASON, MIN_WEEKS, RELEASE_OPTIONS, WEEKS_ERROR, canOfferOverride, reasonOk, STAFF_STATUS_TEXT, emptyClassForm, occurrenceLabel, requirementsText, reservedExample, seriesSummary, staffStatus,
   validateClass, validWeeks, weeklyOccurrences, type ClassForm as Form,
 } from './calc';
 import { useActivePlans, useClassTypes, useCreateClass, useCreateSeries, useSchedulingRules, useScheduleCheck, useSeriesCheck, useStaffOptions } from './useClasses';
@@ -27,6 +27,8 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
   const [problems, setProblems] = useState<string[]>([]);
   const [skipped, setSkipped] = useState<string[]>([]);
   const [summary, setSummary] = useState('');
+  const [reason, setReason] = useState('');
+  const [forced, setForced] = useState<string[]>([]);
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm((f) => ({ ...f, [key]: value }));
   const toggle = (list: string[], id: string, on: boolean) => (on ? [...list, id] : list.filter((x) => x !== id));
 
@@ -50,7 +52,11 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
   const weekChecks = useSeriesCheck(gym.gymId, seriesBase, occurrences);
   // A week can be saved when the database says so (a custom class has nothing to check), and it is not skipped.
   const weekState = (i: number) => (!typeId ? { pending: false, ok: true, errors: [] as string[] } : { pending: !weekChecks.data, ok: weekChecks.data?.[i]?.ok === true, errors: weekChecks.data?.[i]?.errors ?? [] });
-  const included = occurrences.filter((o, i) => weekState(i).ok && !skipped.includes(o.startsAt));
+  // A failing week the owner may choose to schedule anyway (never one that crosses midnight).
+  const weekCanOverride = (i: number) => { const w = weekState(i); return !w.pending && !w.ok && canOfferOverride(w.errors); };
+  const overriddenWeeks = occurrences.filter((o, i) => forced.includes(o.startsAt) && weekCanOverride(i));
+  const included = occurrences.filter((o, i) => (weekState(i).ok && !skipped.includes(o.startsAt)) || (forced.includes(o.startsAt) && weekCanOverride(i)));
+  const anyOverridable = occurrences.some((_, i) => weekCanOverride(i));
 
   const pickType = (id: string) => {
     const t = types.data?.find((x) => x.id === id);
@@ -61,7 +67,7 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
     }));
   };
 
-  const submit = () => {
+  const submit = (overrideReason?: string) => {
     if (!parsed.ok) {
       setProblems([parsed.message]);
       return;
@@ -72,7 +78,7 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
     void _weeks;
     if (repeating) {
       series.mutate(
-        { base: { ...rest, classTypeId: typeId, staffIds: ordered.map((p) => p.userId), reservedPlanIds: pickedPlans }, weeks: included },
+        { base: { ...rest, classTypeId: typeId, staffIds: ordered.map((p) => p.userId), reservedPlanIds: pickedPlans }, weeks: included, overrides: overriddenWeeks.length ? { starts: overriddenWeeks.map((o) => o.startsAt), reason: reason.trim() } : undefined },
         {
           onSuccess: (results) => {
             const failed = results.filter((r) => !r.ok);
@@ -81,7 +87,9 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
               return;
             }
             // Weeks that did save are skipped from now on, so pressing Save again retries only the failed ones.
-            setSkipped((l) => [...l, ...results.filter((r) => r.ok).map((r) => r.startsAt)]);
+            const done = results.filter((r) => r.ok).map((r) => r.startsAt);
+            setSkipped((l) => [...l, ...done]);
+            setForced((l) => l.filter((x) => !done.includes(x)));
             setSummary(seriesSummary(results));
             setProblems(failed.map((r) => `${occurrenceLabel(r)}: ${r.errors.join(' ') || 'could not be scheduled.'}`));
           },
@@ -91,7 +99,7 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
       return;
     }
     create.mutate(
-      { ...rest, startsAt, endsAt, classTypeId: typeId, staffIds: ordered.map((p) => p.userId), reservedPlanIds: pickedPlans },
+      { ...rest, startsAt, endsAt, classTypeId: typeId, staffIds: ordered.map((p) => p.userId), reservedPlanIds: pickedPlans, overrideReason: overrideReason ?? null },
       { onSuccess: (v) => (v.ok ? onSaved(new Date(startsAt)) : setProblems(v.errors.length ? v.errors : ['The class could not be scheduled.'])), onError: (e) => setProblems([e.message]) },
     );
   };
@@ -179,14 +187,24 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
             const w = weekState(i);
             return (
               <div className={`week-row${w.ok || w.pending ? '' : ' bad'}`} key={o.startsAt}>
-                <Checkbox label={occurrenceLabel(o)} checked={w.ok && !skipped.includes(o.startsAt)} disabled={!w.ok} onChange={(on) => setSkipped((l) => (on ? l.filter((x) => x !== o.startsAt) : [...l, o.startsAt]))} />
+                <Checkbox
+                  label={occurrenceLabel(o)}
+                  checked={(w.ok && !skipped.includes(o.startsAt)) || (forced.includes(o.startsAt) && weekCanOverride(i))}
+                  disabled={!w.ok && !weekCanOverride(i)}
+                  onChange={(on) => (w.ok ? setSkipped((l) => (on ? l.filter((x) => x !== o.startsAt) : [...l, o.startsAt])) : setForced((l) => (on ? [...l, o.startsAt] : l.filter((x) => x !== o.startsAt))))}
+                />
                 {w.pending && <span className="week-note">Checking…</span>}
-                {!w.pending && !w.ok && <span className="week-note">{w.errors.join(' ')}</span>}
+                {!w.pending && !w.ok && <span className="week-note">{w.errors.join(' ')}{weekCanOverride(i) ? ' Tick the box to schedule this week anyway.' : ''}</span>}
                 {w.ok && skipped.includes(o.startsAt) && <span className="week-note muted">Skipped</span>}
               </div>
             );
           })}
         </fieldset>
+      )}
+      {repeating && anyOverridable && (
+        <Field label="Reason for scheduling despite the checks" htmlFor="class-override-reason" hint={overriddenWeeks.length ? `Needed because ${overriddenWeeks.length} ${overriddenWeeks.length === 1 ? 'week is' : 'weeks are'} ticked despite failing. It is recorded with your name.` : 'Only needed if you tick a week that failed.'}>
+          <Textarea id="class-override-reason" maxLength={MAX_REASON} placeholder="e.g. Room is free, the booking was moved" value={reason} onChange={(e) => setReason(e.target.value)} />
+        </Field>
       )}
 
       {!repeating && (
@@ -204,6 +222,16 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
         )}
       </div>
       )}
+      {!repeating && verdict && !verdict.ok && !check.isFetching && canOfferOverride(verdict.errors) && (
+        <fieldset className="check-group override-panel">
+          <legend>Schedule it anyway</legend>
+          <div className="muted small">As owner or admin you can schedule this class even though it fails the checks above. Your reason is recorded with your name, the date and the problems overridden.</div>
+          <Field label="Reason" htmlFor="class-override-reason" hint={`${MIN_REASON} to ${MAX_REASON} characters.`}>
+            <Textarea id="class-override-reason" maxLength={MAX_REASON} placeholder="e.g. Room is free, the booking was moved" value={reason} onChange={(e) => setReason(e.target.value)} />
+          </Field>
+          <Button className="wide-btn" disabled={create.isPending || !reasonOk(reason)} onClick={() => submit(reason.trim())}>Schedule anyway</Button>
+        </fieldset>
+      )}
 
       {summary && <div className="msg" role="status">{summary}</div>}
       <div className="assign-msg">
@@ -213,7 +241,7 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
           </span>
         )}
       </div>
-      <Button variant="primary" className="wide-btn" disabled={create.isPending || series.isPending || (repeating ? weekChecks.isFetching || included.length === 0 : !!verdict && !verdict.ok)} onClick={submit}>
+      <Button variant="primary" className="wide-btn" disabled={create.isPending || series.isPending || (repeating ? weekChecks.isFetching || included.length === 0 || (overriddenWeeks.length > 0 && !reasonOk(reason)) : !!verdict && !verdict.ok)} onClick={() => submit()}>
         {repeating ? `Save ${included.length} ${included.length === 1 ? 'class' : 'classes'}` : 'Save class'}
       </Button>
     </Modal>

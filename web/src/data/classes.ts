@@ -162,12 +162,16 @@ export interface ScheduleVerdict {
   ok: boolean;
   errors: string[];
   warnings: string[];
+  /** Only the save call says: false for a problem that can never be overridden (a class across midnight). */
+  canOverride: boolean | null;
+  /** True when the class was scheduled despite failing the checks. */
+  overridden: boolean;
 }
 
 function toVerdict(value: unknown): ScheduleVerdict {
-  const v = (value ?? {}) as { ok?: boolean; errors?: unknown; warnings?: unknown };
+  const v = (value ?? {}) as { ok?: boolean; errors?: unknown; warnings?: unknown; can_override?: unknown; overridden?: unknown };
   const list = (x: unknown) => (Array.isArray(x) ? x.map(String) : []);
-  return { ok: v.ok === true, errors: list(v.errors), warnings: list(v.warnings) };
+  return { ok: v.ok === true, errors: list(v.errors), warnings: list(v.warnings), canOverride: typeof v.can_override === 'boolean' ? v.can_override : null, overridden: v.overridden === true };
 }
 
 /**
@@ -175,7 +179,7 @@ function toVerdict(value: unknown): ScheduleVerdict {
  * big enough, equipment free. A class with no class type has nothing to check against.
  */
 export async function checkSchedule(gymId: string, p: ScheduleProposal): Promise<ScheduleVerdict> {
-  if (!p.classTypeId) return { ok: true, errors: [], warnings: [] };
+  if (!p.classTypeId) return { ok: true, errors: [], warnings: [], canOverride: null, overridden: false };
   const { data, error } = await supabase.rpc('validate_class_schedule', {
     p_gym_id: gymId,
     p_class_type_id: p.classTypeId,
@@ -195,6 +199,8 @@ export interface NewClass extends ScheduleProposal {
   releaseMinutesBefore: number | null;
   /** Plans allowed to use the reserved spaces (ignored when nothing is reserved). */
   reservedPlanIds: string[];
+  /** Why the owner is scheduling this class although it fails the checks. Only sent when given. */
+  overrideReason?: string | null;
 }
 
 /**
@@ -217,6 +223,7 @@ export async function createClassSession(gymId: string, c: NewClass): Promise<Sc
     p_reserved_release_minutes_before: c.releaseMinutesBefore as number,
     p_staff_ids: c.staffIds,
     p_plan_ids: c.reservedPlanIds,
+    ...(c.overrideReason ? { p_override_reason: c.overrideReason } : {}),
   });
   if (error) throw error;
   return toVerdict(data);

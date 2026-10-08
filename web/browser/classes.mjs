@@ -76,6 +76,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     }
     if (path.endsWith('/rpc/validate_class_schedule')) {
       checks.push(body);
+      if (new Date(body.p_ends_at).getTime() - new Date(body.p_starts_at).getTime() === 90 * 60000) return reply(route, { ok: false, errors: ['Classes cannot currently run across midnight.'], warnings: [] });
       if (new Date(body.p_starts_at).getTime() === weekStart(2).getTime()) return reply(route, { ok: false, errors: ['Studio A is outside its configured available hours.'], warnings: [] });
       const none = !body.p_staff_ids?.length;
       return reply(route, none ? { ok: false, errors: ['No selected staff member is currently qualified for Spin instructor.'], warnings: [] } : { ok: true, errors: [], warnings: [] });
@@ -84,7 +85,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
       saved.push(body);
       if (body.p_name === 'Partial series' && new Date(body.p_starts_at).getTime() === weekStart(1).getTime()) return reply(route, { ok: false, errors: ['A selected staff member is already assigned to another class at this time.'], warnings: [] });
       if (body.p_name === 'Clash class') return reply(route, { ok: false, errors: ['Studio A is already booked at this time.', 'A selected staff member is already assigned to another class at this time.'], warnings: [] });
-      return reply(route, { ok: true, session_id: 'new1' });
+      return reply(route, { ok: true, session_id: 'new1', overridden: !!body.p_override_reason });
     }
     if (path.endsWith('/class_types')) return reply(route, [{ id: TYPE, name: 'Spin', description: 'Indoor cycling', duration_minutes: 45, default_capacity: 12 }]);
     if (path.endsWith('/service_requirements')) return reply(route, [{ class_type_id: TYPE, capability_id: CAP, resource_id: null, quantity: 1 }, { class_type_id: TYPE, capability_id: null, resource_id: STUDIO, quantity: 1 }, { class_type_id: TYPE, capability_id: null, resource_id: BIKE, quantity: 12 }]);
@@ -199,7 +200,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const labels = await dialog.locator('.week-row .check span:last-child').allTextContents();
   c.ok('each week is a different Saturday, same time', labels.length === 4 && labels.every((l) => l.includes('09:30')) && new Set(labels).size === 4);
   await c.has('the bad week says why', dialog.getByText('Studio A is outside its configured available hours.'));
-  c.ok('and cannot be included', await dialog.locator('.week-row').nth(2).getByRole('checkbox').isDisabled());
+  c.ok('and is left out unless the owner ticks it as an override', !(await dialog.locator('.week-row').nth(2).getByRole('checkbox').isChecked()) && await dialog.locator('.week-row').nth(2).getByRole('checkbox').isEnabled());
+  await c.has('the way to override is explained', dialog.getByText('Tick the box to schedule this week anyway.'));
   c.ok('Save says how many', await dialog.getByRole('button', { name: 'Save 3 classes' }).isVisible());
   await dialog.locator('.week-row').nth(1).getByRole('checkbox').click({ force: true });
   await c.has('a week can be skipped', dialog.getByText('Weeks: 2 of 4 will be saved'));
@@ -231,6 +233,58 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const partialCalls = saved.filter((b) => b.p_name === 'Partial series').length;
   c.ok('first attempt made two calls', partialCalls === 2);
   await dialog.getByRole('button', { name: 'Close' }).click();
+
+  // Override: schedule anyway, with a reason that must be given and is sent with the save
+  await page.getByRole('button', { name: 'Add class' }).click();
+  await dialog.getByLabel('Class type').selectOption({ label: 'Spin' });
+  await dialog.getByLabel('Class name').fill('Override class');
+  await dialog.getByLabel('Date', { exact: true }).fill(nextSaturday);
+  await dialog.getByLabel('Start time').fill('09:30');
+  await c.has('the failing check offers an override', dialog.getByText('Schedule it anyway'));
+  c.ok('Save class stays blocked', await dialog.getByRole('button', { name: 'Save class' }).isDisabled());
+  c.ok('Schedule anyway needs a reason', await dialog.getByRole('button', { name: 'Schedule anyway' }).isDisabled());
+  await dialog.getByLabel('Reason', { exact: true }).fill('ab');
+  c.ok('two characters is not enough', await dialog.getByRole('button', { name: 'Schedule anyway' }).isDisabled());
+  await dialog.getByLabel('Reason', { exact: true }).fill('  Coach swap agreed  ');
+  c.ok('three or more is', await dialog.getByRole('button', { name: 'Schedule anyway' }).isEnabled());
+  c.ok('override layout', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/class-override-${name}.png` });
+  await dialog.getByRole('button', { name: 'Schedule anyway' }).click();
+  c.ok('form closes after the override', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
+  const forcedCall = saved.find((b) => b.p_name === 'Override class');
+  c.ok('the save carries the trimmed reason and no coach', forcedCall && forcedCall.p_override_reason === 'Coach swap agreed' && JSON.stringify(forcedCall.p_staff_ids) === '[]' && forcedCall.p_class_type_id === TYPE);
+  c.ok('normal saves never carry a reason', saved.filter((b) => b.p_name !== 'Override class' && b.p_name !== 'Weekly Override').every((b) => !('p_override_reason' in b)));
+
+  // A class that crosses midnight can never be overridden
+  await page.getByRole('button', { name: 'Add class' }).click();
+  await dialog.getByLabel('Class type').selectOption({ label: 'Spin' });
+  await dialog.getByLabel('Class name').fill('Late night');
+  await dialog.getByLabel('Date', { exact: true }).fill(nextSaturday);
+  await dialog.getByLabel('Start time').fill('23:30');
+  await dialog.getByLabel('Duration (minutes)').fill('90');
+  await c.has('midnight problem shown', dialog.getByText('Classes cannot currently run across midnight.'));
+  c.ok('and no override is offered', (await dialog.getByText('Schedule it anyway').count()) === 0);
+  await dialog.getByRole('button', { name: 'Close' }).click();
+
+  // Weekly: tick the failing week as an override; one shared reason; only that week carries it
+  await page.getByRole('button', { name: 'Add class' }).click();
+  await dialog.getByLabel('Class type').selectOption({ label: 'Spin' });
+  await dialog.getByLabel('Class name').fill('Weekly Override');
+  await dialog.getByLabel('Date', { exact: true }).fill(nextSaturday);
+  await dialog.getByLabel('Start time').fill('09:30');
+  await dialog.getByLabel('Coach Carla · coach').click();
+  await dialog.getByLabel('Repeat weekly').click();
+  await dialog.getByLabel('Number of weeks').fill('4');
+  await c.has('three of four before overriding', dialog.getByText('Weeks: 3 of 4 will be saved'));
+  await dialog.locator('.week-row').nth(2).getByRole('checkbox').click({ force: true });
+  await c.has('all four once the failing week is ticked', dialog.getByText('Weeks: 4 of 4 will be saved'));
+  c.ok('a reason is now needed and Save waits for it', await dialog.getByRole('button', { name: 'Save 4 classes' }).isDisabled());
+  await dialog.getByLabel('Reason for scheduling despite the checks').fill('Maintenance finished early');
+  await dialog.getByRole('button', { name: 'Save 4 classes' }).click();
+  c.ok('series closes after saving', await dialog.waitFor({ state: 'detached', timeout: 8000 }).then(() => true, () => false));
+  const weeklyOverride = saved.filter((b) => b.p_name === 'Weekly Override');
+  c.ok('four weeks saved', weeklyOverride.length === 4);
+  c.ok('only the overridden week carries the reason', weeklyOverride.filter((b) => b.p_override_reason).length === 1 && new Date(weeklyOverride.find((b) => b.p_override_reason).p_starts_at).getTime() === weekStart(2).getTime() && weeklyOverride.find((b) => b.p_override_reason).p_override_reason === 'Maintenance finished early');
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;
   await ctx.close();

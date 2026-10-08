@@ -273,3 +273,21 @@ export function seriesSummary(results: WeekResult[]): string {
   const saved = results.filter((r) => r.ok).length;
   return saved === results.length ? `Saved all ${saved} weeks.` : `Saved ${saved} of ${results.length} weeks.`;
 }
+
+// ---- Override: schedule a class that fails the checks, on purpose, with a reason that is kept ----
+
+/** The one problem that can never be overridden (calendars assume a class sits inside one day). */
+export const MIDNIGHT_MESSAGE = 'Classes cannot currently run across midnight.';
+export const MIN_REASON = 3;
+export const MAX_REASON = 500;
+
+/** Can the owner be offered "schedule anyway"? Not for a class that crosses midnight, and not when nothing failed. */
+export function canOfferOverride(errors: string[]): boolean {
+  return errors.length > 0 && !errors.includes(MIDNIGHT_MESSAGE);
+}
+
+/** A reason is needed, 3 to 500 characters once trimmed. */
+export function reasonOk(text: string): boolean {
+  const n = text.trim().length;
+  return n >= MIN_REASON && n <= MAX_REASON;
+}
