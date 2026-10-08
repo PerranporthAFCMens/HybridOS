@@ -6,6 +6,7 @@ import { Card, Empty, SectionTitle } from '../ui/Card';
 import { Field, FieldRow, Input, Select, Textarea } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import { RESOURCE_TYPES, emptyResourceForm, formFromResource, resourceFacts, usedBy, validateQualification, validateResource, type QualificationRow, type ResourceForm, type ResourceRow } from './calc';
+import { Hours } from './Hours';
 import { useRooms, useRoomsWrites } from './useRooms';
 import '../members/members.css';
 import '../classsetup/classsetup.css';
@@ -18,6 +19,7 @@ export function Rooms() {
   const q = useRooms(gym.gymId);
   const writes = useRoomsWrites(gym.gymId);
   const [editing, setEditing] = useState<Editing | null>(null);
+  const [hoursFor, setHoursFor] = useState<ResourceRow | null>(null);
   const [showOff, setShowOff] = useState(false);
   const [message, setMessage] = useState('');
   const d = q.data;
@@ -58,7 +60,7 @@ export function Rooms() {
             <SectionTitle title="Rooms and equipment" action={<Button variant="primary" onClick={() => { setMessage(''); setEditing({ kind: 'resource', item: null }); }}>Add room or equipment</Button>} />
             {resources.length === 0 && <Empty>Nothing set up yet. Add your first room.</Empty>}
             <ul className="team-list">
-              {resources.map((r) => <ResourceItem key={r.id} r={r} d={d} busy={writes.toggleResource.isPending} onEdit={() => { setMessage(''); setEditing({ kind: 'resource', item: r }); }} onToggle={() => toggleResource(r)} />)}
+              {resources.map((r) => <ResourceItem key={r.id} r={r} d={d} busy={writes.toggleResource.isPending} onEdit={() => { setMessage(''); setEditing({ kind: 'resource', item: r }); }} onHours={() => setHoursFor(r)} onToggle={() => toggleResource(r)} />)}
             </ul>
           </Card>
 
@@ -80,7 +82,7 @@ export function Rooms() {
             <Card>
               <SectionTitle title="Switched off" />
               <ul className="team-list">
-                {offResources.map((r) => <ResourceItem key={r.id} r={r} d={d} busy={writes.toggleResource.isPending} onEdit={() => { setMessage(''); setEditing({ kind: 'resource', item: r }); }} onToggle={() => toggleResource(r)} />)}
+                {offResources.map((r) => <ResourceItem key={r.id} r={r} d={d} busy={writes.toggleResource.isPending} onEdit={() => { setMessage(''); setEditing({ kind: 'resource', item: r }); }} onHours={() => setHoursFor(r)} onToggle={() => toggleResource(r)} />)}
                 {offQuals.map((c) => <QualItem key={c.id} c={c} d={d} busy={writes.toggleQualification.isPending} onEdit={() => { setMessage(''); setEditing({ kind: 'qualification', item: c }); }} onToggle={() => toggleQual(c)} />)}
               </ul>
             </Card>
@@ -88,6 +90,7 @@ export function Rooms() {
         </>
       )}
 
+      {hoursFor && <Hours resource={hoursFor} onClose={() => setHoursFor(null)} />}
       {editing?.kind === 'resource' && d && (
         <ResourceEditor item={editing.item} d={d} saving={writes.saveResource.isPending} onClose={() => setEditing(null)}
           onSave={(input, onError) => writes.saveResource.mutate({ id: editing.item?.id ?? null, input }, { onSuccess: () => setEditing(null), onError: (e) => onError(e.message) })} />
@@ -100,7 +103,7 @@ export function Rooms() {
   );
 }
 
-function ResourceItem({ r, d, busy, onEdit, onToggle }: { r: ResourceRow; d: RoomsData; busy: boolean; onEdit: () => void; onToggle: () => void }) {
+function ResourceItem({ r, d, busy, onEdit, onHours, onToggle }: { r: ResourceRow; d: RoomsData; busy: boolean; onEdit: () => void; onHours: () => void; onToggle: () => void }) {
   const used = usedBy(r.id, 'resource', d.requirements, d.types);
   return (
     <li className="team-item">
@@ -112,6 +115,7 @@ function ResourceItem({ r, d, busy, onEdit, onToggle }: { r: ResourceRow; d: Roo
       </div>
       <div className="team-actions">
         <Button aria-label={`Edit ${r.name}`} onClick={onEdit}>Edit</Button>
+        <Button aria-label={`Opening hours for ${r.name}`} onClick={onHours}>Opening hours</Button>
         <Button aria-label={`${r.isActive ? 'Switch off' : 'Switch on'} ${r.name}`} disabled={busy} onClick={onToggle}>{r.isActive ? 'Switch off' : 'Switch on'}</Button>
       </div>
     </li>

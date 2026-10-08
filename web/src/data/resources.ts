@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import type { QualificationRow, ResourceInput, ResourceRow } from '../rooms/calc';
+import type { HoursRow, QualificationRow, ResourceInput, ResourceRow } from '../rooms/calc';
 
 export interface RoomsData {
   resources: ResourceRow[];
@@ -48,5 +48,20 @@ export async function saveQualification(gymId: string, id: string | null, name: 
 
 export async function setQualificationActive(gymId: string, id: string, isActive: boolean): Promise<void> {
   const { error } = await supabase.from('capabilities').update({ is_active: isActive }).eq('id', id).eq('gym_id', gymId);
+  if (error) throw error;
+}
+
+/** The saved opening hours of one room or piece of equipment (days never saved are absent). */
+export async function loadHours(gymId: string, resourceId: string): Promise<HoursRow[]> {
+  const { data, error } = await supabase.from('resource_availability').select('weekday, is_available, start_time, end_time').eq('gym_id', gymId).eq('resource_id', resourceId);
+  if (error) throw error;
+  return (data ?? []).map((r) => ({ weekday: Number(r.weekday), isAvailable: r.is_available, start: r.start_time, end: r.end_time }));
+}
+
+export async function saveHours(gymId: string, resourceId: string, rows: HoursRow[]): Promise<void> {
+  const { error } = await supabase.from('resource_availability').upsert(
+    rows.map((r) => ({ gym_id: gymId, resource_id: resourceId, weekday: r.weekday, is_available: r.isAvailable, start_time: r.start, end_time: r.end })),
+    { onConflict: 'resource_id,weekday' },
+  );
   if (error) throw error;
 }
