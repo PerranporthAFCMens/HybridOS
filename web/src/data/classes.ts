@@ -348,3 +348,24 @@ export async function listRoster(gymId: string, sessionId: string): Promise<Rost
     bookedAt: r.booked_at,
   }));
 }
+
+export type BookingAction = 'attended' | 'no_show' | 'booked' | 'cancel' | 'add';
+
+export interface BookingResult {
+  ok: boolean;
+  errors: string[];
+  /** Things the owner chose to go ahead with, e.g. "Their membership does not include classes." */
+  warnings: string[];
+}
+
+/**
+ * Mark someone attended or no-show (or undo it), remove a booking, or add a member to a class, in one
+ * checked database call. Owners and admins only; the database says why when it refuses.
+ */
+export async function manageBooking(gymId: string, sessionId: string, userId: string, action: BookingAction): Promise<BookingResult> {
+  const { data, error } = await supabase.rpc('admin_manage_class_booking', { p_gym_id: gymId, p_session_id: sessionId, p_user_id: userId, p_action: action });
+  if (error) throw error;
+  const v = (data ?? {}) as { ok?: boolean; errors?: unknown; warnings?: unknown };
+  const list = (x: unknown) => (Array.isArray(x) ? x.map(String) : []);
+  return { ok: v.ok === true, errors: list(v.errors), warnings: list(v.warnings) };
+}
