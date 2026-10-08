@@ -68,3 +68,7 @@
 .tr-side-btn { flex: 1; min-height: 44px; border-radius: 10px; border: 1px solid var(--hybrid-line); background: var(--hybrid-panel); color: var(--hybrid-muted); font: inherit; font-weight: 700; cursor: pointer; }
 .tr-side-btn.on { background: var(--hybrid-volt, #c8ff3d); border-color: var(--hybrid-volt, #c8ff3d); color: #0b1020; }
 .tr-side-btn:focus-visible { outline: 2px solid var(--hybrid-pulse, #6b7cff); outline-offset: 2px; }
+
+.mem-pbwin { background: #3a3210; border-color: #7a6a1f; color: #ffe9a0; font-weight: 700; }
+.pb-value { font-size: 22px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; text-align: right; }
+.mem-row a, .mem-back { min-height: 44px; display: inline-flex; align-items: center; }

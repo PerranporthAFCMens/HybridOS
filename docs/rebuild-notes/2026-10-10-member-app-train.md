@@ -17,3 +17,9 @@ Not in this step:
 ## Left / Right / Both (added after the owner ran the SQL)
 - The `side` column on `workout_sets` is live (owner ran `20261010120000_workout_set_side.sql`; the check showed all "ok").
 - Each exercise has a "Left / right" button. Turned on, every set gets Left, Right and Both buttons (tap again to clear). The side is saved with the set, shown in "Last time" and copied by Copy last time. Off by default, so ordinary exercises are unchanged.
+
+## Personal bests (step 3)
+- Same rules as the classic logger (`src/train/pb.ts`, 9 tests): heaviest weight (else most reps) for strength, most reps, shortest time (longest for holds such as plank), furthest distance, most calories. A first log creates the best; later logs only replace it when better; old times saved in minutes are compared in seconds.
+- Finishing a workout records any bests and the Train screen says so ("New personal bests: ..."). If a best cannot be saved the workout is still saved and the screen says so.
+- Train has a Personal bests card; "See all" opens the list with add by hand and remove (with a confirm). Time is shown as minutes and seconds.
+- Not done: the old page's workout-set link (`workout_set_id`) is not filled in; cardio best times for a set distance (needs distance and time together on one set).

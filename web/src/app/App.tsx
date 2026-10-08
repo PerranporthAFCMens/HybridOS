@@ -25,6 +25,7 @@ import { MemberClasses } from '../member/MemberClasses';
 import { Me } from '../member/Me';
 import { Train } from '../train/Train';
 import { Player } from '../train/Player';
+import { Pbs } from '../train/Pbs';
 
 function Leave({ to }: { to: string }) {
   useEffect(() => {
@@ -63,6 +64,7 @@ export function App() {
             <Route path="/m/today" element={<MemberToday />} />
             <Route path="/m/classes" element={<MemberClasses />} />
             <Route path="/m/train" element={<Train />} />
+            <Route path="/m/train/pbs" element={<Pbs />} />
             <Route path="/m/train/:id" element={<Player />} />
             <Route path="/m/me" element={<Me />} />
             <Route path="/m/*" element={<Navigate to="/m/today" replace />} />
