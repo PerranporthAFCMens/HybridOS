@@ -35,8 +35,9 @@ function StatCard({ label, value }: { label: string; value: string }): ReactNode
 /** The tabs other than the Overview. They share one load of the data, only fetched once a tab is opened. */
 export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: Exclude<TabKey, 'overview'>; rangeDays: number; rangeLabel: string; onOpenTable: (build: () => ReportTable) => void }) {
   const { gym } = useReadyAuth();
-  const q = useLibraryData(gym.gymId, rangeDays, true);
+  const q = useLibraryData(gym.gymId, rangeDays, tab !== 'builder');
   const detail = q.error && typeof q.error === 'object' && 'message' in q.error ? String((q.error as { message: unknown }).message) : '';
+  if (tab === 'builder') return <Builder key={gym.gymId} />;
   if (q.isPending) return <Card><Empty>Loading…</Empty></Card>;
   if (q.isError) return <Card><Empty>Could not load this report. Refresh to try again.</Empty>{detail && <p className="muted">Detail: {detail}</p>}</Card>;
   const d = q.data;
@@ -48,7 +49,6 @@ export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: E
   if (tab === 'members') return <MembersPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;
   if (tab === 'payments') return <PaymentsPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;
   if (tab === 'xero') return <XeroExport key={gym.gymId} d={d} rangeLabel={rangeLabel} since={since} />;
-  if (tab === 'builder') return <Builder key={gym.gymId} data={d} rangeLabel={rangeLabel} />;
   return <ReportLibrary data={d} rangeDays={rangeDays} rangeLabel={rangeLabel} />;
 }
 

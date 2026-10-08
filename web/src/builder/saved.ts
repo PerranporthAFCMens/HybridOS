@@ -1,7 +1,8 @@
 import { sanitise, type Spec } from './engine';
 import type { Dataset } from './datasets';
+import { sanitiseCompare, sanitiseSel, type Compare, type PeriodSel } from './period';
 
-export interface SavedReport { name: string; spec: Spec }
+export interface SavedReport { name: string; spec: Spec; period: PeriodSel; compare: Compare }
 
 const key = (gymId: string) => `hybrid-report-builder:${gymId}`;
 
@@ -13,7 +14,8 @@ export function loadSaved(gymId: string, datasets: Dataset[]): SavedReport[] {
     return raw.flatMap((x) => {
       const name = x && typeof x === 'object' && typeof (x as { name?: unknown }).name === 'string' ? (x as { name: string }).name : '';
       const spec = name ? sanitise((x as { spec?: unknown }).spec, datasets) : null;
-      return spec ? [{ name, spec }] : [];
+      const r = x as { period?: unknown; compare?: unknown };
+      return spec ? [{ name, spec, period: sanitiseSel(r.period), compare: sanitiseCompare(r.compare) }] : [];
     });
   } catch {
     return [];
