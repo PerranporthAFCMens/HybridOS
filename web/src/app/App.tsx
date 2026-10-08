@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { LEGACY_CHOOSER, LEGACY_LOGIN, useAuth } from '../auth/AuthProvider';
 import { Shell } from '../shell/Shell';
 import { Today } from '../today/Today';
@@ -19,6 +19,10 @@ import { Community } from '../community/Community';
 import { Comms } from '../comms/Comms';
 import { Workouts } from '../workouts/Workouts';
 import { homeFor } from '../auth/access';
+import { MemberShell } from '../member/MemberShell';
+import { Today as MemberToday } from '../member/Today';
+import { MemberClasses } from '../member/MemberClasses';
+import { Me } from '../member/Me';
 
 function Leave({ to }: { to: string }) {
   useEffect(() => {
@@ -29,6 +33,7 @@ function Leave({ to }: { to: string }) {
 
 function Gate({ children }: { children: ReactNode }) {
   const auth = useAuth();
+  const { pathname } = useLocation();
   switch (auth.status) {
     case 'loading':
       return <div className="center muted">Loading…</div>;
@@ -39,6 +44,8 @@ function Gate({ children }: { children: ReactNode }) {
     case 'no-access':
       return <div className="center">You do not have access to a gym yet.</div>;
     case 'ready': {
+      // The new member app opens for anyone signed in to a gym; real members are still sent to the classic app until the cutover.
+      if (pathname.startsWith('/m/')) return <>{children}</>;
       const home = homeFor(auth.gym.role, auth.gym.gymId);
       return home === 'admin' ? <>{children}</> : <Leave to={home} />;
     }
@@ -50,6 +57,12 @@ export function App() {
     <HashRouter>
       <Gate>
         <Routes>
+          <Route element={<MemberShell />}>
+            <Route path="/m/today" element={<MemberToday />} />
+            <Route path="/m/classes" element={<MemberClasses />} />
+            <Route path="/m/me" element={<Me />} />
+            <Route path="/m/*" element={<Navigate to="/m/today" replace />} />
+          </Route>
           <Route element={<Shell />}>
             <Route path="/today" element={<Today />} />
             <Route path="/members" element={<Members />} />
