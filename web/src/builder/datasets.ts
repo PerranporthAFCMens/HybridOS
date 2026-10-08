@@ -126,4 +126,79 @@ const bookings: Dataset = {
   },
 };
 
-export const DATASETS: Dataset[] = [members, memberships, payments, classes, bookings];
+const hoursBetween = (a: string, b: string) => Math.max(0, (new Date(b).getTime() - new Date(a).getTime()) / 3600000);
+const timeHours = (t: string) => { const [h = 0, m = 0] = t.split(':').map(Number); return h + m / 60; };
+const round2 = (n: number) => Math.round(n * 100) / 100;
+const roleName = (r: string) => (r === 'coach' ? 'Coach / PT' : r.charAt(0).toUpperCase() + r.slice(1));
+
+const staff: Dataset = {
+  id: 'staff', label: 'Staff', description: 'One row per person on the team: their role and the working hours set up for them.',
+  fields: [
+    { id: 'name', label: 'Name', type: 'text' },
+    { id: 'role', label: 'Role', type: 'text' },
+    { id: 'job', label: 'Job title', type: 'text' },
+    { id: 'days', label: 'Days a week working', type: 'number' },
+    { id: 'hours', label: 'Scheduled hours a week', type: 'number' },
+    { id: 'pay', label: 'Hourly pay', type: 'money', sensitive: true },
+  ],
+  rows: (d) => d.staff.map((s) => {
+    const h = d.staffHours.filter((x) => x.userId === s.userId && x.isWorking && x.start && x.end);
+    return { name: s.name, role: roleName(s.role), job: s.jobTitle, days: h.length, hours: round2(h.reduce((n, x) => n + Math.max(0, timeHours(x.end) - timeHours(x.start)), 0)), pay: s.payPence };
+  }),
+};
+
+const delivered: Dataset = {
+  id: 'delivered', label: 'Classes delivered', description: 'One row for each class a coach or member of staff was on, with its length and how many came.',
+  fields: [
+    { id: 'coach', label: 'Coach', type: 'text' },
+    { id: 'class', label: 'Class', type: 'text' },
+    { id: 'date', label: 'Date', type: 'date' },
+    { id: 'day', label: 'Day of week', type: 'text' },
+    { id: 'band', label: 'Time of day', type: 'text' },
+    { id: 'role', label: 'Lead or assistant', type: 'text' },
+    { id: 'hours', label: 'Hours', type: 'number' },
+    { id: 'attended', label: 'Attended', type: 'number' },
+    { id: 'booked', label: 'Took a place', type: 'number' },
+  ],
+  rows: (d) => {
+    const stats = new Map(sessionStats(d).map((s) => [s.session.id, s]));
+    const names = new Map(d.staff.map((s) => [s.userId, s.name]));
+    return d.sessionStaff.flatMap((a) => {
+      const st = stats.get(a.sessionId);
+      if (!st) return [];
+      const p = londonParts(new Date(st.session.startsAt));
+      return [{
+        coach: names.get(a.userId) ?? nameOf(d, a.userId), class: st.session.name, date: p.date, day: DAYS[p.weekday] ?? '', band: bandOf(Number(p.time.slice(0, 2))),
+        role: a.isLead ? 'Lead' : 'Assistant', hours: round2(hoursBetween(st.session.startsAt, st.session.endsAt)), attended: st.attended, booked: st.demand,
+      }];
+    });
+  },
+};
+
+const seen: Dataset = {
+  id: 'seen', label: 'Clients seen', description: 'One row each time a coach saw a client: a class they attended, or a personal training session.',
+  fields: [
+    { id: 'coach', label: 'Coach', type: 'text' },
+    { id: 'client', label: 'Client', type: 'text' },
+    { id: 'date', label: 'Date', type: 'date' },
+    { id: 'kind', label: 'Class or PT', type: 'text' },
+    { id: 'what', label: 'What it was', type: 'text' },
+    { id: 'status', label: 'Status', type: 'text' },
+    { id: 'hours', label: 'Hours', type: 'number' },
+  ],
+  rows: (d) => {
+    const names = new Map(d.staff.map((s) => [s.userId, s.name]));
+    const sessions = new Map(d.sessions.map((s) => [s.id, s]));
+    const coachesOf = new Map<string, string[]>();
+    for (const a of d.sessionStaff) coachesOf.set(a.sessionId, [...(coachesOf.get(a.sessionId) ?? []), a.userId]);
+    const fromClasses = d.bookings.filter((b) => b.status === 'attended').flatMap((b) => {
+      const s = sessions.get(b.sessionId);
+      if (!s) return [];
+      return (coachesOf.get(b.sessionId) ?? []).map((c) => ({ coach: names.get(c) ?? nameOf(d, c), client: nameOf(d, b.userId), date: day(s.startsAt), kind: 'Class', what: s.name, status: 'Attended', hours: round2(hoursBetween(s.startsAt, s.endsAt)) }));
+    });
+    const fromPt = d.pt.filter((p) => p.memberId).map((p) => ({ coach: names.get(p.staffId) ?? nameOf(d, p.staffId), client: nameOf(d, p.memberId), date: day(p.startsAt), kind: 'PT', what: 'Personal training', status: p.status.replace('_', ' '), hours: round2(hoursBetween(p.startsAt, p.endsAt)) }));
+    return [...fromClasses, ...fromPt];
+  },
+};
+
+export const DATASETS: Dataset[] = [members, memberships, payments, classes, bookings, staff, delivered, seen];

@@ -75,7 +75,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   page.on('request', (r) => {
     const u = new URL(r.url());
     if (!u.hostname.endsWith('supabase.co') || u.pathname.includes('/auth/')) return;
-    if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(r.method())) writes.push(`${r.method()} ${u.pathname}`);
+    if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(r.method()) && !u.pathname.includes('/rpc/get_')) writes.push(`${r.method()} ${u.pathname}`);
     if (u.pathname.endsWith('/payment_records')) paymentRequests.push(r.url());
     if (u.pathname.endsWith('/class_sessions')) sessionRequests.push(r.url());
   });

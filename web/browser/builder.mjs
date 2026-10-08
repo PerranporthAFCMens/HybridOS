@@ -73,7 +73,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const { ctx, page, errors } = await signedInPage(browser, { ...viewport });
   page.on('request', (r) => {
     const u = new URL(r.url());
-    if (u.hostname.endsWith('supabase.co') && !u.pathname.includes('/auth/') && ['POST', 'PATCH', 'PUT', 'DELETE'].includes(r.method())) writes.push(`${r.method()} ${u.pathname}`);
+    if (u.hostname.endsWith('supabase.co') && !u.pathname.includes('/auth/') && !u.pathname.includes('/rpc/get_') && ['POST', 'PATCH', 'PUT', 'DELETE'].includes(r.method())) writes.push(`${r.method()} ${u.pathname}`);
   });
   await mockSupabase(page, async ({ route, path }) => {
     if (path.endsWith('/class_sessions')) return reply(route, sessions);
@@ -88,71 +88,89 @@ for (const [name, viewport] of Object.entries(sizes)) {
       return reply(route, payments.slice(a, b + 1));
     }
     if (path.endsWith('/class_booking_purchases')) return reply(route, []);
-    if (path.endsWith('/workout_assignments') || path.endsWith('/workout_sessions') || path.endsWith('/pt_appointments')) return reply(route, []);
+    if (path.endsWith('/rpc/get_gym_team_accounts')) return reply(route, [{ user_id: 'c1', display_name: 'Coach Cara', email: 'cara@example.com', role: 'coach', is_active: true, access_status: 'active', joined_at: '2026-01-01T00:00:00Z' }, { user_id: 'c2', display_name: 'Sam Staff', email: 'sam@example.com', role: 'staff', is_active: true, access_status: 'active', joined_at: '2026-01-01T00:00:00Z' }]);
+    if (path.endsWith('/staff_profiles')) return reply(route, [{ user_id: 'c1', job_title: 'Head coach', gross_hourly_rate_pence: 1500 }]);
+    if (path.endsWith('/staff_working_hours')) return reply(route, [{ id: 'h1', user_id: 'c1', weekday: 1, is_working: true, start_time: '09:00:00', end_time: '17:00:00' }]);
+    if (path.endsWith('/class_session_staff')) return reply(route, [{ id: 'cs1', session_id: 's1', user_id: 'c1', is_lead: true }, { id: 'cs2', session_id: 's2', user_id: 'c1', is_lead: true }]);
+    if (path.endsWith('/pt_appointments')) return reply(route, [{ id: 'pt1', member_user_id: U2, staff_user_id: 'c1', starts_at: daysAgo(4), ends_at: daysAgo(4, 18), status: 'completed', notes: null }]);
+    if (path.endsWith('/workout_assignments') || path.endsWith('/workout_sessions')) return reply(route, []);
     return false;
   });
   await page.goto(`${base}/next/#/reports`);
   const c = runChecks();
   await page.getByRole('tab', { name: 'Report builder', exact: true }).click();
   const paper = page.getByLabel('What you will download');
-  const dataset = page.getByLabel('What do you want to look at?');
+  const dataset = page.getByLabel('Look at');
+  const dialog = page.getByRole('dialog');
   await c.has('builder opens', dataset);
-  c.ok('eight tabs now', (await page.getByRole('tab').count()) === 8);
-  c.ok('five datasets to choose from', (await dataset.locator('option').allInnerTexts()).join('|') === 'Members|Memberships|Payments|Classes|Bookings and attendance');
-  c.ok('starts as a list of members on paper', (await paper.getByRole('heading', { name: 'Members' }).count()) === 1 && (await paper.locator('thead th').count()) === 5);
-  await c.has('the paper counts the rows', paper.getByText('2 rows'));
-  c.ok('layout (builder, list)', (await page.evaluate(layoutProblems)).length === 0);
-  if (shots) await page.screenshot({ path: `${shots}/builder-list-${name}.png`, fullPage: true });
+  c.ok('eight tabs', (await page.getByRole('tab').count()) === 8);
+  c.ok('eight datasets, staff included', (await dataset.locator('option').allInnerTexts()).join('|') === 'Members|Memberships|Payments|Classes|Bookings and attendance|Staff|Classes delivered|Clients seen');
+  c.ok('twelve ready-made reports', (await page.locator('.bld-starter').count()) === 12);
+  c.ok('starts as a list of members on paper', (await paper.getByRole('heading', { name: 'Members' }).count()) === 1);
+  c.ok('layout (builder, first view)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/builder-start-${name}.png`, fullPage: true });
 
-  // Columns: add personal ones, move, remove
-  await page.getByLabel('Add a column').selectOption({ label: 'Gender (personal)' });
-  c.ok('a personal column is marked', (await page.getByText('personal', { exact: true }).count()) >= 1 && (await paper.locator('thead th').allInnerTexts()).includes('Gender'));
-  await page.getByRole('button', { name: 'Move Gender up' }).click();
-  c.ok('moving a column changes the paper', (await paper.locator('thead th').allInnerTexts()).join('|').includes('Gender|'));
-  await page.getByRole('button', { name: 'Remove column Gender' }).click();
-  c.ok('removing a column changes the paper', !(await paper.locator('thead th').allInnerTexts()).includes('Gender'));
-
-  // Summary of payments by month, as columns
-  await dataset.selectOption({ label: 'Payments' });
-  await c.has('paper switches to payments', paper.getByRole('heading', { name: 'Payments' }));
-  c.ok('130 payments listed', (await paper.getByText('130 rows', { exact: true }).count()) === 1 && (await paper.getByText('Showing the first 25 of 130 rows. The download has every row.').count()) === 1);
-  await page.getByRole('radio', { name: /Summarise/ }).click();
-  await page.getByLabel('Group by').selectOption({ label: 'Charge date' });
-  await c.has('dates can be grouped', page.getByLabel('Group dates by'));
-  await page.getByLabel('Figure 1: what to work out').selectOption({ label: 'Total' });
-  await page.getByLabel('Figure 1: of which field').selectOption({ label: 'Amount' });
-  await c.has('the summary is on paper', paper.getByRole('heading', { name: 'Payments: summary' }));
-  c.ok('headers are the group and the figure', (await paper.locator('thead th').allInnerTexts()).join('|') === 'Charge date|Total of Amount');
-  const chartRadio = page.getByRole('radiogroup', { name: 'Chart' });
-  c.ok('charts on offer', (await chartRadio.getByRole('radio').allInnerTexts()).join('|') === 'Table|Columns|Bars|Line|Ring');
-  await chartRadio.getByRole('radio', { name: 'Columns' }).click();
-  const fig = page.getByRole('figure', { name: 'Payments: summary' });
-  await c.has('a column chart is drawn', fig);
-  c.ok('with coloured marks that have height', ((await fig.locator('.chart-mark').first().boundingBox())?.height ?? 0) > 2);
-  c.ok('layout (summary + chart)', (await page.evaluate(layoutProblems)).length === 0);
+  // A ready-made report: one click gives a chart, headline figures and the paper
+  await page.getByRole('button', { name: /Money in, by month/ }).click();
+  await c.has('the chart is drawn', page.getByRole('figure', { name: 'Payments: summary' }));
+  c.ok('the starters fold away', (await page.locator('.bld-starter').count()) === 0);
+  c.ok('headline figure is the total in pounds', (await page.getByRole('list', { name: 'Headline figures' }).textContent()).includes('£5,805.00'));
+  c.ok('the boxes show what was chosen', (await page.getByLabel('Group by box').textContent()).includes('Charge date') && (await page.getByLabel('Filters box').getByLabel('Filter 1: value').inputValue()) === 'failed');
+  c.ok('paper shows the months', (await paper.locator('tbody th').allInnerTexts()).join('|') === 'Sep 2026|Oct 2026');
+  c.ok('chart marks have height', ((await page.getByRole('figure', { name: 'Payments: summary' }).locator('.chart-mark').first().boundingBox())?.height ?? 0) > 2);
+  c.ok('layout (starter chart)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/builder-chart-${name}.png`, fullPage: true });
-  for (const k of ['Line', 'Bars', 'Ring']) {
-    await chartRadio.getByRole('radio', { name: k }).click();
-    c.ok(`${k} chart shows`, (await page.locator('main .card, .card').filter({ hasText: 'Chart' }).first().isVisible()));
-  }
-  await chartRadio.getByRole('radio', { name: 'Table' }).click();
-  c.ok('Table hides the chart card', (await page.getByRole('heading', { name: 'Chart', exact: true }).count()) === 0);
 
-  // A filter: only failed payments
-  await page.getByRole('radio', { name: /List the rows/ }).click();
-  await page.getByRole('button', { name: 'Add a filter' }).click();
-  await page.getByLabel('Filter 1: field').selectOption({ label: 'State' });
-  await page.getByLabel('Filter 1: condition').selectOption({ label: 'is' });
-  await page.getByLabel('Filter 1: value').fill('failed');
-  await c.has('the filter narrows the paper', paper.getByText('1 row'));
-  c.ok('the subtitle counts the filter', (await paper.textContent()).includes('1 filter'));
-  await page.getByLabel('Filter 1: field').selectOption({ label: 'Amount' });
-  await page.getByLabel('Filter 1: condition').selectOption({ label: 'is more than' });
-  await page.getByLabel('Filter 1: value').fill('50');
-  await c.has('money filters are in pounds', paper.getByText('1 row'));
+  // Click a bar to dig in, then narrow the report to it
+  await page.getByRole('figure', { name: 'Payments: summary' }).locator('rect.chart-hit').first().click();
+  await c.has('the rows behind the bar open', dialog.getByRole('heading', { name: /^Rows behind / }));
+  c.ok('they are real payments', (await dialog.locator('tbody').textContent()).includes('Alex Joiner'));
+  c.ok('layout (rows dialog)', (await page.evaluate(layoutProblems)).length === 0);
+  await dialog.getByRole('button', { name: 'Filter the report to this' }).click();
+  await c.has('the report is narrowed and becomes a list', page.getByText(/^Narrowed the report to /));
+  c.ok('with date filters added for that month', (await page.getByLabel('Filters box').getByLabel(/^Filter \d: condition$/).count()) === 3);
 
-  // Real downloads: everything, not just the paper
+  // Drag a field into a box (and the tap way)
+  await page.getByRole('button', { name: /Ready-made reports/ }).or(page.getByRole('button', { name: 'Show', exact: true })).first().click();
+  await page.getByRole('button', { name: /^Members by plan/ }).click();
+  c.ok('a ring is drawn', (await page.getByRole('figure', { name: 'Memberships: summary' }).count()) === 1);
+  await dataset.selectOption({ label: 'Payments' });
+  await page.getByRole('radio', { name: 'Summarise' }).click();
+  await page.getByRole('button', { name: /^Amount\./ }).dragTo(page.getByLabel('Values box'));
+  c.ok('dragging Amount into Values adds a total', (await page.getByLabel('Figure 2: what to work out').count()) === 1 && (await page.getByLabel('Figure 2: what to work out').inputValue()) === 'sum');
+  await page.getByRole('button', { name: /^State\./ }).dragTo(page.getByLabel('Group by box'));
+  c.ok('dragging State into Group by groups by it', (await page.getByLabel('Group by box').textContent()).includes('State'));
+  await page.getByRole('button', { name: /^Member\./ }).click();
+  await page.getByRole('group', { name: 'Where should Member go?' }).getByRole('button', { name: 'Filter by' }).click();
+  c.ok('tapping a field and choosing Filter by adds a filter', (await page.getByLabel('Filters box').getByLabel('Filter 1: field').inputValue()) === 'member');
   await page.getByRole('button', { name: 'Remove filter 1' }).click();
+  await page.getByRole('button', { name: /^Member\./ }).click();
+  await page.getByRole('group', { name: 'Where should Member go?' }).getByRole('button', { name: 'Group by' }).click();
+  await page.getByRole('button', { name: /^Member\./ }).click();
+  await page.getByRole('group', { name: 'Where should Member go?' }).getByRole('button', { name: 'Add to Values' }).count().then((n) => c.ok('a text field cannot be added to Values', n === 0));
+  await page.getByRole('button', { name: 'Number of rows. Drag it into a box, or tap to choose where it goes.' }).click();
+  await page.getByRole('group', { name: 'Where should Number of rows go?' }).getByRole('button', { name: 'Add to Values' }).click();
+  c.ok('Number of rows can be a value', (await page.getByLabel('Figure 2: what to work out').inputValue()) === 'count');
+
+  // Staff metrics
+  await dataset.selectOption({ label: 'Clients seen' });
+  await page.getByRole('radio', { name: 'Summarise' }).click();
+  await page.getByRole('button', { name: /^Coach\./ }).click();
+  await page.getByRole('group', { name: 'Where should Coach go?' }).getByRole('button', { name: 'Group by' }).click();
+  await page.getByLabel('Figure 1: what to work out').selectOption({ label: 'Different values' });
+  await page.getByLabel('Figure 1: of which field').selectOption({ label: 'Client' });
+  await c.has('clients seen by coach', paper.getByRole('heading', { name: 'Clients seen: summary' }));
+  c.ok('the figure is named and counts people, not visits', (await paper.locator('thead th').allInnerTexts()).join('|') === 'Coach|Different values of Client' && (await paper.locator('tbody tr').first().textContent()).includes('Coach Cara'));
+  await dataset.selectOption({ label: 'Staff' });
+  c.ok('staff: the team with scheduled hours', (await paper.getByRole('heading', { name: 'Staff' }).count()) === 1 && (await paper.getByText('2 rows', { exact: true }).count()) === 1);
+  await page.getByRole('button', { name: /^Scheduled hours a week\./ }).click();
+  await page.getByRole('group', { name: 'Where should Scheduled hours a week go?' }).getByRole('button', { name: 'Add as a column' }).click();
+  c.ok('working hours per week: 8 for Cara (Monday 09:00 to 17:00)', (await paper.locator('tbody tr').first().textContent()).includes('8'));
+  c.ok('hourly pay is marked personal', (await page.getByRole('button', { name: /^Hourly pay\./ }).locator('.tag').count()) === 1);
+
+  // Downloads
+  await dataset.selectOption({ label: 'Payments' });
+  await page.getByRole('radio', { name: 'List the rows' }).click();
   await page.getByRole('radio', { name: 'CSV' }).click();
   const csv = await saved(page, () => page.getByRole('button', { name: 'Download CSV' }).click());
   const text = csv.bytes.toString('utf8');
@@ -167,8 +185,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('PDF is a real PDF', pdf.name.endsWith('.pdf') && pdf.bytes.subarray(0, 4).toString() === '%PDF');
 
   // Save on this device, reload, bring it back
-  await page.getByRole('radio', { name: /Summarise/ }).click();
-  await page.getByLabel('Group by').selectOption({ label: 'State' });
+  await page.getByRole('radio', { name: 'Summarise' }).click();
+  await page.getByRole('button', { name: /^State\./ }).click();
+  await page.getByRole('group', { name: 'Where should State go?' }).getByRole('button', { name: 'Group by' }).click();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await c.has('a name is needed', page.getByText('Give the report a name to save it.'));
   await page.getByLabel('Save this report').fill('Payments by state');
@@ -178,8 +197,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('tab', { name: 'Report builder', exact: true }).click();
   await c.has('the saved report is listed after a reload', page.getByLabel('My saved reports'));
   await page.getByLabel('My saved reports').selectOption('Payments by state');
-  c.ok('loading it restores the choices', (await dataset.inputValue()) === 'payments' && (await page.getByLabel('Group by').inputValue()) === 'state');
-  await c.has('and the paper', paper.getByRole('heading', { name: 'Payments: summary' }));
+  c.ok('loading it restores the choices', (await dataset.inputValue()) === 'payments' && (await page.getByLabel('Group by box').textContent()).includes('State'));
   await page.getByRole('button', { name: 'Remove', exact: true }).click();
   c.ok('it can be removed', (await page.getByLabel('My saved reports').count()) === 0);
 

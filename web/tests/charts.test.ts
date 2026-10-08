@@ -118,6 +118,7 @@ const data = (over: Partial<LibraryData> = {}): LibraryData => ({
     { sessionId: 's2', userId: 'u1', status: 'attended', bookedAt: '', cancelledAt: '' },
     { sessionId: 's3', userId: 'u1', status: 'booked', bookedAt: '', cancelledAt: '' },
   ],
+  staff: [], staffHours: [], sessionStaff: [],
   ...over,
 });
 

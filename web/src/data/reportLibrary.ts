@@ -29,6 +29,9 @@ export interface LibPurchase { userId: string; sessionId: string; createdAt: str
 export interface LibAssignment { userId: string; title: string; type: string; source: string; status: string; scheduledFor: string; completedAt: string; rpe: number | null; createdAt: string }
 export interface LibWorkoutSession { userId: string; title: string; performedAt: string; notes: string }
 export interface LibPt { memberId: string; staffId: string; startsAt: string; endsAt: string; status: string; notes: string }
+export interface LibStaff { userId: string; name: string; role: string; jobTitle: string; payPence: number | null }
+export interface LibStaffHours { userId: string; weekday: number; isWorking: boolean; start: string; end: string }
+export interface LibSessionStaff { sessionId: string; userId: string; isLead: boolean }
 export interface LibSession { id: string; name: string; startsAt: string; endsAt: string; capacity: number; dropInPence: number | null }
 export interface LibBooking { sessionId: string; userId: string; status: string; bookedAt: string; cancelledAt: string }
 
@@ -44,6 +47,11 @@ export interface LibraryData {
   pt: LibPt[];
   sessions: LibSession[];
   bookings: LibBooking[];
+  /** Everyone with a staff-side role (owners, admins, staff, coaches) and what they are set up to work. */
+  staff: LibStaff[];
+  staffHours: LibStaffHours[];
+  /** Which staff are on which class. */
+  sessionStaff: LibSessionStaff[];
 }
 
 export async function loadLibraryData(gymId: string, since: string | null): Promise<LibraryData> {
@@ -60,9 +68,13 @@ export async function loadLibraryData(gymId: string, since: string | null): Prom
     if (since) q = q.gte('starts_at', since);
     return q;
   });
-  const [plans, memberships, gymMembers, payments, purchases, assignments, workoutSessions, pt, sessions] = await Promise.all([
-    plansP, membershipsP, gymMembersP, paymentsP, purchasesP, assignmentsP, workoutSessionsP, ptP, sessionsP,
+  const teamP = supabase.rpc('get_gym_team_accounts', { target_gym_id: gymId });
+  const profilesP = allRows((a, b) => supabase.from('staff_profiles').select('user_id, job_title, gross_hourly_rate_pence').eq('gym_id', gymId).order('user_id').range(a, b));
+  const hoursP = allRows((a, b) => supabase.from('staff_working_hours').select('id, user_id, weekday, is_working, start_time, end_time').eq('gym_id', gymId).order('id').range(a, b));
+  const [plans, memberships, gymMembers, payments, purchases, assignments, workoutSessions, pt, sessions, team, staffProfiles, staffHours] = await Promise.all([
+    plansP, membershipsP, gymMembersP, paymentsP, purchasesP, assignmentsP, workoutSessionsP, ptP, sessionsP, teamP, profilesP, hoursP,
   ]);
+  if (team.error) throw new Error(team.error.message);
 
   // Bookings for those classes, asked in groups of classes so the web address stays short.
   const bookings: LibBooking[] = [];
@@ -70,6 +82,14 @@ export async function loadLibraryData(gymId: string, since: string | null): Prom
     const ids = sessions.slice(i, i + 50).map((s) => s.id);
     const rows = await allRows((a, b) => supabase.from('class_bookings').select('id, session_id, user_id, status, booked_at, cancelled_at').in('session_id', ids).order('id').range(a, b));
     for (const r of rows) bookings.push({ sessionId: r.session_id, userId: r.user_id, status: r.status, bookedAt: r.booked_at, cancelledAt: r.cancelled_at ?? '' });
+  }
+
+  // Which staff are on those classes, asked in groups of classes like the bookings.
+  const sessionStaff: LibSessionStaff[] = [];
+  for (let i = 0; i < sessions.length; i += 50) {
+    const ids = sessions.slice(i, i + 50).map((x) => x.id);
+    const rows = await allRows((a, b) => supabase.from('class_session_staff').select('id, session_id, user_id, is_lead').in('session_id', ids).order('id').range(a, b));
+    for (const r of rows) sessionStaff.push({ sessionId: r.session_id, userId: r.user_id, isLead: r.is_lead });
   }
 
   const userIds = new Set<string>();
@@ -103,5 +123,11 @@ export async function loadLibraryData(gymId: string, since: string | null): Prom
     pt: pt.map((p) => ({ memberId: p.member_user_id ?? '', staffId: p.staff_user_id, startsAt: p.starts_at, endsAt: p.ends_at, status: p.status, notes: p.notes ?? '' })),
     sessions: sessions.map((s) => ({ id: s.id, name: s.name, startsAt: s.starts_at, endsAt: s.ends_at, capacity: s.capacity, dropInPence: s.drop_in_price_pence })),
     bookings,
+    staff: (team.data ?? []).filter((t) => t.role !== 'member').map((t) => {
+      const sp = staffProfiles.find((x) => x.user_id === t.user_id);
+      return { userId: t.user_id, name: t.display_name || t.email || 'Staff', role: t.role, jobTitle: sp?.job_title ?? '', payPence: sp?.gross_hourly_rate_pence ?? null };
+    }),
+    staffHours: staffHours.map((h) => ({ userId: h.user_id, weekday: h.weekday, isWorking: h.is_working, start: h.start_time ?? '', end: h.end_time ?? '' })),
+    sessionStaff,
   };
 }

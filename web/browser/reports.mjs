@@ -56,7 +56,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const sessionAsks = [];
   const writes = [];
   const { ctx, page, errors } = await signedInPage(browser, viewport);
-  page.on('request', (r) => { const u = new URL(r.url()); if (u.hostname.endsWith('supabase.co') && !u.pathname.includes('/auth/') && ['POST', 'PATCH', 'PUT', 'DELETE'].includes(r.method())) writes.push(`${r.method()} ${u.pathname}`); });
+  page.on('request', (r) => { const u = new URL(r.url()); if (u.hostname.endsWith('supabase.co') && !u.pathname.includes('/auth/') && !u.pathname.includes('/rpc/get_') && ['POST', 'PATCH', 'PUT', 'DELETE'].includes(r.method())) writes.push(`${r.method()} ${u.pathname}`); });
   await mockSupabase(page, async ({ route, url, path }) => {
     if (path.endsWith('/class_sessions')) {
       const gte = url.searchParams.get('starts_at'); sessionAsks.push(gte);
