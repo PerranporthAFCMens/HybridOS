@@ -103,7 +103,7 @@ function mobile(){
 async function init(){
  const requested=cleanView(new URLSearchParams(location.search).get('view')||'index.html');
  const{data:{session}}=await sb.auth.getSession();if(!session){location.replace(gymLoginUrl(true));return}
- const{data:gms,error:gmErr}=await sb.from('gym_members').select('gym_id,role,gyms(name)').eq('user_id',session.user.id).eq('is_active',true);
+ const{data:gms,error:gmErr}=await sb.from('gym_members').select('gym_id,role,gyms(name,logo_url)').eq('user_id',session.user.id).eq('is_active',true);
  if(gmErr||!gms?.length){location.replace(gymEntryUrl());return}
  const params=new URLSearchParams(location.search);
  const explicitGymId=params.get('gym_id')||'';
@@ -127,6 +127,8 @@ async function init(){
  }
  if(!allowed){location.replace('./staff.html');return}
  gymName.textContent=membership.gyms?.name||'Gym';
+ {const card=gymName.closest('.gym'),url=membership.gyms?.logo_url;
+  if(card&&url&&/^https?:/i.test(url)){let img=card.querySelector('.tenant-gym-logo');if(!img){img=document.createElement('img');card.insertBefore(img,card.firstChild)}img.className='tenant-gym-logo uploaded';img.src=url;img.alt=membership.gyms?.name||'Gym logo'}}
  window.HybridShell?.apply();
  mobile();
  const start=requested;
