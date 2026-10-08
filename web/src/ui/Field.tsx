@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import type { ComponentPropsWithRef, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 
 // The ONLY place a raw <input> or <select> may appear (lint enforces this). The styling in
 // ui/forms.css makes every box shrinkable, 44px tall and iPhone-safe, so a screen cannot get it wrong.
@@ -9,6 +9,14 @@ export function Input({ className = '', ...rest }: InputHTMLAttributes<HTMLInput
 
 export function DateInput({ className = '', ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
   return <input type="date" className={`ctl ctl-date ${className}`.trim()} {...rest} />;
+}
+
+export function ColorInput({ className = '', ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
+  return <input type="color" className={`ctl ctl-color ${className}`.trim()} {...rest} />;
+}
+
+export function FileInput({ className = '', ...rest }: Omit<ComponentPropsWithRef<'input'>, 'type'>) {
+  return <input type="file" className={`ctl ctl-file ${className}`.trim()} {...rest} />;
 }
 
 export function Select({ className = '', ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {

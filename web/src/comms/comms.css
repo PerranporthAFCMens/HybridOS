@@ -1,0 +1,17 @@
+.cx-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.cx-grid > * { min-width: 0; }
+.cx-preview { position: sticky; top: 16px; }
+.cx-logo { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.cx-logo-box { width: 150px; height: 84px; border: 1px dashed var(--hybrid-line-strong); border-radius: 10px; display: grid; place-items: center; overflow: hidden; background: var(--hybrid-panel); }
+.cx-logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.cx-logo-actions { display: grid; gap: 8px; min-width: 0; flex: 1 1 220px; }
+.cx-ask { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cx-ask-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
+.cx-ask-row > span { flex: 1 1 240px; }
+.cx-email { margin-top: 10px; border: 1px solid var(--hybrid-line); border-radius: 12px; overflow: hidden; }
+.cx-head { padding: 12px 16px; font-weight: 600; color: #fff; }
+.cx-body { padding: 16px; overflow-wrap: anywhere; }
+.cx-body h3 { margin: 6px 0; }
+.cx-button { display: inline-block; padding: 10px 14px; border-radius: 8px; color: #fff; font-weight: 600; }
+.cx-foot { padding: 10px 16px; border-top: 1px solid var(--hybrid-line); }
+@media (max-width: 900px) { .cx-grid { grid-template-columns: minmax(0, 1fr); } .cx-preview { position: static; } }
