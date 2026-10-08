@@ -123,7 +123,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('layout (overview charts)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/reports-charts-overview-${name}.png`, fullPage: true });
   c.ok('old page link still there', (await page.getByRole('link', { name: 'Open the detailed reports' }).getAttribute('href')).includes('reporting.html'));
-  c.ok('six tabs', (await page.getByRole('tab').count()) === 6);
+  c.ok('seven tabs', (await page.getByRole('tab').count()) === 7);
   c.ok('Overview is the first tab', (await page.getByRole('tab', { name: 'Overview', exact: true }).getAttribute('aria-selected')) === 'true');
 
   // The other tabs: figures, tables and the heatmap (all from the same mocked data)
@@ -175,6 +175,35 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.getByRole('button', { name: 'Close' }).click();
   c.ok('layout (payments tab)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/reports-charts-payments-${name}.png`, fullPage: true });
+
+  // Accounting export for Xero
+  await page.getByRole('tab', { name: 'Accounting (Xero)', exact: true }).click();
+  await c.has('xero tab', page.getByRole('heading', { name: 'Accounting export for Xero' }));
+  c.ok('xero: how many payments and the total', (await stat('Payments received').textContent()) === '129' && (await stat('Total received').textContent()) === '£5,805.00');
+  await c.has('invoices wait for the account code and tax type', page.getByText('Enter your sales account code from Xero'));
+  c.ok('no invoice download offered yet', (await page.locator('section, .card', { hasText: 'Sales invoices' }).getByRole('button', { name: 'CSV' }).count()) === 0);
+  const payFile = await saved(page, () => page.locator('.card', { hasText: 'Payments received' }).filter({ hasText: 'bank feed' }).getByRole('button', { name: 'CSV' }).click());
+  const payText = payFile.bytes.toString('utf8');
+  c.ok('payments received CSV: Xero columns and every payment', payText.startsWith('﻿*Date,*Amount,Payee,Description,Reference\r\n') && payText.trim().split('\r\n').length === 130 && payText.includes('Alex Joiner'));
+  c.ok('payments received file name', /^puffin-performance-xero-payments-received-\d{4}-\d{2}-\d{2}\.csv$/.test(payFile.name));
+  await page.getByLabel('Sales account code').fill('200');
+  await page.getByLabel('Tax type').fill('No VAT');
+  await c.has('invoices can now be downloaded', page.locator('.card', { hasText: 'Sales invoices' }).filter({ hasText: 'import layout' }).getByRole('button', { name: 'CSV' }));
+  await c.has('a preview of the invoices', page.getByRole('heading', { name: 'Preview of the sales invoices' }));
+  c.ok('the preview shows five rows', (await page.locator('.card', { hasText: 'Preview of the sales invoices' }).locator('tbody tr').count()) === 5);
+  const invFile = await saved(page, () => page.locator('.card', { hasText: 'Sales invoices' }).filter({ hasText: 'import layout' }).getByRole('button', { name: 'CSV' }).click());
+  const invText = invFile.bytes.toString('utf8');
+  c.ok('invoices CSV: Xero headings, one per payment, account and tax filled in', invText.startsWith('﻿*ContactName,EmailAddress,') && invText.trim().split('\r\n').length === 130 && invText.includes(',200,No VAT,') && invText.includes('Membership payment') && /INV-\d{8}-/.test(invText));
+  c.ok('invoice amount is the payment when there is no VAT', invText.includes(',1,45,'));
+  await page.getByLabel('VAT included in payments (%)').fill('20');
+  const invVat = await saved(page, () => page.locator('.card', { hasText: 'Sales invoices' }).filter({ hasText: 'import layout' }).getByRole('button', { name: 'CSV' }).click());
+  c.ok('with 20% VAT included, the invoice shows the amount before VAT', invVat.bytes.toString('utf8').includes(',1,37.5,'));
+  c.ok('layout (xero tab)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/reports-xero-${name}.png`, fullPage: true });
+  await page.reload();
+  await page.getByRole('tab', { name: 'Accounting (Xero)', exact: true }).click();
+  await c.has('the details are remembered after a reload', page.getByLabel('Sales account code'));
+  c.ok('account code remembered', (await page.getByLabel('Sales account code').inputValue()) === '200' && (await page.getByLabel('Tax type').inputValue()) === 'No VAT' && (await page.getByLabel('VAT included in payments (%)').inputValue()) === '20');
 
   await page.getByRole('tab', { name: 'Report library', exact: true }).click();
   await c.has('library opens', page.getByLabel('Search reports'));

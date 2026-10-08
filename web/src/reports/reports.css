@@ -53,3 +53,5 @@ button.bar-row:hover { background: rgba(255, 255, 255, .04); }
 .heat td.v4 { background: rgba(198, 241, 53, .5); color: #0b1020; }
 .heat td.v5 { background: rgba(198, 241, 53, .8); color: #0b1020; }
 .stat .stat-num { display: block; }
+.report-tabs ~ .card { margin-bottom: 16px; }
+.stat-grid.wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }

@@ -99,11 +99,11 @@ const data = (over: Partial<LibraryData> = {}): LibraryData => ({
   ],
   people: new Map([['u1', { name: 'Amelia Hart', dateOfBirth: '', gender: '' }], ['u2', { name: 'Jack Pengelly', dateOfBirth: '', gender: '' }]]),
   payments: [
-    { userId: 'u1', chargeDate: '2026-10-06', createdAt: '', amountPence: 5900, state: 'paid_out', provider: 'manual', failure: '' },
-    { userId: 'u2', chargeDate: '2026-10-06', createdAt: '', amountPence: 4500, state: 'confirmed', provider: 'manual', failure: '' },
-    { userId: 'u3', chargeDate: '2026-09-29', createdAt: '', amountPence: 2900, state: 'failed', provider: 'manual', failure: 'insufficient_funds' },
-    { userId: 'u3', chargeDate: '2026-10-01', createdAt: '', amountPence: 1000, state: 'pending', provider: 'manual', failure: '' },
-    { userId: 'u1', chargeDate: '2026-10-02', createdAt: '', amountPence: 999, state: 'refunded', provider: 'manual', failure: '' },
+    { id: 'pay-u1', membershipId: '', userId: 'u1', chargeDate: '2026-10-06', createdAt: '', amountPence: 5900, state: 'paid_out', provider: 'manual', failure: '' },
+    { id: 'pay-u2', membershipId: '', userId: 'u2', chargeDate: '2026-10-06', createdAt: '', amountPence: 4500, state: 'confirmed', provider: 'manual', failure: '' },
+    { id: 'pay-u3', membershipId: '', userId: 'u3', chargeDate: '2026-09-29', createdAt: '', amountPence: 2900, state: 'failed', provider: 'manual', failure: 'insufficient_funds' },
+    { id: 'pay-u3', membershipId: '', userId: 'u3', chargeDate: '2026-10-01', createdAt: '', amountPence: 1000, state: 'pending', provider: 'manual', failure: '' },
+    { id: 'pay-u1', membershipId: '', userId: 'u1', chargeDate: '2026-10-02', createdAt: '', amountPence: 999, state: 'refunded', provider: 'manual', failure: '' },
   ],
   purchases: [], assignments: [], workoutSessions: [], pt: [],
   sessions: [

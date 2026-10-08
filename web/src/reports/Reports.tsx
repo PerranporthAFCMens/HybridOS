@@ -120,8 +120,8 @@ export function Reports() {
       )}
 
       <Card>
-        <SectionTitle title="Still on the old page" />
-        <p className="muted">The accounting export (for Xero) is still on the old page while it moves over.</p>
+        <SectionTitle title="The old Reporting page" />
+        <p className="muted">Everything from the old Reporting page is now here, including the Xero export. The old page stays available until you accept the new one.</p>
         <LinkButton href={links.reports}>Open the detailed reports</LinkButton>
       </Card>
 

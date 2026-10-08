@@ -17,10 +17,10 @@ const data = (over: Partial<LibraryData> = {}): LibraryData => ({
     { id: 'p3', name: 'Gym', pricePence: 2900, interval: 'monthly', isActive: false },
   ],
   memberships: [
-    { userId: 'u1', planId: 'p1', status: 'active', startsOn: '2026-01-01', endsOn: '', provider: 'manual', paymentStatus: 'confirmed', updatedAt: '2026-10-01T10:00:00Z' },
-    { userId: 'u2', planId: 'p1', status: 'active', startsOn: '2026-02-01', endsOn: '', provider: 'manual', paymentStatus: 'confirmed', updatedAt: '2026-03-01T10:00:00Z' },
-    { userId: 'u3', planId: 'p2', status: 'active', startsOn: '2026-03-01', endsOn: '', provider: 'manual', paymentStatus: 'confirmed', updatedAt: '2026-03-01T10:00:00Z' },
-    { userId: 'u4', planId: 'p3', status: 'cancelled', startsOn: '2026-01-01', endsOn: '2026-09-01', provider: 'manual', paymentStatus: 'confirmed', updatedAt: '2026-09-01T10:00:00Z' },
+    { id: 'm-u1', userId: 'u1', planId: 'p1', status: 'active', startsOn: '2026-01-01', endsOn: '', provider: 'manual', paymentStatus: 'confirmed', updatedAt: '2026-10-01T10:00:00Z' },
+    { id: 'm-u2', userId: 'u2', planId: 'p1', status: 'active', startsOn: '2026-02-01', endsOn: '', provider: 'manual', paymentStatus: 'confirmed', updatedAt: '2026-03-01T10:00:00Z' },
+    { id: 'm-u3', userId: 'u3', planId: 'p2', status: 'active', startsOn: '2026-03-01', endsOn: '', provider: 'manual', paymentStatus: 'confirmed', updatedAt: '2026-03-01T10:00:00Z' },
+    { id: 'm-u4', userId: 'u4', planId: 'p3', status: 'cancelled', startsOn: '2026-01-01', endsOn: '2026-09-01', provider: 'manual', paymentStatus: 'confirmed', updatedAt: '2026-09-01T10:00:00Z' },
   ],
   gymMembers: [
     { userId: 'u1', joinedAt: '2026-01-10T10:00:00Z', attritionOn: '', isActive: true },
@@ -36,9 +36,9 @@ const data = (over: Partial<LibraryData> = {}): LibraryData => ({
     ['staff', { name: 'Coach Carla', dateOfBirth: '', gender: '' }],
   ]),
   payments: [
-    { userId: 'u1', chargeDate: '2026-10-01', createdAt: '2026-10-01T00:00:00Z', amountPence: 5999, state: 'paid_out', provider: 'manual', failure: '' },
-    { userId: 'u2', chargeDate: '2026-10-01', createdAt: '2026-10-01T00:00:00Z', amountPence: 5900, state: 'failed', provider: 'manual', failure: 'insufficient_funds' },
-    { userId: 'u4', chargeDate: '2026-05-01', createdAt: '2026-05-01T00:00:00Z', amountPence: 2900, state: 'charged_back', provider: 'manual', failure: '' },
+    { id: 'pay-u1', membershipId: '', userId: 'u1', chargeDate: '2026-10-01', createdAt: '2026-10-01T00:00:00Z', amountPence: 5999, state: 'paid_out', provider: 'manual', failure: '' },
+    { id: 'pay-u2', membershipId: '', userId: 'u2', chargeDate: '2026-10-01', createdAt: '2026-10-01T00:00:00Z', amountPence: 5900, state: 'failed', provider: 'manual', failure: 'insufficient_funds' },
+    { id: 'pay-u4', membershipId: '', userId: 'u4', chargeDate: '2026-05-01', createdAt: '2026-05-01T00:00:00Z', amountPence: 2900, state: 'charged_back', provider: 'manual', failure: '' },
   ],
   purchases: [{ userId: 'u1', sessionId: 's1', createdAt: '2026-10-02T09:00:00Z', amountPence: 800, status: 'paid' }],
   assignments: [
