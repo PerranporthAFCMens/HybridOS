@@ -11,7 +11,7 @@
 .bar-label { color: var(--hybrid-ink); overflow-wrap: anywhere; }
 .bar-row b { color: var(--hybrid-ink); font-family: var(--hybrid-mono); font-weight: 500; min-width: 36px; text-align: right; }
 .track { height: 8px; border-radius: 4px; background: var(--hybrid-raised); overflow: hidden; }
-.track .fill { height: 8px; border-radius: 4px; background: var(--hybrid-pulse); }
+.track .fill { display: block; height: 8px; border-radius: 4px; background: var(--hybrid-pulse); }
 .bars-gap { height: 18px; }
 
 .download-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -38,3 +38,18 @@ button.bar-row:hover { background: rgba(255, 255, 255, .04); }
 .lib-card h5 { margin: 0 0 4px; font-size: 14px; color: var(--hybrid-ink); }
 .lib-card p { margin: 0 0 10px; }
 .lib-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.report-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.report-tab { min-height: 40px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--hybrid-line); background: var(--hybrid-panel); color: var(--hybrid-muted); font: inherit; font-size: 14px; cursor: pointer; }
+.report-tab:hover { color: var(--hybrid-ink); }
+.report-tab.active { background: var(--hybrid-raised); color: var(--hybrid-ink); border-color: var(--hybrid-line-strong); }
+.report-tab:focus-visible { outline: 2px solid var(--hybrid-pulse); outline-offset: 2px; }
+.heat { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+.heat th { font-size: 12px; font-weight: 500; color: var(--hybrid-muted); padding: 6px 2px; text-align: center; }
+.heat th[scope="row"] { text-align: left; color: var(--hybrid-ink); }
+.heat td { text-align: center; font-size: 12px; padding: 10px 2px; border-radius: 6px; color: var(--hybrid-ink); font-family: var(--hybrid-mono); }
+.heat td.v1 { background: rgba(198, 241, 53, .04); color: var(--hybrid-muted); }
+.heat td.v2 { background: rgba(198, 241, 53, .14); }
+.heat td.v3 { background: rgba(198, 241, 53, .28); }
+.heat td.v4 { background: rgba(198, 241, 53, .5); color: #0b1020; }
+.heat td.v5 { background: rgba(198, 241, 53, .8); color: #0b1020; }
+.stat .stat-num { display: block; }

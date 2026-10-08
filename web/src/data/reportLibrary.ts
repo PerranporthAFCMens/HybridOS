@@ -20,9 +20,9 @@ async function allRows<T>(page: (from: number, to: number) => Page<T>): Promise<
   return out;
 }
 
-export interface LibPlan { id: string; name: string; pricePence: number; interval: string }
+export interface LibPlan { id: string; name: string; pricePence: number; interval: string; isActive: boolean }
 export interface LibMembership { userId: string; planId: string; status: string; startsOn: string; endsOn: string; provider: string; paymentStatus: string; updatedAt: string }
-export interface LibGymMember { userId: string; joinedAt: string; attritionOn: string }
+export interface LibGymMember { userId: string; joinedAt: string; attritionOn: string; isActive: boolean }
 export interface LibPerson { name: string; dateOfBirth: string; gender: string }
 export interface LibPayment { userId: string; chargeDate: string; createdAt: string; amountPence: number; state: string; provider: string; failure: string }
 export interface LibPurchase { userId: string; sessionId: string; createdAt: string; amountPence: number; status: string }
@@ -47,9 +47,9 @@ export interface LibraryData {
 }
 
 export async function loadLibraryData(gymId: string, since: string | null): Promise<LibraryData> {
-  const plansP = allRows((a, b) => supabase.from('membership_plans').select('id, name, price_pence, billing_interval').eq('gym_id', gymId).order('id').range(a, b));
+  const plansP = allRows((a, b) => supabase.from('membership_plans').select('id, name, price_pence, billing_interval, is_active').eq('gym_id', gymId).order('id').range(a, b));
   const membershipsP = allRows((a, b) => supabase.from('memberships').select('id, user_id, plan_id, status, starts_on, ends_on, payment_provider, payment_status, updated_at').eq('gym_id', gymId).order('id').range(a, b));
-  const gymMembersP = allRows((a, b) => supabase.from('gym_members').select('id, user_id, joined_at, attrition_on').eq('gym_id', gymId).eq('role', 'member').order('id').range(a, b));
+  const gymMembersP = allRows((a, b) => supabase.from('gym_members').select('id, user_id, joined_at, attrition_on, is_active').eq('gym_id', gymId).eq('role', 'member').order('id').range(a, b));
   const paymentsP = allRows((a, b) => supabase.from('payment_records').select('id, user_id, charge_date, created_at, amount_pence, state, provider, failure_code, failure_message').eq('gym_id', gymId).order('id').range(a, b));
   const purchasesP = allRows((a, b) => supabase.from('class_booking_purchases').select('id, user_id, session_id, created_at, amount_pence, status').eq('gym_id', gymId).order('id').range(a, b));
   const assignmentsP = allRows((a, b) => supabase.from('workout_assignments').select('id, member_user_id, title, workout_type, source, status, scheduled_for, completed_at, member_rpe, created_at').eq('gym_id', gymId).order('id').range(a, b));
@@ -92,9 +92,9 @@ export async function loadLibraryData(gymId: string, since: string | null): Prom
   }
 
   return {
-    plans: plans.map((p) => ({ id: p.id, name: p.name, pricePence: p.price_pence, interval: p.billing_interval })),
+    plans: plans.map((p) => ({ id: p.id, name: p.name, pricePence: p.price_pence, interval: p.billing_interval, isActive: p.is_active })),
     memberships: memberships.map((m) => ({ userId: m.user_id ?? '', planId: m.plan_id ?? '', status: m.status, startsOn: m.starts_on ?? '', endsOn: m.ends_on ?? '', provider: m.payment_provider ?? '', paymentStatus: m.payment_status ?? '', updatedAt: m.updated_at })),
-    gymMembers: gymMembers.map((m) => ({ userId: m.user_id, joinedAt: m.joined_at, attritionOn: m.attrition_on ?? '' })),
+    gymMembers: gymMembers.map((m) => ({ userId: m.user_id, joinedAt: m.joined_at, attritionOn: m.attrition_on ?? '', isActive: m.is_active })),
     people,
     payments: payments.map((p) => ({ userId: p.user_id ?? '', chargeDate: p.charge_date ?? '', createdAt: p.created_at, amountPence: p.amount_pence, state: p.state, provider: p.provider, failure: p.failure_message || p.failure_code || '' })),
     purchases: purchases.map((p) => ({ userId: p.user_id, sessionId: p.session_id, createdAt: p.created_at, amountPence: p.amount_pence, status: p.status })),
