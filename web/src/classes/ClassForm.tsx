@@ -7,9 +7,10 @@ import { SectionTitle } from '../ui/Card';
 import { Checkbox, DateInput, Field, FieldRow, Input, Select, Textarea } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import {
-  RELEASE_OPTIONS, STAFF_STATUS_TEXT, emptyClassForm, requirementsText, reservedExample, staffStatus, validateClass, type ClassForm as Form,
+  MAX_WEEKS, MIN_WEEKS, RELEASE_OPTIONS, WEEKS_ERROR, STAFF_STATUS_TEXT, emptyClassForm, occurrenceLabel, requirementsText, reservedExample, seriesSummary, staffStatus,
+  validateClass, validWeeks, weeklyOccurrences, type ClassForm as Form,
 } from './calc';
-import { useActivePlans, useClassTypes, useCreateClass, useSchedulingRules, useScheduleCheck, useStaffOptions } from './useClasses';
+import { useActivePlans, useClassTypes, useCreateClass, useCreateSeries, useSchedulingRules, useScheduleCheck, useSeriesCheck, useStaffOptions } from './useClasses';
 
 /** Add a class to the timetable. `onSaved` receives the class's start so the timetable can jump to its week. */
 export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: (startsAt: Date) => void }) {
@@ -19,10 +20,13 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
   const types = useClassTypes(gym.gymId);
   const rules = useSchedulingRules(gym.gymId);
   const create = useCreateClass(gym.gymId);
+  const series = useCreateSeries(gym.gymId);
   const [form, setForm] = useState<Form>(() => emptyClassForm(new Date()));
   const [pickedStaff, setPickedStaff] = useState<string[]>([]);
   const [pickedPlans, setPickedPlans] = useState<string[]>([]);
   const [problems, setProblems] = useState<string[]>([]);
+  const [skipped, setSkipped] = useState<string[]>([]);
+  const [summary, setSummary] = useState('');
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm((f) => ({ ...f, [key]: value }));
   const toggle = (list: string[], id: string, on: boolean) => (on ? [...list, id] : list.filter((x) => x !== id));
 
@@ -39,7 +43,14 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
   const proposal: ScheduleProposal | null = parsed.ok
     ? { classTypeId: typeId, startsAt: parsed.values.startsAt, endsAt: parsed.values.endsAt, capacity: parsed.values.capacity, staffIds: ordered.map((p) => p.userId) }
     : null;
-  const check = useScheduleCheck(gym.gymId, typeId ? proposal : null);
+  const repeating = form.repeat;
+  const check = useScheduleCheck(gym.gymId, typeId && !repeating ? proposal : null);
+  const occurrences = useMemo(() => (repeating && parsed.ok ? weeklyOccurrences(parsed.values.startsAt, parsed.values.endsAt, parsed.values.weeks) : []), [repeating, parsed]);
+  const seriesBase = repeating && proposal ? { classTypeId: proposal.classTypeId, capacity: proposal.capacity, staffIds: proposal.staffIds } : null;
+  const weekChecks = useSeriesCheck(gym.gymId, seriesBase, occurrences);
+  // A week can be saved when the database says so (a custom class has nothing to check), and it is not skipped.
+  const weekState = (i: number) => (!typeId ? { pending: false, ok: true, errors: [] as string[] } : { pending: !weekChecks.data, ok: weekChecks.data?.[i]?.ok === true, errors: weekChecks.data?.[i]?.errors ?? [] });
+  const included = occurrences.filter((o, i) => weekState(i).ok && !skipped.includes(o.startsAt));
 
   const pickType = (id: string) => {
     const t = types.data?.find((x) => x.id === id);
@@ -56,9 +67,32 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
       return;
     }
     setProblems([]);
+    setSummary('');
+    const { startsAt, endsAt, weeks: _weeks, ...rest } = parsed.values;
+    void _weeks;
+    if (repeating) {
+      series.mutate(
+        { base: { ...rest, classTypeId: typeId, staffIds: ordered.map((p) => p.userId), reservedPlanIds: pickedPlans }, weeks: included },
+        {
+          onSuccess: (results) => {
+            const failed = results.filter((r) => !r.ok);
+            if (failed.length === 0) {
+              onSaved(new Date(included[0]?.startsAt ?? startsAt));
+              return;
+            }
+            // Weeks that did save are skipped from now on, so pressing Save again retries only the failed ones.
+            setSkipped((l) => [...l, ...results.filter((r) => r.ok).map((r) => r.startsAt)]);
+            setSummary(seriesSummary(results));
+            setProblems(failed.map((r) => `${occurrenceLabel(r)}: ${r.errors.join(' ') || 'could not be scheduled.'}`));
+          },
+          onError: (e) => setProblems([e.message]),
+        },
+      );
+      return;
+    }
     create.mutate(
-      { ...parsed.values, classTypeId: typeId, staffIds: ordered.map((p) => p.userId), reservedPlanIds: pickedPlans },
-      { onSuccess: (v) => (v.ok ? onSaved(new Date(parsed.values.startsAt)) : setProblems(v.errors.length ? v.errors : ['The class could not be scheduled.'])), onError: (e) => setProblems([e.message]) },
+      { ...rest, startsAt, endsAt, classTypeId: typeId, staffIds: ordered.map((p) => p.userId), reservedPlanIds: pickedPlans },
+      { onSuccess: (v) => (v.ok ? onSaved(new Date(startsAt)) : setProblems(v.errors.length ? v.errors : ['The class could not be scheduled.'])), onError: (e) => setProblems([e.message]) },
     );
   };
 
@@ -95,6 +129,12 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
           <Input id="class-reserved" type="number" inputMode="numeric" min="0" value={form.reserved} onChange={(e) => set('reserved', e.target.value)} />
         </Field>
       </FieldRow>
+      <Checkbox label="Repeat weekly" checked={form.repeat} onChange={(v) => { set('repeat', v); setSkipped([]); setSummary(''); }} />
+      {form.repeat && (
+        <Field label="Number of weeks" htmlFor="class-weeks" hint={validWeeks(form.weeks) ? `Including this one, ${MIN_WEEKS} to ${MAX_WEEKS}. Each week is checked on its own.` : WEEKS_ERROR}>
+          <Input id="class-weeks" type="number" inputMode="numeric" min={MIN_WEEKS} max={MAX_WEEKS} value={form.weeks} onChange={(e) => { set('weeks', e.target.value); setSkipped([]); setSummary(''); }} />
+        </Field>
+      )}
       <Field label="Release reserved spaces" htmlFor="class-release">
         <Select id="class-release" value={form.release} onChange={(e) => set('release', e.target.value)}>
           {RELEASE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -132,6 +172,24 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
         {Number.isInteger(capacity) && Number.isInteger(reserved) && reserved > 0 && reserved <= capacity ? reservedExample(capacity, reserved) : reservedExample(20, 5)}
       </div>
 
+      {repeating && occurrences.length > 0 && (
+        <fieldset className="check-group weeks-panel">
+          <legend>Weeks: {included.length} of {occurrences.length} will be saved</legend>
+          {occurrences.map((o, i) => {
+            const w = weekState(i);
+            return (
+              <div className={`week-row${w.ok || w.pending ? '' : ' bad'}`} key={o.startsAt}>
+                <Checkbox label={occurrenceLabel(o)} checked={w.ok && !skipped.includes(o.startsAt)} disabled={!w.ok} onChange={(on) => setSkipped((l) => (on ? l.filter((x) => x !== o.startsAt) : [...l, o.startsAt]))} />
+                {w.pending && <span className="week-note">Checking…</span>}
+                {!w.pending && !w.ok && <span className="week-note">{w.errors.join(' ')}</span>}
+                {w.ok && skipped.includes(o.startsAt) && <span className="week-note muted">Skipped</span>}
+              </div>
+            );
+          })}
+        </fieldset>
+      )}
+
+      {!repeating && (
       <div className={`schedule-check${verdict ? (verdict.ok ? ' good' : ' bad') : ''}`} role="status" aria-live="polite">
         {!typeId && 'Custom class: nothing to check against. Pick a class type to check coaches, rooms and equipment.'}
         {typeId && !proposal && 'Fill in the date, time, duration and capacity to check this class.'}
@@ -145,7 +203,9 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
           </>
         )}
       </div>
+      )}
 
+      {summary && <div className="msg" role="status">{summary}</div>}
       <div className="assign-msg">
         {problems.length > 0 && (
           <span className="msg error" role="alert">
@@ -153,7 +213,9 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
           </span>
         )}
       </div>
-      <Button variant="primary" className="wide-btn" disabled={create.isPending || (!!verdict && !verdict.ok)} onClick={submit}>Save class</Button>
+      <Button variant="primary" className="wide-btn" disabled={create.isPending || series.isPending || (repeating ? weekChecks.isFetching || included.length === 0 : !!verdict && !verdict.ok)} onClick={submit}>
+        {repeating ? `Save ${included.length} ${included.length === 1 ? 'class' : 'classes'}` : 'Save class'}
+      </Button>
     </Modal>
   );
 }
