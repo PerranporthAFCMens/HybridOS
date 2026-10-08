@@ -140,11 +140,36 @@ The owner wants an overarching **Enterprise manager** that pulls reports, staff 
 - **Step A, an "Estate" view for anyone who is owner or admin of two or more gyms (no database change).** One screen with a card or row per gym and a total: members, active memberships, estimated monthly income, income collected, failed payments, class fill and attendance, new members and leavers, staff headcount and what each coach taught (classes, PT sessions). Compare gyms side by side and over time with the same charts as Reporting; click a gym to open it in the normal admin; downloads as CSV, Excel and PDF. It uses the access the person already has in each gym, so nothing new can leak.
 - **Step B, a true Enterprise manager role (needs new database tables and the owner's approval of the exact SQL first).** A new "organisation" that groups gyms, and an enterprise role for someone who manages the estate **without being a member of each gym**: read access across the organisation's gyms (view first; any changes to a gym stay with that gym's own admins), plus group-level settings. This is also the foundation for franchise or partner gyms later.
 
-**Things to decide with the owner when this starts (not now):**
-- What exactly the Enterprise manager must show first (builder's first list above), and who sees it (only the owner, or named enterprise managers).
-- Can an enterprise manager **change** things in a gym, or only view and report?
-- **Staff reports:** the measures wanted (headcount, hours, classes and PT sessions taught, attendance of their classes, qualifications and expiries).
-- Gyms may differ in **currency and time zone** (the data already stores both per gym); for totals across gyms the builder would show each gym in its own currency and only add up gyms that share one.
-- Whether partner or franchise gyms with **different owners** are ever in the same estate (changes what data may be shared).
+**Decisions from the owner (8 October 2026):**
+1. **Hidden from the gym.** The Enterprise manager is a special level that the gym itself never sees: it does not appear in a gym's own staff or access lists.
+2. **Head office, with control, but changes are made inside the gym.** The Enterprise manager can change things in a gym, but only by **going into that gym** (so every change is made in that gym's own screens, with a record of who did it and when), not from the overview itself. The overview is for seeing, comparing and jumping in.
+3. **What head office, regional managers and accountants need:** hours and shifts, resetting passwords, staff reports (headcount, hours, classes and PT sessions taught, qualifications and expiries), and the financial reports. Builder's suggestion: three levels so people only get what their job needs: **Head office** (all gyms, all of the above), **Regional manager** (only the gyms assigned to them), **Accountant** (finance reports only, view only).
+4. **Currency: do not worry for now.** Build it to work; each gym shows in its own currency and totals only add up gyms that share one.
+
+**Builder's notes on those decisions:**
+- "Go into the gym" needs a clear, recorded way to **enter a gym as head office** (an audit trail: who entered which gym, when, and what they changed). This is the same mechanism a support person or the platform owner would use.
+- **Resetting a password** for someone is sensitive: it must be done by a protected server function that checks the person's level and writes a record, never from the browser alone. Needs the owner's approval of the exact text before anything is deployed.
+- **Hours and shifts** need somewhere to record them; the database has staff working hours (for scheduling) but no clock-in or shift records yet. To be designed with the owner.
 
 **Order:** Xero export, then the report builder (first version), then the Estate view (Step A), then shared saved reports, then the Enterprise manager role (Step B). The owner can re-order.
+
+## Platform control: "HybridOne Control", the portal the owner uses to deploy and manage gyms (owner request, 8 October 2026; build later)
+
+The owner wants a **suite of their own** for running the business of HybridOne: a **login and management portal** to **add a new gym** and to **switch parts of each gym on or off as add-ons** (for example remove Community, or personal bests). It sits above everything else and is **never visible to a gym or to head office**:
+
+1. **HybridOne Control (platform level, the owner and anyone they trust):** create and set up gyms, choose each gym's add-ons, see all gyms.
+2. **Enterprise manager (head office level, per organisation):** the view above.
+3. **The gym (owner, admin, staff, coach, member):** as today.
+
+**What it needs (builder's view):**
+- **A platform administrator level** that is separate from any gym: a short allow-list of platform admins, strong sign-in (the builder recommends a second step at sign-in), and a **record of everything done**. Hidden from gyms by design.
+- **Create a gym** in a few steps: name, web address (slug), colours and logo, time zone and currency, the first owner (invited by email using the existing invite flow), and starter content (default class types, plans, rooms) copied from a template. Today gym web addresses such as `/puffin-performance` are set one by one in `vercel.json`; creating gyms from a portal needs a general rule (any slug) so no code change is needed per gym.
+- **Add-ons per gym:** a catalogue of modules the owner can switch on or off per gym. The builder's first list, from the current pages: Classes and timetable, Class setup and resources, Personal training, Workouts and the workout builder, **Personal bests**, **Community and social**, Groups and challenges, Messages and notifications, Memberships and payments, Reports (and the report builder), Staff permissions, Integrations, Member app. Needs a new table of which modules each gym has. **Hiding a screen is not security by itself**: the important modules also need the database to refuse, not just the menu to hide them (decide module by module with the owner).
+- **Order of work:** first the add-on switches (so each screen can be gated), then create-a-gym, then the platform login and portal. The platform login and the add-on and gym tables each need the owner's approval of the exact SQL before anything is applied.
+
+**Questions for the owner when this starts (not now):**
+- Where does it live (the builder suggests its own web address, such as `control.hybridone.co.uk`, with its own login)?
+- Who else might get platform access later (support staff)? Only view, or also change?
+- Do gyms pay for add-ons or a plan? (If yes, the portal later records the plan and price per gym; a billing system is a separate step.)
+- Exact add-on list, and which are always on (Today, Members, Classes) versus optional.
+- What a new gym starts with (a template gym to copy).
