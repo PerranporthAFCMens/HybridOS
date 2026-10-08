@@ -102,7 +102,26 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const c = runChecks();
   const dialog = page.getByRole('dialog');
   await c.has('overview loaded', page.getByRole('button', { name: /^Active memberships: 3/ }));
-  c.ok('nothing from the library is loaded until it is opened', paymentRequests.length === 0);
+  // Charts on the Overview
+  for (const t of ['Attendance over time', 'Income collected', 'Members joined and left', 'Members over time']) await c.has(`overview chart: ${t}`, page.getByRole('figure', { name: t }));
+  const attendance = page.getByRole('figure', { name: 'Attendance over time' });
+  c.ok('the attendance columns are drawn (coloured marks with height)', ((await attendance.locator('.chart-mark').first().boundingBox())?.height ?? 0) > 4);
+  c.ok('two series have a key', (await attendance.locator('.chart-legend li').count()) === 2);
+  await attendance.locator('rect.chart-hit[aria-label*="Attended 1"]').first().hover();
+  await c.has('hovering a column shows the numbers', page.locator('.chart-tip').filter({ hasText: 'Attended' }));
+  c.ok('the readout leads with the value', (await page.locator('.chart-tip-row b').first().textContent()) === '1');
+  await attendance.getByRole('button', { name: 'View as table' }).click();
+  await c.has('the table view opens', attendance.getByRole('region', { name: 'Attendance over time, as a table' }));
+  c.ok('the table lists the values', (await attendance.locator('tbody').textContent()).includes('Attended') === false && (await attendance.locator('thead').textContent()).includes('Attended'));
+  await attendance.getByRole('button', { name: 'Hide table' }).click();
+  await attendance.locator('rect.chart-hit[aria-label*="Attended 1"]').first().click();
+  await c.has('clicking a column opens its classes', dialog.getByRole('heading', { name: /^Classes, / }));
+  c.ok('the classes behind it include a real one', (await dialog.locator('tbody').textContent()).includes('Past A'));
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  const members = page.getByRole('figure', { name: 'Members over time' });
+  c.ok('the members line has its latest value labelled', (await members.locator('.chart-end').count()) === 1);
+  c.ok('layout (overview charts)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/reports-charts-overview-${name}.png`, fullPage: true });
   c.ok('old page link still there', (await page.getByRole('link', { name: 'Open the detailed reports' }).getAttribute('href')).includes('reporting.html'));
   c.ok('six tabs', (await page.getByRole('tab').count()) === 6);
   c.ok('Overview is the first tab', (await page.getByRole('tab', { name: 'Overview', exact: true }).getAttribute('aria-selected')) === 'true');
@@ -113,6 +132,13 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('memberships tab', page.getByRole('heading', { name: 'Membership plans' }));
   c.ok('memberships: active, MRR, plans, new joins', (await stat('Active').first().textContent()) === '3' && (await stat('MRR').textContent()) === '£130' && (await stat('Plans').textContent()) === '2' && (await stat('New joins').textContent()) === '1');
   c.ok('memberships: plan rows with share', (await page.locator('tbody tr').first().textContent()).includes('Hybrid Monthly with a long plan name') && (await page.locator('tbody tr').first().textContent()).includes('67%'));
+  const donut = page.getByRole('figure', { name: 'Active memberships by plan' });
+  await c.has('plan donut', donut);
+  c.ok('the ring key lists each plan with its members and share', (await donut.locator('.donut-row').count()) === 2 && (await donut.locator('.donut-row').nth(1).textContent()).includes('33%'));
+  await donut.getByRole('button', { name: /^Annual: 1, 33%/ }).click();
+  await c.has('clicking a plan opens its members', dialog.getByRole('heading', { name: 'Active members on Annual' }));
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await c.has('members over time line', page.getByRole('figure', { name: 'Members over time' }));
   c.ok('layout (memberships tab)', (await page.evaluate(layoutProblems)).length === 0);
 
   await page.getByRole('tab', { name: 'Classes', exact: true }).click();
@@ -121,6 +147,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('the bars are actually drawn (the coloured part has a width)', ((await page.locator('.bar-row .fill').first().boundingBox())?.width ?? 0) > 20);
   c.ok('heatmap: seven days by four times of day', (await page.locator('table.heat tbody tr').count()) === 7 && (await page.locator('table.heat tbody tr').first().locator('td').count()) === 4);
   c.ok('heatmap cells say what they are', (await page.locator('table.heat td').first().getAttribute('aria-label')).includes('Mon Morning'));
+  await c.has('attendance chart on the classes tab', page.getByRole('figure', { name: 'Attendance over time' }));
   await page.getByRole('list', { name: 'Average fill by class type' }).getByRole('button', { name: /^Past A/ }).click();
   await c.has('a class type bar opens its sessions', dialog.getByRole('heading', { name: 'Past A sessions' }));
   await dialog.getByRole('button', { name: 'Close' }).click();
@@ -138,6 +165,16 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('payments tab', page.getByRole('heading', { name: 'Bad debtors / payment recovery' }));
   c.ok('payments: failed, outstanding, records', (await stat('Failed / at-risk payments').textContent()) === '1' && (await stat('Outstanding').textContent()) === '£59.99' && (await stat('Payment records').textContent()) === '130');
   c.ok('payments: the failed one with its reason', (await page.locator('tbody tr').first().textContent()).includes('insufficient_funds'));
+
+  await c.has('payments over time chart', page.getByRole('figure', { name: 'Payments over time, in pounds' }));
+  const pay = page.getByRole('figure', { name: 'Payments by outcome' });
+  await c.has('payments by outcome ring', pay);
+  await pay.getByRole('button', { name: /^Failed: 1/ }).click();
+  await c.has('clicking Failed opens the failed payments', dialog.getByRole('heading', { name: 'Failed payments' }));
+  c.ok('with the reason', (await dialog.locator('tbody').textContent()).includes('insufficient_funds'));
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  c.ok('layout (payments tab)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/reports-charts-payments-${name}.png`, fullPage: true });
 
   await page.getByRole('tab', { name: 'Report library', exact: true }).click();
   await c.has('library opens', page.getByLabel('Search reports'));

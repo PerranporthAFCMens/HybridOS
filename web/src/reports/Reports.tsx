@@ -12,6 +12,7 @@ import {
 import { Bars } from './Bars';
 import { DataTable } from './DataTable';
 import { DownloadButtons } from './DownloadButtons';
+import { OverviewCharts } from './ReportCharts';
 import { ReportTabs, TABS, type TabKey } from './ReportTabs';
 import type { ReportTable } from './download';
 import { useReportData } from './useReports';
@@ -54,7 +55,7 @@ export function Reports() {
         </div>
       </header>
 
-      <p className="muted report-hint">Click any figure or bar to see the rows behind it, and download them.</p>
+      <p className="muted report-hint">Click any figure, bar or chart to see the rows behind it, and download them.</p>
 
       <div className="report-tabs" role="tablist" aria-label="Report sections">
         {TABS.map(([key, label]) => (
@@ -109,6 +110,8 @@ export function Reports() {
               ) : <Empty>No membership plans yet.</Empty>}
             </Card>
           </div>
+
+          <OverviewCharts rangeDays={Number(range)} rangeLabel={rangeLabel} onOpenTable={(build) => setDrill(() => build)} />
         </>
       )}
 
