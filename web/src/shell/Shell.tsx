@@ -38,6 +38,7 @@ export function Shell() {
           <NavLink to="/members" onClick={close}>Members</NavLink>
           <NavLink to="/plans" onClick={close}>Membership plans</NavLink>
           <NavLink to="/classes" onClick={close}>Classes and workouts</NavLink>
+          <NavLink to="/workouts" onClick={close}>Workout builder</NavLink>
           <NavLink to="/reports" onClick={close}>Reports</NavLink>
           <NavLink to="/community" onClick={close}>Community</NavLink>
           <NavLink to="/communications" onClick={close}>Communications</NavLink>

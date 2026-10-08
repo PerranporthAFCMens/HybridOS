@@ -42,6 +42,7 @@ export function Classes() {
           <Button onClick={() => setAnchor(new Date())}>Today</Button>
           <Button variant="primary" onClick={() => setAdding('blank')}>Add class</Button>
           <LinkButton href={links['class-setup']}>Class setup</LinkButton>
+          <LinkButton href={links.workouts}>Workout builder</LinkButton>
         </div>
       </header>
 

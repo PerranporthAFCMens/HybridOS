@@ -49,7 +49,7 @@ The word `/next/` goes away at the cutover below. Every piece of work is reporte
 The owner chose to rebuild every remaining screen, then switch over in one go and delete every old page and the `/next/` address. Until then both run side by side. Order:
 1. **Settings and staff, rest:** 6c Access levels (`staff-permissions.html`, `admin-access.html`), 6d Door access (`access-settings.html`) and opening hours (`resource-availability.html`), both built. **Gym layout (`gym-layout.html`) is dropped (owner decision, 8 October 2026): it was a browser-only drawing tool that saved nothing to the database. The page is deleted at the cutover; if a floor map is wanted later it is designed fresh with the member app.**, 6e Member experience (`member-view-settings.html`), built. **`integrations.html` is not an owner setting: it is each member's own Strava connection page (the Strava keys are not yet in Supabase), so it moves with the member app (step 5).**
 2. **Messages and community:** 7a `community.html` (built); 7b `communications.html` (gym logo, email sender details, access invitation email). `social.html`, `groups.html`, `group-join.html` are member-side pages and move with the member app (step 5).
-3. **Workouts and PT, owner side:** `workout-builder.html`.
+3. **Workouts and PT, owner side:** `workout-builder.html` (built). PT appointments with checks still to do (needs a checked database function).
 4. **Report builder, Estate view, add-on switches, create-a-gym, HybridOne Control, Enterprise manager** (sections below).
 5. **Member app:** `integrations.html` (member Strava), `member.html`, `member-memberships.html`, `member-preview.html`, `join.html`, `onboarding.html`.
 6. **Staff app:** `staff.html`.
