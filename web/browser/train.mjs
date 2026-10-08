@@ -88,6 +88,11 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByLabel('Swap Overhead press for').fill('Landmine press');
   await page.getByLabel('Landmine press set 1 Weight').fill('30');
   await page.getByLabel('Landmine press set 1 Reps').fill('8');
+  await page.getByRole('button', { name: 'Left and right for Landmine press' }).click();
+  c.ok('left and right shows a choice for each set', (await page.getByRole('radiogroup', { name: /^Landmine press set \d side$/ }).count()) === 3);
+  await page.getByRole('radiogroup', { name: 'Landmine press set 1 side' }).getByRole('radio', { name: 'Left' }).click();
+  c.ok('the choice is marked', (await page.getByRole('radiogroup', { name: 'Landmine press set 1 side' }).getByRole('radio', { name: 'Left' }).getAttribute('aria-checked')) === 'true');
+  c.ok('layout (left and right)', (await page.evaluate(layoutProblems)).length === 0);
   await page.getByRole('button', { name: 'Skip Stretch' }).click();
   c.ok('a skipped exercise says that is fine', (await page.getByText('Skipped. That is fine.').count()) === 1);
   await page.getByLabel('How hard was it').selectOption('7');
@@ -98,6 +103,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('one session titled from the workout', writes.filter((w) => w.startsWith('session ')).length === 1 && joined.includes('"title":"Upper body"'));
   c.ok('two exercises saved, the swap noted', writes.filter((w) => w.startsWith('entry ')).length === 2 && joined.includes('"exercise_name":"Landmine press"') && joined.includes('Swapped from Overhead press'));
   c.ok('sets saved with kilograms and reps', joined.includes('"weight_kg":26') && joined.includes('"reps":8'));
+  c.ok('the side is saved on that set', joined.includes('"side":"left"'));
   c.ok('the skipped one is not saved', !joined.includes('"exercise_name":"Stretch"'));
   c.ok('the coach workout is marked done with rpe and a note', joined.includes('"status":"completed"') && joined.includes('"member_rpe":7') && joined.includes('Skipped: Stretch'));
   c.ok('the finished workout is gone from today', (await page.getByLabel('Today').getByText('Nothing planned.').count()) === 1);

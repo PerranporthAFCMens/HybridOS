@@ -30,7 +30,7 @@ describe('numbers', () => {
     expect(formatDuration(65)).toBe('1:05');
   });
   it('a set becomes columns, or says what is wrong', () => {
-    expect(toDbSet('strength', { weight: '24', reps: '10' }).row).toEqual({ weight_kg: 24, reps: 10, duration_seconds: null, distance_m: null, calories: null });
+    expect(toDbSet('strength', { weight: '24', reps: '10' }).row).toEqual({ weight_kg: 24, reps: 10, duration_seconds: null, distance_m: null, calories: null, side: null });
     expect(toDbSet('strength', {}).row).toBeNull();
     expect(toDbSet('strength', { weight: 'abc' }).error).toBe('"abc" is not a number.');
     expect(toDbSet('time', { time: '12:30' }).row?.duration_seconds).toBe(750);
@@ -52,6 +52,27 @@ describe('numbers', () => {
 });
 
 const act = (p: Partial<PlayedActivity>): PlayedActivity => ({ name: 'Squat', originalName: 'Squat', tracking: 'strength', sets: [{ weight: '100', reps: '5' }, {}], done: false, skipped: false, note: '', ...p });
+
+describe('left and right', () => {
+  it('a side is kept only when asked for, and only the three words', () => {
+    expect(toDbSet('strength', { weight: '20', reps: '8', side: 'left' }).row?.side).toBe('left');
+    expect(toDbSet('strength', { weight: '20', side: 'upside' }).row?.side).toBeNull();
+    expect(toDbSet('strength', { side: 'left' }).row).toBeNull();
+  });
+  it('comes back for last time', () => {
+    const v = fromDbSet('strength', { weight_kg: 20, reps: 8, side: 'right' });
+    expect(v.side).toBe('right');
+    expect(setText('strength', v)).toBe('20 kg × 8 (right)');
+    expect(fromDbSet('strength', { weight_kg: 20, side: null }).side).toBeUndefined();
+  });
+  it('is saved only for an exercise switched to left and right', () => {
+    const base = { name: 'Row', originalName: 'Row', tracking: 'strength' as const, sets: [{ weight: '20', reps: '8', side: 'left' }], done: false, skipped: false, note: '' };
+    const on = prepareFinish([{ ...base, sided: true }]);
+    const off = prepareFinish([{ ...base, sided: false }]);
+    expect(on.ok && on.entries[0]?.sets[0]?.side).toBe('left');
+    expect(off.ok && off.entries[0]?.sets[0]?.side).toBeNull();
+  });
+});
 
 describe('finishing', () => {
   it('writes what was typed, leaves out empty sets', () => {

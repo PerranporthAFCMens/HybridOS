@@ -62,3 +62,9 @@
 .tr-set .tr-box { flex: 1; min-width: 0; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
 .tr-tools > * { flex: 1 1 120px; }
 .mem-tabs a { min-width: 0; }
+
+.tr-set-wrap { display: grid; gap: 6px; }
+.tr-side { display: flex; gap: 6px; margin-left: 28px; }
+.tr-side-btn { flex: 1; min-height: 44px; border-radius: 10px; border: 1px solid var(--hybrid-line); background: var(--hybrid-panel); color: var(--hybrid-muted); font: inherit; font-weight: 700; cursor: pointer; }
+.tr-side-btn.on { background: var(--hybrid-volt, #c8ff3d); border-color: var(--hybrid-volt, #c8ff3d); color: #0b1020; }
+.tr-side-btn:focus-visible { outline: 2px solid var(--hybrid-pulse, #6b7cff); outline-offset: 2px; }

@@ -2631,6 +2631,7 @@ export type Database = {
           id: string
           notes: string | null
           reps: number | null
+          side: string | null
           set_number: number
           updated_at: string
           weight_kg: number | null
@@ -2646,6 +2647,7 @@ export type Database = {
           id?: string
           notes?: string | null
           reps?: number | null
+          side?: string | null
           set_number: number
           updated_at?: string
           weight_kg?: number | null
@@ -2661,6 +2663,7 @@ export type Database = {
           id?: string
           notes?: string | null
           reps?: number | null
+          side?: string | null
           set_number?: number
           updated_at?: string
           weight_kg?: number | null
