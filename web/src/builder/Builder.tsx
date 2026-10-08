@@ -13,6 +13,7 @@ import { DATASETS } from './datasets';
 import { FN_LABEL, OPS_FOR, build, chartsAllowed, defaultSpec, filtersForGroup, isNumeric, needsValue, rowsInGroup, sanitise, show, type ChartKind, type Field as DField, type Filter, type Fn, type Measure, type Op, type Spec } from './engine';
 import { loadSaved, storeSaved, type SavedReport } from './saved';
 import { STARTERS } from './starters';
+import { sparkPath, trend, trendText } from './trend';
 import '../reports/paper.css';
 import '../charts/charts.css';
 import './builder.css';
@@ -236,9 +237,25 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
 
           {spec.mode === 'summary' && (
             <ul className="bld-kpis" aria-label="Headline figures">
-              {built.totals.map((t, i) => (
-                <li className="card bld-kpi" key={i}><span className="muted small">{built.measureLabels[i]}</span><b>{figure(t, built.measureTypes[i] ?? 'number')}</b></li>
-              ))}
+              {built.totals.map((t, i) => {
+                const vals = built.groups.map((g) => g.values[i] ?? 0);
+                const tr = groupField?.type === 'date' ? trend(vals) : null;
+                const type = built.measureTypes[i] ?? 'number';
+                return (
+                  <li className="card bld-kpi" key={i}>
+                    <span className="muted small">{built.measureLabels[i]}</span>
+                    <b>{figure(t, type)}</b>
+                    {tr && (
+                      <span className={`bld-delta ${tr.direction}`}>{trendText(tr)}<span className="muted"> latest {built.groups[built.groups.length - 1]?.label ?? ''} vs {built.groups[built.groups.length - 2]?.label ?? ''}</span></span>
+                    )}
+                    {vals.length >= 2 && (
+                      <svg className="bld-spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">
+                        <path d={sparkPath(vals.slice(-24), 100, 30)} fill="none" stroke="var(--hybrid-pulse, #6b7cff)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                      </svg>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
 

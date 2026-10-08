@@ -7,7 +7,7 @@ export interface ColumnSeries { name: string; color: string; values: number[] }
 
 const LEFT = 40;
 const RIGHT = 8;
-const TOP = 10;
+const TOP = 22;
 const BOTTOM = 26;
 const GAP = 2;
 const MAX_THICK = 24;
@@ -19,7 +19,7 @@ const MAX_THICK = 24;
  * opens the rows behind it.
  */
 export function ColumnChart({
-  label, categories, series, stacked = false, format = compact, height = 200, onSelect, emptyText = 'Nothing to show for this period.',
+  label, categories, series, stacked = false, format = compact, height = 200, onSelect, emptyText = 'Nothing to show for this period.', maxThick = MAX_THICK, valueLabels = false,
 }: {
   label: string;
   categories: string[];
@@ -29,6 +29,10 @@ export function ColumnChart({
   height?: number;
   onSelect?: (category: number) => void;
   emptyText?: string;
+  /** Widest a column may be (default 24). */
+  maxThick?: number;
+  /** Write each figure above its column when there is one series and room for it. */
+  valueLabels?: boolean;
 }) {
   const [ref, width] = useWidth();
   const [tip, setTip] = useState<{ i: number; x: number } | null>(null);
@@ -42,7 +46,8 @@ export function ColumnChart({
   const slot = innerW / Math.max(1, n);
   const y = (v: number) => TOP + innerH - (v / top) * innerH;
   const k = series.length;
-  const thick = stacked ? Math.min(MAX_THICK, slot * 0.6) : Math.min(MAX_THICK, (slot * 0.7 - GAP * (k - 1)) / k);
+  const thick = stacked ? Math.min(maxThick, slot * 0.6) : Math.min(maxThick, (slot * 0.7 - GAP * (k - 1)) / k);
+  const labelled = valueLabels && !stacked && k === 1 && n <= 14 && slot >= 44;
   const groupW = stacked ? thick : thick * k + GAP * (k - 1);
   const step = labelStep(slot, Math.max(...categories.map((c) => c.length), 1) * 6.2);
   const table: TableView = { headers: ['', ...series.map((s) => s.name)], rows: categories.map((c, i) => [c, ...series.map((s) => format(s.values[i] ?? 0))]) };
@@ -82,7 +87,12 @@ export function ColumnChart({
                   }
                   const xs = x0 + si * (thick + GAP);
                   const h = Math.max(1, y(0) - y(v));
-                  return <path key={s.name} d={roundedTop(xs, y(v), thick, h, 4)} fill={s.color} className={tip?.i === i ? 'chart-mark lift' : 'chart-mark'} />;
+                  return (
+                    <g key={s.name}>
+                      <path d={roundedTop(xs, y(v), thick, h, 4)} fill={s.color} className={tip?.i === i ? 'chart-mark lift' : 'chart-mark'} />
+                      {labelled && <text x={xs + thick / 2} y={y(v) - 6} textAnchor="middle" className="chart-end">{format(v)}</text>}
+                    </g>
+                  );
                 })}
                 {i % step === 0 && <text x={cx} y={height - 8} textAnchor="middle" className="chart-tick">{c}</text>}
               </g>

@@ -25,7 +25,7 @@ export function ChartView({ chart, built, onOpen }: { chart: ChartKind; built: B
     <>
       {mixed && <p className="muted small">Figures in different units cannot share one chart, so only the first kind is drawn. The table shows them all.</p>}
       {groups.length < built.groups.length && <p className="muted small">Showing the first {MAX_CATEGORIES} of {built.groups.length}. The table has all of them.</p>}
-      {chart === 'column' && <ColumnChart label={label} categories={cats} series={series} format={fmt} height={300} onSelect={open} />}
+      {chart === 'column' && <ColumnChart label={label} categories={cats} series={series} format={fmt} height={320} maxThick={64} valueLabels onSelect={open} />}
       {chart === 'line' && <LineChart label={label} categories={cats} series={series} format={fmt} height={300} onSelect={open} />}
       {chart === 'bar' && (
         <Bars label={label} rows={groups.map((g) => ({ label: g.label, value: Math.round(scale(g.values[idx[0] ?? 0] ?? 0) * 100) / 100 }))} onOpen={(l) => { const g = groups.find((x) => x.label === l); if (g) onOpen(g); }} />
