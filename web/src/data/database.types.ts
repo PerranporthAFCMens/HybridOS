@@ -2935,6 +2935,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_manage_class_booking: {
+        Args: { p_action: string; p_gym_id: string; p_session_id: string; p_user_id: string }
+        Returns: Json
+      }
       book_class_session: {
         Args: { p_session_id: string }
         Returns: {

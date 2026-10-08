@@ -77,3 +77,15 @@ describe('roster', () => {
     expect(rosterSummary([{ status: 'booked' }, { status: 'attended' }, { status: 'attended' }, { status: 'no_show' }])).toBe('4 booked · 2 attended · 1 no-show');
   });
 });
+
+describe('roster actions', () => {
+  it('offers attended, no-show and remove for a booked person', async () => {
+    const { rosterActions } = await import('../src/classes/calc');
+    expect(rosterActions('booked').map((a) => a.action)).toEqual(['attended', 'no_show', 'cancel']);
+  });
+  it('offers undo and remove once someone is marked', async () => {
+    const { rosterActions } = await import('../src/classes/calc');
+    expect(rosterActions('attended').map((a) => a.action)).toEqual(['booked', 'cancel']);
+    expect(rosterActions('no_show').map((a) => a.action)).toEqual(['booked', 'cancel']);
+  });
+});
