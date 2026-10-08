@@ -12,9 +12,9 @@ const run = (key: string, d: LibraryData, since: string | null = null) => {
 
 const data = (over: Partial<LibraryData> = {}): LibraryData => ({
   plans: [
-    { id: 'p1', name: 'Hybrid', pricePence: 5900, interval: 'monthly' },
-    { id: 'p2', name: 'Annual', pricePence: 59000, interval: 'annual' },
-    { id: 'p3', name: 'Gym', pricePence: 2900, interval: 'monthly' },
+    { id: 'p1', name: 'Hybrid', pricePence: 5900, interval: 'monthly', isActive: true },
+    { id: 'p2', name: 'Annual', pricePence: 59000, interval: 'annual', isActive: true },
+    { id: 'p3', name: 'Gym', pricePence: 2900, interval: 'monthly', isActive: false },
   ],
   memberships: [
     { userId: 'u1', planId: 'p1', status: 'active', startsOn: '2026-01-01', endsOn: '', provider: 'manual', paymentStatus: 'confirmed', updatedAt: '2026-10-01T10:00:00Z' },
@@ -23,10 +23,10 @@ const data = (over: Partial<LibraryData> = {}): LibraryData => ({
     { userId: 'u4', planId: 'p3', status: 'cancelled', startsOn: '2026-01-01', endsOn: '2026-09-01', provider: 'manual', paymentStatus: 'confirmed', updatedAt: '2026-09-01T10:00:00Z' },
   ],
   gymMembers: [
-    { userId: 'u1', joinedAt: '2026-01-10T10:00:00Z', attritionOn: '' },
-    { userId: 'u2', joinedAt: '2026-01-20T10:00:00Z', attritionOn: '' },
-    { userId: 'u3', joinedAt: '2026-03-05T10:00:00Z', attritionOn: '' },
-    { userId: 'u4', joinedAt: '2026-01-15T10:00:00Z', attritionOn: '2026-09-01' },
+    { userId: 'u1', joinedAt: '2026-01-10T10:00:00Z', attritionOn: '', isActive: true },
+    { userId: 'u2', joinedAt: '2026-01-20T10:00:00Z', attritionOn: '', isActive: true },
+    { userId: 'u3', joinedAt: '2026-03-05T10:00:00Z', attritionOn: '', isActive: true },
+    { userId: 'u4', joinedAt: '2026-01-15T10:00:00Z', attritionOn: '2026-09-01', isActive: false },
   ],
   people: new Map([
     ['u1', { name: 'Amelia Hart', dateOfBirth: '1990-10-08', gender: 'female' }],

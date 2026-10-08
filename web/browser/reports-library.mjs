@@ -32,8 +32,8 @@ const memberships = [
   { id: 'm3', user_id: U3, plan_id: 'p2', status: 'active', starts_on: '2026-03-01', ends_on: null, payment_provider: 'manual', payment_status: 'confirmed', updated_at: daysAgo(40) },
 ];
 const gymMembers = [
-  { id: 'g1', user_id: U1, joined_at: daysAgo(5, 9), attrition_on: null },
-  { id: 'g3', user_id: U3, joined_at: '2024-01-01T00:00:00', attrition_on: null },
+  { id: 'g1', user_id: U1, joined_at: daysAgo(5, 9), attrition_on: null, is_active: true },
+  { id: 'g3', user_id: U3, joined_at: '2024-01-01T00:00:00', attrition_on: null, is_active: true },
 ];
 // 130 payments so the 100-row preview note shows; one failed.
 const payments = Array.from({ length: 130 }, (_, i) => ({
@@ -103,10 +103,43 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const dialog = page.getByRole('dialog');
   await c.has('overview loaded', page.getByRole('button', { name: /^Active memberships: 3/ }));
   c.ok('nothing from the library is loaded until it is opened', paymentRequests.length === 0);
-  await c.has('library closed with an open button', page.getByRole('button', { name: 'Open the report library' }));
   c.ok('old page link still there', (await page.getByRole('link', { name: 'Open the detailed reports' }).getAttribute('href')).includes('reporting.html'));
+  c.ok('six tabs', (await page.getByRole('tab').count()) === 6);
+  c.ok('Overview is the first tab', (await page.getByRole('tab', { name: 'Overview', exact: true }).getAttribute('aria-selected')) === 'true');
 
-  await page.getByRole('button', { name: 'Open the report library' }).click();
+  // The other tabs: figures, tables and the heatmap (all from the same mocked data)
+  const stat = (label) => page.locator('.card.stat', { hasText: label }).locator('.stat-num');
+  await page.getByRole('tab', { name: 'Memberships', exact: true }).click();
+  await c.has('memberships tab', page.getByRole('heading', { name: 'Membership plans' }));
+  c.ok('memberships: active, MRR, plans, new joins', (await stat('Active').first().textContent()) === '3' && (await stat('MRR').textContent()) === '£130' && (await stat('Plans').textContent()) === '2' && (await stat('New joins').textContent()) === '1');
+  c.ok('memberships: plan rows with share', (await page.locator('tbody tr').first().textContent()).includes('Hybrid Monthly with a long plan name') && (await page.locator('tbody tr').first().textContent()).includes('67%'));
+  c.ok('layout (memberships tab)', (await page.evaluate(layoutProblems)).length === 0);
+
+  await page.getByRole('tab', { name: 'Classes', exact: true }).click();
+  await c.has('classes tab', page.getByRole('heading', { name: 'Day × time heatmap' }));
+  c.ok('classes: fill, attendances, no-shows, sessions', (await stat('Avg fill').textContent()) === '10%' && (await stat('Attendances').textContent()) === '1' && (await stat('No-shows').textContent()) === '1' && (await stat('Sessions').textContent()) === '2');
+  c.ok('the bars are actually drawn (the coloured part has a width)', ((await page.locator('.bar-row .fill').first().boundingBox())?.width ?? 0) > 20);
+  c.ok('heatmap: seven days by four times of day', (await page.locator('table.heat tbody tr').count()) === 7 && (await page.locator('table.heat tbody tr').first().locator('td').count()) === 4);
+  c.ok('heatmap cells say what they are', (await page.locator('table.heat td').first().getAttribute('aria-label')).includes('Mon Morning'));
+  await page.getByRole('list', { name: 'Average fill by class type' }).getByRole('button', { name: /^Past A/ }).click();
+  await c.has('a class type bar opens its sessions', dialog.getByRole('heading', { name: 'Past A sessions' }));
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  c.ok('layout (classes tab)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/reports-tabs-classes-${name}.png`, fullPage: true });
+
+  await page.getByRole('tab', { name: 'Members', exact: true }).click();
+  await c.has('members tab', page.getByRole('heading', { name: 'Most active members' }));
+  c.ok('members: active, attending, attendances, no-show rate', (await stat('Active gym members').textContent()) === '2' && (await stat('Members attending').textContent()) === '1' && (await stat('Total attendances').textContent()) === '1' && (await stat('No-show rate').textContent()) === '50%');
+  c.ok('most active: ranked with names', (await page.locator('tbody tr').first().textContent()).includes('1') && (await page.locator('tbody tr').first().textContent()).includes('Alex Joiner'));
+  const topCsv = await saved(page, () => page.getByRole('button', { name: 'CSV' }).first().click());
+  c.ok('most active CSV has the header and the protected name', topCsv.bytes.toString('utf8').startsWith('﻿Rank,Member,Attended,Total activity,No-shows\r\n') && topCsv.bytes.toString('utf8').includes(`"'=HYPERLINK(""http://evil.example"")"`));
+
+  await page.getByRole('tab', { name: 'Payments', exact: true }).click();
+  await c.has('payments tab', page.getByRole('heading', { name: 'Bad debtors / payment recovery' }));
+  c.ok('payments: failed, outstanding, records', (await stat('Failed / at-risk payments').textContent()) === '1' && (await stat('Outstanding').textContent()) === '£59.99' && (await stat('Payment records').textContent()) === '130');
+  c.ok('payments: the failed one with its reason', (await page.locator('tbody tr').first().textContent()).includes('insufficient_funds'));
+
+  await page.getByRole('tab', { name: 'Report library', exact: true }).click();
   await c.has('library opens', page.getByLabel('Search reports'));
   c.ok('24 reports', (await page.locator('.lib-card').count()) === 24);
   c.ok('five groups', (await page.locator('.lib-group').count()) === 5);

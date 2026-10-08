@@ -6,12 +6,13 @@ import { Card, Empty, SectionTitle } from '../ui/Card';
 import { Select } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import {
-  RANGES, attendanceTable, barWidth, buildOverview, classesTable, incomeTable, membershipsTable, newMembersTable, overviewTable,
+  RANGES, attendanceTable, buildOverview, classesTable, incomeTable, membershipsTable, newMembersTable, overviewTable,
   reportMoney, sessionMetrics, type TableContext,
 } from './calc';
+import { Bars } from './Bars';
 import { DataTable } from './DataTable';
 import { DownloadButtons } from './DownloadButtons';
-import { ReportLibrary } from './ReportLibrary';
+import { ReportTabs, TABS, type TabKey } from './ReportTabs';
 import type { ReportTable } from './download';
 import { useReportData } from './useReports';
 import './reports.css';
@@ -19,6 +20,7 @@ import './reports.css';
 export function Reports() {
   const { gym } = useReadyAuth();
   const [range, setRange] = useState('30');
+  const [tab, setTab] = useState<TabKey>('overview');
   const [drill, setDrill] = useState<(() => ReportTable) | null>(null);
   const q = useReportData(gym.gymId, Number(range));
   const rangeLabel = RANGES.find(([v]) => v === range)?.[1] ?? '';
@@ -54,10 +56,16 @@ export function Reports() {
 
       <p className="muted report-hint">Click any figure or bar to see the rows behind it, and download them.</p>
 
-      {q.isError && <Card><Empty>Could not load the report. Refresh to try again.</Empty></Card>}
-      {q.isPending && <Card><Empty>Loading reporting…</Empty></Card>}
+      <div className="report-tabs" role="tablist" aria-label="Report sections">
+        {TABS.map(([key, label]) => (
+          <button key={key} type="button" role="tab" id={`tab-${key}`} aria-selected={tab === key} className={`report-tab${tab === key ? ' active' : ''}`} onClick={() => setTab(key)}>{label}</button>
+        ))}
+      </div>
 
-      {view && o && (
+      {tab === 'overview' && q.isError && <Card><Empty>Could not load the report. Refresh to try again.</Empty></Card>}
+      {tab === 'overview' && q.isPending && <Card><Empty>Loading reporting…</Empty></Card>}
+
+      {tab === 'overview' && view && o && (
         <>
           <div className="download-bar">
             <span className="muted">Download this overview</span>
@@ -101,19 +109,18 @@ export function Reports() {
               ) : <Empty>No membership plans yet.</Empty>}
             </Card>
           </div>
-
-          <ReportLibrary rangeDays={Number(range)} rangeLabel={rangeLabel} />
-
-          <Card>
-            <SectionTitle title="Still on the old page" />
-            <p className="muted">
-              The detailed tabs for memberships, classes, members and payments, and the accounting export, are
-              still on the old page while they move over.
-            </p>
-            <LinkButton href={links.reports}>Open the detailed reports</LinkButton>
-          </Card>
         </>
       )}
+
+      {tab !== 'overview' && (
+        <ReportTabs tab={tab} rangeDays={Number(range)} rangeLabel={rangeLabel} onOpenTable={(build) => setDrill(() => build)} />
+      )}
+
+      <Card>
+        <SectionTitle title="Still on the old page" />
+        <p className="muted">The accounting export (for Xero) is still on the old page while it moves over.</p>
+        <LinkButton href={links.reports}>Open the detailed reports</LinkButton>
+      </Card>
 
       {drill && <DrillDown build={drill} gymName={gym.gymName} onClose={() => setDrill(null)} />}
     </>
@@ -138,22 +145,5 @@ function Stat({ label, value, onOpen }: { label: string; value: string; onOpen: 
       <span className="muted">{label}</span>
       <span className="stat-num">{value}</span>
     </button>
-  );
-}
-
-function Bars({ rows, suffix = '', label, onOpen }: { rows: { label: string; value: number }[]; suffix?: string; label: string; onOpen: (label: string) => void }) {
-  const max = Math.max(1, ...rows.map((r) => r.value));
-  return (
-    <div className="bar-list" role="list" aria-label={label}>
-      {rows.map((r) => (
-        <div role="listitem" key={r.label}>
-          <button type="button" className="bar-row" onClick={() => onOpen(r.label)} aria-label={`${r.label}: ${r.value}${suffix}. Show what is behind this.`}>
-            <span className="bar-label">{r.label}</span>
-            <span className="track" aria-hidden="true"><span className="fill" style={{ width: `${barWidth(r.value, max)}%` }} /></span>
-            <b>{r.value}{suffix}</b>
-          </button>
-        </div>
-      ))}
-    </div>
   );
 }
