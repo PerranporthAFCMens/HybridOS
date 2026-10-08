@@ -11,7 +11,7 @@ import './shell.css';
 
 // Screens not yet moved open their old page inside the old Admin shell.
 const OLD_SCREENS = [
-  { label: 'Messages and community', href: links.communications },
+  { label: 'Communications', href: links.communications },
 ] as const;
 
 export function Shell() {
@@ -45,6 +45,7 @@ export function Shell() {
           <NavLink to="/plans" onClick={close}>Membership plans</NavLink>
           <NavLink to="/classes" onClick={close}>Classes and workouts</NavLink>
           <NavLink to="/reports" onClick={close}>Reports</NavLink>
+          <NavLink to="/community" onClick={close}>Community</NavLink>
           <NavLink to="/settings" onClick={close}>Settings and staff</NavLink>
           {OLD_SCREENS.map((s) => (
             <a key={s.label} href={s.href}>{s.label}</a>
