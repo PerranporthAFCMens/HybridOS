@@ -51,6 +51,8 @@ const STATES = {
   'member view': async (page) => { await page.goto(`${base}/next/#/member-view`); await page.getByRole('button', { name: 'Save member view' }).waitFor(); },
   community: async (page) => { await page.goto(`${base}/next/#/community`); await page.getByText('No community posts yet.').waitFor(); },
   communications: async (page) => { await page.goto(`${base}/next/#/communications`); await page.getByRole('button', { name: 'Save template' }).waitFor(); },
+  workouts: async (page) => { await page.goto(`${base}/next/#/workouts`); await page.getByText('No workouts yet. Build your first one.').waitFor(); },
+  'workout editor': async (page) => { await page.goto(`${base}/next/#/workouts`); await page.getByRole('button', { name: 'New workout' }).click(); await page.getByLabel('Workout name').waitFor(); },
   owners: async (page) => { await page.goto(`${base}/next/#/owners`); await page.getByText('No access invitations yet.').waitFor(); },
   menu: async (page, size) => { await page.goto(`${base}/next/#/today`); await page.getByText('Active members', { exact: true }).waitFor(); if (size.width < 900) { await page.getByRole('button', { name: 'Open menu' }).click(); await page.waitForTimeout(350); } },
 };

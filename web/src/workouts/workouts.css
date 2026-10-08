@@ -1,0 +1,7 @@
+.wk-block, .wk-activity { border: 1px solid var(--hybrid-line); border-radius: 12px; padding: 12px; margin: 10px 0; min-width: 0; }
+.wk-activity { background: var(--hybrid-bg); }
+.wk-block-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.wk-move { display: flex; gap: 6px; flex-wrap: wrap; }
+.wk-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.wk-confirm > span { flex: 1 1 260px; }
+.wk-actions { margin-top: 14px; }
