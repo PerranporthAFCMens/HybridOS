@@ -47,7 +47,7 @@ The word `/next/` goes away at the cutover below. Every piece of work is reporte
 
 ## Cutover decision (owner, 8 October 2026): finish everything first
 The owner chose to rebuild every remaining screen, then switch over in one go and delete every old page and the `/next/` address. Until then both run side by side. Order:
-1. **Settings and staff, rest:** 6c Access levels (`staff-permissions.html`, `admin-access.html`), 6d Door access (`access-settings.html`) and Gym layout (`gym-layout.html`), 6e Member experience (`member-view-settings.html`), Integrations (`integrations.html`), Resource availability (`resource-availability.html`).
+1. **Settings and staff, rest:** 6c Access levels (`staff-permissions.html`, `admin-access.html`), 6d Door access (`access-settings.html`) and opening hours (`resource-availability.html`), both built. **Gym layout (`gym-layout.html`) is dropped (owner decision, 8 October 2026): it was a browser-only drawing tool that saved nothing to the database. The page is deleted at the cutover; if a floor map is wanted later it is designed fresh with the member app.**, 6e Member experience (`member-view-settings.html`), Integrations (`integrations.html`).
 2. **Messages and community:** `communications.html`, `community.html`, `social.html`, `groups.html`, `group-join.html`.
 3. **Workouts and PT, owner side:** `workout-builder.html`.
 4. **Report builder, Estate view, add-on switches, create-a-gym, HybridOne Control, Enterprise manager** (sections below).
