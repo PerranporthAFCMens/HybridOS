@@ -172,6 +172,7 @@ input.staff-member-search{width:100%;min-height:44px;padding:11px 12px!important
   object-fit:contain!important;
   object-position:left center!important;
 }
+.side .hybrid-shell-gym .tenant-gym-logo.uploaded{filter:none!important;background:#fff!important;padding:6px 8px!important;border-radius:12px!important;box-sizing:border-box!important;object-fit:contain!important}
 .side .hybrid-shell-gym small{
   display:block!important;
   margin-bottom:4px!important;
