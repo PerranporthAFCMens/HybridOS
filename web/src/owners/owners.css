@@ -1,0 +1,4 @@
+.owners-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.owners-confirm > span { flex: 1 1 260px; }
+.owners-link { display: grid; gap: 8px; margin-top: 14px; padding: 12px; border: 1px dashed var(--hybrid-line-strong); border-radius: 10px; }
+.owners-link .btn { justify-self: start; }

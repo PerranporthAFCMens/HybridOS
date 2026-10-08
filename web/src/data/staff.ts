@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { edgeErrorMessage } from './edge';
 import type { HoursRow, StaffValues, QualChanges, TeamRow } from '../staff/calc';
 
 export interface CapabilityRow { id: string; name: string }
@@ -112,19 +113,7 @@ export async function createStaffLogin(gymId: string, n: NewLogin): Promise<{ us
   const { data, error } = await supabase.functions.invoke('admin-create-staff-with-level', {
     body: { gym_id: gymId, email: n.email, display_name: n.name, role: n.role, access_level_id: n.accessLevelId },
   });
-  if (error) {
-    let message = error.message;
-    const ctx = (error as { context?: unknown }).context;
-    if (ctx instanceof Response) {
-      try {
-        const j = (await ctx.json()) as { error?: string };
-        if (j.error) message = j.error;
-      } catch {
-        /* keep the generic message */
-      }
-    }
-    throw new Error(message || 'Could not create the staff login.');
-  }
+  if (error) throw new Error(await edgeErrorMessage(error, 'Could not create the staff login.'));
   const j = (data ?? {}) as { user_id?: string; temp_password?: string; error?: string };
   if (!j.user_id) throw new Error(j.error || 'Could not create the staff login.');
   return { userId: j.user_id, tempPassword: j.temp_password ?? null };

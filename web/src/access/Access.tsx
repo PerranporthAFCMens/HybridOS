@@ -45,7 +45,7 @@ export function Access() {
           <div className="muted">Create access levels once, then give each staff member one. Changing a level changes it for everyone who has it.</div>
         </div>
         <div className="staff-top">
-          <LinkButton href={links['admin-access']}>Owners and admins</LinkButton>
+          <LinkButton href={links.owners}>Owners and admins</LinkButton>
           {isOwner && <Button variant="primary" onClick={() => { setMessage(null); setEditing({ level: null }); }}>New access level</Button>}
         </div>
       </header>

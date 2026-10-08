@@ -13,3 +13,8 @@
 .settings-list { list-style: none; margin: 0; padding: 0; }
 .settings-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--hybrid-line-strong); }
 .settings-list li:first-child { border-top: 0; }
+
+@media (max-width: 400px) {
+  .day-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .day-row > :first-child { grid-column: 1 / -1; }
+}
