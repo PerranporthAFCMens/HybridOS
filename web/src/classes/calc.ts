@@ -1,4 +1,4 @@
-import type { TimetableSession } from '../data/classes';
+import type { SchedulingRules, TimetableSession } from '../data/classes';
 
 /** Monday 00:00 (local) of the week containing `d`. */
 export function startOfWeek(d: Date): Date {
@@ -82,6 +82,8 @@ export function weekSummary(sessions: TimetableSession[]): string {
 
 /** What the Add class form holds. */
 export interface ClassForm {
+  /** Saved class type, or empty for a custom class. */
+  classTypeId: string;
   name: string;
   date: string;
   start: string;
@@ -102,7 +104,7 @@ export const RELEASE_OPTIONS = [
 ] as const;
 
 export function emptyClassForm(today: Date): ClassForm {
-  return { name: '', date: dayKey(today), start: '18:00', duration: '60', capacity: '20', reserved: '0', release: '', description: '' };
+  return { classTypeId: '', name: '', date: dayKey(today), start: '18:00', duration: '60', capacity: '20', reserved: '0', release: '', description: '' };
 }
 
 export interface ClassValues {
@@ -146,4 +148,48 @@ export function validateClass(form: ClassForm): ClassCheck {
 /** The old page's worked example, shown under the reserved-spaces boxes. */
 export function reservedExample(capacity: number, reserved: number): string {
   return `Example: capacity ${capacity} + ${reserved} reserved means standard members can fill up to ${capacity - reserved} places, while eligible premium plans can still book into the final ${reserved}.`;
+}
+
+// ---- Gym rules: who may teach, what a class needs ----
+
+
+const LONDON = new Intl.DateTimeFormat('en-GB', {
+  weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', timeZone: 'Europe/London',
+});
+const WEEKDAY_NUMBER: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+/** The gym's clock (UK time) for an instant: weekday 0 = Sunday, the date, and the time as HH:MM:SS. */
+export function londonParts(d: Date): { weekday: number; date: string; time: string } {
+  const p = Object.fromEntries(LONDON.formatToParts(d).map((x) => [x.type, x.value]));
+  return { weekday: WEEKDAY_NUMBER[p.weekday ?? ''] ?? 0, date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}:${p.second}` };
+}
+
+export type StaffStatus = 'ok' | 'not-qualified' | 'outside-hours';
+
+/**
+ * Can this person take this class? Same two tests the database makes before it will schedule it:
+ * every qualification the class type needs is held (and not expired on the day), and the class sits
+ * inside their working hours for that weekday. The database still has the final say.
+ */
+export function staffStatus(userId: string, classTypeId: string | null, start: Date, end: Date, rules: SchedulingRules): StaffStatus {
+  if (!classTypeId) return 'ok';
+  const s = londonParts(start);
+  const e = londonParts(end);
+  const needed = rules.requirements.filter((r) => r.classTypeId === classTypeId && r.capabilityId).map((r) => r.capabilityId);
+  const qualified = needed.every((cap) => rules.qualifications.some((q) => q.userId === userId && q.capabilityId === cap && q.qualified && (!q.expiresOn || q.expiresOn >= s.date)));
+  if (!qualified) return 'not-qualified';
+  const working = rules.hours.some((h) => h.userId === userId && h.weekday === s.weekday && h.isWorking && !!h.startTime && !!h.endTime && h.startTime <= s.time && h.endTime >= e.time);
+  return working ? 'ok' : 'outside-hours';
+}
+
+export const STAFF_STATUS_TEXT: Record<StaffStatus, string> = { ok: '', 'not-qualified': 'Not qualified', 'outside-hours': 'Outside hours' };
+
+/** "Qualification: Spin instructor · Needs: Studio A, 12 × Spin bike", or a note that nothing is needed. */
+export function requirementsText(classTypeId: string | null, rules: SchedulingRules): string {
+  if (!classTypeId) return 'Custom class: no qualification, room or equipment checks are made.';
+  const mine = rules.requirements.filter((r) => r.classTypeId === classTypeId);
+  const quals = mine.flatMap((r) => rules.capabilities.filter((c) => c.id === r.capabilityId).map((c) => c.name));
+  const things = mine.flatMap((r) => rules.resources.filter((x) => x.id === r.resourceId).map((x) => (r.quantity > 1 ? `${r.quantity} × ${x.name}` : x.name)));
+  const parts = [quals.length ? `Qualification: ${quals.join(', ')}` : '', things.length ? `Needs: ${things.join(', ')}` : ''].filter(Boolean);
+  return parts.length ? parts.join(' · ') : 'This class type has no qualification, room or equipment requirements.';
 }
