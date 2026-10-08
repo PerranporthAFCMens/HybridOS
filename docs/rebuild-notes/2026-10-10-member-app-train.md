@@ -23,3 +23,8 @@ Not in this step:
 - Finishing a workout records any bests and the Train screen says so ("New personal bests: ..."). If a best cannot be saved the workout is still saved and the screen says so.
 - Train has a Personal bests card; "See all" opens the list with add by hand and remove (with a confirm). Time is shown as minutes and seconds.
 - Not done: the old page's workout-set link (`workout_set_id`) is not filled in; cardio best times for a set distance (needs distance and time together on one set).
+
+## Personal training page (step 4)
+- Train shows a Personal training card for members whose plan includes PT or who have sessions; "See all" opens `#/m/train/pt`: coming up (day, time, length) and past sessions (Done / Missed). Members cannot move or cancel from the app; it says to ask the coach (PT has no clash rules yet, so there is no safe self-service).
+- The coach's name and notes are not shown: the coach notes on an appointment may be private, and whether members can read coach profiles has not been checked.
+- Still to do: the coach side (plan a PT session, send a programme) and linking a session to its plan. Both need a database change; the exact SQL goes to the owner first.

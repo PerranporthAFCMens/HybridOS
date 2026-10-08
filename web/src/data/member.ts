@@ -100,3 +100,18 @@ export async function countMyWorkouts(userId: string, gymId: string, since: Date
   if (error) throw error;
   return count ?? 0;
 }
+
+/** The member's PT sessions over the last year and the next few, newest first. */
+export async function listMyPtAll(userId: string, gymId: string, now: Date): Promise<PtRow[]> {
+  const from = new Date(now.getTime() - 365 * 86400000);
+  const { data, error } = await supabase
+    .from('pt_appointments')
+    .select('id, starts_at, ends_at, status')
+    .eq('gym_id', gymId)
+    .eq('member_user_id', userId)
+    .gte('starts_at', from.toISOString())
+    .order('starts_at', { ascending: false })
+    .limit(80);
+  if (error) throw error;
+  return (data ?? []).map((r) => ({ id: r.id, startsAt: r.starts_at, endsAt: r.ends_at, status: r.status }));
+}

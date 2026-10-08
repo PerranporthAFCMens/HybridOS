@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ClassRow, MyPlan, PtRow } from '../src/data/member';
-import { addDay, chooseHero, dayLabel, dayOf, dayStrip, flagsFor, goalMessage, spaceText, suggestions, timeOf, weekStartInstant, whenWords } from '../src/member/calc';
+import { ptMinutes, ptPastTag, splitPt, addDay, chooseHero, dayLabel, dayOf, dayStrip, flagsFor, goalMessage, spaceText, suggestions, timeOf, weekStartInstant, whenWords } from '../src/member/calc';
 
 const cls = (id: string, startsAt: string, patch: Partial<ClassRow> = {}): ClassRow => ({ sessionId: id, name: id, description: '', startsAt, endsAt: new Date(new Date(startsAt).getTime() + 3600000).toISOString(), capacity: 10, bookedCount: 0, availableSpaces: 5, isBooked: false, ...patch });
 const pt = (id: string, startsAt: string, status = 'scheduled'): PtRow => ({ id, startsAt, endsAt: new Date(new Date(startsAt).getTime() + 3600000).toISOString(), status });
@@ -91,5 +91,20 @@ describe('the week', () => {
     expect(goalMessage(3, 3)).toBe('Weekly goal done. Nice work.');
     expect(goalMessage(2, 3)).toBe('One more session to reach your goal.');
     expect(goalMessage(0, 3)).toBe('3 sessions to reach your goal.');
+  });
+});
+
+describe('personal training sessions', () => {
+  const rows = [pt('past', '2026-10-01T09:00:00Z', 'completed'), pt('miss', '2026-09-20T09:00:00Z', 'no_show'), pt('cancelled', '2026-10-12T09:00:00Z', 'cancelled'), pt('next', '2026-10-10T09:00:00Z', 'booked'), pt('later', '2026-10-17T09:00:00Z', 'booked'), pt('unmarked', '2026-10-05T09:00:00Z', 'booked')];
+  it('splits what is coming from what has been', () => {
+    const r = splitPt(rows, NOW);
+    expect(r.upcoming.map((x) => x.id)).toEqual(['next', 'later']);
+    expect(r.past.map((x) => x.id)).toEqual(['unmarked', 'past', 'miss']);
+  });
+  it('lengths and labels', () => {
+    expect(ptMinutes(pt('a', '2026-10-01T09:00:00Z'))).toBe(60);
+    expect(ptPastTag('completed')).toBe('Done');
+    expect(ptPastTag('no_show')).toBe('Missed');
+    expect(ptPastTag('booked')).toBe('');
   });
 });

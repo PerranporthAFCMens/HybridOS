@@ -12,6 +12,7 @@ const snapshot = {
     ] },
   ],
 };
+const hrs = (h) => new Date(Date.now() + h * 3600000).toISOString();
 const assignment = { id: 'a1', title: 'Upper body', source: 'pt', status: 'todo', scheduled_for: null, due_at: null, workout_snapshot: snapshot, focus_tags: ['Strength'] };
 
 function layoutProblems() {
@@ -44,7 +45,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
       ? [{ status: 'active', membership_plans: { name: 'Gym Monthly', includes_classes: false, includes_open_gym: true, includes_pt: false } }]
       : [{ id: 'm1', status: 'active', ends_on: null, created_at: '2026-01-01T00:00:00Z' }]);
     if (path.endsWith('/profiles')) return reply(route, [{ display_name: 'Priya Nair', first_name: 'Priya', last_name: 'Nair' }]);
-    if (path.endsWith('/pt_appointments')) return reply(route, []);
+    if (path.endsWith('/pt_appointments')) return reply(route, [{ id: 'pt1', starts_at: hrs(30), ends_at: hrs(31), status: 'booked' }, { id: 'pt0', starts_at: hrs(-48), ends_at: hrs(-47), status: 'completed' }, { id: 'pt9', starts_at: hrs(-200), ends_at: hrs(-199), status: 'no_show' }]);
     if (path.endsWith('/workout_assignments')) {
       if (method === 'PATCH') { writes.push(`PATCH assignment ${JSON.stringify(body)}`); if (body?.status === 'completed') open = false; return reply(route, []); }
       return reply(route, open ? [assignment] : []);
@@ -123,7 +124,15 @@ for (const [name, viewport] of Object.entries(sizes)) {
   if (shots) await page.screenshot({ path: `${shots}/train-home-${name}.png` });
 
   c.ok('personal bests are listed on Train', (await page.getByLabel('Personal bests', { exact: true }).textContent()).includes('Deadlift') && (await page.getByLabel('Personal bests', { exact: true }).textContent()).includes('145 kg'));
-  await page.getByRole('link', { name: 'See all' }).click();
+  c.ok('a PT card with the next session', (await page.getByLabel('Personal training').textContent()).includes('Next session'));
+  await page.getByLabel('Personal training').getByRole('link', { name: 'See all' }).click();
+  await c.has('the PT page', page.getByRole('heading', { name: 'Personal training' }));
+  c.ok('coming up has one session of 60 minutes', (await page.getByLabel('Coming up').textContent()).includes('60 min'));
+  c.ok('past sessions say done and missed', (await page.getByLabel('Past sessions').textContent()).includes('Done') && (await page.getByLabel('Past sessions').textContent()).includes('Missed'));
+  c.ok('and who to ask to move one', (await page.getByText('To move or cancel a session, ask your coach.').count()) === 1);
+  c.ok('layout (PT)', (await page.evaluate(layoutProblems)).length === 0);
+  await page.getByRole('link', { name: '‹ Train' }).click();
+  await page.getByLabel('Personal bests', { exact: true }).getByRole('link', { name: 'See all' }).click();
   await c.has('the personal bests page', page.getByRole('heading', { name: 'Personal bests' }));
   c.ok('a time is shown as minutes and seconds', (await page.getByRole('article', { name: '5k' }).textContent()).includes('24:18') && (await page.getByRole('article', { name: '5k' }).textContent()).includes('lower is better'));
   c.ok('layout (personal bests)', (await page.evaluate(layoutProblems)).length === 0);

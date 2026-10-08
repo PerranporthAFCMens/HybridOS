@@ -3,7 +3,7 @@ import { Link, useLocation, useOutletContext } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { listMyPbs, listRecentSessions } from '../data/train';
 import { pbValueText } from './pb';
-import { dayLabel, dayOf } from '../member/calc';
+import { dayLabel, dayOf, timeOf } from '../member/calc';
 import type { MemberCtx } from '../member/useMember';
 import { comingUp, dueNow, planDay } from './calc';
 
@@ -50,6 +50,13 @@ export function Train() {
               <Link className="btn secondary" to={`/m/train/${p.id}`} aria-label={`Open ${p.title}`}>Open</Link>
             </div>
           ))}
+        </section>
+      )}
+
+      {d.flags.pt && (
+        <section className="mem-card" aria-label="Personal training">
+          <div className="mem-row"><h2>Personal training</h2><Link to="/m/train/pt">See all</Link></div>
+          {d.pt[0] ? <div className="mem-line"><b>Next session</b><span>{dayLabel(dayOf(d.pt[0].startsAt))} · {timeOf(d.pt[0].startsAt)}</span></div> : <div className="muted">No sessions booked.</div>}
         </section>
       )}
 

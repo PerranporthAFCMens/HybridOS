@@ -95,3 +95,18 @@ export function goalMessage(done: number, target: number): string {
   if (done === target - 1) return 'One more session to reach your goal.';
   return `${target - done} sessions to reach your goal.`;
 }
+
+/** PT sessions still to come (not cancelled), soonest first, and the ones that have passed, newest first. */
+export function splitPt(rows: PtRow[], now: Date): { upcoming: PtRow[]; past: PtRow[] } {
+  const t = now.getTime();
+  const upcoming = rows.filter((r) => r.status !== 'cancelled' && new Date(r.endsAt).getTime() >= t).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const past = rows.filter((r) => new Date(r.endsAt).getTime() < t && r.status !== 'cancelled').sort((a, b) => b.startsAt.localeCompare(a.startsAt));
+  return { upcoming, past };
+}
+
+export const ptMinutes = (r: Pick<PtRow, 'startsAt' | 'endsAt'>): number => Math.max(0, Math.round((new Date(r.endsAt).getTime() - new Date(r.startsAt).getTime()) / 60000));
+
+/** What to say about a session that has passed. A booked one nobody has marked gets no label. */
+export function ptPastTag(status: string): string {
+  return status === 'completed' ? 'Done' : status === 'no_show' ? 'Missed' : '';
+}
