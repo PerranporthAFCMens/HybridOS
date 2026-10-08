@@ -8,3 +8,8 @@ First step of the reports redesign (see the owner-approved mock-ups).
 - Nothing changes in the engine, data, downloads or saved reports.
 - Browser checks: the drag checks scroll the target into view first, because the field list and the boxes are now stacked in one column.
 - Still to do from the mock-ups: reports home (headline figures with change and trend), dashboards, phone bottom sheet, three-step export.
+
+## Polish (same day)
+- The ready-made reports start closed (they filled the first screen).
+- List the rows / Summarise sits inside the sentence; the sentence text is smaller.
+- Column choices are compact pills; buttons keep the 44px touch size.

@@ -47,7 +47,7 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
   const [pickSaved, setPickSaved] = useState('');
   const [note, setNote] = useState<Note>(null);
   const [busy, setBusy] = useState(false);
-  const [starters, setStarters] = useState(true);
+  const [starters, setStarters] = useState(false);
   const [openField, setOpenField] = useState<string | null>(null);
   const [drill, setDrill] = useState<{ key: string; label: string } | null>(null);
 
@@ -201,9 +201,14 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
               <Select aria-label="Look at" className="bld-pill" value={spec.dataset} onChange={(e) => setDataset(e.target.value)}>
                 {DATASETS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
               </Select>
+              <div className="bld-seg bld-mode" role="radiogroup" aria-label="How to show it">
+                {([['list', 'List the rows'], ['summary', 'Summarise']] as const).map(([id, label]) => (
+                  <button key={id} type="button" role="radio" aria-checked={spec.mode === id} className={`format-pick${spec.mode === id ? ' on' : ''}`} onClick={() => change({ mode: id, chart: id === 'list' ? 'table' : spec.chart })}><b>{label}</b></button>
+                ))}
+              </div>
               {spec.mode === 'summary' ? (
                 <>
-                  <span>and show</span>
+                  <span>showing</span>
                   <Select aria-label="Show" className="bld-pill" value={m0Value} onChange={(e) => pickMeasure(e.target.value)}>
                     {measureOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </Select>
@@ -213,16 +218,11 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
                     {fields.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
                   </Select>
                 </>
-              ) : <span>and list the rows</span>}
+              ) : <span>one line per row</span>}
               <span>for {rangeLabel.toLowerCase()}</span>
             </div>
             {ds?.description && <p className="muted small bld-desc">{ds.description}</p>}
             <div className="bld-toolbar">
-              <div className="bld-seg" role="radiogroup" aria-label="How to show it">
-                {([['list', 'List the rows'], ['summary', 'Summarise']] as const).map(([id, label]) => (
-                  <button key={id} type="button" role="radio" aria-checked={spec.mode === id} className={`format-pick${spec.mode === id ? ' on' : ''}`} onClick={() => change({ mode: id, chart: id === 'list' ? 'table' : spec.chart })}><b>{label}</b></button>
-                ))}
-              </div>
               {allowed.length > 1 && (
                 <div className="bld-charts" role="radiogroup" aria-label="Chart">
                   {allowed.map((k) => <button key={k} type="button" role="radio" aria-checked={chart === k} className={`format-pick${chart === k ? ' on' : ''}`} onClick={() => change({ chart: k })}><b>{CHART_LABEL[k]}</b></button>)}
