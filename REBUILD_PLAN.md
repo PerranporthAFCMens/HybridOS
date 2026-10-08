@@ -91,7 +91,7 @@ The owner's picture of members: **classes-only**, **gym-only**, **PT clients**, 
 3. **See their PT sessions** (upcoming and past).
 4. **Record what they did** (log a workout or an activity, including in a PT session).
 
-**Design rule (the test for every screen):** each of those is reachable in as few taps as possible from the first screen, and **what the member sees depends on their type** (a classes-only member never sees gym or PT clutter; a mix sees only what they have). Type should come from their membership plan (the plan already says gym / classes / hybrid / PT), not from a setting the member has to manage.
+**Design rule (the test for every screen):** each of those is reachable in as few taps as possible from the first screen. **Members are not put in boxes** (owner, 8 October: the types above describe the member base, they are not labels to design around). The app does not ask "what type are you"; it shows **what this member has**: their plan decides which of classes, gym and PT are switched on, and the first screen shows what is relevant to them right now (next class booked, today's planned workout, next PT session), so a member with only classes simply has nothing to see about PT. The plan fields (`includes_open_gym`, `includes_classes`, `includes_pt`) are the only input.
 
 **Requested change:** when logging an activity, add **Left / Right / Both** (for single-side exercises).
 
@@ -101,10 +101,19 @@ The owner's picture of members: **classes-only**, **gym-only**, **PT clients**, 
 - PT: `pt_appointments` has staff, member, times, status and notes only. "Record what they did" in a PT session needs a link from an appointment to a workout log; nothing links them today. PT also still has none of the clash checks that classes have (the owner has not yet said whether PT should follow the same rules).
 - A member's type can be read from `membership_plans` (`includes_open_gym`, `includes_classes`, `includes_pt`, `access_type`).
 
-**Questions for the owner when this step starts (not now):**
-- Is the member app a **phone-first web app** (opens from a link, can be saved to the home screen) first, with an App Store app later, or an App Store app from the start?
-- What is the **one thing** a member opens the app for most often? (That becomes the first screen.)
-- Should a member be able to **start logging with one tap** from "today's workout" (set by their coach), and **repeat last time's numbers** in one tap?
-- For PT: does the **coach** log what was done in the session, the **member**, or either?
+**Decisions from the owner (8 October 2026):**
+- **A web app first** (opens from a link, can be saved to the phone's home screen like an app). A native App Store app is too much for now; revisit only if it is simple and low cost (the builder's note: the same web app can later be wrapped for the stores, with a yearly Apple developer fee and a smaller one-off Google fee plus review time, so the web app is not wasted work).
+- **No single "most used thing":** it depends on the member, so the first screen adapts (see the design rule).
+- **PT sessions: both the coach and the member can record what was done.** In practice **the PT plans the session first and pushes it to the member**. A PT can also **push a planned workout timetable or set of activities** to a member (the old data already has `workout_assignments` and `workout_templates`, which this builds on).
+
+**What that adds to the build (builder's view):**
+- A **coach side** to plan a PT session (activities for that appointment), assign it to a member, and push a **programme** (a timetable of planned workouts over days or weeks).
+- The member sees **today's planned workout first** and logs against it (pre-filled with the plan, one-tap "repeat last time").
+- A link from a PT appointment to the planned and logged workout (new, needs a database change with the owner's approval of the exact SQL).
+- The member is told when something is pushed to them (a notification; the web app can do this once saved to the home screen, details to check when built).
+
+**Still to ask the owner when this step starts (not now):**
+- Can a member change a pushed workout (swap an exercise, skip one), or only log against it?
+- Does a PT see what the member logged straight away, and can they comment?
 
 **Order:** owner-side screens first (Classes finished with bookings and attendance, Reports 5b to 5d, Settings and staff), then **milestones and awards** (above), then the member app, designed with the owner from the list above.
