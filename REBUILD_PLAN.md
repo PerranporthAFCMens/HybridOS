@@ -80,3 +80,40 @@ The owner wants **milestones and awards on member profiles**. Not designed or bu
 - Are milestones per gym or does a member carry them between gyms (Hybrid Hub and Puffin)?
 
 **What it needs (builder's view):** a place to store each award (type, who, when, given by, optional note), a list of milestone rules, and attendance data to count classes. **Counting classes attended depends on attendance being recordable**, which today is blocked (members' attendance can only be marked through a new database function; see the Classes bookings step). So the order is: bookings and attendance first, then milestones.
+
+## Member side: types of member, and "super easy" (owner direction, 8 October 2026; build later)
+
+The owner's picture of members: **classes-only**, **gym-only**, **PT clients**, and any **mix** of the three. The member side will eventually be an **app** (build later, after the owner-side screens). The owner's words: the current member side is "clunky and kinda difficult"; it must be **SUPER easy**.
+
+**What a member must be able to do (the whole list):**
+1. **Book and cancel classes.**
+2. **See their workouts and update them.**
+3. **See their PT sessions** (upcoming and past).
+4. **Record what they did** (log a workout or an activity, including in a PT session).
+
+**Design rule (the test for every screen):** each of those is reachable in as few taps as possible from the first screen. **Members are not put in boxes** (owner, 8 October: the types above describe the member base, they are not labels to design around). The app does not ask "what type are you"; it shows **what this member has**: their plan decides which of classes, gym and PT are switched on, and the first screen shows what is relevant to them right now (next class booked, today's planned workout, next PT session), so a member with only classes simply has nothing to see about PT. The plan fields (`includes_open_gym`, `includes_classes`, `includes_pt`) are the only input.
+
+**Requested change:** when logging an activity, add **Left / Right / Both** (for single-side exercises).
+
+**What the builder found in the code (so the next step is not guesswork):**
+- Old logging today: `workout-logger.js` plus the member pages (`member.html` and several `member-*.js`): a template/block/activity builder with sets (`workout_sets`: reps, weight, duration, distance, calories, custom value, notes). The owner finds creating a workout, then logging an activity, too many steps.
+- **There is no side (left/right/both) column** in `workout_sets` or the activity template. Adding it needs a small database change (needs the owner's approval of the exact SQL before anything is applied).
+- PT: `pt_appointments` has staff, member, times, status and notes only. "Record what they did" in a PT session needs a link from an appointment to a workout log; nothing links them today. PT also still has none of the clash checks that classes have (the owner has not yet said whether PT should follow the same rules).
+- A member's type can be read from `membership_plans` (`includes_open_gym`, `includes_classes`, `includes_pt`, `access_type`).
+
+**Decisions from the owner (8 October 2026):**
+- **A web app first** (opens from a link, can be saved to the phone's home screen like an app). A native App Store app is too much for now; revisit only if it is simple and low cost (the builder's note: the same web app can later be wrapped for the stores, with a yearly Apple developer fee and a smaller one-off Google fee plus review time, so the web app is not wasted work).
+- **No single "most used thing":** it depends on the member, so the first screen adapts (see the design rule).
+- **PT sessions: both the coach and the member can record what was done.** In practice **the PT plans the session first and pushes it to the member**. A PT can also **push a planned workout timetable or set of activities** to a member (the old data already has `workout_assignments` and `workout_templates`, which this builds on).
+
+**What that adds to the build (builder's view):**
+- A **coach side** to plan a PT session (activities for that appointment), assign it to a member, and push a **programme** (a timetable of planned workouts over days or weeks).
+- The member sees **today's planned workout first** and logs against it (pre-filled with the plan, one-tap "repeat last time").
+- A link from a PT appointment to the planned and logged workout (new, needs a database change with the owner's approval of the exact SQL).
+- The member is told when something is pushed to them (a notification; the web app can do this once saved to the home screen, details to check when built).
+
+**Still to ask the owner when this step starts (not now):**
+- Can a member change a pushed workout (swap an exercise, skip one), or only log against it?
+- Does a PT see what the member logged straight away, and can they comment?
+
+**Order:** owner-side screens first (Classes finished with bookings and attendance, Reports 5b to 5d, Settings and staff), then **milestones and awards** (above), then the member app, designed with the owner from the list above.
