@@ -10,14 +10,17 @@
     "test": "vitest run",
     "build": "tsc --noEmit && vite build",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "browser": "node browser/signed-out.mjs && node browser/today.mjs && node browser/members.mjs && node browser/plans.mjs && node browser/classes.mjs && node browser/reports.mjs && node browser/audit.mjs"
+    "browser": "node browser/signed-out.mjs && node browser/today.mjs && node browser/members.mjs && node browser/plans.mjs && node browser/classes.mjs && node browser/reports.mjs && node browser/reports-drill.mjs && node browser/audit.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",
     "@tanstack/react-query": "^5.104.1",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-router-dom": "^7.18.4"
+    "react-router-dom": "^7.18.4",
+    "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -27,6 +30,7 @@
     "@vitejs/plugin-react": "^6.1.2",
     "eslint": "^10.12.0",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "fflate": "^0.8.3",
     "globals": "^17.13.0",
     "jsdom": "^29.1.1",
     "playwright": "^1.63.0",

@@ -55,7 +55,7 @@ describe('buildOverview', () => {
   const metrics = sessionMetrics(sessions, bookings);
   const o = buildOverview({
     metrics, plans, now, since: '2026-09-07T12:00:00.000Z',
-    activePlanIds: ['p1', 'p1', 'p2', 'p3', ''],
+    activeMemberships: ['p1', 'p1', 'p2', 'p3', ''].map((planId, i) => ({ userId: 'u' + i, planId })),
     members: [
       { userId: '1', joinedAt: '2026-10-01T00:00:00', attritionOn: null },
       { userId: '2', joinedAt: '2026-01-01T00:00:00', attritionOn: null },
@@ -72,7 +72,7 @@ describe('buildOverview', () => {
   });
   it('new members only inside the range', () => expect(o.newMembers).toBe(1));
   it('all time counts every member', () => {
-    expect(buildOverview({ metrics, plans, now, since: null, activePlanIds: [], members: [{ userId: '1', joinedAt: '2020-01-01T00:00:00', attritionOn: null }] }).newMembers).toBe(1);
+    expect(buildOverview({ metrics, plans, now, since: null, activeMemberships: [], members: [{ userId: '1', joinedAt: '2020-01-01T00:00:00', attritionOn: null }] }).newMembers).toBe(1);
   });
   it('busiest days and times, in week order', () => {
     expect(o.byDay.map((d) => d.label)).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
@@ -88,7 +88,84 @@ describe('buildOverview', () => {
     expect(o.planMix).toHaveLength(4);
   });
   it('an empty gym gives zeros, not errors', () => {
-    const e = buildOverview({ metrics: [], plans: [], now, since: null, activePlanIds: [], members: [] });
+    const e = buildOverview({ metrics: [], plans: [], now, since: null, activeMemberships: [], members: [] });
     expect([e.activeMemberships, e.mrr, e.avgFill, e.attendanceRate, e.newMembers, e.sessions]).toEqual([0, 0, 0, 0, 0, 0]);
+  });
+});
+
+import { attendanceTable, classesTable, incomeTable, membershipsTable, newMembersTable, overviewTable, ukDate, ukDateTime } from '../src/reports/calc';
+import { fileBase, safeCell, toCsv } from '../src/reports/download';
+
+describe('downloads: CSV text', () => {
+  it('starts with a byte-order mark and uses Windows line ends', () => {
+    const csv = toCsv({ headers: ['A', 'B'], rows: [['x', 1]] });
+    expect(csv).toBe('﻿A,B\r\nx,1\r\n');
+  });
+  it('quotes commas, quotes and new lines, and keeps £ and accents', () => {
+    const csv = toCsv({ headers: ['Name'], rows: [['Smith, Ann'], ['She said "hi"'], ['two\nlines'], ['£45 café']] });
+    expect(csv).toBe('﻿Name\r\n"Smith, Ann"\r\n"She said ""hi"""\r\n"two\nlines"\r\n£45 café\r\n');
+  });
+  it('neutralises text a spreadsheet would run as a formula, but not numbers', () => {
+    expect(['=SUM(A1)', '+1', '-1', '@x', '\tx'].map(safeCell)).toEqual(["'=SUM(A1)", "'+1", "'-1", "'@x", "'\tx"]);
+    expect(safeCell(-5)).toBe(-5);
+    expect(safeCell('Anna-Marie')).toBe('Anna-Marie');
+    expect(toCsv({ headers: ['M'], rows: [['=HYPERLINK("http://x")']] })).toContain("\"'=HYPERLINK(\"\"http://x\"\")\"");
+  });
+  it('builds a tidy file name', () => {
+    expect(fileBase('Puffin Performance', 'Classes on Mons', new Date(2026, 9, 7))).toBe('puffin-performance-classes-on-mons-2026-10-07');
+    expect(fileBase('Café & Gym!', 'New members', new Date(2026, 0, 2))).toBe('cafe-gym-new-members-2026-01-02');
+  });
+});
+
+describe('the rows behind each figure', () => {
+  const now = new Date('2026-10-07T12:00:00Z');
+  const ctx = { gymName: 'Puffin', rangeLabel: 'Last 30 days', now };
+  const plans = [plan('p1', 'Monthly', 4500, 'monthly'), plan('p2', 'Annual', 48000, 'annual')];
+  const mems = [{ userId: 'u1', planId: 'p1' }, { userId: 'u2', planId: 'p2' }, { userId: 'u3', planId: 'p1' }, { userId: 'u4', planId: '' }];
+  const names = new Map([['u1', 'Zoe Zed'], ['u2', 'Amy Ash'], ['u3', 'Bob Bay']]);
+  const metrics = sessionMetrics(
+    [session('a', '2026-10-05T17:30:00Z', 10, 'Evening Hybrid'), session('b', '2026-10-06T17:30:00Z', 10, 'Evening Hybrid'), session('c', '2026-10-09T07:30:00Z', 10, 'Strength')],
+    [...bk('a', 'attended', 6), ...bk('a', 'no_show', 2), ...bk('b', 'attended', 4), ...bk('c', 'booked', 3)],
+  );
+  it('formats UK dates and times', () => {
+    expect(ukDateTime('2026-10-05T17:30:00Z')).toBe('05/10/2026 18:30');
+    expect(ukDate('2026-10-05T23:30:00Z')).toBe('06/10/2026');
+  });
+  it('lists classes with fill, oldest first, and can narrow to one day', () => {
+    const t = classesTable(ctx, 'Classes', metrics);
+    expect(t.headers).toEqual(['Class', 'Date and time (UK)', 'Places', 'Booked', 'Attended', 'No-show', 'Fill %']);
+    expect(t.rows.map((r) => r[0])).toEqual(['Evening Hybrid', 'Evening Hybrid', 'Strength']);
+    expect(t.rows[0]).toEqual(['Evening Hybrid', '05/10/2026 18:30', 10, 0, 6, 2, 80]);
+    expect(classesTable(ctx, 'Mondays', metrics, (m) => m.day === 'Mon').rows).toHaveLength(1);
+    expect(t.subtitle).toContain('Puffin · Last 30 days');
+  });
+  it('attendance by class counts only classes already started', () => {
+    const t = attendanceTable(ctx, 'Attendance', metrics);
+    expect(t.rows).toEqual([['Evening Hybrid', 2, 10, 2, 83]]);
+  });
+  it('income by plan adds up to the Overview figure', () => {
+    const t = incomeTable(ctx, plans, mems);
+    expect(t.rows[0]).toEqual(['Monthly', 'monthly', '£45', 2, '£90']);
+    expect(t.rows[1]).toEqual(['Annual', 'annual', '£480', 1, '£40']);
+    expect(t.rows[2]).toEqual(['(no plan)', '', '', 1, '£0']);
+  });
+  it('lists active members by name, and can narrow to one plan', () => {
+    expect(membershipsTable(ctx, 'All', plans, mems, names).rows.map((r) => r[0])).toEqual(['Amy Ash', 'Bob Bay', 'Member', 'Zoe Zed']);
+    expect(membershipsTable(ctx, 'Monthly', plans, mems, names, 'p1').rows).toEqual([['Bob Bay', 'Monthly'], ['Zoe Zed', 'Monthly']]);
+  });
+  it('new members: only inside the range, newest first', () => {
+    const members = [
+      { userId: 'u1', joinedAt: '2026-10-01T00:00:00', attritionOn: null },
+      { userId: 'u2', joinedAt: '2026-10-03T00:00:00', attritionOn: null },
+      { userId: 'u3', joinedAt: '2025-01-01T00:00:00', attritionOn: null },
+    ];
+    expect(newMembersTable(ctx, members, names, '2026-09-07T12:00:00.000Z').rows).toEqual([['Amy Ash', '03/10/2026'], ['Zoe Zed', '01/10/2026']]);
+    expect(newMembersTable(ctx, members, names, null).rows).toHaveLength(3);
+  });
+  it('the overview download carries every headline figure', () => {
+    const o = buildOverview({ metrics, plans, now, since: null, activeMemberships: mems, members: [] });
+    const t = overviewTable(ctx, o);
+    expect(t.rows.slice(0, 8).map((r) => r[0])).toEqual(['Active memberships', 'Est. MRR', 'Average class fill', 'Attendance rate', 'New members', 'Class attendances', 'No-shows', 'Sessions analysed']);
+    expect(t.rows).toContainEqual(['Membership mix: Monthly', 2]);
   });
 });

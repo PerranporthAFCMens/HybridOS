@@ -67,4 +67,4 @@ The owner wants Reports to show everything needed to run the business, and will 
 
 **Not possible with today's data (needs new data capture first):** profit (no costs, rent or wages), enquiries and lead conversion, door check-ins that are not class bookings, class waiting lists.
 
-**Order:** 5a Overview (built); 5b comparison with the previous period, churn and retention, income collected and trend, plus the click-through and PDF/Excel/CSV download framework; 5c members at risk, ending soon and payment problems, class and coach views; 5d the full library, Xero export and the multi-gym roll-up.
+**Order:** 5a Overview (merged #131); 5b-1 click-through and PDF/Excel/CSV downloads on the Overview (branch `reports-drilldown`); 5b comparison with the previous period, churn and retention, income collected and trend, plus the click-through and PDF/Excel/CSV download framework; 5c members at risk, ending soon and payment problems, class and coach views; 5d the full library, Xero export and the multi-gym roll-up.
