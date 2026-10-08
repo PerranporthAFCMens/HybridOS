@@ -8,6 +8,7 @@ import { DataTable } from './DataTable';
 import { DownloadButtons } from './DownloadButtons';
 import type { ReportTable } from './download';
 import { pounds, type LibraryContext } from './library';
+import { AttendanceChart, JoinsChart, MembersLineChart, PaymentStateDonut, PaymentsChart, PlanDonut } from './ReportCharts';
 import { ReportLibrary } from './ReportLibrary';
 import {
   atRiskTable, classPerformanceTable, classesTab, heatStep, membersTab, membershipsTab, membershipsTable, metricsOf, paymentsTab, topMembersTable,
@@ -38,16 +39,18 @@ export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: E
   const d = q.data;
   const since = rangeStart(rangeDays, new Date());
   const ctx = (): LibraryContext => ({ gymName: gym.gymName, rangeLabel, now: new Date(), since });
-  if (tab === 'memberships') return <MembershipsPane d={d} since={since} ctx={ctx} gymName={gym.gymName} />;
-  if (tab === 'classes') return <ClassesPane d={d} ctx={ctx} gymName={gym.gymName} onOpenTable={onOpenTable} />;
-  if (tab === 'members') return <MembersPane d={d} ctx={ctx} gymName={gym.gymName} />;
-  if (tab === 'payments') return <PaymentsPane d={d} ctx={ctx} gymName={gym.gymName} />;
+  const cp = { d, rangeDays, rangeLabel, onOpenTable };
+  if (tab === 'memberships') return <MembershipsPane d={d} since={since} ctx={ctx} gymName={gym.gymName} cp={cp} />;
+  if (tab === 'classes') return <ClassesPane d={d} ctx={ctx} gymName={gym.gymName} onOpenTable={onOpenTable} cp={cp} />;
+  if (tab === 'members') return <MembersPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;
+  if (tab === 'payments') return <PaymentsPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;
   return <ReportLibrary data={d} rangeDays={rangeDays} rangeLabel={rangeLabel} />;
 }
 
-interface PaneProps { d: LibraryData; ctx: () => LibraryContext; gymName: string }
+type ChartProps = Parameters<typeof AttendanceChart>[0];
+interface PaneProps { d: LibraryData; ctx: () => LibraryContext; gymName: string; cp: ChartProps }
 
-function MembershipsPane({ d, since, ctx, gymName }: PaneProps & { since: string | null }) {
+function MembershipsPane({ d, since, ctx, gymName, cp }: PaneProps & { since: string | null }) {
   const t: MembershipsTab = membershipsTab(d, since);
   return (
     <>
@@ -57,6 +60,7 @@ function MembershipsPane({ d, since, ctx, gymName }: PaneProps & { since: string
         <StatCard label="Plans" value={String(t.activePlans)} />
         <StatCard label="New joins" value={String(t.newJoins)} />
       </div>
+      <div className="report-cols"><PlanDonut {...cp} /><MembersLineChart {...cp} /></div>
       <Card>
         <SectionTitle title="Membership plans" action={<DownloadButtons gymName={gymName} build={() => membershipsTable(ctx(), t)} />} />
         {t.plans.length === 0 ? <Empty>No membership plans yet.</Empty> : <DataTable table={membershipsTable(ctx(), t)} />}
@@ -65,7 +69,7 @@ function MembershipsPane({ d, since, ctx, gymName }: PaneProps & { since: string
   );
 }
 
-function ClassesPane({ d, ctx, gymName, onOpenTable }: PaneProps & { onOpenTable: (build: () => ReportTable) => void }) {
+function ClassesPane({ d, ctx, gymName, onOpenTable, cp }: PaneProps & { onOpenTable: (build: () => ReportTable) => void }) {
   const t: ClassesTab = classesTab(d, new Date());
   const metrics = metricsOf(d);
   const tctx = (): TableContext => ctx();
@@ -77,6 +81,7 @@ function ClassesPane({ d, ctx, gymName, onOpenTable }: PaneProps & { onOpenTable
         <StatCard label="No-shows" value={String(t.noShows)} />
         <StatCard label="Sessions" value={String(t.sessions)} />
       </div>
+      <AttendanceChart {...cp} />
       <div className="report-cols">
         <Card>
           <SectionTitle title="By class type" action={<DownloadButtons gymName={gymName} build={() => classPerformanceTable(ctx(), t)} />} />
@@ -111,7 +116,7 @@ function ClassesPane({ d, ctx, gymName, onOpenTable }: PaneProps & { onOpenTable
   );
 }
 
-function MembersPane({ d, ctx, gymName }: PaneProps) {
+function MembersPane({ d, ctx, gymName, cp }: PaneProps) {
   const t: MembersTab = membersTab(d, new Date());
   return (
     <>
@@ -121,6 +126,7 @@ function MembersPane({ d, ctx, gymName }: PaneProps) {
         <StatCard label="Total attendances" value={String(t.attendances)} />
         <StatCard label="No-show rate" value={`${t.noShowRate}%`} />
       </div>
+      <JoinsChart {...cp} />
       <Card>
         <SectionTitle title="Most active members" action={<DownloadButtons gymName={gymName} build={() => topMembersTable(ctx(), t)} />} />
         {t.top.length === 0 ? <Empty>Attendance data will appear here as members attend classes.</Empty> : <DataTable table={topMembersTable(ctx(), t)} />}
@@ -129,7 +135,7 @@ function MembersPane({ d, ctx, gymName }: PaneProps) {
   );
 }
 
-function PaymentsPane({ d, ctx, gymName }: PaneProps) {
+function PaymentsPane({ d, ctx, gymName, cp }: PaneProps) {
   const t: PaymentsTab = paymentsTab(d);
   return (
     <>
@@ -138,6 +144,7 @@ function PaymentsPane({ d, ctx, gymName }: PaneProps) {
         <StatCard label="Outstanding" value={pounds(t.outstanding)} />
         <StatCard label="Payment records" value={String(t.records)} />
       </div>
+      <div className="report-cols"><PaymentsChart {...cp} /><PaymentStateDonut {...cp} /></div>
       <Card>
         <SectionTitle title="Bad debtors / payment recovery" action={<DownloadButtons gymName={gymName} build={() => atRiskTable(ctx(), d, t)} />} />
         {t.atRisk.length === 0 ? <Empty>No failed or charged-back payments.</Empty> : <DataTable table={atRiskTable(ctx(), d, t)} />}
