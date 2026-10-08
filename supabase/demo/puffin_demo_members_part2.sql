@@ -23,9 +23,12 @@ select m.id as member_id, gen_random_uuid() as user_id, m.first_name, m.last_nam
 from public.members m
 where m.gym_id = 'aec16956-3793-4543-873b-4412646ca1eb' and m.email like '%@demo.hybridone.invalid';
 
-insert into auth.users (id, instance_id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+-- The text token columns are set to '' (not left empty), which is what Supabase's Auth service expects.
+insert into auth.users (id, instance_id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+                        confirmation_token, recovery_token, email_change_token_new, email_change)
 select user_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', email, now(),
-       '{"provider":"email","providers":["email"]}'::jsonb, jsonb_build_object('demo', true), joined_at, now()
+       '{"provider":"email","providers":["email"]}'::jsonb, jsonb_build_object('demo', true), joined_at, now(),
+       '', '', '', ''
 from demo_map;
 
 -- 2. Profiles (a sign-up trigger may already have made them, so fill in the names either way).
