@@ -73,7 +73,7 @@ export function Reports() {
             <DownloadButtons gymName={gym.gymName} build={() => overviewTable(ctx(), o)} />
           </div>
 
-          <div className="stat-grid">
+          <div className="stat-grid eight">
             <Stat label="Active memberships" value={String(o.activeMemberships)} onOpen={() => setDrill(() => () => membershipsTable(ctx(), 'Active memberships', view.plans, view.activeMemberships, view.names))} />
             <Stat label="Est. MRR" value={reportMoney(o.mrr)} onOpen={() => setDrill(() => () => incomeTable(ctx(), view.plans, view.activeMemberships))} />
             <Stat label="Average class fill" value={`${o.avgFill}%`} onOpen={() => setDrill(() => () => classesTable(ctx(), 'Classes and how full they were', view.metrics))} />
