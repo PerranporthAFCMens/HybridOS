@@ -1,4 +1,4 @@
-import type { EditableClass, SchedulingRules, TimetableSession } from '../data/classes';
+import type { BookingStatus, EditableClass, RosterEntry, SchedulingRules, TimetableSession } from '../data/classes';
 
 /** Monday 00:00 (local) of the week containing `d`. */
 export function startOfWeek(d: Date): Date {
@@ -322,4 +322,13 @@ export function formFromClass(c: EditableClass): ClassForm {
     repeat: false,
     weeks: '8',
   };
+}
+
+export const BOOKING_STATUS_TEXT: Record<BookingStatus, string> = { booked: 'Booked', attended: 'Attended', no_show: 'No-show' };
+
+/** "5 booked · 2 attended · 1 no-show" for a roster (counts of zero are left out, except the booked total). */
+export function rosterSummary(roster: Pick<RosterEntry, 'status'>[]): string {
+  const attended = roster.filter((r) => r.status === 'attended').length;
+  const noShow = roster.filter((r) => r.status === 'no_show').length;
+  return [`${roster.length} booked`, attended ? `${attended} attended` : '', noShow ? `${noShow} no-show` : ''].filter(Boolean).join(' · ');
 }

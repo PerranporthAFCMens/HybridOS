@@ -4,13 +4,14 @@ import type { TimetableSession } from '../data/classes';
 import { Button } from '../ui/Button';
 import { SectionTitle } from '../ui/Card';
 import { Modal } from '../ui/Modal';
-import { bookedText, dayTitle, sessionStatus, timeRange } from './calc';
-import { useSetCancelled } from './useClasses';
+import { BOOKING_STATUS_TEXT, bookedText, dayTitle, rosterSummary, sessionStatus, timeRange } from './calc';
+import { useRoster, useSetCancelled } from './useClasses';
 
 /** One class opened from the calendar: its facts, and cancel or bring it back. */
 export function ClassDetail({ session, onClose, onEdit }: { session: TimetableSession; onClose: () => void; onEdit: () => void }) {
   const { gym } = useReadyAuth();
   const setCancelled = useSetCancelled(gym.gymId);
+  const roster = useRoster(gym.gymId, session.session_id);
   const [confirming, setConfirming] = useState(false);
   const [message, setMessage] = useState('');
   const status = sessionStatus(session);
@@ -31,6 +32,23 @@ export function ClassDetail({ session, onClose, onEdit }: { session: TimetableSe
         )}
         {session.description && <div><dt>About</dt><dd>{session.description}</dd></div>}
       </dl>
+      <h4 className="detail-heading">Who has booked</h4>
+      {roster.isPending && <p className="muted small">Loading…</p>}
+      {roster.isError && <p className="muted small">Could not load the list of people. Close and open the class to try again.</p>}
+      {roster.data && roster.data.length === 0 && <p className="muted small">Nobody has booked yet.</p>}
+      {roster.data && roster.data.length > 0 && (
+        <>
+          <p className="muted small">{rosterSummary(roster.data)}</p>
+          <ol className="roster">
+            {roster.data.map((r) => (
+              <li key={r.bookingId}>
+                <span className="roster-name">{r.name}</span>
+                <span className={`tag ${r.status === 'attended' ? 'good' : r.status === 'no_show' ? 'warn' : ''}`.trim()}>{BOOKING_STATUS_TEXT[r.status]}</span>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
       {confirming && !session.is_cancelled && (
         <div className="schedule-check bad" role="alert">
           Cancel this class? It stays on the timetable marked Cancelled and you can bring it back. People who have booked are not told automatically.

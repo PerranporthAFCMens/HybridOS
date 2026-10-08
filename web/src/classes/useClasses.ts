@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { checkSchedule, createClassSession, loadClassForEdit, setClassCancelled, updateClassSession, listClassTypes, listSchedulingRules, listStaffOptions, listTimetable, type NewClass, type ScheduleProposal } from '../data/classes';
+import { checkSchedule, createClassSession, listRoster, loadClassForEdit, setClassCancelled, updateClassSession, listClassTypes, listSchedulingRules, listStaffOptions, listTimetable, type NewClass, type ScheduleProposal } from '../data/classes';
 import { listPlans } from '../data/plans';
 import { addDays, type Occurrence, type WeekResult } from './calc';
 
@@ -129,4 +129,9 @@ export function useUpdateClass(gymId: string, sessionId: string) {
       await Promise.all([qc.invalidateQueries({ queryKey: ['timetable', gymId] }), qc.invalidateQueries({ queryKey: ['today'] })]);
     },
   });
+}
+
+/** Who has booked one class. */
+export function useRoster(gymId: string, sessionId: string) {
+  return useQuery({ queryKey: ['roster', gymId, sessionId], queryFn: () => listRoster(gymId, sessionId) });
 }

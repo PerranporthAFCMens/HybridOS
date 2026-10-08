@@ -310,3 +310,41 @@ export async function updateClassSession(gymId: string, sessionId: string, c: Ne
   if (error) throw error;
   return toVerdict(data);
 }
+
+export type BookingStatus = 'booked' | 'attended' | 'no_show';
+
+/** One person on a class's roster. */
+export interface RosterEntry {
+  bookingId: string;
+  userId: string;
+  name: string;
+  status: BookingStatus;
+  bookedAt: string;
+}
+
+/** Who has booked a class, in booking order, with their names. Cancelled bookings are left out. */
+export async function listRoster(gymId: string, sessionId: string): Promise<RosterEntry[]> {
+  const { data, error } = await supabase
+    .from('class_bookings')
+    .select('id, user_id, status, booked_at')
+    .eq('gym_id', gymId)
+    .eq('session_id', sessionId)
+    .in('status', ['booked', 'attended', 'no_show'])
+    .order('booked_at');
+  if (error) throw error;
+  const rows = data ?? [];
+  if (rows.length === 0) return [];
+  const { data: profiles, error: pErr } = await supabase
+    .from('profiles')
+    .select('id, display_name, first_name, last_name')
+    .in('id', [...new Set(rows.map((r) => r.user_id))]);
+  if (pErr) throw pErr;
+  const names = new Map((profiles ?? []).map((p) => [p.id, p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Member']));
+  return rows.map((r) => ({
+    bookingId: r.id,
+    userId: r.user_id,
+    name: names.get(r.user_id) ?? 'Member',
+    status: r.status as BookingStatus,
+    bookedAt: r.booked_at,
+  }));
+}

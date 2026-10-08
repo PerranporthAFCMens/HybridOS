@@ -68,3 +68,12 @@ describe('edit form', () => {
     expect(f.start).toBe('09:00');
   });
 });
+
+describe('roster', () => {
+  it('words the counts, leaving out zero attended and no-show', async () => {
+    const { rosterSummary } = await import('../src/classes/calc');
+    expect(rosterSummary([])).toBe('0 booked');
+    expect(rosterSummary([{ status: 'booked' }, { status: 'booked' }])).toBe('2 booked');
+    expect(rosterSummary([{ status: 'booked' }, { status: 'attended' }, { status: 'attended' }, { status: 'no_show' }])).toBe('4 booked · 2 attended · 1 no-show');
+  });
+});
