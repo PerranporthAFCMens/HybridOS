@@ -1,0 +1,5 @@
+.perm-bulk { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.perm { padding: 4px 0; border-top: 1px solid var(--hybrid-line); }
+.perm:first-of-type { border-top: 0; }
+.perm-text { padding: 0 0 4px 32px; }
+.notice { margin-bottom: 14px; }

@@ -53,7 +53,7 @@ export async function mockSupabase(page, handle) {
     let body = null;
     try { body = req.postDataJSON(); } catch { /* no body */ }
     if (path.includes('/auth/v1/')) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(session.user) });
-    if (path.endsWith('/gym_members') && select.includes('gyms(')) return reply(route, [{ gym_id: GYM, role: 'owner', gyms: { name: 'Puffin Performance', logo_url: process.env.MOCK_LOGO === 'none' ? null : 'https://logos.example.test/puffin.png' } }]);
+    if (path.endsWith('/gym_members') && select.includes('gyms(')) return reply(route, [{ gym_id: GYM, role: process.env.MOCK_ROLE ?? 'owner', gyms: { name: 'Puffin Performance', logo_url: process.env.MOCK_LOGO === 'none' ? null : 'https://logos.example.test/puffin.png' } }]);
     if (await handle({ route, url, path, select, method, body })) return undefined;
     if (method === 'HEAD') return route.fulfill({ status: 200, headers: { 'content-range': '*/0' } });
     if (['PATCH', 'POST', 'DELETE'].includes(method)) return route.fulfill({ status: 204, body: '' });

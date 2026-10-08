@@ -11,6 +11,7 @@ import { ClassSetup } from '../classsetup/ClassSetup';
 import { Staff } from '../staff/Staff';
 import { Settings } from '../staff/Settings';
 import { Rooms } from '../rooms/Rooms';
+import { Access } from '../access/Access';
 import { homeFor } from '../auth/access';
 
 function Leave({ to }: { to: string }) {
@@ -51,6 +52,7 @@ export function App() {
             <Route path="/reports" element={<Reports />} />
             <Route path="/staff" element={<Staff />} />
             <Route path="/rooms" element={<Rooms />} />
+            <Route path="/access" element={<Access />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/class-setup" element={<ClassSetup />} />
             <Route path="*" element={<Navigate to="/today" replace />} />

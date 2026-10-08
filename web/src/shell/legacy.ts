@@ -18,7 +18,7 @@ export const legacyRoutes = {
 export type LegacyRoute = keyof typeof legacyRoutes;
 
 /** Screens already moved to the new app (hash routes). */
-export const appLinks = { members: '#/members', plans: '#/plans', classes: '#/classes', staff: '#/staff', resources: '#/rooms', settings: '#/settings', 'class-setup': '#/class-setup' } as const;
+export const appLinks = { members: '#/members', plans: '#/plans', classes: '#/classes', staff: '#/staff', access: '#/access', resources: '#/rooms', settings: '#/settings', 'class-setup': '#/class-setup' } as const;
 
 /** Every link target a screen may use: moved screens first, old pages for the rest. */
 export const links = { ...legacyRoutes, ...appLinks } as const;
