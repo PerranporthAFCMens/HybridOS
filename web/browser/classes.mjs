@@ -19,7 +19,22 @@ const thisWeek = [
   row({ session_id: 'c', name: 'Cancelled Spin', starts_at: at(2, 12), ends_at: at(2, 13), is_cancelled: true }),
   row({ session_id: 'd', name: 'Sunday Long Run', starts_at: at(6, 10), ends_at: at(6, 11), spaces_left: 0, availability_note: 'Full' }),
 ];
+// The form means gym time (UK), whatever the device's timezone. This is the same sum the app does.
+const londonFormat = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const londonInstant = (date, time) => {
+  const [y, m, d] = date.split('-').map(Number);
+  const [hh, mm] = time.split(':').map(Number);
+  const wall = Date.UTC(y, m - 1, d, hh, mm);
+  let guess = wall;
+  for (let i = 0; i < 3; i++) {
+    const p = Object.fromEntries(londonFormat.formatToParts(new Date(guess)).map((x) => [x.type, x.value]));
+    guess += wall - Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute);
+  }
+  return new Date(guess);
+};
+const plusDays = (date, n) => { const [y, m, d] = date.split('-').map(Number); const x = new Date(Date.UTC(y, m - 1, d + n)); return `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, '0')}-${String(x.getUTCDate()).padStart(2, '0')}`; };
 const nextSaturday = (() => { const x = new Date(monday); x.setDate(x.getDate() + 12); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; })();
+const weekStart = (k) => londonInstant(plusDays(nextSaturday, 7 * k), '09:30');
 const nextWeek = [row({ session_id: 'e', name: 'Next Week Mobility', starts_at: at(8, 17), ends_at: at(8, 18) })];
 
 function layoutProblems() {
@@ -61,11 +76,13 @@ for (const [name, viewport] of Object.entries(sizes)) {
     }
     if (path.endsWith('/rpc/validate_class_schedule')) {
       checks.push(body);
+      if (new Date(body.p_starts_at).getTime() === weekStart(2).getTime()) return reply(route, { ok: false, errors: ['Studio A is outside its configured available hours.'], warnings: [] });
       const none = !body.p_staff_ids?.length;
       return reply(route, none ? { ok: false, errors: ['No selected staff member is currently qualified for Spin instructor.'], warnings: [] } : { ok: true, errors: [], warnings: [] });
     }
     if (path.endsWith('/rpc/create_validated_class_session')) {
       saved.push(body);
+      if (body.p_name === 'Partial series' && new Date(body.p_starts_at).getTime() === weekStart(1).getTime()) return reply(route, { ok: false, errors: ['A selected staff member is already assigned to another class at this time.'], warnings: [] });
       if (body.p_name === 'Clash class') return reply(route, { ok: false, errors: ['Studio A is already booked at this time.', 'A selected staff member is already assigned to another class at this time.'], warnings: [] });
       return reply(route, { ok: true, session_id: 'new1' });
     }
@@ -150,7 +167,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.getByRole('button', { name: 'Save class' }).click();
   c.ok('form closes after saving', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
   const made = saved.find((b) => b.p_name === 'Saturday Spin');
-  const startsExpected = new Date(`${nextSaturday}T09:30:00`);
+  const startsExpected = londonInstant(nextSaturday, '09:30');
   c.ok('one save call carries the class, type, coach and reserved plan', made && made.p_gym_id === GYM && made.p_class_type_id === TYPE && made.p_description === 'Indoor cycling' && new Date(made.p_starts_at).getTime() === startsExpected.getTime() && new Date(made.p_ends_at).getTime() === startsExpected.getTime() + 45 * 60000 && made.p_capacity === 12 && made.p_reserved_capacity === 4 && made.p_reserved_release_minutes_before === 120 && JSON.stringify(made.p_staff_ids) === JSON.stringify([COACH]) && JSON.stringify(made.p_plan_ids) === JSON.stringify(['pl1']));
   c.ok('no direct table writes any more', !writes.some((w) => /class_sessions|class_session_staff|class_session_reserved_plans/.test(w)));
   await c.has('timetable jumped to the new class week', page.getByRole('heading', { name: 'Next Week Mobility' }));
@@ -165,6 +182,55 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => undefined);
   const custom = saved.find((b) => b.p_name === 'Open workshop');
   c.ok('custom class saved with no class type', custom && custom.p_class_type_id === null && JSON.stringify(custom.p_staff_ids) === '[]');
+
+  // Repeat weekly: every week is checked on its own; a bad week is shown and left out; the rest are saved one by one
+  await page.getByRole('button', { name: 'Add class' }).click();
+  await dialog.getByLabel('Class type').selectOption({ label: 'Spin' });
+  await dialog.getByLabel('Class name').fill('Weekly Spin');
+  await dialog.getByLabel('Date', { exact: true }).fill(nextSaturday);
+  await dialog.getByLabel('Start time').fill('09:30');
+  await dialog.getByLabel('Coach Carla · coach').click();
+  await dialog.getByLabel('Repeat weekly').click();
+  await dialog.getByLabel('Number of weeks').fill('1');
+  await c.has('weeks out of range is explained straight away', dialog.getByText('Choose between 2 and 52 weeks.'));
+  c.ok('and Save is not available', await dialog.getByRole('button', { name: /^Save/ }).isDisabled());
+  await dialog.getByLabel('Number of weeks').fill('4');
+  await c.has('four weeks listed', dialog.getByText('Weeks: 3 of 4 will be saved'));
+  const labels = await dialog.locator('.week-row .check span:last-child').allTextContents();
+  c.ok('each week is a different Saturday, same time', labels.length === 4 && labels.every((l) => l.includes('09:30')) && new Set(labels).size === 4);
+  await c.has('the bad week says why', dialog.getByText('Studio A is outside its configured available hours.'));
+  c.ok('and cannot be included', await dialog.locator('.week-row').nth(2).getByRole('checkbox').isDisabled());
+  c.ok('Save says how many', await dialog.getByRole('button', { name: 'Save 3 classes' }).isVisible());
+  await dialog.locator('.week-row').nth(1).getByRole('checkbox').click({ force: true });
+  await c.has('a week can be skipped', dialog.getByText('Weeks: 2 of 4 will be saved'));
+  await dialog.locator('.week-row').nth(1).getByRole('checkbox').click({ force: true });
+  c.ok('and put back', await dialog.getByRole('button', { name: 'Save 3 classes' }).isVisible());
+  c.ok('series layout', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/class-repeat-${name}.png` });
+  await dialog.getByRole('button', { name: 'Save 3 classes' }).click();
+  c.ok('form closes after saving the series', await dialog.waitFor({ state: 'detached', timeout: 8000 }).then(() => true, () => false));
+  const weekly = saved.filter((b) => b.p_name === 'Weekly Spin').map((b) => new Date(b.p_starts_at).getTime());
+  c.ok('three classes saved: weeks 1, 2 and 4, at the same clock time', JSON.stringify(weekly) === JSON.stringify([weekStart(0).getTime(), weekStart(1).getTime(), weekStart(3).getTime()]));
+  c.ok('each carries the class type and coach', saved.filter((b) => b.p_name === 'Weekly Spin').every((b) => b.p_class_type_id === TYPE && JSON.stringify(b.p_staff_ids) === JSON.stringify([COACH])));
+
+  // A week that fails at save time is reported; Save again retries only that week
+  await page.getByRole('button', { name: 'Add class' }).click();
+  await dialog.getByLabel('Class type').selectOption({ label: 'Spin' });
+  await dialog.getByLabel('Class name').fill('Partial series');
+  await dialog.getByLabel('Date', { exact: true }).fill(nextSaturday);
+  await dialog.getByLabel('Start time').fill('09:30');
+  await dialog.getByLabel('Coach Carla · coach').click();
+  await dialog.getByLabel('Repeat weekly').click();
+  await dialog.getByLabel('Number of weeks').fill('2');
+  await c.has('two weeks', dialog.getByText('Weeks: 2 of 2 will be saved'));
+  await dialog.getByRole('button', { name: 'Save 2 classes' }).click();
+  await c.has('partial summary', dialog.getByText('Saved 1 of 2 weeks.'));
+  await c.has('the failed week is named with its reason', dialog.getByText(/A selected staff member is already assigned to another class at this time\./).first());
+  c.ok('form stays open', await dialog.isVisible());
+  c.ok('Save now retries only the failed week', await dialog.getByRole('button', { name: 'Save 1 class' }).isVisible());
+  const partialCalls = saved.filter((b) => b.p_name === 'Partial series').length;
+  c.ok('first attempt made two calls', partialCalls === 2);
+  await dialog.getByRole('button', { name: 'Close' }).click();
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;
   await ctx.close();

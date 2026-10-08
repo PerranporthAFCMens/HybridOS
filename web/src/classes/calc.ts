@@ -92,6 +92,9 @@ export interface ClassForm {
   reserved: string;
   release: string;
   description: string;
+  /** Repeat every week, for `weeks` weeks including this one. */
+  repeat: boolean;
+  weeks: string;
 }
 
 export const RELEASE_OPTIONS = [
@@ -104,7 +107,7 @@ export const RELEASE_OPTIONS = [
 ] as const;
 
 export function emptyClassForm(today: Date): ClassForm {
-  return { classTypeId: '', name: '', date: dayKey(today), start: '18:00', duration: '60', capacity: '20', reserved: '0', release: '', description: '' };
+  return { classTypeId: '', name: '', date: dayKey(today), start: '18:00', duration: '60', capacity: '20', reserved: '0', release: '', description: '', repeat: false, weeks: '8' };
 }
 
 export interface ClassValues {
@@ -115,11 +118,22 @@ export interface ClassValues {
   capacity: number;
   reservedCapacity: number;
   releaseMinutesBefore: number | null;
+  /** How many weekly classes: 1 when not repeating. */
+  weeks: number;
 }
 
 export type ClassCheck = { ok: true; values: ClassValues } | { ok: false; message: string };
 
 export const CLASS_FORM_ERROR = 'Check the class name, date, duration and capacity values.';
+export const MIN_WEEKS = 2;
+export const MAX_WEEKS = 52;
+export const WEEKS_ERROR = `Choose between ${MIN_WEEKS} and ${MAX_WEEKS} weeks.`;
+
+/** Is the "number of weeks" box a whole number from 2 to 52? */
+export function validWeeks(text: string): boolean {
+  const n = Number(text);
+  return text.trim() !== '' && Number.isInteger(n) && n >= MIN_WEEKS && n <= MAX_WEEKS;
+}
 
 /** Same rules as the old timetable's Add class form. Duration 5 to 480 minutes, as its box said. */
 export function validateClass(form: ClassForm): ClassCheck {
@@ -133,14 +147,16 @@ export function validateClass(form: ClassForm): ClassCheck {
     !Number.isInteger(capacity) || capacity < 1 ||
     !Number.isInteger(reserved) || reserved < 0 || reserved > capacity
   ) return { ok: false, message: CLASS_FORM_ERROR };
-  const starts = new Date(`${form.date}T${form.start}:00`);
+  const weeks = form.repeat ? Number(form.weeks) : 1;
+  if (form.repeat && !validWeeks(form.weeks)) return { ok: false, message: WEEKS_ERROR };
+  const starts = londonInstant(form.date, form.start);
   if (Number.isNaN(starts.getTime())) return { ok: false, message: CLASS_FORM_ERROR };
   const ends = new Date(starts.getTime() + duration * 60000);
   return {
     ok: true,
     values: {
       name, description: form.description.trim() || null, startsAt: starts.toISOString(), endsAt: ends.toISOString(),
-      capacity, reservedCapacity: reserved, releaseMinutesBefore: form.release === '' ? null : Number(form.release),
+      capacity, reservedCapacity: reserved, releaseMinutesBefore: form.release === '' ? null : Number(form.release), weeks,
     },
   };
 }
@@ -162,6 +178,25 @@ const WEEKDAY_NUMBER: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3,
 export function londonParts(d: Date): { weekday: number; date: string; time: string } {
   const p = Object.fromEntries(LONDON.formatToParts(d).map((x) => [x.type, x.value]));
   return { weekday: WEEKDAY_NUMBER[p.weekday ?? ''] ?? 0, date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}:${p.second}` };
+}
+
+/**
+ * The instant when the gym's clock (UK time) shows this date and time. The Add class form means gym
+ * time whatever timezone the device is in, so a 09:30 class is 09:30 at the gym in summer and winter.
+ */
+export function londonInstant(date: string, time: string): Date {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return new Date(NaN);
+  const [y = 0, m = 1, d = 1] = date.split('-').map(Number);
+  const [hh = 0, mm = 0] = time.split(':').map(Number);
+  const wall = Date.UTC(y, m - 1, d, hh, mm);
+  let guess = wall;
+  for (let i = 0; i < 3; i++) {
+    const p = londonParts(new Date(guess));
+    const [py = 0, pm = 1, pd = 1] = p.date.split('-').map(Number);
+    const [ph = 0, pmi = 0] = p.time.split(':').map(Number);
+    guess += wall - Date.UTC(py, pm - 1, pd, ph, pmi);
+  }
+  return new Date(guess);
 }
 
 export type StaffStatus = 'ok' | 'not-qualified' | 'outside-hours';
@@ -192,4 +227,49 @@ export function requirementsText(classTypeId: string | null, rules: SchedulingRu
   const things = mine.flatMap((r) => rules.resources.filter((x) => x.id === r.resourceId).map((x) => (r.quantity > 1 ? `${r.quantity} × ${x.name}` : x.name)));
   const parts = [quals.length ? `Qualification: ${quals.join(', ')}` : '', things.length ? `Needs: ${things.join(', ')}` : ''].filter(Boolean);
   return parts.length ? parts.join(' · ') : 'This class type has no qualification, room or equipment requirements.';
+}
+
+// ---- Weekly repeats ----
+
+export interface Occurrence {
+  startsAt: string;
+  endsAt: string;
+}
+
+/**
+ * Every weekly occurrence of a class, the first included. Each week is the same day and the same
+ * clock time at the gym (so a class at 18:00 stays at 18:00 when the clocks change), not simply
+ * 7 x 24 hours later.
+ */
+export function weeklyOccurrences(startsAt: string, endsAt: string, weeks: number): Occurrence[] {
+  const first = new Date(startsAt);
+  const length = new Date(endsAt).getTime() - first.getTime();
+  const { date, time } = londonParts(first);
+  const clock = time.slice(0, 5);
+  const [y = 0, m = 1, d = 1] = date.split('-').map(Number);
+  return Array.from({ length: weeks }, (_, i) => {
+    const day = new Date(Date.UTC(y, m - 1, d + 7 * i));
+    const key = `${day.getUTCFullYear()}-${String(day.getUTCMonth() + 1).padStart(2, '0')}-${String(day.getUTCDate()).padStart(2, '0')}`;
+    const s = londonInstant(key, clock);
+    return { startsAt: s.toISOString(), endsAt: new Date(s.getTime() + length).toISOString() };
+  });
+}
+
+const OCCURRENCE_LABEL = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Europe/London' });
+
+/** "Sat 17 Oct 2026, 09:30" in gym time. */
+export function occurrenceLabel(o: Pick<Occurrence, 'startsAt'>): string {
+  return OCCURRENCE_LABEL.format(new Date(o.startsAt));
+}
+
+export interface WeekResult {
+  startsAt: string;
+  ok: boolean;
+  errors: string[];
+}
+
+/** After saving a series: "Saved 10 of 12 weeks." */
+export function seriesSummary(results: WeekResult[]): string {
+  const saved = results.filter((r) => r.ok).length;
+  return saved === results.length ? `Saved all ${saved} weeks.` : `Saved ${saved} of ${results.length} weeks.`;
 }
