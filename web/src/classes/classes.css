@@ -24,3 +24,9 @@
 .schedule-check.good { background: rgba(198, 241, 53, .12); border-color: rgba(198, 241, 53, .4); color: var(--hybrid-volt); }
 .schedule-check.bad { background: rgba(255, 122, 69, .12); border-color: rgba(255, 122, 69, .45); color: var(--hybrid-ember); }
 .schedule-check ul, .assign-msg ul { margin: 7px 0 0; padding-left: 18px; }
+.weeks-panel { border: 1px solid var(--hybrid-line); border-radius: 10px; padding: 8px 12px 10px; max-height: 320px; overflow-y: auto; }
+.week-row { border-top: 1px solid var(--hybrid-line); padding: 2px 0; }
+.week-row:first-of-type { border-top: 0; }
+.week-row.bad .check { opacity: .8; }
+.week-note { display: block; font-size: 12px; color: var(--hybrid-ember); padding: 0 0 8px 32px; }
+.week-note.muted { color: var(--hybrid-muted); }

@@ -70,10 +70,10 @@ describe('validateClass', () => {
     const r = validateClass({ ...good, release: '120' });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    const starts = new Date(2026, 9, 10, 9, 30);
+    const starts = new Date('2026-10-10T08:30:00Z'); // 09:30 at the gym (BST), whatever the device's timezone
     expect(r.values).toEqual({
       name: 'Hybrid Conditioning', description: 'Bring water', startsAt: starts.toISOString(), endsAt: new Date(starts.getTime() + 45 * 60000).toISOString(),
-      capacity: 10, reservedCapacity: 4, releaseMinutesBefore: 120,
+      capacity: 10, reservedCapacity: 4, releaseMinutesBefore: 120, weeks: 1,
     });
   });
   it('keeps reserved spaces until the start when no release time is chosen; blank description is null', () => {
@@ -156,5 +156,57 @@ describe('gym rules: who may teach, what a class needs', () => {
     expect(requirementsText('empty', rules)).toBe('This class type has no qualification, room or equipment requirements.');
     expect(requirementsText(null, rules)).toContain('no qualification, room or equipment checks');
     expect(STAFF_STATUS_TEXT['not-qualified']).toBe('Not qualified');
+  });
+});
+
+import { MAX_WEEKS, MIN_WEEKS, WEEKS_ERROR, londonInstant, occurrenceLabel, seriesSummary, weeklyOccurrences } from '../src/classes/calc';
+
+describe('weekly repeats', () => {
+  const good = { ...emptyClassForm(new Date(2026, 9, 7)), name: 'Spin', date: '2026-10-17', start: '09:30', duration: '45', capacity: '12' };
+  it('is a single class unless repeat is ticked', () => {
+    const r = validateClass(good);
+    expect(r.ok && r.values.weeks).toBe(1);
+  });
+  it('accepts 2 to 52 weeks and refuses anything else', () => {
+    const rep = (weeks: string) => validateClass({ ...good, repeat: true, weeks });
+    expect([MIN_WEEKS, MAX_WEEKS]).toEqual([2, 52]);
+    expect(rep('2').ok && rep('52').ok).toBe(true);
+    for (const bad of ['1', '0', '53', '', '2.5', '-3', 'abc']) expect(rep(bad)).toEqual({ ok: false, message: WEEKS_ERROR });
+  });
+  it('ignores a silly weeks box when not repeating', () => {
+    expect(validateClass({ ...good, repeat: false, weeks: 'abc' }).ok).toBe(true);
+  });
+  it('reads the form in gym time, summer and winter, whatever the device timezone', () => {
+    expect(londonInstant('2026-10-17', '09:30').toISOString()).toBe('2026-10-17T08:30:00.000Z'); // BST
+    expect(londonInstant('2026-11-07', '09:30').toISOString()).toBe('2026-11-07T09:30:00.000Z'); // GMT
+    expect(londonInstant('2026-03-29', '12:00').toISOString()).toBe('2026-03-29T11:00:00.000Z'); // day the clocks go forward, after the change
+    expect(londonInstant('2026-10-25', '12:00').toISOString()).toBe('2026-10-25T12:00:00.000Z'); // day the clocks go back, after the change
+    expect(Number.isNaN(londonInstant('', '09:30').getTime())).toBe(true);
+    expect(Number.isNaN(londonInstant('2026-10-17', '9:3').getTime())).toBe(true);
+  });
+  it('makes one occurrence per week, 7 calendar days apart, the first being the class itself', () => {
+    const start = londonInstant('2026-10-17', '09:30');
+    const o = weeklyOccurrences(start.toISOString(), new Date(start.getTime() + 45 * 60000).toISOString(), 4);
+    expect(o).toHaveLength(4);
+    expect(o[0]?.startsAt).toBe(start.toISOString());
+    expect(o.map((x) => londonParts(new Date(x.startsAt)).date)).toEqual(['2026-10-17', '2026-10-24', '2026-10-31', '2026-11-07']);
+    expect(o.map((x) => new Date(x.endsAt).getTime() - new Date(x.startsAt).getTime())).toEqual([2700000, 2700000, 2700000, 2700000]);
+  });
+  it('keeps the same gym clock time when the clocks change', () => {
+    // UK clocks go back on Sun 25 Oct 2026; a Sat 18:00 class on the 24th must still be 18:00 on 31 Oct and after
+    const start = londonInstant('2026-10-24', '18:00');
+    const o = weeklyOccurrences(start.toISOString(), new Date(start.getTime() + 3600000).toISOString(), 3);
+    expect(o.map((x) => londonParts(new Date(x.startsAt)).time)).toEqual(['18:00:00', '18:00:00', '18:00:00']);
+    expect(o.map((x) => x.startsAt)).toEqual(['2026-10-24T17:00:00.000Z', '2026-10-31T18:00:00.000Z', '2026-11-07T18:00:00.000Z']);
+    // and in spring: clocks go forward on Sun 29 Mar 2026
+    const spring = weeklyOccurrences(londonInstant('2026-03-28', '18:00').toISOString(), londonInstant('2026-03-28', '19:00').toISOString(), 2);
+    expect(spring.map((x) => londonParts(new Date(x.startsAt)).time)).toEqual(['18:00:00', '18:00:00']);
+    expect(spring.map((x) => x.startsAt)).toEqual(['2026-03-28T18:00:00.000Z', '2026-04-04T17:00:00.000Z']);
+  });
+  it('labels a week in gym time and sums up a series', () => {
+    expect(occurrenceLabel({ startsAt: '2026-10-17T08:30:00Z' })).toBe('Sat, 17 Oct 2026, 09:30');
+    const r = (ok: boolean) => ({ startsAt: 'x', ok, errors: [] });
+    expect(seriesSummary([r(true), r(true)])).toBe('Saved all 2 weeks.');
+    expect(seriesSummary([r(true), r(false), r(true)])).toBe('Saved 2 of 3 weeks.');
   });
 });
