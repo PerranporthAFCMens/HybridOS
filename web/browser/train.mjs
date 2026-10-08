@@ -54,6 +54,15 @@ for (const [name, viewport] of Object.entries(sizes)) {
       if (method === 'DELETE') return reply(route, []);
       return reply(route, [{ exercise_name: 'Dumbbell row', created_at: '2026-10-01T10:00:00Z', workout_sets: [{ set_number: 1, weight_kg: 24, reps: 10, duration_seconds: null, distance_m: null, calories: null }, { set_number: 2, weight_kg: 24, reps: 10, duration_seconds: null, distance_m: null, calories: null }] }]);
     }
+    if (path.endsWith('/personal_bests')) {
+      if (method === 'POST') { writes.push(`pb ${JSON.stringify(body)}`); return reply(route, []); }
+      if (method === 'DELETE') { writes.push('DELETE pb'); return reply(route, []); }
+      if (select.includes('exercise_key')) return reply(route, [{ exercise_key: 'dumbbell row', metric_type: 'weight', value_numeric: 24, unit: 'kg' }]);
+      return reply(route, [
+        { id: 'p1', exercise_name: 'Deadlift', metric_type: 'weight', comparison_direction: 'higher', value_numeric: 145, unit: 'kg', achieved_at: '2026-09-12T12:00:00Z', notes: null },
+        { id: 'p2', exercise_name: '5k', metric_type: 'time', comparison_direction: 'lower', value_numeric: 1458, unit: 'sec', achieved_at: '2026-09-05T12:00:00Z', notes: null },
+      ]);
+    }
     if (path.endsWith('/workout_sets') && method === 'POST') { writes.push(`sets ${JSON.stringify(body)}`); return reply(route, []); }
     if (path.endsWith('/workout_sessions')) {
       if (method === 'POST') { writes.push(`session ${JSON.stringify(body)}`); return reply(route, [{ id: 's9' }]); }
@@ -104,6 +113,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('two exercises saved, the swap noted', writes.filter((w) => w.startsWith('entry ')).length === 2 && joined.includes('"exercise_name":"Landmine press"') && joined.includes('Swapped from Overhead press'));
   c.ok('sets saved with kilograms and reps', joined.includes('"weight_kg":26') && joined.includes('"reps":8'));
   c.ok('the side is saved on that set', joined.includes('"side":"left"'));
+  c.ok('both new bests were saved: a heavier row and a first press', writes.filter((w) => w.startsWith('pb ')).length === 2 && joined.includes('"exercise_name":"Dumbbell row"') && joined.includes('"value_numeric":26') && joined.includes('"exercise_name":"Landmine press"') && joined.includes('"value_numeric":30'));
+  c.ok('the screen says so', (await page.getByText('New personal bests: Dumbbell row 26 kg, Landmine press 30 kg').count()) === 1);
   c.ok('the skipped one is not saved', !joined.includes('"exercise_name":"Stretch"'));
   c.ok('the coach workout is marked done with rpe and a note', joined.includes('"status":"completed"') && joined.includes('"member_rpe":7') && joined.includes('Skipped: Stretch'));
   await c.has('the finished workout is gone from today', page.getByLabel('Today').getByText('Nothing planned.'));
@@ -111,6 +122,30 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('layout (train)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/train-home-${name}.png` });
 
+  c.ok('personal bests are listed on Train', (await page.getByLabel('Personal bests', { exact: true }).textContent()).includes('Deadlift') && (await page.getByLabel('Personal bests', { exact: true }).textContent()).includes('145 kg'));
+  await page.getByRole('link', { name: 'See all' }).click();
+  await c.has('the personal bests page', page.getByRole('heading', { name: 'Personal bests' }));
+  c.ok('a time is shown as minutes and seconds', (await page.getByRole('article', { name: '5k' }).textContent()).includes('24:18') && (await page.getByRole('article', { name: '5k' }).textContent()).includes('lower is better'));
+  c.ok('layout (personal bests)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/train-pbs-${name}.png` });
+  writes.length = 0;
+  await page.getByRole('button', { name: 'Add a personal best' }).click();
+  await page.getByLabel('Value').fill('abc');
+  await page.getByLabel('Exercise or event').fill('Back squat');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await c.has('a bad value is explained', page.getByRole('alert').getByText('Enter a number above zero.'));
+  await page.getByLabel('Value').fill('120');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await c.has('saved by hand', page.getByText('Saved: Back squat 120 kg.'));
+  c.ok('it was written', writes.some((w) => w.startsWith('pb ') && w.includes('"exercise_name":"Back squat"')));
+  await page.getByRole('button', { name: 'Remove Deadlift weight' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Keep it' }).click();
+  c.ok('keeping it deletes nothing', !writes.includes('DELETE pb'));
+  await page.getByRole('button', { name: 'Remove Deadlift weight' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Remove', exact: true }).click();
+  await c.has('removed', page.getByRole('heading', { name: 'Personal bests' }));
+  c.ok('the delete was sent', writes.includes('DELETE pb'));
+  await page.getByRole('link', { name: '‹ Train' }).click();
   writes.length = 0;
   await page.getByRole('link', { name: 'Start my own workout' }).click();
   await page.getByRole('button', { name: 'Finish workout' }).click();

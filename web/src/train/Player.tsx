@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { finishWorkout, getMyAssignment, listLastTimes, markStarted, type LastTime } from '../data/train';
 import { Button } from '../ui/Button';
+import { wonMessage } from './pb';
 import { Checkbox, Input, Select } from '../ui/Field';
 import { FIELDS, SIDES, assignmentNote, blankSets, fromDbSet, prepareFinish, readSnapshot, setText, type PlayedActivity, type SetValues, type Tracking } from './calc';
 
@@ -86,8 +87,9 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
         assignment: isNew ? null : { id, rpe: rpe ? Number(rpe) : null, note: assignmentNote(notes, r.skipped, r.swapped) },
       });
       try { localStorage.removeItem(key); } catch { /* nothing to clear */ }
-      await Promise.all([qc.invalidateQueries({ queryKey: ['m-assignments'] }), qc.invalidateQueries({ queryKey: ['m-week'] }), qc.invalidateQueries({ queryKey: ['m-sessions'] }), qc.invalidateQueries({ queryKey: ['m-last'] })]);
-      navigate('/m/train', { state: { saved: result.marked ? 'Workout saved and marked as done.' : 'Workout saved.' } });
+      await Promise.all([qc.invalidateQueries({ queryKey: ['m-assignments'] }), qc.invalidateQueries({ queryKey: ['m-week'] }), qc.invalidateQueries({ queryKey: ['m-sessions'] }), qc.invalidateQueries({ queryKey: ['m-last'] }), qc.invalidateQueries({ queryKey: ['m-pbs'] })]);
+      const pb = wonMessage(result.won);
+      navigate('/m/train', { state: { saved: result.marked ? 'Workout saved and marked as done.' : 'Workout saved.', pb, pbError: result.pbError } });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save the workout.');
     } finally {

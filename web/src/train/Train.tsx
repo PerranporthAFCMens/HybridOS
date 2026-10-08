@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation, useOutletContext } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { listRecentSessions } from '../data/train';
+import { listMyPbs, listRecentSessions } from '../data/train';
+import { pbValueText } from './pb';
 import { dayLabel, dayOf } from '../member/calc';
 import type { MemberCtx } from '../member/useMember';
 import { comingUp, dueNow, planDay } from './calc';
@@ -10,7 +11,8 @@ import { comingUp, dueNow, planDay } from './calc';
 export function Train() {
   const { gym, userId } = useReadyAuth();
   const d = useOutletContext<MemberCtx>();
-  const state = useLocation().state as { saved?: string } | null;
+  const state = useLocation().state as { saved?: string; pb?: string; pbError?: string | null } | null;
+  const pbs = useQuery({ queryKey: ['m-pbs', gym.gymId, userId], queryFn: () => listMyPbs(userId, gym.gymId) });
   const recent = useQuery({ queryKey: ['m-sessions', gym.gymId, userId], queryFn: () => listRecentSessions(userId, gym.gymId) });
   const now = dueNow(d.plans, d.today, dayOf);
   const later = comingUp(d.plans, d.today, dayOf);
@@ -18,6 +20,8 @@ export function Train() {
     <div className="mem-screen">
       <h1 className="mem-title">Train</h1>
       {state?.saved && <div className="mem-card mem-ok" role="status">{state.saved}</div>}
+      {state?.pb && <div className="mem-card mem-pbwin" role="status">{state.pb}</div>}
+      {state?.pbError && <div className="mem-error" role="alert">Your workout is saved, but a personal best could not be saved: {state.pbError}</div>}
 
       <section className="mem-card" aria-label="Today">
         <h2>Today</h2>
@@ -48,6 +52,13 @@ export function Train() {
           ))}
         </section>
       )}
+
+      <section className="mem-card" aria-label="Personal bests">
+        <div className="mem-row"><h2>Personal bests</h2><Link to="/m/train/pbs">See all</Link></div>
+        {pbs.isPending && <div className="muted">Loading…</div>}
+        {pbs.data?.length === 0 && <div className="muted">Log a workout and your bests appear here.</div>}
+        {pbs.data?.slice(0, 3).map((p) => <div className="mem-line" key={p.id}><b>{p.name}</b><span>{pbValueText(p.metric, p.unit, p.value)}</span></div>)}
+      </section>
 
       <section className="mem-card" aria-label="Recent">
         <h2>Recent</h2>

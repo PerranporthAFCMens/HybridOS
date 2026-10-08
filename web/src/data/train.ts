@@ -1,6 +1,7 @@
 import { supabase } from './client';
 import type { Json } from './database.types';
 import type { DbSet, StoredSet, Tracking } from '../train/calc';
+import { candidatesFor, isBetter, pbKey, wonText, type PbCandidate, type StoredPb, type Won } from '../train/pb';
 
 export interface AssignmentRow { id: string; title: string; source: string; status: string; scheduledFor: string | null; dueAt: string | null; snapshot: Json; focusTags: string[] }
 export interface SessionRow { id: string; title: string; performedAt: string }
@@ -85,7 +86,7 @@ export interface FinishInput {
  * mark it done. If something fails part way, what was written is removed so nothing half-saved is left.
  * Returns whether the coach's workout was also marked done.
  */
-export async function finishWorkout(input: FinishInput): Promise<{ marked: boolean }> {
+export async function finishWorkout(input: FinishInput): Promise<{ marked: boolean; won: Won[]; pbError: string | null }> {
   let sessionId: string | null = null;
   const entryIds: string[] = [];
   const undo = async () => {
@@ -113,11 +114,66 @@ export async function finishWorkout(input: FinishInput): Promise<{ marked: boole
       throw new Error(e instanceof Error ? e.message : (e as { message?: string }).message ?? 'Could not save the workout.', { cause: e });
     }
   }
+  let won: Won[] = [];
+  let pbError: string | null = null;
+  try {
+    won = await savePbs(input.userId, input.gymId, pbCandidatesFor(input.entries), new Date().toISOString());
+  } catch (e) {
+    pbError = e instanceof Error ? e.message : (e as { message?: string }).message ?? 'unknown error';
+  }
   let marked = false;
   if (input.assignment) {
     const u = await supabase.from('workout_assignments').update({ status: 'completed', completed_at: new Date().toISOString(), member_rpe: input.assignment.rpe, member_notes: input.assignment.note, updated_at: new Date().toISOString() }).eq('id', input.assignment.id);
     if (u.error) throw new Error(`Your workout is saved, but it could not be marked as done: ${u.error.message}`);
     marked = true;
   }
-  return { marked };
+  return { marked, won, pbError };
 }
+
+/** All the member's personal bests in this gym, newest first. */
+export async function listMyPbs(userId: string, gymId: string): Promise<StoredPb[]> {
+  const { data, error } = await supabase
+    .from('personal_bests')
+    .select('id, exercise_name, metric_type, comparison_direction, value_numeric, unit, achieved_at, notes')
+    .eq('gym_id', gymId)
+    .eq('user_id', userId)
+    .order('achieved_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((r) => ({ id: r.id, name: r.exercise_name, metric: r.metric_type, dir: r.comparison_direction, value: Number(r.value_numeric), unit: r.unit ?? '', achievedAt: r.achieved_at, notes: r.notes }));
+}
+
+/**
+ * Record any of these that beat what the member already has (the first of its kind always counts).
+ * Two of the same kind in one list: only the better is considered.
+ */
+export async function savePbs(userId: string, gymId: string, candidates: PbCandidate[], achievedAt: string): Promise<Won[]> {
+  const best = new Map<string, PbCandidate>();
+  for (const c of candidates) {
+    const k = `${pbKey(c.name)}|${c.metric}`;
+    const o = best.get(k);
+    if (!o || (c.dir === 'lower' ? c.value < o.value : c.value > o.value)) best.set(k, c);
+  }
+  if (best.size === 0) return [];
+  const keys = [...new Set([...best.values()].map((c) => pbKey(c.name)))];
+  const have = await supabase.from('personal_bests').select('exercise_key, metric_type, value_numeric, unit').eq('gym_id', gymId).eq('user_id', userId).in('exercise_key', keys);
+  if (have.error) throw have.error;
+  const old = new Map((have.data ?? []).map((r) => [`${r.exercise_key}|${r.metric_type}`, { metric: r.metric_type, unit: r.unit, value: Number(r.value_numeric) }]));
+  const won: Won[] = [];
+  for (const [k, c] of best) {
+    const o = old.get(k);
+    if (!isBetter(c, o)) continue;
+    const row = { gym_id: gymId, user_id: userId, exercise_name: c.name, metric_type: c.metric, comparison_direction: c.dir, value_numeric: c.value, unit: c.unit, achieved_at: achievedAt };
+    const r = await supabase.from('personal_bests').upsert(row, { onConflict: 'gym_id,user_id,exercise_key,metric_type' });
+    if (r.error) throw r.error;
+    won.push({ text: wonText(c), first: !o });
+  }
+  return won;
+}
+
+export async function deletePb(id: string): Promise<void> {
+  const { error } = await supabase.from('personal_bests').delete().eq('id', id);
+  if (error) throw error;
+}
+
+/** The bests a finished workout could have set. */
+export const pbCandidatesFor = (entries: FinishInput['entries']): PbCandidate[] => entries.flatMap((e) => candidatesFor(e.name, e.tracking, e.sets));
