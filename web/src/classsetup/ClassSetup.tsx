@@ -71,7 +71,7 @@ export function ClassSetup() {
               {data.capabilities.length} qualification{data.capabilities.length === 1 ? '' : 's'} and {data.resources.length} room{data.resources.length === 1 ? '' : 's'} or
               {' '}piece{data.resources.length === 1 ? '' : 's'} of equipment are set up. They, and staff qualifications and working hours, are still managed on the old page while they move over.
             </p>
-            <LinkButton href={links.settings}>Open staff and resources</LinkButton>
+            <LinkButton href={links.resources}>Open staff and resources</LinkButton>
           </Card>
         </>
       )}
