@@ -18,7 +18,7 @@ const GROUPS: { title: string; items: { key: LinkKey; name: string; text: string
     title: 'Gym',
     items: [
       { key: 'class-setup', name: 'Class types', text: 'The classes you run and who can teach them.', moved: true },
-      { key: 'resources', name: 'Rooms and equipment', text: 'Rooms, kit and the services the gym depends on.' },
+      { key: 'resources', name: 'Rooms and equipment', text: 'Rooms, kit and the qualifications classes depend on.', moved: true },
       { key: 'layout', name: 'Gym layout', text: 'The floor plan.' },
     ],
   },

@@ -69,9 +69,9 @@ export function ClassSetup() {
             <SectionTitle title="Qualifications, rooms and equipment" />
             <p className="muted">
               {data.capabilities.length} qualification{data.capabilities.length === 1 ? '' : 's'} and {data.resources.length} room{data.resources.length === 1 ? '' : 's'} or
-              {' '}piece{data.resources.length === 1 ? '' : 's'} of equipment are set up. They, and staff qualifications and working hours, are still managed on the old page while they move over.
+              {' '}piece{data.resources.length === 1 ? '' : 's'} of equipment are set up. They, and staff qualifications and working hours, are managed under Rooms and equipment; staff qualifications and working hours under Staff.
             </p>
-            <LinkButton href={links.resources}>Open staff and resources</LinkButton>
+            <LinkButton href={links.resources}>Open rooms and equipment</LinkButton>
           </Card>
         </>
       )}
@@ -151,7 +151,7 @@ function TypeEditor({ type, data, saving, onClose, onSave }: {
 
       <fieldset className="check-group">
         <legend>Qualifications the coach needs</legend>
-        {data.capabilities.length === 0 && <div className="muted small">No qualifications yet. Add them in staff and resources.</div>}
+        {data.capabilities.length === 0 && <div className="muted small">No qualifications yet. Add them under Rooms and equipment.</div>}
         {data.capabilities.map((c) => (
           <Checkbox
             key={c.id}
@@ -164,7 +164,7 @@ function TypeEditor({ type, data, saving, onClose, onSave }: {
 
       <fieldset className="check-group">
         <legend>Room and equipment needed</legend>
-        {data.resources.length === 0 && <div className="muted small">No rooms or equipment yet. Add them in staff and resources.</div>}
+        {data.resources.length === 0 && <div className="muted small">No rooms or equipment yet. Add them under Rooms and equipment.</div>}
         {data.resources.map((r) => {
           const on = r.id in form.resources;
           return (

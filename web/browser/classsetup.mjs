@@ -136,7 +136,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.waitForTimeout(300);
   const on = writes.filter((w) => w.table === 'class_types').at(-1);
   c.ok('switch on', on && on.query.id === 'eq.type-yoga' && JSON.stringify(on.body) === JSON.stringify({ is_active: true }));
-  c.ok('old link to the staff and resources page kept', (await page.getByRole('link', { name: 'Open staff and resources' }).getAttribute('href')).includes('admin.html'));
+  c.ok('link to rooms and equipment', (await page.getByRole('link', { name: 'Open rooms and equipment' }).getAttribute('href')) === '#/rooms');
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;
   await ctx.close();
