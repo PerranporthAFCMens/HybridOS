@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { checkSchedule, createClassSession, listRoster, loadClassForEdit, setClassCancelled, updateClassSession, listClassTypes, listSchedulingRules, listStaffOptions, listTimetable, type NewClass, type ScheduleProposal } from '../data/classes';
+import { checkSchedule, createClassSession, listRoster, loadClassForEdit, manageBooking, type BookingAction, setClassCancelled, updateClassSession, listClassTypes, listSchedulingRules, listStaffOptions, listTimetable, type NewClass, type ScheduleProposal } from '../data/classes';
 import { listPlans } from '../data/plans';
 import { addDays, type Occurrence, type WeekResult } from './calc';
 
@@ -134,4 +134,19 @@ export function useUpdateClass(gymId: string, sessionId: string) {
 /** Who has booked one class. */
 export function useRoster(gymId: string, sessionId: string) {
   return useQuery({ queryKey: ['roster', gymId, sessionId], queryFn: () => listRoster(gymId, sessionId) });
+}
+
+/** Attendance, removing and adding people. The roster and the timetable's booked counts refresh. */
+export function useManageBooking(gymId: string, sessionId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { userId: string; action: BookingAction }) => manageBooking(gymId, sessionId, v.userId, v.action),
+    onSettled: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['roster', gymId, sessionId] }),
+        qc.invalidateQueries({ queryKey: ['timetable', gymId] }),
+        qc.invalidateQueries({ queryKey: ['today'] }),
+      ]);
+    },
+  });
 }
