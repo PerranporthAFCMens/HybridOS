@@ -6,7 +6,7 @@ import { downloadTable, fileBase, type Format } from '../reports/download';
 import { pounds } from '../reports/library';
 import { Button } from '../ui/Button';
 import { Card, SectionTitle } from '../ui/Card';
-import { DateInput, Field, Input, Select } from '../ui/Field';
+import { DateInput, Input, Select } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import { ChartView } from './ChartView';
 import { DATASETS } from './datasets';
@@ -152,59 +152,71 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
     </li>
   );
 
+  const measureOptions: { value: string; label: string }[] = [
+    { value: 'count:', label: 'Number of rows' },
+    ...numericFields.map((f) => ({ value: `sum:${f.id}`, label: `Total ${f.label}` })),
+  ];
+  const m0 = spec.measures[0];
+  const m0Value = m0 ? `${m0.fn}:${m0.field ?? ''}` : 'count:';
+  if (m0 && !measureOptions.some((o) => o.value === m0Value)) measureOptions.push({ value: m0Value, label: `${FN_LABEL[m0.fn]}${m0.field ? ` of ${byId.get(m0.field)?.label ?? ''}` : ''}` });
+  const pickMeasure = (v: string) => {
+    const [fn, field] = v.split(':');
+    const m = (fn === 'count' ? { fn: 'count', field: null } : { fn: fn as Fn, field: field ?? null }) as Measure;
+    change({ measures: spec.measures.length ? spec.measures.map((x, k) => (k === 0 ? m : x)) : [m] });
+  };
+
   return (
     <div className="bld2">
-      <Card>
-        <div className="bld-top">
-          <div>
-            <SectionTitle title="Report builder" />
-            <p className="muted small bld-lead">Start from a ready-made report, or drag fields from the list into the boxes. Tap a field to choose where it goes.</p>
-          </div>
-          <div className="bld-save">
-            {saved.length > 0 && (
-              <div className="bld-row">
-                <Select aria-label="My saved reports" value={pickSaved} onChange={(e) => loadOne(e.target.value)}>
-                  <option value="">My saved reports…</option>
-                  {saved.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
-                </Select>
-                {pickSaved && <Button onClick={removeOne}>Remove</Button>}
-              </div>
-            )}
-            <div className="bld-row">
-              <Input aria-label="Save this report" placeholder="Name this report to save it" value={name} onChange={(e) => { setName(e.target.value); setNote(null); }} />
-              <Button onClick={save}>Save</Button>
-            </div>
-          </div>
+      <div className="bld-bar">
+        <div className="bld-bar-left">
+          <Button aria-expanded={starters} onClick={() => setStarters((v) => !v)}>Start from a ready-made report {starters ? '▴' : '▾'}</Button>
+          {saved.length > 0 && (
+            <>
+              <Select aria-label="My saved reports" value={pickSaved} onChange={(e) => loadOne(e.target.value)}>
+                <option value="">My saved reports…</option>
+                {saved.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
+              </Select>
+              {pickSaved && <Button onClick={removeOne}>Remove</Button>}
+            </>
+          )}
         </div>
-        <div className="bld-starters-head">
-          <b>Ready-made reports</b>
-          <Button aria-expanded={starters} onClick={() => setStarters((v) => !v)}>{starters ? 'Hide' : 'Show'}</Button>
+        <div className="bld-bar-right">
+          <Input aria-label="Save this report" placeholder="Name this report to save it" value={name} onChange={(e) => { setName(e.target.value); setNote(null); }} />
+          <Button onClick={save}>Save</Button>
         </div>
-        {starters && (
-          <ul className="bld-starters">
-            {STARTERS.map((s) => (
-              <li key={s.id}><button type="button" className="bld-starter" onClick={() => startFrom(s.spec)}><b>{s.title}</b><span className="muted small">{s.text}</span></button></li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      </div>
+      {starters && (
+        <ul className="bld-starters">
+          {STARTERS.map((s) => (
+            <li key={s.id}><button type="button" className="bld-starter" onClick={() => startFrom(s.spec)}><b>{s.title}</b><span className="muted small">{s.text}</span></button></li>
+          ))}
+        </ul>
+      )}
 
       <div className="bld2-main">
-        <Card className="bld-fields">
-          <Field label="Look at" htmlFor="bld-dataset" hint={ds?.description}>
-            <Select id="bld-dataset" value={spec.dataset} onChange={(e) => setDataset(e.target.value)}>
-              {DATASETS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
-            </Select>
-          </Field>
-          <div className="paper-label">Fields</div>
-          <ul className="bld-field-list">
-            {spec.mode === 'summary' && fieldButton(COUNT, 'Number of rows', '#')}
-            {fields.map((f) => fieldButton(f.id, f.label, TYPE_TAG[f.type], f.sensitive))}
-          </ul>
-        </Card>
-
         <div className="bld-canvas">
           <Card>
+            <div className="bld-sentence">
+              <span>Look at</span>
+              <Select aria-label="Look at" className="bld-pill" value={spec.dataset} onChange={(e) => setDataset(e.target.value)}>
+                {DATASETS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+              </Select>
+              {spec.mode === 'summary' ? (
+                <>
+                  <span>and show</span>
+                  <Select aria-label="Show" className="bld-pill" value={m0Value} onChange={(e) => pickMeasure(e.target.value)}>
+                    {measureOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </Select>
+                  <span>by</span>
+                  <Select aria-label="Split by" className="bld-pill" value={spec.groupBy ?? ''} onChange={(e) => change({ groupBy: e.target.value || null })}>
+                    <option value="">Nothing (one total)</option>
+                    {fields.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+                  </Select>
+                </>
+              ) : <span>and list the rows</span>}
+              <span>for {rangeLabel.toLowerCase()}</span>
+            </div>
+            {ds?.description && <p className="muted small bld-desc">{ds.description}</p>}
             <div className="bld-toolbar">
               <div className="bld-seg" role="radiogroup" aria-label="How to show it">
                 {([['list', 'List the rows'], ['summary', 'Summarise']] as const).map(([id, label]) => (
@@ -218,6 +230,49 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
               )}
             </div>
 
+          </Card>
+
+          {note && <div className={`msg ${note.good ? '' : 'error'}`} role={note.good ? 'status' : 'alert'}>{note.text}</div>}
+
+          {spec.mode === 'summary' && (
+            <ul className="bld-kpis" aria-label="Headline figures">
+              {built.totals.map((t, i) => (
+                <li className="card bld-kpi" key={i}><span className="muted small">{built.measureLabels[i]}</span><b>{figure(t, built.measureTypes[i] ?? 'number')}</b></li>
+              ))}
+            </ul>
+          )}
+
+          {chart !== 'table' && (
+            <Card>
+              <SectionTitle title={built.table.title} action={<span className="muted">Click a bar to see its rows</span>} />
+              <ChartView chart={chart} built={built} onOpen={(g) => setDrill({ key: g.key, label: g.label })} />
+            </Card>
+          )}
+
+          <div className="paper-layout bld-paper-layout">
+            <div className="paper" aria-label="What you will download">
+              <div className="paper-gym">{gym.gymName}</div>
+              <h3 className="paper-title">{built.table.title}</h3>
+              <div className="paper-sub">{built.table.subtitle}</div>
+              <div className="paper-count">{built.table.rows.length} {built.table.rows.length === 1 ? 'row' : 'rows'}</div>
+              <DataTable table={{ ...built.table, rows: built.table.rows.slice(0, BUILDER_PAPER_ROWS) }} />
+              {built.table.rows.length > BUILDER_PAPER_ROWS && <p className="paper-more">Showing the first {BUILDER_PAPER_ROWS} of {built.table.rows.length} rows. The download has every row.</p>}
+            </div>
+            <div className="paper-controls">
+              <div className="paper-field" role="radiogroup" aria-label="File format">
+                <div className="paper-label">File format</div>
+                <div className="paper-formats">
+                  {FORMATS.map((f) => <button key={f.id} type="button" role="radio" aria-checked={format === f.id} className={`format-pick${format === f.id ? ' on' : ''}`} onClick={() => { setFormat(f.id); setNote(null); }}><b>{f.label}</b></button>)}
+                </div>
+              </div>
+              <div className="muted small paper-file">File name: <span>{`${fileBase(gym.gymName, built.table.title, new Date())}.${chosen?.ext ?? ''}`}</span></div>
+              <Button variant="primary" className="wide-btn" disabled={busy || built.table.rows.length === 0} onClick={() => void doDownload()}>{busy ? 'Preparing…' : `Download ${chosen?.label ?? ''}`}</Button>
+            </div>
+          </div>
+        </div>
+
+        <aside className="bld-panel" aria-label="Fields and settings">
+          <Card>
             <div className="bld-wells">
               {spec.mode === 'list' ? (
                 <div className="bld-well" onDragOver={over} onDrop={drop('columns')} aria-label="Columns box">
@@ -291,45 +346,15 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
               </div>
             </div>
           </Card>
-
-          {note && <div className={`msg ${note.good ? '' : 'error'}`} role={note.good ? 'status' : 'alert'}>{note.text}</div>}
-
-          {spec.mode === 'summary' && (
-            <ul className="bld-kpis" aria-label="Headline figures">
-              {built.totals.map((t, i) => (
-                <li className="card bld-kpi" key={i}><span className="muted small">{built.measureLabels[i]}</span><b>{figure(t, built.measureTypes[i] ?? 'number')}</b></li>
-              ))}
+          <Card className="bld-fields">
+            <div className="paper-label">Fields</div>
+            <p className="muted small bld-hint">Drag a field into a box below, or tap it.</p>
+            <ul className="bld-field-list">
+              {spec.mode === 'summary' && fieldButton(COUNT, 'Number of rows', '#')}
+              {fields.map((f) => fieldButton(f.id, f.label, TYPE_TAG[f.type], f.sensitive))}
             </ul>
-          )}
-
-          {chart !== 'table' && (
-            <Card>
-              <SectionTitle title={built.table.title} action={<span className="muted">Click a bar to see its rows</span>} />
-              <ChartView chart={chart} built={built} onOpen={(g) => setDrill({ key: g.key, label: g.label })} />
-            </Card>
-          )}
-
-          <div className="paper-layout bld-paper-layout">
-            <div className="paper" aria-label="What you will download">
-              <div className="paper-gym">{gym.gymName}</div>
-              <h3 className="paper-title">{built.table.title}</h3>
-              <div className="paper-sub">{built.table.subtitle}</div>
-              <div className="paper-count">{built.table.rows.length} {built.table.rows.length === 1 ? 'row' : 'rows'}</div>
-              <DataTable table={{ ...built.table, rows: built.table.rows.slice(0, BUILDER_PAPER_ROWS) }} />
-              {built.table.rows.length > BUILDER_PAPER_ROWS && <p className="paper-more">Showing the first {BUILDER_PAPER_ROWS} of {built.table.rows.length} rows. The download has every row.</p>}
-            </div>
-            <div className="paper-controls">
-              <div className="paper-field" role="radiogroup" aria-label="File format">
-                <div className="paper-label">File format</div>
-                <div className="paper-formats">
-                  {FORMATS.map((f) => <button key={f.id} type="button" role="radio" aria-checked={format === f.id} className={`format-pick${format === f.id ? ' on' : ''}`} onClick={() => { setFormat(f.id); setNote(null); }}><b>{f.label}</b></button>)}
-                </div>
-              </div>
-              <div className="muted small paper-file">File name: <span>{`${fileBase(gym.gymName, built.table.title, new Date())}.${chosen?.ext ?? ''}`}</span></div>
-              <Button variant="primary" className="wide-btn" disabled={busy || built.table.rows.length === 0} onClick={() => void doDownload()}>{busy ? 'Preparing…' : `Download ${chosen?.label ?? ''}`}</Button>
-            </div>
-          </div>
-        </div>
+          </Card>
+        </aside>
       </div>
 
       {drill && (

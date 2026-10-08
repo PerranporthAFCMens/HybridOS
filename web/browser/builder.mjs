@@ -131,13 +131,16 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('with date filters added for that month', (await page.getByLabel('Filters box').getByLabel(/^Filter \d: condition$/).count()) === 3);
 
   // Drag a field into a box (and the tap way)
-  await page.getByRole('button', { name: /Ready-made reports/ }).or(page.getByRole('button', { name: 'Show', exact: true })).first().click();
+  await page.getByRole('button', { name: /Start from a ready-made report/ }).click();
   await page.getByRole('button', { name: /^Members by plan/ }).click();
   c.ok('a ring is drawn', (await page.getByRole('figure', { name: 'Memberships: summary' }).count()) === 1);
   await dataset.selectOption({ label: 'Payments' });
   await page.getByRole('radio', { name: 'Summarise' }).click();
+  if (name === 'phone') await page.getByRole('button', { name: /^Amount\./ }).evaluate((el) => el.scrollIntoView({ block: 'start' }));
+  if (name !== 'phone') await page.getByLabel('Values box').evaluate((el) => el.scrollIntoView({ block: 'start' }));
   await page.getByRole('button', { name: /^Amount\./ }).dragTo(page.getByLabel('Values box'));
   c.ok('dragging Amount into Values adds a total', (await page.getByLabel('Figure 2: what to work out').count()) === 1 && (await page.getByLabel('Figure 2: what to work out').inputValue()) === 'sum');
+  if (name !== 'phone') await page.getByLabel('Group by box').evaluate((el) => el.scrollIntoView({ block: 'start' }));
   await page.getByRole('button', { name: /^State\./ }).dragTo(page.getByLabel('Group by box'));
   c.ok('dragging State into Group by groups by it', (await page.getByLabel('Group by box').textContent()).includes('State'));
   await page.getByRole('button', { name: /^Member\./ }).click();
