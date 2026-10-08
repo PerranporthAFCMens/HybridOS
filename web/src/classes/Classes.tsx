@@ -3,18 +3,29 @@ import { useReadyAuth } from '../auth/AuthProvider';
 import { links } from '../shell/legacy';
 import { Button, LinkButton } from '../ui/Button';
 import { Card, Empty } from '../ui/Card';
+import type { TimetableSession } from '../data/classes';
+import { CalendarGrid } from './CalendarGrid';
+import { ClassDetail } from './ClassDetail';
 import { ClassForm } from './ClassForm';
-import { addDays, bookedText, sessionStatus, startOfWeek, timeRange, weekColumns, weekdayName, weekLabel, weekSummary } from './calc';
+import { addDays, bookedText, dayTitle, sessionStatus, startOfWeek, timeRange, weekColumns, weekdayName, weekLabel, weekSummary } from './calc';
 import { useTimetable } from './useClasses';
 import '../members/members.css';
 import './classes.css';
 
 export function Classes() {
   const { gym } = useReadyAuth();
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
-  const [adding, setAdding] = useState(false);
+  const [anchor, setAnchor] = useState(() => new Date());
+  const [view, setView] = useState<'day' | 'week' | 'list'>('day');
+  const [adding, setAdding] = useState<{ date: string; start: string } | 'blank' | null>(null);
+  const [opened, setOpened] = useState<string | null>(null);
+  const weekStart = startOfWeek(anchor);
+  const step = view === 'day' ? 1 : 7;
   const q = useTimetable(gym.gymId, weekStart);
   const columns = weekColumns(weekStart, q.data ?? [], new Date());
+  const days = view === 'day' ? [anchor] : columns.map((c) => c.date);
+  const open = (s: TimetableSession) => setOpened(s.session_id);
+  // Looked up by id so the open class reflects a cancel or reinstate as soon as the timetable reloads.
+  const openedSession = opened ? (q.data ?? []).find((x) => x.session_id === opened) ?? null : null;
 
   return (
     <>
@@ -24,19 +35,24 @@ export function Classes() {
           <h1>Classes</h1>
         </div>
         <div className="week-actions">
-          <Button onClick={() => setWeekStart(startOfWeek(new Date()))}>Today</Button>
-          <Button variant="primary" onClick={() => setAdding(true)}>Add class</Button>
+          <Button onClick={() => setAnchor(new Date())}>Today</Button>
+          <Button variant="primary" onClick={() => setAdding('blank')}>Add class</Button>
           <LinkButton href={links['class-setup']}>Class setup</LinkButton>
         </div>
       </header>
 
       <div className="weekbar">
         <div className="week-actions">
-          <Button onClick={() => setWeekStart(addDays(weekStart, -7))}>Previous</Button>
-          <Button onClick={() => setWeekStart(addDays(weekStart, 7))}>Next</Button>
+          <Button onClick={() => setAnchor(addDays(anchor, -step))}>Previous</Button>
+          <Button onClick={() => setAnchor(addDays(anchor, step))}>Next</Button>
+        </div>
+        <div className="view-switch" role="group" aria-label="View">
+          <Button variant={view === 'day' ? 'primary' : 'secondary'} aria-pressed={view === 'day'} onClick={() => setView('day')}>Day</Button>
+          <Button className="view-week" variant={view === 'week' ? 'primary' : 'secondary'} aria-pressed={view === 'week'} onClick={() => setView('week')}>Week</Button>
+          <Button variant={view === 'list' ? 'primary' : 'secondary'} aria-pressed={view === 'list'} onClick={() => setView('list')}>List</Button>
         </div>
         <div className="week-title">
-          <strong>{weekLabel(weekStart)}</strong>
+          <strong>{view === 'day' ? dayTitle(anchor) : weekLabel(weekStart)}</strong>
           {q.data && <span className="muted">{weekSummary(q.data)}</span>}
         </div>
       </div>
@@ -44,7 +60,11 @@ export function Classes() {
       {q.isError && <Card><Empty>Could not load classes. Refresh to try again.</Empty></Card>}
       {q.isPending && <Card><Empty>Loading classes…</Empty></Card>}
 
-      {q.data && (
+      {q.data && view !== 'list' && (
+        <CalendarGrid days={days} sessions={q.data} now={new Date()} onSlot={(date, start) => setAdding({ date, start })} onOpen={open} />
+      )}
+
+      {q.data && view === 'list' && (
         <div className="calendar">
           {columns.map((day) => (
             <section key={day.key} className={`day${day.isToday ? ' today' : ''}`} aria-label={`${weekdayName(day.date)} ${day.date.getDate()}`}>
@@ -56,7 +76,7 @@ export function Classes() {
               {day.sessions.map((s) => {
                 const status = sessionStatus(s);
                 return (
-                  <article key={s.session_id} className={`session${s.is_cancelled ? ' cancelled' : ''}`}>
+                  <article key={s.session_id} className={`session${s.is_cancelled ? ' cancelled' : ''}`} onClick={() => open(s)}>
                     <div className="time">{timeRange(s)}</div>
                     <h3>{s.name}</h3>
                     {s.description && <div className="meta">{s.description}</div>}
@@ -76,13 +96,15 @@ export function Classes() {
 
       {adding && (
         <ClassForm
-          onClose={() => setAdding(false)}
+          initial={adding === 'blank' ? undefined : adding}
+          onClose={() => setAdding(null)}
           onSaved={(startsAt) => {
-            setWeekStart(startOfWeek(startsAt));
-            setAdding(false);
+            setAnchor(startsAt);
+            setAdding(null);
           }}
         />
       )}
+      {openedSession && <ClassDetail session={openedSession} onClose={() => setOpened(null)} />}
     </>
   );
 }

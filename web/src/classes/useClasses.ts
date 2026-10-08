@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { checkSchedule, createClassSession, listClassTypes, listSchedulingRules, listStaffOptions, listTimetable, type NewClass, type ScheduleProposal } from '../data/classes';
+import { checkSchedule, createClassSession, setClassCancelled, listClassTypes, listSchedulingRules, listStaffOptions, listTimetable, type NewClass, type ScheduleProposal } from '../data/classes';
 import { listPlans } from '../data/plans';
 import { addDays, type Occurrence, type WeekResult } from './calc';
 
@@ -98,6 +98,17 @@ export function useCreateSeries(gymId: string) {
       }
       return results;
     },
+    onSettled: async () => {
+      await Promise.all([qc.invalidateQueries({ queryKey: ['timetable', gymId] }), qc.invalidateQueries({ queryKey: ['today'] })]);
+    },
+  });
+}
+
+/** Cancel a class or bring it back; the timetable and Today refresh. */
+export function useSetCancelled(gymId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { sessionId: string; cancelled: boolean }) => setClassCancelled(gymId, v.sessionId, v.cancelled),
     onSettled: async () => {
       await Promise.all([qc.invalidateQueries({ queryKey: ['timetable', gymId] }), qc.invalidateQueries({ queryKey: ['today'] })]);
     },
