@@ -117,3 +117,34 @@ The owner's picture of members: **classes-only**, **gym-only**, **PT clients**, 
 - Does a PT see what the member logged straight away, and can they comment?
 
 **Order:** owner-side screens first (Classes finished with bookings and attendance, Reports 5b to 5d, Settings and staff), then **milestones and awards** (above), then the member app, designed with the owner from the list above.
+
+## Report builder and Enterprise manager (owner requests, 8 October 2026; build later, in this order after the Xero export)
+
+### 1. A report builder the owner uses themselves
+The owner wants owners and admins to **build their own reports** from the database by **clicking or dragging** what they want to see.
+
+**Behaviour:** pick what to look at (members, memberships, payments, classes, bookings and attendance, PT sessions, workouts); pick the columns to show or a measure (how many, how much, average); optionally split by something (plan, month, class, coach); optionally filter (status, date range, plan); choose how to see it (table, columns, line, ring, bars); save it; download as CSV, Excel or PDF; click any bar or slice for the rows behind it (as the current reports do). Tap to add fields first (phone friendly), drag to reorder on desktop.
+
+**Safety rule:** no free typing of database commands. The builder offers a fixed, builder-chosen list of fields per dataset, always inside one gym by the existing row rules; personal details (date of birth, gender) are owner and admin only.
+
+**First version (no database change):** five datasets from the data the Reports already load, tables plus the four chart types, filters and group-by, saved reports kept on the device. **Second step (needs a new table and the owner's approval of the exact SQL first):** save reports for the whole gym so every owner and admin sees the same ones.
+
+**Decisions still to confirm with the owner:** shared saved reports (builder suggests yes); coaches get a cut-down version for their own classes or owners and admins only for now (builder suggests owners and admins only).
+
+### 2. Enterprise manager: one view over the whole estate (admin only, no member screens)
+The owner wants an overarching **Enterprise manager** that pulls reports, staff reports and the like from **every gym in the estate** into one view.
+
+**What the builder found:** the database has **no organisation above a gym** today. Gyms are separate, and each person's role (owner, admin, staff, coach, member) belongs to one gym. The existing gym picker (Hybrid Hub and Puffin Performance) works by switching one gym at a time.
+
+**Two steps, so value comes early:**
+- **Step A, an "Estate" view for anyone who is owner or admin of two or more gyms (no database change).** One screen with a card or row per gym and a total: members, active memberships, estimated monthly income, income collected, failed payments, class fill and attendance, new members and leavers, staff headcount and what each coach taught (classes, PT sessions). Compare gyms side by side and over time with the same charts as Reporting; click a gym to open it in the normal admin; downloads as CSV, Excel and PDF. It uses the access the person already has in each gym, so nothing new can leak.
+- **Step B, a true Enterprise manager role (needs new database tables and the owner's approval of the exact SQL first).** A new "organisation" that groups gyms, and an enterprise role for someone who manages the estate **without being a member of each gym**: read access across the organisation's gyms (view first; any changes to a gym stay with that gym's own admins), plus group-level settings. This is also the foundation for franchise or partner gyms later.
+
+**Things to decide with the owner when this starts (not now):**
+- What exactly the Enterprise manager must show first (builder's first list above), and who sees it (only the owner, or named enterprise managers).
+- Can an enterprise manager **change** things in a gym, or only view and report?
+- **Staff reports:** the measures wanted (headcount, hours, classes and PT sessions taught, attendance of their classes, qualifications and expiries).
+- Gyms may differ in **currency and time zone** (the data already stores both per gym); for totals across gyms the builder would show each gym in its own currency and only add up gyms that share one.
+- Whether partner or franchise gyms with **different owners** are ever in the same estate (changes what data may be shared).
+
+**Order:** Xero export, then the report builder (first version), then the Estate view (Step A), then shared saved reports, then the Enterprise manager role (Step B). The owner can re-order.
