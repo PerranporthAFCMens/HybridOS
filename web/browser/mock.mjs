@@ -24,6 +24,9 @@ export async function signedInPage(browser, viewport) {
   const ctx = await browser.newContext({ viewport });
   await ctx.addInitScript(([key, value, gym]) => { localStorage.setItem(key, value); sessionStorage.setItem('hybrid-gym-id', gym); }, ['sb-mzgnhmeydhhpzgxlgudh-auth-token', JSON.stringify(session), GYM]);
   const page = await ctx.newPage();
+  // Everything here is mocked and local, so 10 seconds is plenty. The default of 30 turned one mistaken
+  // click on a button that never exists into a 30 second wait, twice per run (it cost a minute of every CI run).
+  page.setDefaultTimeout(10000);
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   return { ctx, page, errors };
