@@ -86,11 +86,11 @@ export function useCreateClass(gymId: string) {
 export function useCreateSeries(gymId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { base: Omit<NewClass, 'startsAt' | 'endsAt'>; weeks: Occurrence[] }): Promise<WeekResult[]> => {
+    mutationFn: async (v: { base: Omit<NewClass, 'startsAt' | 'endsAt'>; weeks: Occurrence[]; /** Weeks (by start) to schedule despite failing, with one shared reason. */ overrides?: { starts: string[]; reason: string } }): Promise<WeekResult[]> => {
       const results: WeekResult[] = [];
       for (const w of v.weeks) {
         try {
-          const verdict = await createClassSession(gymId, { ...v.base, startsAt: w.startsAt, endsAt: w.endsAt });
+          const verdict = await createClassSession(gymId, { ...v.base, startsAt: w.startsAt, endsAt: w.endsAt, overrideReason: v.overrides?.starts.includes(w.startsAt) ? v.overrides.reason : null });
           results.push({ startsAt: w.startsAt, ok: verdict.ok, errors: verdict.errors });
         } catch (e) {
           results.push({ startsAt: w.startsAt, ok: false, errors: [e instanceof Error ? e.message : 'Could not save this week.'] });

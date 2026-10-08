@@ -3079,6 +3079,7 @@ export type Database = {
           p_ends_at: string
           p_gym_id: string
           p_name: string
+          p_override_reason?: string
           p_plan_ids?: string[]
           p_reserved_capacity?: number
           p_reserved_release_minutes_before?: number

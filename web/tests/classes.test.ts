@@ -210,3 +210,20 @@ describe('weekly repeats', () => {
     expect(seriesSummary([r(true), r(false), r(true)])).toBe('Saved 2 of 3 weeks.');
   });
 });
+
+import { MAX_REASON, MIDNIGHT_MESSAGE, MIN_REASON, canOfferOverride, reasonOk } from '../src/classes/calc';
+
+describe('override', () => {
+  it('is offered for ordinary problems and never for a class across midnight', () => {
+    expect(canOfferOverride(['No selected staff member is currently qualified for Spin instructor.'])).toBe(true);
+    expect(canOfferOverride(['Studio A is already booked at this time.', 'A coach is outside their working hours.'])).toBe(true);
+    expect(canOfferOverride([MIDNIGHT_MESSAGE])).toBe(false);
+    expect(canOfferOverride(['Studio A is already booked at this time.', MIDNIGHT_MESSAGE])).toBe(false);
+    expect(canOfferOverride([])).toBe(false);
+  });
+  it('needs a reason of 3 to 500 characters once trimmed', () => {
+    expect([MIN_REASON, MAX_REASON]).toEqual([3, 500]);
+    for (const bad of ['', '  ', 'ab', '  ab  ', 'x'.repeat(501)]) expect(reasonOk(bad)).toBe(false);
+    for (const good of ['abc', '  abc  ', 'x'.repeat(500)]) expect(reasonOk(good)).toBe(true);
+  });
+});
