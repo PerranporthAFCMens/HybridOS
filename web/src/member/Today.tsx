@@ -7,6 +7,7 @@ import { getProfileNames } from '../data/profile';
 import type { ClassRow } from '../data/member';
 import { Button } from '../ui/Button';
 import { chooseHero, dayLabel, dayOf, goalMessage, suggestions, timeOf, whenWords, spaceText } from './calc';
+import { dueNow } from '../train/calc';
 import type { MemberCtx } from './useMember';
 import { useBooking } from './useBooking';
 
@@ -32,7 +33,8 @@ export function Today() {
   const booking = useBooking();
   const [goal, setGoal] = useState(readGoal);
   const profile = useQuery({ queryKey: ['profile', userId], queryFn: () => getProfileNames(userId) });
-  const hero = chooseHero(d.now, d.classes.data, d.pt, d.flags);
+  const due = dueNow(d.plans, d.today, dayOf)[0] ?? null;
+  const hero = chooseHero(d.now, d.classes.data, d.pt, d.flags, due ? { id: due.id, title: due.title, status: due.status } : null);
   const first = profile.data?.firstName ?? profile.data?.displayName?.split(' ')[0] ?? '';
   const sugg = d.flags.classes ? suggestions(d.now, d.classes.data, 3) : [];
   const nextPt = d.pt[0];
@@ -44,7 +46,8 @@ export function Today() {
   };
 
   const headline =
-    hero.kind === 'class' ? `Your next class is ${whenWords(dayOf(hero.row.startsAt), d.today)}`
+    hero.kind === 'workout' ? 'Today\'s workout is ready'
+    : hero.kind === 'class' ? `Your next class is ${whenWords(dayOf(hero.row.startsAt), d.today)}`
     : hero.kind === 'pt' ? `PT ${whenWords(dayOf(hero.row.startsAt), d.today)}`
     : hero.kind === 'book' ? 'Ready for your next class?'
     : 'Welcome back';
@@ -67,6 +70,13 @@ export function Today() {
             <Link className="btn secondary" to="/m/classes">All classes</Link>
           </div>
         </section>
+      ) : hero.kind === 'workout' ? (
+        <section className="mem-card mem-hero" aria-label="Today's workout">
+          <span className="mem-eyebrow">Today</span>
+          <div className="mem-big">{hero.row.title}</div>
+          <div className="muted">Suggested for you. Change, swap or skip anything.</div>
+          <Link className="btn primary" to={`/m/train/${hero.row.id}`}>{hero.row.status === 'in_progress' ? 'Continue workout' : 'Start workout'}</Link>
+        </section>
       ) : hero.kind === 'pt' ? (
         <section className="mem-card mem-hero" aria-label="Next PT session">
           <span className="mem-eyebrow">Next PT session</span>
@@ -88,6 +98,12 @@ export function Today() {
         <section className="mem-card" aria-label="Book another">
           <div className="mem-row"><h2>{hero.kind === 'class' ? 'Book another' : 'Coming up'}</h2><Link to="/m/classes">See all</Link></div>
           {sugg.map((c) => <SuggestionRow key={c.sessionId} c={c} busy={booking.busy === c.sessionId} onBook={() => void booking.book(c)} />)}
+        </section>
+      )}
+
+      {hero.kind !== 'workout' && due && d.flags.train && (
+        <section className="mem-card" aria-label="Today's workout">
+          <div className="mem-line"><div><h2>Today's workout</h2><div className="muted">{due.title}</div></div><Link className="btn secondary" to={`/m/train/${due.id}`}>{due.status === 'in_progress' ? 'Continue' : 'Start'}</Link></div>
         </section>
       )}
 

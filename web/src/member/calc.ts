@@ -42,28 +42,35 @@ export function spaceText(c: Pick<ClassRow, 'isBooked' | 'availableSpaces'>): st
   return `${c.availableSpaces} ${c.availableSpaces === 1 ? 'space' : 'spaces'} left`;
 }
 
-export interface Flags { classes: boolean; gym: boolean; pt: boolean }
+export interface Flags { classes: boolean; gym: boolean; pt: boolean; train: boolean }
 
-/** What this member has. No plan information means classes are shown (they may still drop in) and nothing else. */
-export function flagsFor(plan: MyPlan | null, hasPt: boolean): Flags {
-  if (!plan) return { classes: true, gym: false, pt: hasPt };
-  return { classes: plan.includesClasses, gym: plan.includesOpenGym, pt: plan.includesPt || hasPt };
+/** What this member has. No plan information means classes are shown (they may still drop in). Train appears when the plan has the gym or PT, or a workout has been sent. */
+export function flagsFor(plan: MyPlan | null, hasPt: boolean, hasWorkouts = false): Flags {
+  if (!plan) return { classes: true, gym: false, pt: hasPt, train: hasPt || hasWorkouts };
+  const pt = plan.includesPt || hasPt;
+  return { classes: plan.includesClasses, gym: plan.includesOpenGym, pt, train: plan.includesOpenGym || pt || hasWorkouts };
 }
 
 export type Hero =
   | { kind: 'class'; row: ClassRow }
   | { kind: 'pt'; row: PtRow }
+  | { kind: 'workout'; row: { id: string; title: string; status: string } }
   | { kind: 'book' }
   | { kind: 'welcome' };
 
-/** The one thing on top: the soonest thing already booked, whether class or PT; else invite a booking; else welcome. */
-export function chooseHero(now: Date, classes: ClassRow[], pt: PtRow[], flags: Flags): Hero {
+/**
+ * The one thing on top. Something booked that starts within three hours (or is on now) comes first; then a workout
+ * that is due today; then the soonest booked class or PT session; else an invitation to book, else a welcome.
+ */
+export function chooseHero(now: Date, classes: ClassRow[], pt: PtRow[], flags: Flags, workout: { id: string; title: string; status: string } | null = null): Hero {
   const t = now.getTime();
   const nextClass = classes.filter((c) => c.isBooked && new Date(c.endsAt).getTime() >= t).sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
   const nextPt = pt.filter((p) => p.status !== 'cancelled' && new Date(p.endsAt).getTime() >= t).sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
-  if (nextClass && nextPt) return nextPt.startsAt < nextClass.startsAt ? { kind: 'pt', row: nextPt } : { kind: 'class', row: nextClass };
-  if (nextClass) return { kind: 'class', row: nextClass };
-  if (nextPt) return { kind: 'pt', row: nextPt };
+  const thing: Hero | null = nextClass && nextPt ? (nextPt.startsAt < nextClass.startsAt ? { kind: 'pt', row: nextPt } : { kind: 'class', row: nextClass }) : nextClass ? { kind: 'class', row: nextClass } : nextPt ? { kind: 'pt', row: nextPt } : null;
+  const startsAt = thing ? new Date(thing.kind === 'class' || thing.kind === 'pt' ? thing.row.startsAt : 0).getTime() : Infinity;
+  if (thing && startsAt - t <= 3 * 3600000) return thing;
+  if (workout) return { kind: 'workout', row: workout };
+  if (thing) return thing;
   return flags.classes ? { kind: 'book' } : { kind: 'welcome' };
 }
 

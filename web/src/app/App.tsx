@@ -23,6 +23,8 @@ import { MemberShell } from '../member/MemberShell';
 import { Today as MemberToday } from '../member/Today';
 import { MemberClasses } from '../member/MemberClasses';
 import { Me } from '../member/Me';
+import { Train } from '../train/Train';
+import { Player } from '../train/Player';
 
 function Leave({ to }: { to: string }) {
   useEffect(() => {
@@ -60,6 +62,8 @@ export function App() {
           <Route element={<MemberShell />}>
             <Route path="/m/today" element={<MemberToday />} />
             <Route path="/m/classes" element={<MemberClasses />} />
+            <Route path="/m/train" element={<Train />} />
+            <Route path="/m/train/:id" element={<Player />} />
             <Route path="/m/me" element={<Me />} />
             <Route path="/m/*" element={<Navigate to="/m/today" replace />} />
           </Route>

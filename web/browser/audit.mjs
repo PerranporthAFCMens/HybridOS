@@ -56,6 +56,7 @@ const STATES = {
   'report builder': async (page) => { await page.goto(`${base}/next/#/reports`); await page.getByRole('tab', { name: 'Report builder', exact: true }).click(); await page.getByLabel('Look at').waitFor(); },
   'member today': async (page) => { await page.goto(`${base}/next/#/m/today`); await page.getByRole('heading', { name: 'Ready for your next class?' }).waitFor(); },
   'member classes': async (page) => { await page.goto(`${base}/next/#/m/classes`); await page.getByText('No classes on this day.').waitFor(); },
+  'member train': async (page) => { await page.goto(`${base}/next/#/m/train`); await page.getByRole('button', { name: 'Start my own workout' }).or(page.getByRole('link', { name: 'Start my own workout' })).waitFor(); },
   'member me': async (page) => { await page.goto(`${base}/next/#/m/me`); await page.getByRole('button', { name: 'Sign out' }).waitFor(); },
   owners: async (page) => { await page.goto(`${base}/next/#/owners`); await page.getByText('No access invitations yet.').waitFor(); },
   menu: async (page, size) => { await page.goto(`${base}/next/#/today`); await page.getByText('Active members', { exact: true }).waitFor(); if (size.width < 900) { await page.getByRole('button', { name: 'Open menu' }).click(); await page.waitForTimeout(350); } },
