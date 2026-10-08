@@ -68,3 +68,15 @@ The owner wants Reports to show everything needed to run the business, and will 
 **Not possible with today's data (needs new data capture first):** profit (no costs, rent or wages), enquiries and lead conversion, door check-ins that are not class bookings, class waiting lists.
 
 **Order:** 5a Overview (merged #131); 5b-1 click-through and PDF/Excel/CSV downloads on the Overview (branch `reports-drilldown`); 5b comparison with the previous period, churn and retention, income collected and trend, plus the click-through and PDF/Excel/CSV download framework; 5c members at risk, ending soon and payment problems, class and coach views; 5d the full library, Xero export and the multi-gym roll-up.
+
+## Member profile: milestones and awards (owner request, 8 October 2026: "don't forget")
+
+The owner wants **milestones and awards on member profiles**. Not designed or built yet; recorded so it is not lost. It belongs with the **member record** (owner view, already in the new app) and later the **member app** (the member sees their own).
+
+**Open questions for the owner before any design (ask when this is reached):**
+- Which milestones are automatic? Examples the builder would suggest: joined (1 month, 6 months, 1 year), 10th, 50th and 100th class attended, a booking streak, a first class of each type. Which does the owner want?
+- Which awards are given by hand by an owner or coach (member of the month, personal best, challenge winner)? Can a coach give them, or only owner and admin?
+- Does the member see them (member app), and can they be shared (the existing social feed)?
+- Are milestones per gym or does a member carry them between gyms (Hybrid Hub and Puffin)?
+
+**What it needs (builder's view):** a place to store each award (type, who, when, given by, optional note), a list of milestone rules, and attendance data to count classes. **Counting classes attended depends on attendance being recordable**, which today is blocked (members' attendance can only be marked through a new database function; see the Classes bookings step). So the order is: bookings and attendance first, then milestones.
