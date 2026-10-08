@@ -249,8 +249,11 @@ for (const [name, viewport] of Object.entries(sizes)) {
   // The List view is still there
   await page.getByRole('button', { name: 'List', exact: true }).click();
   await c.has('list view cards', page.getByRole('heading', { name: 'Morning HIIT' }));
-  await page.getByRole('button', { name: /Morning HIIT/ }).first().click().catch(() => {});
+  // A card in the list opens the same class details as a block on the calendar.
+  await page.getByRole('heading', { name: 'Morning HIIT' }).click();
+  await c.has('a list card opens the class details', dialog.getByText('Who has booked'));
   await page.keyboard.press('Escape');
+  c.ok('Escape closes the details', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
   await page.getByRole('button', { name: 'Day', exact: true }).click();
 
   if (name === 'desktop') {
