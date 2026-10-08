@@ -80,3 +80,31 @@ The owner wants **milestones and awards on member profiles**. Not designed or bu
 - Are milestones per gym or does a member carry them between gyms (Hybrid Hub and Puffin)?
 
 **What it needs (builder's view):** a place to store each award (type, who, when, given by, optional note), a list of milestone rules, and attendance data to count classes. **Counting classes attended depends on attendance being recordable**, which today is blocked (members' attendance can only be marked through a new database function; see the Classes bookings step). So the order is: bookings and attendance first, then milestones.
+
+## Member side: types of member, and "super easy" (owner direction, 8 October 2026; build later)
+
+The owner's picture of members: **classes-only**, **gym-only**, **PT clients**, and any **mix** of the three. The member side will eventually be an **app** (build later, after the owner-side screens). The owner's words: the current member side is "clunky and kinda difficult"; it must be **SUPER easy**.
+
+**What a member must be able to do (the whole list):**
+1. **Book and cancel classes.**
+2. **See their workouts and update them.**
+3. **See their PT sessions** (upcoming and past).
+4. **Record what they did** (log a workout or an activity, including in a PT session).
+
+**Design rule (the test for every screen):** each of those is reachable in as few taps as possible from the first screen, and **what the member sees depends on their type** (a classes-only member never sees gym or PT clutter; a mix sees only what they have). Type should come from their membership plan (the plan already says gym / classes / hybrid / PT), not from a setting the member has to manage.
+
+**Requested change:** when logging an activity, add **Left / Right / Both** (for single-side exercises).
+
+**What the builder found in the code (so the next step is not guesswork):**
+- Old logging today: `workout-logger.js` plus the member pages (`member.html` and several `member-*.js`): a template/block/activity builder with sets (`workout_sets`: reps, weight, duration, distance, calories, custom value, notes). The owner finds creating a workout, then logging an activity, too many steps.
+- **There is no side (left/right/both) column** in `workout_sets` or the activity template. Adding it needs a small database change (needs the owner's approval of the exact SQL before anything is applied).
+- PT: `pt_appointments` has staff, member, times, status and notes only. "Record what they did" in a PT session needs a link from an appointment to a workout log; nothing links them today. PT also still has none of the clash checks that classes have (the owner has not yet said whether PT should follow the same rules).
+- A member's type can be read from `membership_plans` (`includes_open_gym`, `includes_classes`, `includes_pt`, `access_type`).
+
+**Questions for the owner when this step starts (not now):**
+- Is the member app a **phone-first web app** (opens from a link, can be saved to the home screen) first, with an App Store app later, or an App Store app from the start?
+- What is the **one thing** a member opens the app for most often? (That becomes the first screen.)
+- Should a member be able to **start logging with one tap** from "today's workout" (set by their coach), and **repeat last time's numbers** in one tap?
+- For PT: does the **coach** log what was done in the session, the **member**, or either?
+
+**Order:** owner-side screens first (Classes finished with bookings and attendance, Reports 5b to 5d, Settings and staff), then **milestones and awards** (above), then the member app, designed with the owner from the list above.
