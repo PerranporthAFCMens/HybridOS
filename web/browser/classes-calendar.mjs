@@ -116,6 +116,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const defaultView = name === 'desktop' ? 'Week' : 'Day';
   c.ok(`${defaultView} is the default view`, (await page.getByRole('button', { name: defaultView, exact: true }).getAttribute('aria-pressed')) === 'true');
   if (name === 'desktop') {
+    // The calendar draws once the classes have loaded, so wait for the seventh day before counting.
+    await page.locator('.cal-col').nth(6).waitFor({ timeout: 15000 }).catch(() => undefined);
     c.ok('the default week shows seven days', (await page.locator('.cal-col').count()) === 7);
     await page.getByRole('button', { name: 'Day', exact: true }).click();
   }
