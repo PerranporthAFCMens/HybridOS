@@ -86,6 +86,15 @@ for (const [name, viewport] of Object.entries(sizes)) {
       const h = sessions[0];
       return reply(route, { id: h.session_id, class_type_id: 'ty1', name: h.name, description: h.description, starts_at: h.starts_at, ends_at: h.ends_at, capacity: 16, reserved_capacity: 0, reserved_release_minutes_before: null });
     }
+    if (path.endsWith('/class_bookings') && method === 'GET') {
+      if (url.searchParams.get('session_id') !== 'eq.h') return reply(route, []);
+      return reply(route, [
+        { id: 'b1', user_id: 'u1', status: 'booked', booked_at: '2026-10-01T10:00:00Z' },
+        { id: 'b2', user_id: 'u2', status: 'attended', booked_at: '2026-10-01T11:00:00Z' },
+        { id: 'b3', user_id: 'u3', status: 'no_show', booked_at: '2026-10-01T12:00:00Z' },
+      ]);
+    }
+    if (path.endsWith('/profiles')) return reply(route, [{ id: 'u1', display_name: 'Amelia Hart', first_name: null, last_name: null }, { id: 'u2', display_name: null, first_name: 'Jack', last_name: 'Pengelly' }]);
     if (path.endsWith('/class_session_staff')) return reply(route, []);
     if (path.endsWith('/class_types')) return reply(route, [{ id: 'ty1', name: 'HIIT', description: null, duration_minutes: 45, default_capacity: 16, is_active: true }]);
     return false;
@@ -126,12 +135,25 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('button', { name: /^Morning HIIT/ }).click();
   await c.has('class details open', dialog.getByText('5/16 booked'));
   await c.has('class description', dialog.getByText('Intervals for everyone'));
+  await c.has('who has booked', dialog.getByText('Who has booked'));
+  await c.has('roster summary', dialog.getByText('3 booked · 1 attended · 1 no-show'));
+  await c.has('first booked person', dialog.getByText('Amelia Hart'));
+  await c.has('name from first and last name', dialog.getByText('Jack Pengelly'));
+  await c.has('person with no profile name', dialog.getByText('Member', { exact: true }));
+  await c.has('attended status', dialog.getByText('Attended', { exact: true }));
+  await c.has('no-show status', dialog.getByText('No-show', { exact: true }));
+  c.ok('roster is in booking order', (await dialog.locator('.roster li .roster-name').allTextContents()).join('|') === 'Amelia Hart|Jack Pengelly|Member');
   await dialog.getByRole('button', { name: 'Cancel class' }).click();
   await c.has('asks before cancelling', dialog.getByText(/Cancel this class\?/));
   c.ok('nothing written yet', patches.length === 0);
   await dialog.getByRole('button', { name: 'Yes, cancel class' }).click();
   c.ok('dialog closes after cancelling', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
   c.ok('cancel wrote is_cancelled true to that class in this gym', patches.length === 1 && patches[0].body.is_cancelled === true && patches[0].id === 'eq.h' && patches[0].gym === `eq.${GYM}`);
+
+  // A class nobody has booked says so
+  await page.getByRole('button', { name: /^Morning Spin/ }).click();
+  await c.has('empty roster message', dialog.getByText('Nobody has booked yet.'));
+  await dialog.getByRole('button', { name: 'Close' }).click();
 
   // Bring a cancelled class back
   await page.getByRole('button', { name: /^Lunch Yoga/ }).click();
