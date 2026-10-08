@@ -37,3 +37,5 @@ select.ctl { width: 100%; }
 .check input:focus-visible + .check-box { outline: 2px solid var(--hybrid-pulse); outline-offset: 2px; }
 .check.disabled { cursor: not-allowed; opacity: .55; }
 .check.disabled input { cursor: not-allowed; }
+.ctl-color { padding: 4px; min-height: 44px; }
+.ctl-file { padding: 8px; height: auto; }

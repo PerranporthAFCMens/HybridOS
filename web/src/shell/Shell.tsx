@@ -6,13 +6,7 @@ import { getProfileNames } from '../data/profile';
 import { Button } from '../ui/Button';
 import { fullName, roleLabel } from './account';
 import { gymLogo } from './gymBrand';
-import { links } from './legacy';
 import './shell.css';
-
-// Screens not yet moved open their old page inside the old Admin shell.
-const OLD_SCREENS = [
-  { label: 'Communications', href: links.communications },
-] as const;
 
 export function Shell() {
   const auth = useReadyAuth();
@@ -46,10 +40,8 @@ export function Shell() {
           <NavLink to="/classes" onClick={close}>Classes and workouts</NavLink>
           <NavLink to="/reports" onClick={close}>Reports</NavLink>
           <NavLink to="/community" onClick={close}>Community</NavLink>
+          <NavLink to="/communications" onClick={close}>Communications</NavLink>
           <NavLink to="/settings" onClick={close}>Settings and staff</NavLink>
-          {OLD_SCREENS.map((s) => (
-            <a key={s.label} href={s.href}>{s.label}</a>
-          ))}
           <div className="section">Preview</div>
           <a href="../member.html?view=member">Preview as member</a>
           <a href="../staff.html?view=staff">Preview as staff</a>
