@@ -23,10 +23,9 @@ const GROUPS: { title: string; items: { key: LinkKey; name: string; text: string
     ],
   },
   {
-    title: 'Members and connections',
+    title: 'Members',
     items: [
-      { key: 'member-view', name: 'What members see', text: 'Choose what shows in the member app.' },
-      { key: 'integrations', name: 'Integrations', text: 'Payments, door systems and other connections.' },
+      { key: 'member-view', name: 'What members see', text: 'Choose and order the tiles on the member home, and the promo panel.', moved: true },
     ],
   },
 ];

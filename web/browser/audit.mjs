@@ -48,6 +48,7 @@ const STATES = {
   access: async (page) => { await page.goto(`${base}/next/#/access`); await page.getByText('No access levels yet.').first().waitFor(); },
   'access form': async (page) => { await page.goto(`${base}/next/#/access`); await page.getByRole('button', { name: 'New access level' }).click(); await page.getByRole('dialog').getByLabel('Level name').waitFor(); },
   door: async (page) => { await page.goto(`${base}/next/#/door`); await page.getByRole('button', { name: 'Save door access' }).waitFor(); },
+  'member view': async (page) => { await page.goto(`${base}/next/#/member-view`); await page.getByRole('button', { name: 'Save member view' }).waitFor(); },
   owners: async (page) => { await page.goto(`${base}/next/#/owners`); await page.getByText('No access invitations yet.').waitFor(); },
   menu: async (page, size) => { await page.goto(`${base}/next/#/today`); await page.getByText('Active members', { exact: true }).waitFor(); if (size.width < 900) { await page.getByRole('button', { name: 'Open menu' }).click(); await page.waitForTimeout(350); } },
 };
