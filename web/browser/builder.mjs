@@ -105,6 +105,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('builder opens', dataset);
   c.ok('eight tabs', (await page.getByRole('tab').count()) === 8);
   c.ok('eight datasets, staff included', (await dataset.locator('option').allInnerTexts()).join('|') === 'Members|Memberships|Payments|Classes|Bookings and attendance|Staff|Classes delivered|Clients seen');
+  await page.getByRole('button', { name: /Start from a ready-made report/ }).click();
   c.ok('twelve ready-made reports', (await page.locator('.bld-starter').count()) === 12);
   c.ok('starts as a list of members on paper', (await paper.getByRole('heading', { name: 'Members' }).count()) === 1);
   c.ok('layout (builder, first view)', (await page.evaluate(layoutProblems)).length === 0);
