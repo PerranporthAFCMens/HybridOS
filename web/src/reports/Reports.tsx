@@ -11,6 +11,7 @@ import {
 } from './calc';
 import { DataTable } from './DataTable';
 import { DownloadButtons } from './DownloadButtons';
+import { ReportLibrary } from './ReportLibrary';
 import type { ReportTable } from './download';
 import { useReportData } from './useReports';
 import './reports.css';
@@ -101,11 +102,13 @@ export function Reports() {
             </Card>
           </div>
 
+          <ReportLibrary rangeDays={Number(range)} rangeLabel={rangeLabel} />
+
           <Card>
-            <SectionTitle title="More reports" />
+            <SectionTitle title="Still on the old page" />
             <p className="muted">
-              Detailed tabs for memberships, classes, members and payments, the report library and the accounting export
-              are still on the old page while they move over.
+              The detailed tabs for memberships, classes, members and payments, and the accounting export, are
+              still on the old page while they move over.
             </p>
             <LinkButton href={links.reports}>Open the detailed reports</LinkButton>
           </Card>
