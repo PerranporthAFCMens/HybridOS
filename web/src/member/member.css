@@ -49,3 +49,16 @@
 .mem-tabs a.active { color: var(--hybrid-volt, #c8ff3d); }
 .mem-tabs svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 @media (prefers-reduced-motion: no-preference) { .mem-day, .mem-class { transition: border-color .15s; } }
+
+/* Train */
+.mem-back { font-size: 14px; color: var(--hybrid-muted); text-decoration: none; display: inline-block; padding: 4px 0; }
+.mem-ok { background: #0f3d2e; border-color: #1c6b50; color: #c9f7e1; font-weight: 600; }
+.mem-error { background: #4a1d19; color: #ffd6d0; border-radius: 10px; padding: 10px 12px; font-weight: 600; }
+.tr-act.skipped { opacity: .65; }
+.tr-name { font-size: 17px; overflow-wrap: anywhere; }
+.tr-sets { display: grid; gap: 8px; }
+.tr-set { display: flex; gap: 8px; align-items: center; }
+.tr-n { width: 20px; text-align: center; flex: none; }
+.tr-set .tr-box { flex: 1; min-width: 0; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tr-tools > * { flex: 1 1 120px; }
+.mem-tabs a { min-width: 0; }
