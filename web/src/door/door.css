@@ -1,0 +1,4 @@
+.door-hint { margin: 2px 0 14px 32px; }
+.door-preview { margin: 14px 0; padding: 14px; border: 1px dashed var(--hybrid-line-strong); border-radius: 10px; }
+.door-pin { font-family: var(--hybrid-mono); font-size: 28px; letter-spacing: .12em; margin: 6px 0; overflow-wrap: anywhere; }
+.door-pin.off { opacity: .35; }

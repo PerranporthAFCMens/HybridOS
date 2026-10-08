@@ -12,7 +12,7 @@ const GROUPS: { title: string; items: { key: LinkKey; name: string; text: string
       { key: 'staff', name: 'Staff', text: 'Logins, hours, qualifications and removing access.', moved: true },
       { key: 'access', name: 'Access levels', text: 'What each level of staff login can see and do.', moved: true },
       { key: 'owners', name: 'Owners and admins', text: 'Invite and manage owners and admins.', moved: true },
-      { key: 'access-settings', name: 'Door and entry access', text: 'Who can get in, and when.' },
+      { key: 'door', name: 'Door access', text: 'The PIN members can reveal in their member view.', moved: true },
     ],
   },
   {

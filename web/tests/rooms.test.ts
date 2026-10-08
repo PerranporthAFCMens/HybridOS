@@ -57,3 +57,33 @@ describe('usedBy', () => {
     expect(usedBy('zzz', 'resource', reqs, types)).toEqual([]);
   });
 });
+
+import { hoursFromRows, validateHours } from '../src/rooms/calc';
+
+describe('opening hours', () => {
+  it('shows unsaved days as open 06:00 to 22:00 and trims seconds', () => {
+    const f = hoursFromRows([{ weekday: 1, isAvailable: false, start: '09:00:00', end: '12:30:00' }]);
+    expect(f[1]).toEqual({ on: false, start: '09:00', end: '12:30' });
+    expect(f[0]).toEqual({ on: true, start: '06:00', end: '22:00' });
+    expect(Object.keys(f)).toHaveLength(7);
+  });
+  it('writes all seven days', () => {
+    const c = validateHours(hoursFromRows([]));
+    expect(c.ok && c.rows).toHaveLength(7);
+    expect(c.ok && c.rows[0]).toEqual({ weekday: 0, isAvailable: true, start: '06:00', end: '22:00' });
+  });
+  it('refuses an open day that finishes before it starts, or has no time', () => {
+    const f = hoursFromRows([]);
+    expect(validateHours({ ...f, 2: { on: true, start: '10:00', end: '09:00' } })).toEqual({ ok: false, message: 'Tuesday must finish after it starts.' });
+    expect(validateHours({ ...f, 3: { on: true, start: '', end: '09:00' } })).toEqual({ ok: false, message: 'Enter an opening and closing time for Wednesday.' });
+  });
+  it('lets a closed day have bad times but sends defaults, since the database needs a later finish on every row', () => {
+    const f = hoursFromRows([]);
+    const c = validateHours({ ...f, 0: { on: false, start: '', end: '' } });
+    expect(c.ok && c.rows[0]).toEqual({ weekday: 0, isAvailable: false, start: '06:00', end: '22:00' });
+  });
+  it('keeps the times of a closed day when they are valid', () => {
+    const c = validateHours({ ...hoursFromRows([]), 5: { on: false, start: '08:00', end: '11:00' } });
+    expect(c.ok && c.rows[5]).toEqual({ weekday: 5, isAvailable: false, start: '08:00', end: '11:00' });
+  });
+});

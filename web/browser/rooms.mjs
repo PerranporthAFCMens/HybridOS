@@ -39,12 +39,13 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const writes = [];
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, async ({ route, url, path, method, body }) => {
-    const table = ['resources', 'capabilities'].find((t) => path.endsWith(`/${t}`));
+    const table = ['resources', 'capabilities', 'resource_availability'].find((t) => path.endsWith(`/${t}`));
     if (table && ['POST', 'PATCH', 'DELETE'].includes(method)) {
       writes.push({ table, method, query: Object.fromEntries(url.searchParams), body });
       await route.fulfill({ status: 204, body: '' });
       return true;
     }
+    if (path.endsWith('/resource_availability')) return reply(route, [{ weekday: 1, is_available: true, start_time: '07:00:00', end_time: '21:00:00' }, { weekday: 0, is_available: false, start_time: '06:00:00', end_time: '22:00:00' }]);
     if (path.endsWith('/resources')) return reply(route, [studio, bike, old]);
     if (path.endsWith('/capabilities')) return reply(route, [spinQual, { id: 'cap-pt', name: 'Personal trainer', description: null, is_active: false }]);
     if (path.endsWith('/service_requirements')) return reply(route, [{ class_type_id: 'type-spin', capability_id: 'cap-spin', resource_id: null }, { class_type_id: 'type-spin', capability_id: null, resource_id: 'res-studio' }]);
@@ -85,6 +86,24 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('form closes after saving', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
   const edit = writes.find((w) => w.table === 'resources' && w.method === 'PATCH');
   c.ok('edit writes only the form fields, scoped to this room and gym', edit && edit.query.id === 'eq.res-studio' && edit.query.gym_id === `eq.${GYM}` && JSON.stringify(edit.body) === JSON.stringify({ name: 'Studio A', resource_type: 'room', capacity: 24, allow_overlap: true, notes: 'Mirrors' }));
+
+  // Opening hours
+  writes.length = 0;
+  await page.getByRole('button', { name: 'Opening hours for Studio A' }).click();
+  await c.has('hours dialog', dialog.getByText('Opening hours: Studio A').first());
+  c.ok('saved hours shown', (await dialog.getByLabel('Monday opens').inputValue()) === '07:00' && (await dialog.getByLabel('Monday closes').inputValue()) === '21:00' && !(await dialog.getByLabel('Sunday', { exact: true }).isChecked()) && (await dialog.getByLabel('Tuesday opens').inputValue()) === '06:00');
+  c.ok('hours layout', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/rooms-hours-${name}.png` });
+  await dialog.getByLabel('Tuesday closes').fill('05:00');
+  await dialog.getByRole('button', { name: 'Save opening hours' }).click();
+  await c.has('bad hours refused', dialog.getByText('Tuesday must finish after it starts.'));
+  c.ok('nothing written yet', writes.length === 0);
+  await dialog.getByLabel('Tuesday closes').fill('20:00');
+  await dialog.getByRole('button', { name: 'Save opening hours' }).click();
+  c.ok('hours dialog closes after saving', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
+  const hw = writes.find((x) => x.table === 'resource_availability');
+  c.ok('hours: upsert of all seven days for this room', hw && hw.method === 'POST' && hw.query.on_conflict === 'resource_id,weekday' && Array.isArray(hw.body) && hw.body.length === 7 && hw.body.every((r) => r.gym_id === GYM && r.resource_id === 'res-studio'));
+  c.ok('hours: the changed day and the closed Sunday are exact', hw && hw.body.find((r) => r.weekday === 2).end_time === '20:00' && hw.body.find((r) => r.weekday === 0).is_available === false && hw.body.find((r) => r.weekday === 1).start_time === '07:00');
 
   // Add a piece of equipment with no limit
   writes.length = 0;
