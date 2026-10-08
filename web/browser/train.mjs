@@ -106,8 +106,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('the side is saved on that set', joined.includes('"side":"left"'));
   c.ok('the skipped one is not saved', !joined.includes('"exercise_name":"Stretch"'));
   c.ok('the coach workout is marked done with rpe and a note', joined.includes('"status":"completed"') && joined.includes('"member_rpe":7') && joined.includes('Skipped: Stretch'));
-  c.ok('the finished workout is gone from today', (await page.getByLabel('Today').getByText('Nothing planned.').count()) === 1);
-  c.ok('recent workouts are listed', (await page.getByLabel('Recent').textContent()).includes('Lower body'));
+  await c.has('the finished workout is gone from today', page.getByLabel('Today').getByText('Nothing planned.'));
+  await c.has('recent workouts are listed', page.getByLabel('Recent').getByText('Lower body'));
   c.ok('layout (train)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/train-home-${name}.png` });
 
