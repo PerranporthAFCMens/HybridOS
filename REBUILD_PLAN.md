@@ -47,11 +47,11 @@ The word `/next/` goes away at the cutover below. Every piece of work is reporte
 
 ## Cutover decision (owner, 8 October 2026): finish everything first
 The owner chose to rebuild every remaining screen, then switch over in one go and delete every old page and the `/next/` address. Until then both run side by side. Order:
-1. **Settings and staff, rest:** 6c Access levels (`staff-permissions.html`, `admin-access.html`), 6d Door access (`access-settings.html`) and opening hours (`resource-availability.html`), both built. **Gym layout (`gym-layout.html`) is dropped (owner decision, 8 October 2026): it was a browser-only drawing tool that saved nothing to the database. The page is deleted at the cutover; if a floor map is wanted later it is designed fresh with the member app.**, 6e Member experience (`member-view-settings.html`), Integrations (`integrations.html`).
+1. **Settings and staff, rest:** 6c Access levels (`staff-permissions.html`, `admin-access.html`), 6d Door access (`access-settings.html`) and opening hours (`resource-availability.html`), both built. **Gym layout (`gym-layout.html`) is dropped (owner decision, 8 October 2026): it was a browser-only drawing tool that saved nothing to the database. The page is deleted at the cutover; if a floor map is wanted later it is designed fresh with the member app.**, 6e Member experience (`member-view-settings.html`), built. **`integrations.html` is not an owner setting: it is each member's own Strava connection page (the Strava keys are not yet in Supabase), so it moves with the member app (step 5).**
 2. **Messages and community:** `communications.html`, `community.html`, `social.html`, `groups.html`, `group-join.html`.
 3. **Workouts and PT, owner side:** `workout-builder.html`.
 4. **Report builder, Estate view, add-on switches, create-a-gym, HybridOne Control, Enterprise manager** (sections below).
-5. **Member app:** `member.html`, `member-memberships.html`, `member-preview.html`, `join.html`, `onboarding.html`.
+5. **Member app:** `integrations.html` (member Strava), `member.html`, `member-memberships.html`, `member-preview.html`, `join.html`, `onboarding.html`.
 6. **Staff app:** `staff.html`.
 7. **Sign-in, invites, landing:** `login.html`, `choose-gym.html`, `auth-return.html`, `admin-invite.html`, `sign-out.html`, `landing.html`, and the gym login redirect pages. These are the most sensitive: Auth journey and protected routing tests must be rewritten and pass first.
 8. **Cutover:** make the new app the root, point sign-in at it, rewrite the checks that name old pages, release, watch, then delete the old pages and `admin.html` frame and drop `/next/`. Old pages are deleted only after the owner accepts the replacement of each.
