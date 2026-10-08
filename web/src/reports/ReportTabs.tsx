@@ -9,6 +9,7 @@ import { DownloadButtons } from './DownloadButtons';
 import type { ReportTable } from './download';
 import { pounds, type LibraryContext } from './library';
 import { AttendanceChart, JoinsChart, MembersLineChart, PaymentStateDonut, PaymentsChart, PlanDonut } from './ReportCharts';
+import { Builder } from '../builder/Builder';
 import { ReportLibrary } from './ReportLibrary';
 import { XeroExport } from './XeroExport';
 import {
@@ -17,9 +18,9 @@ import {
 } from './tabs';
 import { useLibraryData } from './useReports';
 
-export type TabKey = 'overview' | 'memberships' | 'classes' | 'members' | 'payments' | 'xero' | 'library';
+export type TabKey = 'overview' | 'memberships' | 'classes' | 'members' | 'payments' | 'xero' | 'library' | 'builder';
 export const TABS: [TabKey, string][] = [
-  ['overview', 'Overview'], ['memberships', 'Memberships'], ['classes', 'Classes'], ['members', 'Members'], ['payments', 'Payments'], ['xero', 'Accounting (Xero)'], ['library', 'Report library'],
+  ['overview', 'Overview'], ['memberships', 'Memberships'], ['classes', 'Classes'], ['members', 'Members'], ['payments', 'Payments'], ['xero', 'Accounting (Xero)'], ['library', 'Report library'], ['builder', 'Report builder'],
 ];
 
 function StatCard({ label, value }: { label: string; value: string }): ReactNode {
@@ -46,6 +47,7 @@ export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: E
   if (tab === 'members') return <MembersPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;
   if (tab === 'payments') return <PaymentsPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;
   if (tab === 'xero') return <XeroExport key={gym.gymId} d={d} rangeLabel={rangeLabel} since={since} />;
+  if (tab === 'builder') return <Builder key={gym.gymId} data={d} rangeLabel={rangeLabel} />;
   return <ReportLibrary data={d} rangeDays={rangeDays} rangeLabel={rangeLabel} />;
 }
 
