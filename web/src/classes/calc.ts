@@ -1,4 +1,4 @@
-import type { SchedulingRules, TimetableSession } from '../data/classes';
+import type { EditableClass, SchedulingRules, TimetableSession } from '../data/classes';
 
 /** Monday 00:00 (local) of the week containing `d`. */
 export function startOfWeek(d: Date): Date {
@@ -303,4 +303,23 @@ export function dayTitle(d: Date): string {
 /** "Thu 8 Oct". */
 export function shortDay(d: Date): string {
   return SHORT_DAY.format(d);
+}
+
+/** The edit form's starting values for a saved class, in gym time (UK). */
+export function formFromClass(c: EditableClass): ClassForm {
+  const start = londonParts(new Date(c.startsAt));
+  const minutes = Math.round((new Date(c.endsAt).getTime() - new Date(c.startsAt).getTime()) / 60000);
+  return {
+    classTypeId: c.classTypeId ?? '',
+    name: c.name,
+    date: start.date,
+    start: start.time.slice(0, 5),
+    duration: String(minutes),
+    capacity: String(c.capacity),
+    reserved: String(c.reservedCapacity),
+    release: c.releaseMinutesBefore === null ? '' : String(c.releaseMinutesBefore),
+    description: c.description,
+    repeat: false,
+    weeks: '8',
+  };
 }

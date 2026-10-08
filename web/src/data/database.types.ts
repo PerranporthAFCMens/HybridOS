@@ -3316,6 +3316,23 @@ export type Database = {
         Args: { p_challenge_id: string; p_note?: string; p_value: number }
         Returns: undefined
       }
+      update_validated_class_session: {
+        Args: {
+          p_capacity: number
+          p_description: string
+          p_ends_at: string
+          p_gym_id: string
+          p_name: string
+          p_override_reason?: string
+          p_plan_ids?: string[]
+          p_reserved_capacity?: number
+          p_reserved_release_minutes_before?: number
+          p_session_id: string
+          p_staff_ids?: string[]
+          p_starts_at: string
+        }
+        Returns: Json
+      }
       validate_class_schedule: {
         Args: {
           p_capacity: number

@@ -1,19 +1,19 @@
 import { useMemo, useState } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
-import type { ScheduleProposal } from '../data/classes';
+import type { EditableClass, ScheduleProposal } from '../data/classes';
 import { money } from '../today/calc';
 import { Button } from '../ui/Button';
 import { SectionTitle } from '../ui/Card';
 import { Checkbox, DateInput, Field, FieldRow, Input, Select, Textarea } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import {
-  MAX_REASON, MAX_WEEKS, MIN_REASON, MIN_WEEKS, RELEASE_OPTIONS, WEEKS_ERROR, canOfferOverride, reasonOk, STAFF_STATUS_TEXT, emptyClassForm, occurrenceLabel, requirementsText, reservedExample, seriesSummary, staffStatus,
+  MAX_REASON, MAX_WEEKS, MIN_REASON, MIN_WEEKS, RELEASE_OPTIONS, WEEKS_ERROR, canOfferOverride, reasonOk, STAFF_STATUS_TEXT, emptyClassForm, formFromClass, occurrenceLabel, requirementsText, reservedExample, seriesSummary, staffStatus,
   validateClass, validWeeks, weeklyOccurrences, type ClassForm as Form,
 } from './calc';
-import { useActivePlans, useClassTypes, useCreateClass, useCreateSeries, useSchedulingRules, useScheduleCheck, useSeriesCheck, useStaffOptions } from './useClasses';
+import { useActivePlans, useClassTypes, useCreateClass, useCreateSeries, useSchedulingRules, useScheduleCheck, useSeriesCheck, useStaffOptions, useUpdateClass } from './useClasses';
 
 /** Add a class to the timetable. `onSaved` receives the class's start so the timetable can jump to its week. */
-export function ClassForm({ onClose, onSaved, initial }: { onClose: () => void; onSaved: (startsAt: Date) => void; /** Date (yyyy-mm-dd) and start time (HH:MM) to open with, e.g. from a tap on the calendar. */ initial?: { date: string; start: string } }) {
+export function ClassForm({ onClose, onSaved, initial, editing }: { onClose: () => void; onSaved: (startsAt: Date) => void; /** Date (yyyy-mm-dd) and start time (HH:MM) to open with, e.g. from a tap on the calendar. */ initial?: { date: string; start: string }; /** A saved class to change instead of adding a new one. Its class type stays as it is. */ editing?: EditableClass }) {
   const { gym } = useReadyAuth();
   const staff = useStaffOptions(gym.gymId);
   const plans = useActivePlans(gym.gymId);
@@ -21,9 +21,10 @@ export function ClassForm({ onClose, onSaved, initial }: { onClose: () => void; 
   const rules = useSchedulingRules(gym.gymId);
   const create = useCreateClass(gym.gymId);
   const series = useCreateSeries(gym.gymId);
-  const [form, setForm] = useState<Form>(() => ({ ...emptyClassForm(new Date()), ...(initial ?? {}) }));
-  const [pickedStaff, setPickedStaff] = useState<string[]>([]);
-  const [pickedPlans, setPickedPlans] = useState<string[]>([]);
+  const update = useUpdateClass(gym.gymId, editing?.sessionId ?? '');
+  const [form, setForm] = useState<Form>(() => (editing ? formFromClass(editing) : { ...emptyClassForm(new Date()), ...(initial ?? {}) }));
+  const [pickedStaff, setPickedStaff] = useState<string[]>(() => editing?.staffIds ?? []);
+  const [pickedPlans, setPickedPlans] = useState<string[]>(() => editing?.planIds ?? []);
   const [problems, setProblems] = useState<string[]>([]);
   const [skipped, setSkipped] = useState<string[]>([]);
   const [summary, setSummary] = useState('');
@@ -43,7 +44,7 @@ export function ClassForm({ onClose, onSaved, initial }: { onClose: () => void; 
 
   const ordered = (staff.data ?? []).filter((p) => picked.includes(p.userId)).sort((a, b) => picked.indexOf(a.userId) - picked.indexOf(b.userId));
   const proposal: ScheduleProposal | null = parsed.ok
-    ? { classTypeId: typeId, startsAt: parsed.values.startsAt, endsAt: parsed.values.endsAt, capacity: parsed.values.capacity, staffIds: ordered.map((p) => p.userId) }
+    ? { classTypeId: typeId, startsAt: parsed.values.startsAt, endsAt: parsed.values.endsAt, capacity: parsed.values.capacity, staffIds: ordered.map((p) => p.userId), ...(editing ? { excludeSessionId: editing.sessionId } : {}) }
     : null;
   const repeating = form.repeat;
   const check = useScheduleCheck(gym.gymId, typeId && !repeating ? proposal : null);
@@ -98,10 +99,10 @@ export function ClassForm({ onClose, onSaved, initial }: { onClose: () => void; 
       );
       return;
     }
-    create.mutate(
-      { ...rest, startsAt, endsAt, classTypeId: typeId, staffIds: ordered.map((p) => p.userId), reservedPlanIds: pickedPlans, overrideReason: overrideReason ?? null },
-      { onSuccess: (v) => (v.ok ? onSaved(new Date(startsAt)) : setProblems(v.errors.length ? v.errors : ['The class could not be scheduled.'])), onError: (e) => setProblems([e.message]) },
-    );
+    const single = { ...rest, startsAt, endsAt, classTypeId: typeId, staffIds: ordered.map((p) => p.userId), reservedPlanIds: pickedPlans, overrideReason: overrideReason ?? null };
+    const handlers = { onSuccess: (v: { ok: boolean; errors: string[] }) => (v.ok ? onSaved(new Date(startsAt)) : setProblems(v.errors.length ? v.errors : [editing ? 'The change could not be saved.' : 'The class could not be scheduled.'])), onError: (e: Error) => setProblems([e.message]) };
+    if (editing) update.mutate(single, handlers);
+    else create.mutate(single, handlers);
   };
 
   const capacity = Number(form.capacity);
@@ -109,10 +110,10 @@ export function ClassForm({ onClose, onSaved, initial }: { onClose: () => void; 
   const verdict = check.data;
 
   return (
-    <Modal title="Add to timetable" onClose={onClose}>
-      <SectionTitle title="Add to timetable" action={<Button onClick={onClose}>Close</Button>} />
+    <Modal title={editing ? 'Edit class' : 'Add to timetable'} onClose={onClose}>
+      <SectionTitle title={editing ? 'Edit class' : 'Add to timetable'} action={<Button onClick={onClose}>Close</Button>} />
       <Field label="Class type" htmlFor="class-type" hint={rules.data ? requirementsText(typeId, rules.data) : undefined}>
-        <Select id="class-type" value={form.classTypeId} onChange={(e) => pickType(e.target.value)}>
+        <Select id="class-type" value={form.classTypeId} disabled={!!editing} onChange={(e) => pickType(e.target.value)}>
           <option value="">Custom class (no checks)</option>
           {types.data?.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </Select>
@@ -137,7 +138,7 @@ export function ClassForm({ onClose, onSaved, initial }: { onClose: () => void; 
           <Input id="class-reserved" type="number" inputMode="numeric" min="0" value={form.reserved} onChange={(e) => set('reserved', e.target.value)} />
         </Field>
       </FieldRow>
-      <Checkbox label="Repeat weekly" checked={form.repeat} onChange={(v) => { set('repeat', v); setSkipped([]); setSummary(''); }} />
+      {!editing && <Checkbox label="Repeat weekly" checked={form.repeat} onChange={(v) => { set('repeat', v); setSkipped([]); setSummary(''); }} />}
       {form.repeat && (
         <Field label="Number of weeks" htmlFor="class-weeks" hint={validWeeks(form.weeks) ? `Including this one, ${MIN_WEEKS} to ${MAX_WEEKS}. Each week is checked on its own.` : WEEKS_ERROR}>
           <Input id="class-weeks" type="number" inputMode="numeric" min={MIN_WEEKS} max={MAX_WEEKS} value={form.weeks} onChange={(e) => { set('weeks', e.target.value); setSkipped([]); setSummary(''); }} />
@@ -216,7 +217,7 @@ export function ClassForm({ onClose, onSaved, initial }: { onClose: () => void; 
         {typeId && proposal && !check.isFetching && verdict?.ok && 'Coaches, working hours, rooms, equipment and clashes all check out.'}
         {typeId && proposal && !check.isFetching && verdict && !verdict.ok && (
           <>
-            <b>Cannot schedule this class yet:</b>
+            <b>{editing ? 'Cannot save this change yet:' : 'Cannot schedule this class yet:'}</b>
             <ul>{verdict.errors.map((m) => <li key={m}>{m}</li>)}</ul>
           </>
         )}
@@ -224,12 +225,12 @@ export function ClassForm({ onClose, onSaved, initial }: { onClose: () => void; 
       )}
       {!repeating && verdict && !verdict.ok && !check.isFetching && canOfferOverride(verdict.errors) && (
         <fieldset className="check-group override-panel">
-          <legend>Schedule it anyway</legend>
+          <legend>{editing ? 'Save it anyway' : 'Schedule it anyway'}</legend>
           <div className="muted small">As owner or admin you can schedule this class even though it fails the checks above. Your reason is recorded with your name, the date and the problems overridden.</div>
           <Field label="Reason" htmlFor="class-override-reason" hint={`${MIN_REASON} to ${MAX_REASON} characters.`}>
             <Textarea id="class-override-reason" maxLength={MAX_REASON} placeholder="e.g. Room is free, the booking was moved" value={reason} onChange={(e) => setReason(e.target.value)} />
           </Field>
-          <Button className="wide-btn" disabled={create.isPending || !reasonOk(reason)} onClick={() => submit(reason.trim())}>Schedule anyway</Button>
+          <Button className="wide-btn" disabled={create.isPending || update.isPending || !reasonOk(reason)} onClick={() => submit(reason.trim())}>{editing ? 'Save anyway' : 'Schedule anyway'}</Button>
         </fieldset>
       )}
 
@@ -241,8 +242,8 @@ export function ClassForm({ onClose, onSaved, initial }: { onClose: () => void; 
           </span>
         )}
       </div>
-      <Button variant="primary" className="wide-btn" disabled={create.isPending || series.isPending || (repeating ? weekChecks.isFetching || included.length === 0 || (overriddenWeeks.length > 0 && !reasonOk(reason)) : !!verdict && !verdict.ok)} onClick={() => submit()}>
-        {repeating ? `Save ${included.length} ${included.length === 1 ? 'class' : 'classes'}` : 'Save class'}
+      <Button variant="primary" className="wide-btn" disabled={create.isPending || update.isPending || series.isPending || (repeating ? weekChecks.isFetching || included.length === 0 || (overriddenWeeks.length > 0 && !reasonOk(reason)) : !!verdict && !verdict.ok)} onClick={() => submit()}>
+        {repeating ? `Save ${included.length} ${included.length === 1 ? 'class' : 'classes'}` : editing ? 'Save changes' : 'Save class'}
       </Button>
     </Modal>
   );

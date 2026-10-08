@@ -51,3 +51,20 @@ describe('calendar layout', () => {
     expect(hourLabel(9)).toBe('09:00');
   });
 });
+
+describe('edit form', () => {
+  it('starts from the saved class in gym time', async () => {
+    const { formFromClass } = await import('../src/classes/calc');
+    // 08:00 to 09:15 UTC in July is 09:00 to 10:15 in London.
+    const f = formFromClass({ sessionId: 's', classTypeId: 't', name: 'Spin', description: 'About', startsAt: '2027-07-14T08:00:00Z', endsAt: '2027-07-14T09:15:00Z', capacity: 12, reservedCapacity: 3, releaseMinutesBefore: 60, staffIds: [], planIds: [] });
+    expect(f).toMatchObject({ classTypeId: 't', name: 'Spin', date: '2027-07-14', start: '09:00', duration: '75', capacity: '12', reserved: '3', release: '60', description: 'About', repeat: false });
+  });
+
+  it('leaves the release blank when there is none and the type blank for a custom class', async () => {
+    const { formFromClass } = await import('../src/classes/calc');
+    const f = formFromClass({ sessionId: 's', classTypeId: null, name: 'Custom', description: '', startsAt: '2027-01-12T09:00:00Z', endsAt: '2027-01-12T10:00:00Z', capacity: 5, reservedCapacity: 0, releaseMinutesBefore: null, staffIds: [], planIds: [] });
+    expect(f.release).toBe('');
+    expect(f.classTypeId).toBe('');
+    expect(f.start).toBe('09:00');
+  });
+});
