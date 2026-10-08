@@ -6,6 +6,10 @@ import { GYM, base, launch, mockSupabase, reply, runChecks, shots, signedInPage,
 
 const COACH = '66666666-6666-4666-8666-666666666666';
 const ALEX = '77777777-7777-4777-8777-777777777777';
+const TYPE = '91111111-1111-4111-8111-111111111111';
+const CAP = '92222222-2222-4222-8222-222222222222';
+const STUDIO = '93333333-3333-4333-8333-333333333333';
+const BIKE = '94444444-4444-4444-8444-444444444444';
 const monday = (() => { const x = new Date(); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; })();
 const at = (dayOffset, h, m = 0) => { const x = new Date(monday); x.setDate(x.getDate() + dayOffset); x.setHours(h, m, 0, 0); return x.toISOString(); };
 const row = (over) => ({ session_id: 's', name: 'Class', starts_at: at(0, 9), ends_at: at(0, 10), booked_count: 3, capacity: 12, spaces_left: 9, is_cancelled: false, description: '', availability_note: '', bookable_for_me: true, my_booking_status: '', reserved_capacity: 0, reserved_eligible: false, reserved_plan_names: [], reserved_release_minutes_before: 0, ...over });
@@ -47,16 +51,30 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const asked = [];
   const writes = [];
   const saved = [];
+  const checks = [];
   const { ctx, page, errors } = await signedInPage(browser, viewport);
-  page.on('request', (r) => { const u = new URL(r.url()); if (u.hostname.endsWith('supabase.co') && !u.pathname.includes('/auth/') && !u.pathname.includes('/rpc/get_class_calendar') && !u.pathname.includes('/class_session') && ['POST', 'PATCH', 'PUT', 'DELETE'].includes(r.method())) writes.push(`${r.method()} ${u.pathname}`); });
-  await mockSupabase(page, async ({ route, path, method, body }) => {
+  page.on('request', (r) => { const u = new URL(r.url()); if (u.hostname.endsWith('supabase.co') && !u.pathname.includes('/auth/') && !u.pathname.includes('/rpc/get_class_calendar') && !u.pathname.includes('/rpc/') && ['POST', 'PATCH', 'PUT', 'DELETE'].includes(r.method())) writes.push(`${r.method()} ${u.pathname}`); });
+  await mockSupabase(page, async ({ route, path, body }) => {
     if (path.endsWith('/rpc/get_class_calendar')) {
       asked.push(body);
       return reply(route, new Date(body.p_from).getTime() === monday.getTime() ? thisWeek : nextWeek);
     }
-    if (path.endsWith('/class_sessions') && method === 'POST') { saved.push({ table: 'class_sessions', body }); return reply(route, [{ id: 'new1' }]); }
-    if (path.endsWith('/class_session_reserved_plans') && method === 'POST') { saved.push({ table: 'reserved', body }); await route.fulfill({ status: 201, body: '' }); return true; }
-    if (path.endsWith('/class_session_staff') && method === 'POST') { saved.push({ table: 'staff', body }); await route.fulfill({ status: 201, body: '' }); return true; }
+    if (path.endsWith('/rpc/validate_class_schedule')) {
+      checks.push(body);
+      const none = !body.p_staff_ids?.length;
+      return reply(route, none ? { ok: false, errors: ['No selected staff member is currently qualified for Spin instructor.'], warnings: [] } : { ok: true, errors: [], warnings: [] });
+    }
+    if (path.endsWith('/rpc/create_validated_class_session')) {
+      saved.push(body);
+      if (body.p_name === 'Clash class') return reply(route, { ok: false, errors: ['Studio A is already booked at this time.', 'A selected staff member is already assigned to another class at this time.'], warnings: [] });
+      return reply(route, { ok: true, session_id: 'new1' });
+    }
+    if (path.endsWith('/class_types')) return reply(route, [{ id: TYPE, name: 'Spin', description: 'Indoor cycling', duration_minutes: 45, default_capacity: 12 }]);
+    if (path.endsWith('/service_requirements')) return reply(route, [{ class_type_id: TYPE, capability_id: CAP, resource_id: null, quantity: 1 }, { class_type_id: TYPE, capability_id: null, resource_id: STUDIO, quantity: 1 }, { class_type_id: TYPE, capability_id: null, resource_id: BIKE, quantity: 12 }]);
+    if (path.endsWith('/capabilities')) return reply(route, [{ id: CAP, name: 'Spin instructor' }]);
+    if (path.endsWith('/resources')) return reply(route, [{ id: STUDIO, name: 'Studio A', resource_type: 'room', capacity: 20 }, { id: BIKE, name: 'Spin bike', resource_type: 'equipment', capacity: 12 }]);
+    if (path.endsWith('/staff_capabilities')) return reply(route, [{ user_id: COACH, capability_id: CAP, qualified: true, expires_on: null }]);
+    if (path.endsWith('/staff_working_hours')) return reply(route, [COACH, ALEX].flatMap((u) => [0, 1, 2, 3, 4, 5, 6].map((d) => ({ user_id: u, weekday: d, start_time: '06:00:00', end_time: '22:00:00', is_working: true }))));
     if (path.endsWith('/class_session_staff')) return reply(route, [{ session_id: 'a', user_id: COACH, is_lead: true }]);
     if (path.endsWith('/gym_members')) return reply(route, [{ user_id: COACH, role: 'coach' }, { user_id: ALEX, role: 'admin' }]);
     if (path.endsWith('/membership_plans')) return reply(route, [{ id: 'pl1', name: 'Premium', price_pence: 6000, billing_interval: 'monthly', access_type: 'hybrid', is_active: true }]);
@@ -95,38 +113,58 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('old class setup link kept (class types library)', (await page.getByRole('link', { name: 'Class setup' }).getAttribute('href')).includes('class-setup.html'));
   c.ok(`read-only: no writes (${writes.join(', ') || 'none'})`, writes.length === 0);
 
-  // Add class: validation first, then a real save of everything the form collects
+  // Add class: pick a class type, see what it needs, let the gym rules guide who can teach it
   const dialog = page.getByRole('dialog');
   await page.getByRole('button', { name: 'Add class' }).click();
   await c.has('add form opens', dialog.getByText('Add to timetable').first());
-  c.ok('add form layout', (await page.evaluate(layoutProblems)).length === 0);
-  if (shots) await page.screenshot({ path: `${shots}/class-form-${name}.png` });
-  await c.has('staff options', dialog.getByLabel('Alex Admin · admin'));
-  await c.has('plan options', dialog.getByLabel('Premium · £60.00'));
-  await dialog.getByRole('button', { name: 'Save class' }).click();
-  await c.has('blank form refused', dialog.getByText('Check the class name, date, duration and capacity values.'));
-  c.ok('nothing saved on a bad form', saved.length === 0);
-  await dialog.getByLabel('Class name').fill('Saturday Hybrid');
+  await dialog.getByLabel('Class type').selectOption({ label: 'Spin' });
+  await c.has('what the class type needs', dialog.getByText('Qualification: Spin instructor · Needs: Studio A, 12 × Spin bike'));
+  c.ok('class type fills duration, capacity and description', (await dialog.getByLabel('Duration (minutes)').inputValue()) === '45' && (await dialog.getByLabel('Total capacity').inputValue()) === '12' && (await dialog.getByLabel('Description').inputValue()) === 'Indoor cycling');
+  c.ok('class name filled from the type when blank', (await dialog.getByLabel('Class name').inputValue()) === 'Spin');
   await dialog.getByLabel('Date', { exact: true }).fill(nextSaturday);
   await dialog.getByLabel('Start time').fill('09:30');
-  await dialog.getByLabel('Duration (minutes)').fill('45');
-  await dialog.getByLabel('Total capacity').fill('10');
-  await dialog.getByLabel('Reserved spaces', { exact: true }).fill('4');
-  await c.has('worked example updates', dialog.getByText(/capacity 10 \+ 4 reserved means standard members can fill up to 6 places/));
-  await dialog.getByLabel('Release reserved spaces').selectOption('120');
-  await dialog.getByLabel('Description').fill('Bring water');
-  await dialog.getByLabel('Alex Admin · admin').click();
+  await c.has('unqualified staff are greyed out with a reason', dialog.locator('.staff-pick.unavailable', { hasText: 'Alex Admin' }).getByText('Not qualified'));
+  c.ok('and cannot be ticked', await dialog.getByLabel('Alex Admin · admin').isDisabled());
+  c.ok('the qualified coach can', await dialog.getByLabel('Coach Carla · coach').isEnabled());
+  await c.has('no one assigned: the database says why', dialog.getByText('No selected staff member is currently qualified for Spin instructor.'));
+  c.ok('Save is blocked while the check fails', await dialog.getByRole('button', { name: 'Save class' }).isDisabled());
+  c.ok('add form layout', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/class-form-${name}.png` });
   await dialog.getByLabel('Coach Carla · coach').click();
+  await c.has('check passes', dialog.getByText('Coaches, working hours, rooms, equipment and clashes all check out.'));
+  const lastCheck = checks[checks.length - 1];
+  c.ok('the check asked about the right class, time and coach', lastCheck && lastCheck.p_gym_id === GYM && lastCheck.p_class_type_id === TYPE && lastCheck.p_capacity === 12 && JSON.stringify(lastCheck.p_staff_ids) === JSON.stringify([COACH]) && new Date(lastCheck.p_ends_at).getTime() - new Date(lastCheck.p_starts_at).getTime() === 45 * 60000);
+
+  // A clash found by the database at save time is shown in full and nothing jumps
+  await dialog.getByLabel('Class name').fill('Clash class');
+  await dialog.getByRole('button', { name: 'Save class' }).click();
+  await c.has('clash reasons listed', dialog.getByText('Studio A is already booked at this time.'));
+  await c.has('second reason listed', dialog.getByText('A selected staff member is already assigned to another class at this time.'));
+  c.ok('form stays open on a clash', await dialog.isVisible());
+
+  // A good class saves in ONE call that carries everything
+  await dialog.getByLabel('Class name').fill('Saturday Spin');
+  await dialog.getByLabel('Reserved spaces', { exact: true }).fill('4');
+  await dialog.getByLabel('Release reserved spaces').selectOption('120');
   await dialog.getByLabel('Premium · £60.00').click();
   await dialog.getByRole('button', { name: 'Save class' }).click();
   c.ok('form closes after saving', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
-  const sessionWrite = saved.find((w) => w.table === 'class_sessions')?.body;
+  const made = saved.find((b) => b.p_name === 'Saturday Spin');
   const startsExpected = new Date(`${nextSaturday}T09:30:00`);
-  c.ok('class write', sessionWrite && sessionWrite.gym_id === GYM && sessionWrite.name === 'Saturday Hybrid' && sessionWrite.description === 'Bring water' && new Date(sessionWrite.starts_at).getTime() === startsExpected.getTime() && new Date(sessionWrite.ends_at).getTime() === startsExpected.getTime() + 45 * 60000 && sessionWrite.capacity === 10 && sessionWrite.reserved_capacity === 4 && sessionWrite.reserved_release_minutes_before === 120);
-  c.ok('reserved plan write', JSON.stringify(saved.find((w) => w.table === 'reserved')?.body) === JSON.stringify([{ session_id: 'new1', plan_id: 'pl1' }]));
-  c.ok('staff write: first ticked leads', JSON.stringify(saved.find((w) => w.table === 'staff')?.body) === JSON.stringify([{ session_id: 'new1', gym_id: GYM, user_id: ALEX, assignment_role: 'staff', is_lead: true }, { session_id: 'new1', gym_id: GYM, user_id: COACH, assignment_role: 'coach', is_lead: false }]));
+  c.ok('one save call carries the class, type, coach and reserved plan', made && made.p_gym_id === GYM && made.p_class_type_id === TYPE && made.p_description === 'Indoor cycling' && new Date(made.p_starts_at).getTime() === startsExpected.getTime() && new Date(made.p_ends_at).getTime() === startsExpected.getTime() + 45 * 60000 && made.p_capacity === 12 && made.p_reserved_capacity === 4 && made.p_reserved_release_minutes_before === 120 && JSON.stringify(made.p_staff_ids) === JSON.stringify([COACH]) && JSON.stringify(made.p_plan_ids) === JSON.stringify(['pl1']));
+  c.ok('no direct table writes any more', !writes.some((w) => /class_sessions|class_session_staff|class_session_reserved_plans/.test(w)));
   await c.has('timetable jumped to the new class week', page.getByRole('heading', { name: 'Next Week Mobility' }));
   c.ok('asked for the new class week', asked.some((b) => Math.abs(new Date(b.p_from).getTime() - (monday.getTime() + 7 * 86400000)) <= 3600000));
+
+  // A custom class: no class type, nothing to check against, still saved through the same call
+  await page.getByRole('button', { name: 'Add class' }).click();
+  await c.has('custom class explained', dialog.getByText('Custom class: no qualification, room or equipment checks are made.'));
+  await dialog.getByLabel('Class name').fill('Open workshop');
+  await dialog.getByLabel('Date', { exact: true }).fill(nextSaturday);
+  await dialog.getByRole('button', { name: 'Save class' }).click();
+  await dialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => undefined);
+  const custom = saved.find((b) => b.p_name === 'Open workshop');
+  c.ok('custom class saved with no class type', custom && custom.p_class_type_id === null && JSON.stringify(custom.p_staff_ids) === '[]');
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;
   await ctx.close();

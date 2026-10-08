@@ -35,3 +35,5 @@ select.ctl { width: 100%; }
 .check input:checked + .check-box { background: var(--hybrid-volt); border-color: var(--hybrid-volt); }
 .check input:checked + .check-box::after { content: ''; width: 6px; height: 11px; border: solid var(--hybrid-dark); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg) translate(-1px, -1px); }
 .check input:focus-visible + .check-box { outline: 2px solid var(--hybrid-pulse); outline-offset: 2px; }
+.check.disabled { cursor: not-allowed; opacity: .55; }
+.check.disabled input { cursor: not-allowed; }

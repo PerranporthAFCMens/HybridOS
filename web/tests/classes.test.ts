@@ -98,3 +98,63 @@ describe('validateClass', () => {
     expect(RELEASE_OPTIONS.map(([v]) => v)).toEqual(['', '1440', '720', '120', '60', '30']);
   });
 });
+
+import { STAFF_STATUS_TEXT, londonParts, requirementsText, staffStatus } from '../src/classes/calc';
+import type { SchedulingRules } from '../src/data/classes';
+
+describe('gym rules: who may teach, what a class needs', () => {
+  const rules: SchedulingRules = {
+    requirements: [
+      { classTypeId: 'spin', capabilityId: 'cap-spin', resourceId: null, quantity: 1 },
+      { classTypeId: 'spin', capabilityId: null, resourceId: 'studio', quantity: 1 },
+      { classTypeId: 'spin', capabilityId: null, resourceId: 'bike', quantity: 12 },
+      { classTypeId: 'yoga', capabilityId: null, resourceId: 'studio', quantity: 1 },
+    ],
+    capabilities: [{ id: 'cap-spin', name: 'Spin instructor' }],
+    resources: [{ id: 'studio', name: 'Studio A', type: 'room', capacity: 20 }, { id: 'bike', name: 'Spin bike', type: 'equipment', capacity: 12 }],
+    qualifications: [
+      { userId: 'ann', capabilityId: 'cap-spin', qualified: true, expiresOn: null },
+      { userId: 'bob', capabilityId: 'cap-spin', qualified: true, expiresOn: '2026-10-01' },
+      { userId: 'cat', capabilityId: 'cap-spin', qualified: false, expiresOn: null },
+    ],
+    hours: ['ann', 'bob', 'cat', 'dan'].map((userId) => ({ userId, weekday: 3, startTime: '09:00:00', endTime: '20:00:00', isWorking: true })),
+  };
+  // Wed 7 Oct 2026, BST: 17:30Z is 18:30 in the gym
+  const start = new Date('2026-10-07T17:30:00Z');
+  const end = new Date('2026-10-07T18:30:00Z');
+
+  it('reads the gym clock in UK time', () => {
+    expect(londonParts(start)).toEqual({ weekday: 3, date: '2026-10-07', time: '18:30:00' });
+    expect(londonParts(new Date('2026-01-04T23:30:00Z'))).toEqual({ weekday: 0, date: '2026-01-04', time: '23:30:00' });
+    // 23:30Z in summer is 00:30 the next day in the gym
+    expect(londonParts(new Date('2026-07-01T23:30:00Z'))).toEqual({ weekday: 4, date: '2026-07-02', time: '00:30:00' });
+  });
+  it('a qualified person working that evening is available', () => expect(staffStatus('ann', 'spin', start, end, rules)).toBe('ok'));
+  it('an expired qualification, or a withdrawn one, or none at all, is not qualified', () => {
+    expect(staffStatus('bob', 'spin', start, end, rules)).toBe('not-qualified');
+    expect(staffStatus('cat', 'spin', start, end, rules)).toBe('not-qualified');
+    expect(staffStatus('dan', 'spin', start, end, rules)).toBe('not-qualified');
+  });
+  it('a qualification is fine on its last day', () => {
+    const r = { ...rules, qualifications: [{ userId: 'bob', capabilityId: 'cap-spin', qualified: true, expiresOn: '2026-10-07' }] };
+    expect(staffStatus('bob', 'spin', start, end, r)).toBe('ok');
+  });
+  it('outside working hours: too late, wrong day, or not working', () => {
+    expect(staffStatus('ann', 'spin', new Date('2026-10-07T19:30:00Z'), new Date('2026-10-07T20:30:00Z'), rules)).toBe('outside-hours'); // 20:30 to 21:30
+    expect(staffStatus('ann', 'spin', new Date('2026-10-08T17:30:00Z'), new Date('2026-10-08T18:30:00Z'), rules)).toBe('outside-hours'); // Thursday
+    const off = { ...rules, hours: [{ userId: 'ann', weekday: 3, startTime: '09:00:00', endTime: '20:00:00', isWorking: false }] };
+    expect(staffStatus('ann', 'spin', start, end, off)).toBe('outside-hours');
+  });
+  it('a class type with no qualification asks nothing of anyone but still needs working hours; a custom class asks nothing', () => {
+    expect(staffStatus('dan', 'yoga', start, end, rules)).toBe('ok');
+    expect(staffStatus('nobody', null, start, end, rules)).toBe('ok');
+    expect(staffStatus('nobody', 'yoga', start, end, rules)).toBe('outside-hours');
+  });
+  it('says what a class type needs, in words', () => {
+    expect(requirementsText('spin', rules)).toBe('Qualification: Spin instructor · Needs: Studio A, 12 × Spin bike');
+    expect(requirementsText('yoga', rules)).toBe('Needs: Studio A');
+    expect(requirementsText('empty', rules)).toBe('This class type has no qualification, room or equipment requirements.');
+    expect(requirementsText(null, rules)).toContain('no qualification, room or equipment checks');
+    expect(STAFF_STATUS_TEXT['not-qualified']).toBe('Not qualified');
+  });
+});

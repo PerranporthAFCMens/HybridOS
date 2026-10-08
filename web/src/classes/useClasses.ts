@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createClassSession, listStaffOptions, listTimetable, type NewClass } from '../data/classes';
+import { checkSchedule, createClassSession, listClassTypes, listSchedulingRules, listStaffOptions, listTimetable, type NewClass, type ScheduleProposal } from '../data/classes';
 import { listPlans } from '../data/plans';
 import { addDays } from './calc';
 
@@ -19,6 +19,25 @@ export function useActivePlans(gymId: string) {
   return useQuery({
     queryKey: ['class-plans', gymId],
     queryFn: async () => (await listPlans(gymId)).filter((p) => p.isActive),
+  });
+}
+
+export function useClassTypes(gymId: string) {
+  return useQuery({ queryKey: ['class-types', gymId], queryFn: () => listClassTypes(gymId) });
+}
+
+export function useSchedulingRules(gymId: string) {
+  return useQuery({ queryKey: ['scheduling-rules', gymId], queryFn: () => listSchedulingRules(gymId) });
+}
+
+/** The database's live verdict on a proposed class. Only asked once there is a class type and a sensible time. */
+export function useScheduleCheck(gymId: string, proposal: ScheduleProposal | null) {
+  return useQuery({
+    queryKey: ['schedule-check', gymId, proposal],
+    queryFn: () => checkSchedule(gymId, proposal as ScheduleProposal),
+    enabled: !!proposal && !!proposal.classTypeId,
+    staleTime: 0,
+    gcTime: 0,
   });
 }
 
