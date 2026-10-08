@@ -206,53 +206,57 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('account code remembered', (await page.getByLabel('Sales account code').inputValue()) === '200' && (await page.getByLabel('Tax type').inputValue()) === 'No VAT' && (await page.getByLabel('VAT included in payments (%)').inputValue()) === '20');
 
   await page.getByRole('tab', { name: 'Report library', exact: true }).click();
-  await c.has('library opens', page.getByLabel('Search reports'));
-  c.ok('24 reports', (await page.locator('.lib-card').count()) === 24);
-  c.ok('five groups', (await page.locator('.lib-group').count()) === 5);
-  for (const g of ['Membership & growth', 'Lifecycle & retention', 'Classes & attendance', 'Revenue & payments', 'Workouts & PT']) await c.has(`group ${g}`, page.getByRole('region', { name: g }));
+  const pick = page.getByLabel('Report', { exact: true });
+  const paper = page.getByLabel('What you will download');
+  await c.has('library opens with a report to choose', pick);
+  c.ok('24 reports in the list, in five groups', (await pick.locator('option').count()) === 24 && (await pick.locator('optgroup').count()) === 5);
+  c.ok('the groups are named', (await pick.locator('optgroup').evaluateAll((gs) => gs.map((g) => g.label))).join('|') === 'Membership & growth|Lifecycle & retention|Classes & attendance|Revenue & payments|Workouts & PT');
+  c.ok('the first report is already on the paper', (await paper.getByRole('heading', { name: 'Membership register' }).count()) === 1);
+  await c.has('the paper says how many rows', paper.getByText('3 rows'));
+  c.ok('names and plans are on the paper', (await paper.locator('tbody').textContent()).includes('Alex Joiner') && (await paper.locator('tbody').textContent()).includes('Annual'));
+  c.ok('the gym and period are on the paper', (await paper.textContent()).includes('Puffin Performance') && (await paper.textContent()).includes('Last 30 days'));
   c.ok('the library asked for payments once', paymentRequests.length >= 1);
   c.ok('classes were limited to the chosen range', sessionRequests.some((u) => decodeURIComponent(u).includes('starts_at=gte.')));
   c.ok('layout (library open)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/reports-library-${name}.png`, fullPage: true });
 
-  // Search
-  await page.getByLabel('Search reports').fill('no-show');
-  await c.has('search finds no-shows', page.getByRole('heading', { name: 'No-shows', level: 5 }));
-  c.ok('search narrows the list', (await page.locator('.lib-card').count()) < 24 && (await page.locator('.lib-card').count()) >= 1);
-  await page.getByLabel('Search reports').fill('zzzzzz');
-  await c.has('search with no match says so', page.getByText('No report matches that search.'));
-  await page.getByLabel('Search reports').fill('');
-  c.ok('clearing shows all 24', (await page.locator('.lib-card').count()) === 24);
-
-  // View a report
-  await page.getByRole('button', { name: 'View Membership register' }).click();
-  await c.has('report opens', dialog.getByRole('heading', { name: 'Membership register' }));
-  await c.has('row count', dialog.getByText('3 rows'));
-  c.ok('names and plans in the rows', (await dialog.locator('tbody').textContent()).includes('Alex Joiner') && (await dialog.locator('tbody').textContent()).includes('Annual'));
-  c.ok('layout (report open)', (await page.evaluate(layoutProblems)).length === 0);
-  await page.keyboard.press('Escape');
-  c.ok('Escape closes it', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
-
-  // Preview limit
-  await page.getByRole('button', { name: 'View Payment ledger' }).click();
-  await c.has('ledger opens', dialog.getByRole('heading', { name: 'Payment ledger' }));
-  await c.has('preview note', dialog.getByText('Showing the first 100 of 130 rows. The downloads include every row.'));
-  c.ok('100 rows on screen', (await dialog.locator('tbody tr').count()) === 100);
-  const full = await saved(page, () => dialog.getByRole('button', { name: 'CSV' }).click());
+  // Choose a report and a format; the sheet and the file name follow
+  await pick.selectOption({ label: 'Payment ledger' });
+  await c.has('the paper changes to the ledger', paper.getByRole('heading', { name: 'Payment ledger' }));
+  await c.has('the preview note', paper.getByText('Showing the first 25 of 130 rows. The download has every row.'));
+  c.ok('25 rows on the paper', (await paper.locator('tbody tr').count()) === 25);
+  c.ok('Excel is chosen to start with', (await page.getByRole('radio', { name: /Excel/ }).getAttribute('aria-checked')) === 'true');
+  await page.getByRole('radio', { name: /CSV/ }).click();
+  c.ok('the file name follows the report and the format', /payment-ledger-\d{4}-\d{2}-\d{2}\.csv/.test(await page.locator('.paper-file span').textContent()));
+  c.ok('layout (paper with a long report)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/reports-library-paper-${name}.png`, fullPage: true });
+  const full = await saved(page, () => page.getByRole('button', { name: 'Download CSV' }).click());
   const fullText = full.bytes.toString('utf8');
-  c.ok('the CSV has all 130 rows', fullText.trim().split('\r\n').length === 131);
+  c.ok('the CSV has all 130 rows, not just the 25 on the paper', fullText.trim().split('\r\n').length === 131);
   c.ok('CSV file name', /^puffin-performance-payment-ledger-\d{4}-\d{2}-\d{2}\.csv$/.test(full.name));
-  await dialog.getByRole('button', { name: 'Close' }).click();
+  await c.has('downloaded message', page.getByText('Downloaded 130 rows as CSV.'));
 
-  // A download straight from the card, with pence and formula protection
-  const failed = await saved(page, () => page.locator('.lib-card', { hasText: 'Failed payments' }).getByRole('button', { name: 'CSV' }).click());
+  // The other formats
+  await page.getByRole('radio', { name: /Excel/ }).click();
+  const xl = await saved(page, () => page.getByRole('button', { name: 'Download Excel' }).click());
+  c.ok('Excel file is a real workbook', xl.name.endsWith('.xlsx') && xl.bytes.subarray(0, 2).toString() === 'PK');
+  await page.getByRole('radio', { name: /PDF/ }).click();
+  const pdf = await saved(page, () => page.getByRole('button', { name: 'Download PDF' }).click());
+  c.ok('PDF file is a real PDF', pdf.name.endsWith('.pdf') && pdf.bytes.subarray(0, 4).toString() === '%PDF');
+
+  // Pence and formula protection
+  await pick.selectOption({ label: 'Failed payments' });
+  await page.getByRole('radio', { name: /CSV/ }).click();
+  const failed = await saved(page, () => page.getByRole('button', { name: 'Download CSV' }).click());
   const failedText = failed.bytes.toString('utf8');
   c.ok('failed payments CSV: header, pence, protected name, reason', failedText.startsWith('﻿Member,Charge date,Amount,State,Failure\r\n') && failedText.includes('£59.99') && failedText.includes(`"'=HYPERLINK(""http://evil.example"")"`) && failedText.includes('insufficient_funds'));
 
-  // Reports with no rows say so
-  await page.getByRole('button', { name: 'View PT appointments' }).click();
-  await c.has('empty report says so', dialog.getByText('Nothing to show for this.'));
-  await dialog.getByRole('button', { name: 'Close' }).click();
+  // A report with nothing in it says so and offers no download
+  await pick.selectOption({ label: 'PT appointments' });
+  await c.has('empty report says so', paper.getByText('Nothing to show for this.'));
+  c.ok('the download button is switched off', await page.getByRole('button', { name: /^Download/ }).isDisabled());
+  await c.has('and says why', page.getByText('There is nothing in this report for the period, so there is nothing to download.'));
+  c.ok('layout (empty paper)', (await page.evaluate(layoutProblems)).length === 0);
 
   c.ok(`read-only: no writes (${writes.join(', ') || 'none'})`, writes.length === 0);
   c.ok('no page errors', errors.length === 0);
