@@ -78,7 +78,7 @@
       const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
       const card=document.createElement('div');
       card.className='door-access-card';
-      card.innerHTML='<div class="door-access-head"><span class="door-key-icon" aria-hidden="true">🔑</span><div><small>'+esc(settings.member_label||'Door access')+'</small><strong>Gym PIN</strong></div></div><button type="button" class="door-code-reveal" aria-expanded="false">Tap to reveal</button><div class="door-code-value" hidden>'+esc(settings.access_code)+'</div><div class="door-code-note">'+esc(settings.member_note||'Set by your gym.')+'</div>';
+      card.innerHTML='<div class="door-access-head"><span class="door-key-icon" aria-hidden="true"><i class="hi hi-key" aria-hidden="true"></i></span><div><small>'+esc(settings.member_label||'Door access')+'</small><strong>Gym PIN</strong></div></div><button type="button" class="door-code-reveal" aria-expanded="false">Tap to reveal</button><div class="door-code-value" hidden>'+esc(settings.access_code)+'</div><div class="door-code-note">'+esc(settings.member_note||'Set by your gym.')+'</div>';
       gym.insertAdjacentElement('afterend',card);
       const reveal=card.querySelector('.door-code-reveal');
       const value=card.querySelector('.door-code-value');

@@ -7,7 +7,7 @@
   var recoveryShown=false;
   var navMask=null;
   var mobileViewport=window.matchMedia('(max-width:900px)');
-  var mobileChromeColor='#f5f7fb';
+  var mobileChromeColor='#0B1020';
 
   function syncMobileBrowserChrome(){
     if(!mobileViewport.matches)return;
@@ -71,7 +71,7 @@
     if(recoveryShown||!loadingStillVisible())return;
     recoveryShown=true;
     var loading=byId('loading');if(!loading)return;
-    loading.innerHTML='<div style="max-width:560px;margin:40px auto;padding:22px;border:1px solid #e7ebf2;border-radius:20px;background:#fff;box-shadow:0 14px 34px rgba(16,24,40,.08);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:#101828"><div style="font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494">HybridOne</div><h2 style="margin:7px 0 8px;font-size:24px">This page did not finish loading</h2><p style="margin:0;color:#667085;line-height:1.5">Please try again. Your saved data has not been changed.</p><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:16px"><button id="hybridRetryBtn" style="border:0;border-radius:12px;padding:10px 14px;background:#0b1020;color:#fff;font:inherit;font-weight:800">Try again</button><a href="./index.html" style="border:1px solid #e7ebf2;border-radius:12px;padding:10px 14px;background:#fff;color:#101828;text-decoration:none;font-weight:800">Back to HybridOne</a></div><details style="margin-top:14px;color:#98a2b3;font-size:12px"><summary>Technical detail</summary><div style="margin-top:7px;overflow-wrap:anywhere">'+escapeHtml(reason||'Startup timed out')+'</div></details></div>';
+    loading.innerHTML='<div style="max-width:560px;margin:40px auto;padding:22px;border:1px solid var(--hybrid-line);border-radius:16px;background:var(--hybrid-panel);box-shadow:none;font-family:var(--hybrid-font);color:var(--hybrid-ink)"><div style="font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--hybrid-muted)">HybridOne</div><h2 style="margin:7px 0 8px;font-size:24px">This page did not finish loading</h2><p style="margin:0;color:var(--hybrid-muted);line-height:1.5">Please try again. Your saved data has not been changed.</p><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:16px"><button id="hybridRetryBtn" style="border:0;border-radius:10px;padding:10px 14px;background:#0b1020;color:#fff;font:inherit;font-weight:500;border-radius:10px;padding:10px 14px;background:var(--hybrid-panel);color:var(--hybrid-ink);text-decoration:none;font-weight:500;color:var(--hybrid-muted);font-size:12px"><summary>Technical detail</summary><div style="margin-top:7px;overflow-wrap:anywhere">'+escapeHtml(reason||'Startup timed out')+'</div></details></div>';
     var b=byId('hybridRetryBtn');if(b)b.onclick=retry;
   }
   function markReady(){

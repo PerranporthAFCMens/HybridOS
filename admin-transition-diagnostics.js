@@ -44,7 +44,7 @@
       box.style.cssText='position:fixed;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:2147483647;width:min(290px,calc(100vw - 20px));padding:12px 13px;border-radius:14px;background:rgba(11,16,32,.94);color:#fff;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:0 12px 36px rgba(0,0,0,.28);pointer-events:none';
       document.body.appendChild(box);
     }
-    box.innerHTML='<div style="font-weight:900;margin-bottom:7px">ADMIN TRANSITION DIAG</div>'+
+    box.innerHTML='<div style="font-weight:600;margin-bottom:7px">ADMIN TRANSITION DIAG</div>'+
       '<div style="opacity:.7;margin-bottom:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+location.pathname.split('/').pop()+(location.hash||'')+'</div>'+
       row('tap → navigation',metrics.tapToNav)+
       row('navigation start',metrics.navStart)+

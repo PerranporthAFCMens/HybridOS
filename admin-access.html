@@ -4,14 +4,14 @@
 <meta name="theme-color" content="#0b1020">
 <title>Admin access · HybridOne</title>
 <style>
-:root{--bg:#f5f7fb;--panel:#fff;--ink:#101828;--muted:#667085;--line:#e7ebf2;--dark:#0b1020;--good:#067647;--warn:#b54708;--bad:#b42318;--shadow:0 14px 34px rgba(16,24,40,.08)}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
-button,input,select{font:inherit}.hidden{display:none!important}.shell{min-height:100vh;display:grid;grid-template-columns:255px 1fr}.side{background:var(--dark);color:#fff;padding:24px 18px}.brand{font-size:18px;font-weight:900;letter-spacing:.08em}.gym{padding:13px;border-radius:16px;background:rgba(255,255,255,.07);margin:22px 0}.gym small{color:#98a2b3}.nav{display:grid;gap:6px}.main{padding:28px 30px 70px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:20px}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#7a8494}.top h1{margin:4px 0;font-size:32px}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(0,1.1fr);gap:16px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}.field{margin:12px 0}.field label{display:block;font-size:13px;font-weight:800;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:1px solid #d0d5dd;border-radius:12px;background:#fff}.btn{border:0;border-radius:12px;padding:10px 13px;font-weight:850;cursor:pointer}.primary{background:var(--dark);color:#fff}.secondary{background:#fff;border:1px solid var(--line);color:var(--ink)}.danger{background:#fff1f0;color:var(--bad);border:1px solid #fecdca}.success{background:#ecfdf3;color:var(--good);border:1px solid #abefc6}.btn:disabled{opacity:.5;cursor:not-allowed}.status{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}.status.active,.status.approved{background:#ecfdf3;color:var(--good)}.status.pending,.status.claimed,.status.open,.status.awaiting_approval{background:#fffaeb;color:var(--warn)}.status.revoked,.status.expired{background:#fef3f2;color:var(--bad)}.person,.invite{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:14px 0;border-top:1px solid var(--line)}.person:first-child,.invite:first-child{border-top:0}.person-main{min-width:0}.person-name{font-weight:900}.person-email{font-size:12px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}.actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.notice{padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid var(--line);font-size:13px;line-height:1.45}.generated{margin-top:12px;padding:12px;border-radius:14px;background:#f0fdf9;border:1px solid #a6f4c5}.generated input{margin-top:8px;width:100%;padding:10px;border:1px solid #a6f4c5;border-radius:10px;background:#fff}.msg{min-height:20px;margin-top:10px;font-size:13px}.good{color:var(--good)}.bad{color:var(--bad)}@media(max-width:900px){.shell{display:block}.side{display:none}.main{padding:18px 14px 50px}.grid{grid-template-columns:1fr}.top h1{font-size:28px}.person,.invite{display:grid}.actions{justify-content:flex-start}}
+:root{--bg:var(--hybrid-bg);--panel:var(--hybrid-panel);--ink:var(--hybrid-ink);--muted:var(--hybrid-muted);--line:var(--hybrid-line);--dark:var(--hybrid-dark);--good:var(--hybrid-volt);--warn:var(--hybrid-ember);--bad:var(--hybrid-ember);--shadow:none}
+*{box-sizing:border-box}body{margin:0;font-family:var(--hybrid-font);background:var(--bg);color:var(--ink)}
+button,input,select{font:inherit}.hidden{display:none!important}.shell{min-height:100vh;display:grid;grid-template-columns:255px 1fr}.side{background:var(--dark);color:#fff;padding:24px 18px}.brand{font-size:18px;font-weight:600;letter-spacing:.08em}.gym{padding:13px;border-radius:10px;background:rgba(255,255,255,.07);margin:22px 0}.gym small{color:var(--hybrid-muted)}.nav{display:grid;gap:6px}.main{padding:28px 30px 70px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:20px}.eyebrow{font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--hybrid-muted);font-family:var(--hybrid-mono)}.top h1{margin:4px 0;font-size:32px}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(0,1.1fr);gap:16px}.card{background:var(--hybrid-panel);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}.field{margin:12px 0}.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:1px solid var(--hybrid-line-strong);border-radius:10px;background:var(--hybrid-panel)}.btn{border:0;border-radius:10px;padding:10px 13px;font-weight:600;cursor:pointer}.primary{background:var(--dark);color:#fff}.secondary{background:var(--hybrid-panel);border:1px solid var(--line);color:var(--ink)}.danger{background:rgba(255,122,69,.12);color:var(--bad);border:1px solid rgba(255,122,69,.45)}.success{background:rgba(198,241,53,.12);color:var(--good);border:1px solid rgba(198,241,53,.4)}.btn:disabled{opacity:.5;cursor:not-allowed}.status{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;font-family:var(--hybrid-mono)}.status.active,.status.approved{background:rgba(198,241,53,.12);color:var(--good)}.status.pending,.status.claimed,.status.open,.status.awaiting_approval{background:rgba(255,122,69,.12);color:var(--warn)}.status.revoked,.status.expired{background:rgba(255,122,69,.12);color:var(--bad)}.person,.invite{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:14px 0;border-top:1px solid var(--line)}.person:first-child,.invite:first-child{border-top:0}.person-main{min-width:0}.person-name{font-weight:600}.person-email{font-size:12px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}.actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.notice{padding:12px 14px;border-radius:10px;background:var(--hybrid-bg);border:1px solid var(--line);font-size:13px;line-height:1.45}.generated{margin-top:12px;padding:12px;border-radius:10px;background:rgba(198,241,53,.12);border:1px solid rgba(198,241,53,.4)}.generated input{margin-top:8px;width:100%;padding:10px;border:1px solid rgba(198,241,53,.4);border-radius:10px;background:var(--hybrid-panel)}.msg{min-height:20px;margin-top:10px;font-size:13px}.good{color:var(--good)}.bad{color:var(--bad)}@media(max-width:900px){.shell{display:block}.side{display:none}.main{padding:18px 14px 50px}.grid{grid-template-columns:1fr}.top h1{font-size:28px}.person,.invite{display:grid}.actions{justify-content:flex-start}}
 </style>
-</head><body>
+<link rel="icon" href="./assets/brand/icons/favicon.svg" type="image/svg+xml"><link rel="icon" href="./assets/brand/icons/favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="./assets/brand/icons/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="./assets/brand/icons/apple-touch-icon.png"></head><body>
 <div id="loading" style="padding:30px">Loading admin access…</div>
 <div id="app" class="shell hidden">
-  <aside class="side"><div class="brand">Hybrid<b>One</b></div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:800;margin-top:4px"></div></div><nav class="nav"></nav></aside>
+  <aside class="side"><div class="brand"><img class="hybrid-logo-img" src="./assets/brand/logo/svg/hybridone-logo-on-dark.svg" alt="HybridOne" height="34"></div><div class="gym"><small>Current gym</small><div id="gymName" style="font-weight:600;margin-top:4px"></div></div><nav class="nav"></nav></aside>
   <main class="main">
     <div class="top"><div><div class="eyebrow">Owner controls</div><h1>Admin access</h1><div class="muted">Invite and manage Admins and equal Owners. Owner-level changes require explicit Owner approval.</div></div><button id="signOutBtn" class="btn secondary">Sign out</button></div>
     <div id="ownerOnly" class="card hidden"><h2 style="margin-top:0">Owner-only area</h2><p class="muted">Only an active Owner can manage Admin and Owner access.</p></div>
@@ -21,6 +21,7 @@ button,input,select{font:inherit}.hidden{display:none!important}.shell{min-heigh
         <div class="eyebrow">New invite</div><h2 style="margin:4px 0 6px">Invite access</h2>
         <div id="inviteContext" class="notice" style="margin-bottom:10px"><b>Inviting to:</b> <span id="inviteGymName">—</span><br><span class="muted">Signed in as <span id="signedInAccount">—</span></span></div>
         <div class="notice">We’ll email the invitation directly. <b>Admin</b> access activates when they accept. <b>Owner</b> invitations are emailed only after the required current Owner approvals are recorded.</div>
+        <div class="field"><label for="inviteName">Their name</label><input id="inviteName" type="text" autocomplete="off" maxlength="120" placeholder="e.g. Josh Smith"></div>
         <div class="field"><label for="inviteEmail">Email address</label><input id="inviteEmail" type="email" autocomplete="email" placeholder="name@example.com"></div>
         <div class="field"><label for="inviteRole">Access level</label><select id="inviteRole"><option value="admin" selected>Admin</option><option value="owner">Owner · equal ownership</option></select></div>
         <div class="field"><label for="inviteDays">Invitation expires</label><select id="inviteDays"><option value="3">3 days</option><option value="7" selected>7 days</option><option value="14">14 days</option><option value="30">30 days</option></select></div>
@@ -74,7 +75,7 @@ function showToast(title,message,type='success'){
   toast.setAttribute('aria-live','polite');
   const success=type==='success';
   toast.style.cssText='position:fixed;right:18px;top:18px;z-index:20000;width:min(390px,calc(100vw - 36px));background:#0b1020;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:15px 16px;box-shadow:0 18px 45px rgba(16,24,40,.28);display:flex;gap:12px;align-items:flex-start;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif';
-  toast.innerHTML='<div style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:'+(success?'#D1FADF':'#FEE4E2')+';color:'+(success?'#027A48':'#B42318')+';font-weight:900;flex:0 0 auto">'+(success?'✓':'!')+'</div><div style="min-width:0;flex:1"><div style="font-weight:900;font-size:14px;margin-bottom:3px">'+esc(title)+'</div><div style="font-size:13px;line-height:1.45;color:#D0D5DD;word-break:break-word">'+esc(message)+'</div></div><button type="button" aria-label="Close" style="border:0;background:transparent;color:#fff;font-size:20px;line-height:1;cursor:pointer;padding:0 0 0 6px">×</button>';
+  toast.innerHTML='<div style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:'+(success?'rgba(198,241,53,.12)':'rgba(255,122,69,.12)')+';color:'+(success?'var(--hybrid-volt)':'var(--hybrid-ember)')+';font-weight:600;flex:0 0 auto">'+(success?'<i class="hi hi-check" aria-hidden="true"></i>':'!')+'</div><div style="min-width:0;flex:1"><div style="font-weight:600;font-size:14px;margin-bottom:3px">'+esc(title)+'</div><div style="font-size:13px;line-height:1.45;color:var(--hybrid-muted);word-break:break-word">'+esc(message)+'</div></div><button type="button" aria-label="Close" style="border:0;background:transparent;color:#fff;font-size:20px;line-height:1;cursor:pointer;padding:0 0 0 6px"><i class="hi hi-x" aria-hidden="true"></i></button>';
   toast.querySelector('button').onclick=()=>toast.remove();
   document.body.appendChild(toast);
   setTimeout(()=>toast.remove(),5000);
@@ -115,7 +116,7 @@ async function load(){
 async function refresh(){
   const [{data:members,error:memberErr},{data:inviteRows,error:inviteErr},{data:actionRows,error:actionErr}]=await Promise.all([
     supabase.from('gym_members').select('user_id,role,access_status,is_active,joined_at').eq('gym_id',gym.id).eq('is_active',true).in('role',['owner','admin']).order('joined_at'),
-    supabase.from('gym_admin_invites').select('id,email,status,invite_role,claimed_by,created_at,expires_at,claimed_at,approved_at,revoked_at,email_sent_at,delivery_method').eq('gym_id',gym.id).order('created_at',{ascending:false}),
+    supabase.from('gym_admin_invites').select('id,email,invitee_name,status,invite_role,claimed_by,created_at,expires_at,claimed_at,approved_at,revoked_at,email_sent_at,delivery_method').eq('gym_id',gym.id).order('created_at',{ascending:false}),
     supabase.from('gym_ownership_actions').select('id,action_type,target_user_id,created_by,status,created_at,expires_at,executed_at').eq('gym_id',gym.id).eq('status','pending').order('created_at',{ascending:false})
   ]);
   if(memberErr)throw memberErr;if(inviteErr)throw inviteErr;if(actionErr)throw actionErr;
@@ -179,7 +180,7 @@ function renderInvites(){
     if(i.status==='open'&&i.delivery_method!=='link')buttons+='<button class="btn success" data-send-email="'+i.id+'">'+(i.email_sent_at?'Resend email':'Send / retry email')+'</button>';
     if(['awaiting_approval','open','claimed'].includes(i.status))buttons+='<button class="btn danger" data-revoke="'+i.id+'">Revoke invite</button>';
     if(i.status!=='approved')buttons+='<button class="btn secondary" data-delete-invite="'+i.id+'">Delete invite</button>';
-    return '<div class="invite"><div class="person-main"><div class="person-name">'+esc(i.email)+' <span class="status '+esc(status)+'">'+esc(status.replaceAll('_',' '))+'</span> <span class="status active">'+esc(i.invite_role||'admin')+'</span></div><div class="person-email">Created '+esc(fmt(i.created_at))+' · expires '+esc(fmt(i.expires_at))+esc(approvalText)+esc(sentText)+esc(acceptedText)+'</div></div><div class="actions">'+buttons+'</div></div>';
+    return '<div class="invite"><div class="person-main"><div class="person-name">'+esc(i.invitee_name||i.email)+' <span class="status '+esc(status)+'">'+esc(status.replaceAll('_',' '))+'</span> <span class="status active">'+esc(i.invite_role||'admin')+'</span></div><div class="person-email">'+(i.invitee_name?esc(i.email)+' · ':'')+'Created '+esc(fmt(i.created_at))+' · expires '+esc(fmt(i.expires_at))+esc(approvalText)+esc(sentText)+esc(acceptedText)+'</div></div><div class="actions">'+buttons+'</div></div>';
   }).join('')||'<div class="muted">No access invitations yet.</div>';
   document.querySelectorAll('[data-approve-owner-invite]').forEach(b=>b.onclick=()=>approveOwnerInvite(b.dataset.approveOwnerInvite,b.dataset.delivery,b));
   document.querySelectorAll('[data-send-email]').forEach(b=>b.onclick=()=>sendInviteEmail(b.dataset.sendEmail,b));
@@ -187,7 +188,7 @@ function renderInvites(){
   document.querySelectorAll('[data-delete-invite]').forEach(b=>b.onclick=()=>deleteInvite(b.dataset.deleteInvite,b));
 }
 $('createInvite').onclick=async()=>{
-  const email=$('inviteEmail').value.trim();if(!email)return setMsg('Enter the email address first.');
+  const email=$('inviteEmail').value.trim();if(!$('inviteName').value.trim())return setMsg('Enter their name first.');if(!email)return setMsg('Enter the email address first.');
   $('createInvite').disabled=true;setMsg('');
   try{
     const requestedRole=$('inviteRole').value;
@@ -195,10 +196,11 @@ $('createInvite').onclick=async()=>{
       target_gym_id:gym.id,
       invite_email:email,
       requested_role:requestedRole,
-      expires_in_days:Number($('inviteDays').value)
+      expires_in_days:Number($('inviteDays').value),
+      invitee_name:$('inviteName').value.trim()||null
     });
     if(error)throw error;const row=data?.[0];if(!row)throw new Error('Invitation was not created.');
-    $('inviteEmail').value='';
+    $('inviteEmail').value='';$('inviteName').value='';
     if(row.status==='open'){
       await sendInviteEmail(row.invite_id,null,true);
       setMsg((requestedRole==='owner'?'Owner':'Admin')+' invitation emailed to '+email+'.',true);
@@ -220,7 +222,7 @@ function showGeneratedLink(token,email,inviteRole){
   $('generatedLink').value=u.toString();$('generated').classList.remove('hidden');
 }
 $('createLinkInvite').onclick=async()=>{
-  const email=$('inviteEmail').value.trim();if(!email)return setMsg('Enter the email address first.');
+  const email=$('inviteEmail').value.trim();if(!$('inviteName').value.trim())return setMsg('Enter their name first.');if(!email)return setMsg('Enter the email address first.');
   $('createLinkInvite').disabled=true;setMsg('');$('generated').classList.add('hidden');
   try{
     const requestedRole=$('inviteRole').value;
@@ -228,7 +230,8 @@ $('createLinkInvite').onclick=async()=>{
       target_gym_id:gym.id,
       invite_email:email,
       requested_role:requestedRole,
-      expires_in_days:Number($('inviteDays').value)
+      expires_in_days:Number($('inviteDays').value),
+      invitee_name:$('inviteName').value.trim()||null
     });
     if(error)throw error;const row=data?.[0];if(!row)throw new Error('Secure invite was not created.');
     if(row.status==='open'&&row.token){
@@ -237,7 +240,7 @@ $('createLinkInvite').onclick=async()=>{
     }else{
       setMsg('Owner invite created. '+row.owner_approvals+' of '+row.owner_approvals_required+' Owner approvals recorded. The secure link will be available after final approval.',true);
     }
-    $('inviteEmail').value='';await refresh();
+    $('inviteEmail').value='';$('inviteName').value='';await refresh();
   }catch(e){setMsg(e.message||'Could not create secure invite link.')}finally{$('createLinkInvite').disabled=false}
 };
 $('copyInvite').onclick=async()=>{try{await navigator.clipboard.writeText($('generatedLink').value);$('copyInvite').textContent='Copied';setTimeout(()=>$('copyInvite').textContent='Copy link',1200)}catch(_e){$('generatedLink').select();document.execCommand('copy')}};

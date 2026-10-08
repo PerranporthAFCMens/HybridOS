@@ -6,15 +6,15 @@
 <meta name="theme-color" content="#0b1020">
 <title>Signing out · HybridOne</title>
 <style>
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f5f7fb;color:#101828;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-.card{width:min(420px,calc(100% - 32px));background:#fff;border:1px solid #e7ebf2;border-radius:22px;padding:26px;box-shadow:0 14px 34px rgba(16,24,40,.08);text-align:center}
-.brand{font-size:18px;font-weight:900;letter-spacing:.09em;margin-bottom:18px}
-.muted{color:#667085;line-height:1.5}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--hybrid-bg);color:var(--hybrid-ink);font-family:var(--hybrid-font)}
+.card{width:min(420px,calc(100% - 32px));background:var(--hybrid-panel);border:1px solid var(--hybrid-line);border-radius:16px;padding:26px;box-shadow:none;text-align:center}
+.brand{font-size:18px;font-weight:600;letter-spacing:.09em;margin-bottom:18px}
+.muted{color:var(--hybrid-muted);line-height:1.5}
 </style>
-</head>
+<link rel="icon" href="./assets/brand/icons/favicon.svg" type="image/svg+xml"><link rel="icon" href="./assets/brand/icons/favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="./assets/brand/icons/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="./assets/brand/icons/apple-touch-icon.png"></head>
 <body>
 <div class="card">
-  <div class="brand">HybridOne</div>
+  <div class="brand"><img class="hybrid-logo-img" src="./assets/brand/logo/svg/hybridone-logo-on-dark.svg" alt="HybridOne" height="34"></div>
   <h1 style="font-size:26px;margin:0 0 8px">Signing you out…</h1>
   <div id="status" class="muted">Ending this HybridOne session.</div>
 </div>

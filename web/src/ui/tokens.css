@@ -1,0 +1,17 @@
+/* Shared brand tokens live in ../assets/brand/brand.css (the --hybrid-* variables and the Geist fonts),
+   loaded by index.html. This file only adds what the new app needs on top, so a redesign stays a
+   one-file change. */
+:root {
+  --sidebar: 254px;
+  --page-x: 30px;
+}
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100dvh; margin: 0; }
+body {
+  background: var(--hybrid-bg);
+  color: var(--hybrid-text);
+  font-family: var(--hybrid-font);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { font-weight: 550; letter-spacing: -0.02em; }
+button { font: inherit; }

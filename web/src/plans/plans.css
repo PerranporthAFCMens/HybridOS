@@ -1,0 +1,9 @@
+.plans-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.plan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+.plan-grid > * { min-width: 0; }
+.plan.inactive { opacity: .7; }
+.plan-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.plan-head h3 { margin: 10px 0 0; font-size: 18px; overflow-wrap: anywhere; }
+.plan-price { margin: 10px 0 2px; font-size: 24px; font-weight: 600; color: var(--hybrid-ink); }
+.plan-price .muted { font-size: 13px; font-weight: 400; }
+.plan-text { margin-top: 8px; overflow-wrap: anywhere; }

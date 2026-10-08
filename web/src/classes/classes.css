@@ -1,0 +1,63 @@
+.week-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+.weekbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.week-title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.week-title strong { font-size: 18px; color: var(--hybrid-ink); }
+.calendar { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 10px; align-items: start; }
+.day { min-width: 0; background: var(--hybrid-panel); border: 1px solid var(--hybrid-line); border-radius: 16px; padding: 12px; }
+.day.today { border-color: rgba(198, 241, 53, .4); }
+.dayhead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.dayhead b { font-size: 13px; color: var(--hybrid-ink); }
+.datebubble { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--hybrid-bg); font-weight: 600; font-size: 12px; }
+.today .datebubble { background: rgba(198, 241, 53, .12); color: var(--hybrid-volt); }
+.session { border: 1px solid var(--hybrid-line); border-radius: 10px; padding: 11px; margin-top: 9px; background: var(--hybrid-panel); min-width: 0; overflow-wrap: anywhere; }
+.session.cancelled { opacity: .55; }
+.session .time { font-size: 12px; font-weight: 600; color: var(--hybrid-ink); }
+.session h3 { font-size: 15px; margin: 5px 0; color: var(--hybrid-ink); }
+.session .meta { font-size: 12px; color: var(--hybrid-muted); line-height: 1.45; margin-top: 3px; }
+.session .tag { margin-top: 8px; font-size: 11px; font-weight: 600; padding: 4px 7px; }
+.check-group { border: 0; margin: 14px 0; padding: 0; min-width: 0; }
+.check-group legend { font-size: 12px; font-weight: 600; margin-bottom: 4px; padding: 0; }
+.staff-pick { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+.staff-pick .check { flex: 1 1 auto; min-width: 0; }
+.staff-why { font-size: 11px; color: var(--hybrid-ember); white-space: nowrap; }
+.schedule-check { margin: 12px 0; padding: 12px 13px; border-radius: 10px; background: var(--hybrid-bg); border: 1px solid var(--hybrid-line); font-size: 13px; color: var(--hybrid-muted); }
+.schedule-check.good { background: rgba(198, 241, 53, .12); border-color: rgba(198, 241, 53, .4); color: var(--hybrid-volt); }
+.schedule-check.bad { background: rgba(255, 122, 69, .12); border-color: rgba(255, 122, 69, .45); color: var(--hybrid-ember); }
+.schedule-check ul, .assign-msg ul { margin: 7px 0 0; padding-left: 18px; }
+.weeks-panel { border: 1px solid var(--hybrid-line); border-radius: 10px; padding: 8px 12px 10px; max-height: 320px; overflow-y: auto; }
+.week-row { border-top: 1px solid var(--hybrid-line); padding: 2px 0; }
+.week-row:first-of-type { border-top: 0; }
+.week-row.bad .check { opacity: .8; }
+.week-note { display: block; font-size: 12px; color: var(--hybrid-ember); padding: 0 0 8px 32px; }
+.week-note.muted { color: var(--hybrid-muted); }
+.override-panel { border: 1px solid rgba(255, 122, 69, .45); border-radius: 10px; padding: 10px 12px 12px; }
+.view-switch { display: flex; gap: 6px; }
+.cal-scroll { overflow-x: auto; border: 1px solid var(--hybrid-line); border-radius: 16px; background: var(--hybrid-panel); max-height: 70vh; overflow-y: auto; }
+.cal-grid { display: grid; grid-template-columns: 52px repeat(var(--cols), minmax(0, 1fr)); min-width: calc(52px + var(--cols) * 128px); }
+.cal-grid.single { min-width: 0; }
+.cal-corner, .cal-dayhead { position: sticky; top: 0; z-index: 3; background: var(--hybrid-panel); border-bottom: 1px solid var(--hybrid-line); }
+.cal-dayhead { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px 4px; font-size: 13px; color: var(--hybrid-ink); }
+.cal-dayhead.today span { background: rgba(198, 241, 53, .12); color: var(--hybrid-volt); border-radius: 999px; padding: 2px 9px; }
+.cal-hours { display: flex; flex-direction: column; }
+.cal-hour { font-size: 11px; color: var(--hybrid-muted); padding: 4px 6px 0 8px; border-top: 1px solid var(--hybrid-line); box-sizing: border-box; }
+.cal-col { position: relative; border-left: 1px solid var(--hybrid-line); min-width: 0; }
+.cal-slot { position: absolute; left: 0; right: 0; background: transparent; border: 0; border-top: 1px solid var(--hybrid-line); border-radius: 0; cursor: pointer; padding: 0; }
+.cal-slot:hover, .cal-slot:focus-visible { background: rgba(198, 241, 53, .07); }
+.cal-class { position: absolute; z-index: 2; box-sizing: border-box; padding: 5px 7px; text-align: left; border: 1px solid rgba(198, 241, 53, .5); background: rgba(198, 241, 53, .14); color: var(--hybrid-ink); border-radius: 8px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cal-class.cancelled { opacity: .55; text-decoration: line-through; border-style: dashed; }
+.cal-class-name { font-size: 12px; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; }
+.cal-class-meta { font-size: 11px; color: var(--hybrid-muted); }
+.session { cursor: pointer; }
+.detail-list { margin: 12px 0; display: grid; gap: 8px; }
+.detail-list > div { display: grid; grid-template-columns: 90px 1fr; gap: 10px; font-size: 14px; }
+.detail-list dt { color: var(--hybrid-muted); }
+.detail-list dd { margin: 0; color: var(--hybrid-ink); overflow-wrap: anywhere; }
+@media (max-width: 700px) { .view-switch .view-week { display: none; } }
+.detail-heading { margin: 16px 0 4px; font-size: 14px; color: var(--hybrid-ink); }
+.roster { list-style: none; margin: 8px 0 12px; padding: 0; display: grid; gap: 6px; max-height: 240px; overflow-y: auto; }
+.roster li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 11px; border: 1px solid var(--hybrid-line); border-radius: 10px; font-size: 14px; }
+.roster-name { min-width: 0; overflow-wrap: anywhere; color: var(--hybrid-ink); }
+.roster li.roster-row { flex-wrap: wrap; }
+.roster-row .roster-name { flex: 1 1 140px; }
+.roster-actions { display: flex; gap: 6px; flex-wrap: wrap; flex: 1 1 100%; }
+.add-to-class { margin-top: 8px; }

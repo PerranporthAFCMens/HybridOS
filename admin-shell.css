@@ -5,7 +5,7 @@
 html,body{
   margin:0;
   min-height:100%;
-  background:#f5f7fb;
+  background:var(--hybrid-bg);
 }
 body{
   min-height:100vh;
@@ -16,7 +16,7 @@ body{
   min-height:100vh;
   position:relative;
   color:transparent;
-  background:linear-gradient(90deg,#0b1020 0 255px,#f5f7fb 255px 100%);
+  background:var(--hybrid-panel);
   overflow:hidden;
 }
 #loading::before{
@@ -35,11 +35,11 @@ body{
   right:30px;
   top:30px;
   height:190px;
-  border-radius:22px;
-  background:linear-gradient(100deg,#e9edf3 20%,#f7f8fa 36%,#e9edf3 52%);
+  border-radius:16px;
+  background:linear-gradient(100deg,var(--hybrid-bg) 20%,var(--hybrid-bg) 36%,var(--hybrid-bg) 52%);
   background-size:220% 100%;
   animation:adminShimmer 1.05s linear infinite;
-  box-shadow:0 220px 0 #fff,0 430px 0 #fff;
+  box-shadow:none;
 }
 @keyframes adminShimmer{to{background-position:-220% 0}}
 
@@ -48,11 +48,11 @@ body{
 html.admin-embedded,
 html.admin-embedded body{
   min-height:100%!important;
-  background:#f5f7fb!important;
+  background:var(--hybrid-bg)!important;
 }
 html.admin-embedded .main{
   min-height:100%!important;
-  background:#f5f7fb!important;
+  background:var(--hybrid-bg)!important;
 }
 html.admin-embedded .admin-mobile-menu-btn,
 html.admin-embedded .admin-mobile-menu-close,
@@ -65,12 +65,12 @@ html.admin-embedded .bottom{
 @media(max-width:900px){
   html:not(.admin-embedded),
   html:not(.admin-embedded) body{
-    background:#f5f7fb!important;
+    background:var(--hybrid-bg)!important;
     min-height:100%;
     min-height:100dvh;
   }
 
-  html:not(.admin-embedded) #loading{background:#f5f7fb}
+  html:not(.admin-embedded) #loading{background:var(--hybrid-bg)}
   html:not(.admin-embedded) #loading::before{display:none}
   html:not(.admin-embedded) #loading::after{left:14px;right:14px;top:20px;height:150px}
 
@@ -83,7 +83,7 @@ html.admin-embedded .bottom{
     padding-top:74px!important;
     padding-bottom:calc(36px + env(safe-area-inset-bottom))!important;
     min-height:100dvh;
-    background:#f5f7fb!important;
+    background:var(--hybrid-bg)!important;
   }
 
   html:not(.admin-embedded) .admin-mobile-menu-btn{
@@ -95,13 +95,13 @@ html.admin-embedded .bottom{
     width:44px;
     height:44px;
     padding:0;
-    border:1px solid var(--line,#e7ebf2);
-    border-radius:13px;
-    background:#fff;
-    color:var(--ink,#101828);
+    border:1px solid var(--line,var(--hybrid-line));
+    border-radius:10px;
+    background:var(--hybrid-panel);
+    color:var(--ink,var(--hybrid-ink));
     font-size:24px;
     line-height:1;
-    box-shadow:0 8px 24px rgba(16,24,40,.12);
+    box-shadow:none;
     z-index:81;
     cursor:pointer;
   }
@@ -124,7 +124,7 @@ html.admin-embedded .bottom{
     z-index:90!important;
     transform:translateX(-105%);
     transition:transform .22s ease;
-    box-shadow:18px 0 40px rgba(0,0,0,.22);
+    box-shadow:none;
     overflow-y:auto;
     padding-top:calc(24px + env(safe-area-inset-top))!important;
     padding-bottom:calc(24px + env(safe-area-inset-bottom))!important;
@@ -141,7 +141,7 @@ html.admin-embedded .bottom{
     width:38px;
     height:38px;
     border:1px solid rgba(255,255,255,.15);
-    border-radius:11px;
+    border-radius:10px;
     background:rgba(255,255,255,.08);
     color:#fff;
     font-size:24px;

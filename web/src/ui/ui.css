@@ -1,0 +1,24 @@
+/* Shared components. Values come from the brand tokens. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 44px;
+  border: 0; border-radius: var(--hybrid-control-radius); padding: 10px 13px;
+  font-weight: 600; line-height: 1.2; cursor: pointer; touch-action: manipulation; text-decoration: none;
+  background: var(--hybrid-raised); color: var(--hybrid-ink);
+}
+.btn.primary { background: var(--hybrid-volt); color: var(--hybrid-dark); }
+.btn.secondary { background: var(--hybrid-raised); color: var(--hybrid-ink); }
+.btn:hover { filter: brightness(1.08); }
+.card {
+  background: var(--hybrid-panel); border: 1px solid var(--hybrid-line);
+  border-radius: var(--hybrid-radius); padding: 18px; min-width: 0;
+}
+.section-title { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.section-title h3 { margin: 0; font-size: 18px; color: var(--hybrid-ink); }
+.muted { color: var(--hybrid-muted); }
+.muted-link { display: inline-flex; align-items: center; justify-content: flex-end; min-height: 44px; min-width: 44px; margin: -8px 0; color: var(--hybrid-pulse); font-size: 14px; text-decoration: none; }
+.empty {
+  padding: 14px; border: 1px dashed var(--hybrid-line-strong); border-radius: var(--hybrid-radius-sm);
+  color: var(--hybrid-muted);
+}
+.center { min-height: 100dvh; display: grid; place-items: center; padding: 16px; text-align: center; color: var(--hybrid-muted); }
+.btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
