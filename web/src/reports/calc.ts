@@ -156,7 +156,7 @@ export interface TableContext {
   now: Date;
 }
 
-function table(ctx: TableContext, title: string, headers: string[], rows: Cell[][]): ReportTable {
+export function table(ctx: TableContext, title: string, headers: string[], rows: Cell[][]): ReportTable {
   return { title, subtitle: `${ctx.gymName} · ${ctx.rangeLabel} · made ${ukDateTime(ctx.now.toISOString())}`, headers, rows };
 }
 

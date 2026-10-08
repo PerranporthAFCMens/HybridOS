@@ -30,3 +30,11 @@ button.bar-row:hover { background: rgba(255, 255, 255, .04); }
 .table tbody th { color: var(--hybrid-ink); font-weight: 600; }
 .table tr:last-child th, .table tr:last-child td { border-bottom: 0; }
 .report-hint { margin: -10px 0 14px; font-size: 13px; }
+.lib-group { margin-top: 18px; }
+.lib-group-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.lib-group-head h4 { margin: 0; font-size: 15px; color: var(--hybrid-ink); }
+.lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 10px; }
+.lib-card { border: 1px solid var(--hybrid-line); border-radius: 12px; padding: 12px; min-width: 0; background: var(--hybrid-panel); }
+.lib-card h5 { margin: 0 0 4px; font-size: 14px; color: var(--hybrid-ink); }
+.lib-card p { margin: 0 0 10px; }
+.lib-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
