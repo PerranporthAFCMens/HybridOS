@@ -16,7 +16,7 @@ const data = (payments: LibraryData['payments']): LibraryData => ({
   memberships: [{ id: 'm1', userId: 'u1', planId: 'p1', status: 'active', startsOn: '', endsOn: '', provider: '', paymentStatus: '', updatedAt: '' }],
   gymMembers: [],
   people: new Map([['u1', { name: 'Amelia Hart', dateOfBirth: '', gender: '' }], ['u2', { name: '=cmd|\' /C calc\'!A0', dateOfBirth: '', gender: '' }]]),
-  payments, purchases: [], assignments: [], workoutSessions: [], pt: [], sessions: [], bookings: [],
+  payments, purchases: [], assignments: [], workoutSessions: [], pt: [], sessions: [], bookings: [], staff: [], staffHours: [], sessionStaff: [],
 });
 
 describe('settings', () => {
