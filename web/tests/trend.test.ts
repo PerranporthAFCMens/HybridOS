@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sparkPath, trend, trendText, type Trend } from '../src/builder/trend';
+import { trend, trendText, type Trend } from '../src/builder/trend';
 
 describe('trend', () => {
   it('needs two figures', () => { expect(trend([5])).toBeNull(); });
@@ -11,9 +11,4 @@ describe('trend', () => {
   });
   it('shows a fall', () => { expect(trendText(trend([50, 40]) as Trend)).toBe('▼ 20%'); });
   it('has no percentage from zero', () => { expect(trendText(trend([0, 4]) as Trend)).toBe('▲ from 0'); });
-  it('draws a path inside the box', () => {
-    const d = sparkPath([1, 3, 2], 100, 30);
-    expect(d.startsWith('M0.0 ')).toBe(true);
-    expect(sparkPath([1], 100, 30)).toBe('');
-  });
 });

@@ -52,7 +52,7 @@ export function XeroExport({ d, rangeLabel, since }: { d: LibraryData; rangeLabe
         <p className="muted">
           Two files to give to your accountant or bring into Xero yourself. They cover the payments received in the period chosen at the top of this page.
         </p>
-        <div className="stat-grid wide">
+        <div className="stat-grid">
           <div className="card stat"><span className="muted">Payments received</span><span className="stat-num">{summary.count}</span></div>
           <div className="card stat"><span className="muted">Total received</span><span className="stat-num">{pounds(summary.totalPence)}</span></div>
         </div>
