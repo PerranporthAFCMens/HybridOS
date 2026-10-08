@@ -16,7 +16,9 @@ import './classes.css';
 export function Classes() {
   const { gym } = useReadyAuth();
   const [anchor, setAnchor] = useState(() => new Date());
-  const [view, setView] = useState<'day' | 'week' | 'list'>('day');
+  // Week by default, as the owner asked. A week needs room for seven columns, so on a phone it opens on the day
+  // (the Week button is hidden there; see classes.css).
+  const [view, setView] = useState<'day' | 'week' | 'list'>(() => (typeof window !== 'undefined' && window.matchMedia?.('(min-width: 701px)').matches ? 'week' : 'day'));
   const [adding, setAdding] = useState<{ date: string; start: string } | 'blank' | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);

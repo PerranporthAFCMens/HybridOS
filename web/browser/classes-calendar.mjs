@@ -112,7 +112,13 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.goto(`${base}/next/#/classes`);
   const c = runChecks();
   await c.has('heading', page.getByRole('heading', { name: 'Classes', level: 1 }));
-  c.ok('Day is the default view', (await page.getByRole('button', { name: 'Day', exact: true }).getAttribute('aria-pressed')) === 'true');
+  // Week is the default where there is room for it; a phone opens on the day (it has no Week button).
+  const defaultView = name === 'desktop' ? 'Week' : 'Day';
+  c.ok(`${defaultView} is the default view`, (await page.getByRole('button', { name: defaultView, exact: true }).getAttribute('aria-pressed')) === 'true');
+  if (name === 'desktop') {
+    c.ok('the default week shows seven days', (await page.locator('.cal-col').count()) === 7);
+    await page.getByRole('button', { name: 'Day', exact: true }).click();
+  }
   await c.has('class on the calendar', page.getByRole('button', { name: /^Morning HIIT/ }));
   await c.has('overlapping class on the calendar', page.getByRole('button', { name: /^Morning Spin/ }));
   await c.has('hour labels', page.getByText('09:00', { exact: true }).first());
