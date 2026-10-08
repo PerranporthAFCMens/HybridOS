@@ -1,10 +1,10 @@
 import { supabase } from './client';
 import type { Json } from './database.types';
-import type { DbSet, Tracking } from '../train/calc';
+import type { DbSet, StoredSet, Tracking } from '../train/calc';
 
 export interface AssignmentRow { id: string; title: string; source: string; status: string; scheduledFor: string | null; dueAt: string | null; snapshot: Json; focusTags: string[] }
 export interface SessionRow { id: string; title: string; performedAt: string }
-export interface LastTime { name: string; sets: Partial<DbSet>[] }
+export interface LastTime { name: string; sets: StoredSet[] }
 
 const OPEN = ['todo', 'in_progress'];
 
@@ -55,7 +55,7 @@ export async function listRecentSessions(userId: string, gymId: string): Promise
 export async function listLastTimes(userId: string, gymId: string): Promise<Map<string, LastTime>> {
   const { data, error } = await supabase
     .from('workout_entries')
-    .select('exercise_name, created_at, workout_sets(set_number, weight_kg, reps, duration_seconds, distance_m, calories)')
+    .select('exercise_name, created_at, workout_sets(set_number, weight_kg, reps, duration_seconds, distance_m, calories, side)')
     .eq('gym_id', gymId)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })

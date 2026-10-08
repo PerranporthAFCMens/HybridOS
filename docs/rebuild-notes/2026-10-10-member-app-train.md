@@ -13,3 +13,7 @@ Not in this step:
 - **Left / Right / Both:** needs a new column. SQL written, tested on a scratch Postgres, NOT applied: `supabase/migrations/20261010120000_workout_set_side.sql`, rollback `supabase/rollback/20261010_drop_workout_set_side.sql`, checks `supabase/verification/20261010_workout_set_side_check.sql`. The screen gets the buttons after the owner approves and runs it.
 - Personal bests: the classic logger works them out when a set is saved; the new screen does not yet.
 - PT sessions linked to a plan, the coach side to plan and push a PT session or programme, notifications.
+
+## Left / Right / Both (added after the owner ran the SQL)
+- The `side` column on `workout_sets` is live (owner ran `20261010120000_workout_set_side.sql`; the check showed all "ok").
+- Each exercise has a "Left / right" button. Turned on, every set gets Left, Right and Both buttons (tap again to clear). The side is saved with the set, shown in "Last time" and copied by Copy last time. Off by default, so ordinary exercises are unchanged.

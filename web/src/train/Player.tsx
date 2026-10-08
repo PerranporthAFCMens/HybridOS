@@ -5,7 +5,7 @@ import { useReadyAuth } from '../auth/AuthProvider';
 import { finishWorkout, getMyAssignment, listLastTimes, markStarted, type LastTime } from '../data/train';
 import { Button } from '../ui/Button';
 import { Checkbox, Input, Select } from '../ui/Field';
-import { FIELDS, assignmentNote, blankSets, fromDbSet, prepareFinish, readSnapshot, setText, type PlayedActivity, type SetValues, type Tracking } from './calc';
+import { FIELDS, SIDES, assignmentNote, blankSets, fromDbSet, prepareFinish, readSnapshot, setText, type PlayedActivity, type SetValues, type Tracking } from './calc';
 
 interface Act extends PlayedActivity { key: string; plan: string; planNote: string; block: string }
 interface Draft { acts: Act[]; rpe: string; notes: string }
@@ -64,7 +64,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
   const lastFor = (a: Act) => last.get(a.originalName.trim().toLowerCase());
   const copyLast = (a: Act) => {
     const l = lastFor(a);
-    if (l) patch(a.key, { sets: l.sets.map((s) => fromDbSet(a.tracking, s)) });
+    if (l) patch(a.key, { sets: l.sets.map((s) => fromDbSet(a.tracking, s)), sided: l.sets.some((s) => s.side) || a.sided });
   };
   const addExercise = () => {
     const name = adding.name.trim();
@@ -127,17 +127,27 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
                 {l && l.sets.length > 0 && <div className="muted small">Last time: {l.sets.map((s) => setText(a.tracking, fromDbSet(a.tracking, s))).filter(Boolean).join(', ')}</div>}
                 <div className="tr-sets">
                   {a.sets.map((s: SetValues, i) => (
-                    <div className="tr-set" key={i}>
-                      <span className="muted tr-n">{i + 1}</span>
-                      {fields.map((f) => (
-                        <Input key={f.id} className="tr-box" inputMode={f.id === 'time' ? 'text' : 'decimal'} aria-label={`${a.name} set ${i + 1} ${f.hint}`} placeholder={f.label}
-                          value={s[f.id] ?? ''} onChange={(e) => setSet(a.key, i, f.id, e.target.value)} />
-                      ))}
+                    <div className="tr-set-wrap" key={i}>
+                      <div className="tr-set">
+                        <span className="muted tr-n">{i + 1}</span>
+                        {fields.map((f) => (
+                          <Input key={f.id} className="tr-box" inputMode={f.id === 'time' ? 'text' : 'decimal'} aria-label={`${a.name} set ${i + 1} ${f.hint}`} placeholder={f.label}
+                            value={s[f.id] ?? ''} onChange={(e) => setSet(a.key, i, f.id, e.target.value)} />
+                        ))}
+                      </div>
+                      {a.sided && (
+                        <div className="tr-side" role="radiogroup" aria-label={`${a.name} set ${i + 1} side`}>
+                          {SIDES.map(([v, label]) => (
+                            <button key={v} type="button" role="radio" aria-checked={s.side === v} className={`tr-side-btn${s.side === v ? ' on' : ''}`} onClick={() => setSet(a.key, i, 'side', s.side === v ? '' : v)}>{label}</button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
                 <div className="mem-actions tr-tools">
                   <Button onClick={() => patch(a.key, { sets: [...a.sets, {}] })} aria-label={`Add a set to ${a.name}`}>+ Set</Button>
+                  <Button onClick={() => patch(a.key, { sided: !a.sided })} aria-pressed={!!a.sided} aria-label={`Left and right for ${a.name}`}>{a.sided ? 'Left / right: on' : 'Left / right'}</Button>
                   {l && l.sets.length > 0 && <Button onClick={() => copyLast(a)} aria-label={`Copy last time for ${a.name}`}>Copy last time</Button>}
                 </div>
               </>

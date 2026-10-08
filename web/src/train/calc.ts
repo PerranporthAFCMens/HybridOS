@@ -43,7 +43,11 @@ export const FIELDS: Record<Tracking, { id: Field; label: string; hint: string }
   instruction: [],
 };
 
-export type SetValues = Partial<Record<Field, string>>;
+export type Side = 'left' | 'right' | 'both';
+export const SIDES: [Side, string][] = [['left', 'Left'], ['right', 'Right'], ['both', 'Both']];
+const asSide = (v: unknown): Side | null => (v === 'left' || v === 'right' || v === 'both' ? v : null);
+
+export type SetValues = Partial<Record<Field, string>> & { side?: string };
 
 export const blankSets = (tracking: Tracking, n = 3): SetValues[] => (tracking === 'instruction' ? [] : Array.from({ length: n }, () => ({})));
 
@@ -68,14 +72,14 @@ const num = (text: string | undefined): number | null => {
   return Number.isFinite(n) && n >= 0 ? n : null;
 };
 
-export interface DbSet { weight_kg: number | null; reps: number | null; duration_seconds: number | null; distance_m: number | null; calories: number | null }
+export interface DbSet { weight_kg: number | null; reps: number | null; duration_seconds: number | null; distance_m: number | null; calories: number | null; side: Side | null }
 
 /** One typed set as database columns. Null when nothing was entered; `error` names a box that cannot be read. */
 export function toDbSet(tracking: Tracking, v: SetValues): { row: DbSet | null; error: string | null } {
   const used = FIELDS[tracking].map((f) => f.id);
   const entered = used.filter((id) => (v[id] ?? '').trim() !== '');
   if (entered.length === 0) return { row: null, error: null };
-  const row: DbSet = { weight_kg: null, reps: null, duration_seconds: null, distance_m: null, calories: null };
+  const row: DbSet = { weight_kg: null, reps: null, duration_seconds: null, distance_m: null, calories: null, side: asSide(v.side) };
   for (const id of entered) {
     const raw = v[id] ?? '';
     if (id === 'time') {
@@ -95,7 +99,8 @@ export function toDbSet(tracking: Tracking, v: SetValues): { row: DbSet | null; 
 }
 
 /** Database columns back to the boxes, for "last time". */
-export function fromDbSet(tracking: Tracking, r: Partial<DbSet>): SetValues {
+export type StoredSet = Partial<Omit<DbSet, 'side'>> & { side?: string | null };
+export function fromDbSet(tracking: Tracking, r: StoredSet): SetValues {
   const out: SetValues = {};
   for (const f of FIELDS[tracking]) {
     if (f.id === 'weight' && r.weight_kg != null) out.weight = String(r.weight_kg);
@@ -104,21 +109,25 @@ export function fromDbSet(tracking: Tracking, r: Partial<DbSet>): SetValues {
     if (f.id === 'distance' && r.distance_m != null) out.distance = String(Math.round(r.distance_m) / 1000);
     if (f.id === 'calories' && r.calories != null) out.calories = String(r.calories);
   }
+  const side = asSide(r.side);
+  if (side) out.side = side;
   return out;
 }
 
 /** "24 kg × 10" style words for one set. */
 export function setText(tracking: Tracking, v: SetValues): string {
   const parts: string[] = [];
-  if (tracking === 'strength') return [v.weight ? `${v.weight} kg` : '', v.reps ? `${v.reps}` : ''].filter(Boolean).join(' × ');
+  const side = asSide(v.side);
+  const tail = side ? ` (${side})` : '';
+  if (tracking === 'strength') return [v.weight ? `${v.weight} kg` : '', v.reps ? `${v.reps}` : ''].filter(Boolean).join(' × ') + tail;
   if (v.reps) parts.push(`${v.reps} ${tracking === 'intervals' ? 'rounds' : 'reps'}`);
   if (v.time) parts.push(v.time);
   if (v.distance) parts.push(`${v.distance} km`);
   if (v.calories) parts.push(`${v.calories} cal`);
-  return parts.join(' · ');
+  return parts.join(' · ') + tail;
 }
 
-export interface PlayedActivity { name: string; originalName: string; tracking: Tracking; sets: SetValues[]; done: boolean; skipped: boolean; note: string }
+export interface PlayedActivity { name: string; originalName: string; tracking: Tracking; sets: SetValues[]; done: boolean; skipped: boolean; note: string; sided?: boolean }
 
 export type Prepared =
   | { ok: true; entries: { name: string; tracking: Tracking; note: string | null; sets: DbSet[] }[]; ticked: string[]; skipped: string[]; swapped: string[] }
@@ -142,7 +151,7 @@ export function prepareFinish(acts: PlayedActivity[]): Prepared {
     if (a.tracking === 'instruction') { if (a.done) ticked.push(name); continue; }
     const sets: DbSet[] = [];
     for (const s of a.sets) {
-      const { row, error } = toDbSet(a.tracking, s);
+      const { row, error } = toDbSet(a.tracking, a.sided ? s : { ...s, side: undefined });
       if (error) return { ok: false, message: `${name}: ${error}` };
       if (row) sets.push(row);
     }
