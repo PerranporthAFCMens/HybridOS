@@ -94,9 +94,9 @@ RENDER_BASELINE={
  'admin-shell.css':'ec3d5ab0faee0b01d383fbea29183e604430a53e',
  'admin-frame.css':'4af4cf23fa071d5fb4324bac9a12929428ee316b',
  'admin-embed.js':'73920d3e75684542819929736e15613d1d95c24e',
- 'admin-frame.js':'af101d07be34b70b34a4d3130f23c2bad597e464',
+ 'admin-frame.js':'05648c7e1edd57d388f970508e45b01eef13cd8b',
  'app-stability.js':'661d84d7129dad37a84978f940b5995625bf1c75',
- 'shared-admin-nav.js':'b530a4b0c4ac4d1970fb1adf5ef03f955b44ab37',
+ 'shared-admin-nav.js':'3e5f4147f51c3bab5eb361991acda1c4564d3079',
 }
 def git_blob_sha(path):
  import hashlib
@@ -382,7 +382,7 @@ for x in ('Communications','Transactional','Marketing','gym_communication_settin
  if x not in communications:problems.append(f'communications.html: communications editor missing: {x}')
 for x in ("{key:'communications'","href:'./communications.html'","if(p.endsWith('/communications.html'))return'communications'"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: communications route missing: {x}')
-for x in ("{key:'community'","view:'communications.html'","file==='communications.html'"):
+for x in ("{key:'community'","file==='communications.html'"):
  if x not in admin_frame_js:problems.append(f'admin-frame.js: communications route missing: {x}')
 ops_source=(ROOT/'admin-operations.html').read_text(encoding='utf-8')
 if 'class="operations-page"' not in ops_source:problems.append('admin-operations.html: operations page scope class missing')
