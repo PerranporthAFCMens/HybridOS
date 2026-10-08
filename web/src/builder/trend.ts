@@ -15,12 +15,3 @@ export function trendText(t: Trend): string {
   const arrow = t.direction === 'up' ? '▲' : t.direction === 'down' ? '▼' : '■';
   return t.pct === null ? `${arrow} from 0` : `${arrow} ${Math.abs(Math.round(t.pct * 10) / 10)}%`;
 }
-
-/** Points for a small line, scaled into a width by height box. */
-export function sparkPath(values: number[], w: number, h: number, pad = 3): string {
-  if (values.length < 2) return '';
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const r = max - min || 1;
-  return values.map((v, i) => `${i ? 'L' : 'M'}${((i * w) / (values.length - 1)).toFixed(1)} ${(h - pad - ((v - min) / r) * (h - pad * 2)).toFixed(1)}`).join(' ');
-}

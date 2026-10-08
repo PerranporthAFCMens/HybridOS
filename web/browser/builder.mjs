@@ -100,6 +100,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const c = runChecks();
   await page.getByRole('tab', { name: 'Report builder', exact: true }).click();
   const paper = page.getByLabel('What you will download');
+  const show = page.getByLabel('Show', { exact: true });
+  const openFine = async () => { const b = page.getByRole('button', { name: /Filters, columns and fields/ }); if ((await b.getAttribute('aria-expanded')) !== 'true') await b.click(); };
+  const readPaper = async (fn) => { await page.getByRole('button', { name: 'Print report' }).click(); const r = await fn(paper); await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click(); return r; };
   const dataset = page.getByLabel('Look at');
   const dialog = page.getByRole('dialog');
   await c.has('builder opens', dataset);
@@ -107,7 +110,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('eight datasets, staff included', (await dataset.locator('option').allInnerTexts()).join('|') === 'Members|Memberships|Payments|Classes|Bookings and attendance|Staff|Classes delivered|Clients seen');
   await page.getByRole('button', { name: /Start from a ready-made report/ }).click();
   c.ok('twelve ready-made reports', (await page.locator('.bld-starter').count()) === 12);
-  c.ok('starts as a list of members on paper', (await paper.getByRole('heading', { name: 'Members' }).count()) === 1);
+  c.ok('starts as a list of members', (await page.getByLabel('Report table').textContent()).includes('Alex Joiner'));
+  c.ok('the paper report is not on screen until asked for', (await paper.count()) === 0);
   c.ok('layout (builder, first view)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/builder-start-${name}.png`, fullPage: true });
 
@@ -116,8 +120,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('the chart is drawn', page.getByRole('figure', { name: 'Payments: summary' }));
   c.ok('the starters fold away', (await page.locator('.bld-starter').count()) === 0);
   c.ok('headline figure is the total in pounds', (await page.getByRole('list', { name: 'Headline figures' }).textContent()).includes('£5,805.00'));
+  await openFine();
   c.ok('the boxes show what was chosen', (await page.getByLabel('Group by box').textContent()).includes('Charge date') && (await page.getByLabel('Filters box').getByLabel('Filter 1: value').inputValue()) === 'failed');
-  c.ok('paper shows the months', (await paper.locator('tbody th').allInnerTexts()).join('|') === 'Sep 2026|Oct 2026');
+  c.ok('paper shows the months', (await readPaper((p) => p.locator('tbody th').allInnerTexts())).join('|') === 'Sep 2026|Oct 2026');
   c.ok('chart marks have height', ((await page.getByRole('figure', { name: 'Payments: summary' }).locator('.chart-mark').first().boundingBox())?.height ?? 0) > 2);
   c.ok('layout (starter chart)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/builder-chart-${name}.png`, fullPage: true });
@@ -136,18 +141,19 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('button', { name: /^Members by plan/ }).click();
   c.ok('a ring is drawn', (await page.getByRole('figure', { name: 'Memberships: summary' }).count()) === 1);
   await dataset.selectOption({ label: 'Payments' });
-  await page.getByRole('radio', { name: 'Summarise' }).click();
+  await show.selectOption('count:');
+  await openFine();
   if (name === 'phone') await page.getByRole('button', { name: /^Amount\./ }).evaluate((el) => el.scrollIntoView({ block: 'start' }));
   if (name !== 'phone') await page.getByLabel('Values box').evaluate((el) => el.scrollIntoView({ block: 'start' }));
   await page.getByRole('button', { name: /^Amount\./ }).dragTo(page.getByLabel('Values box'));
   c.ok('dragging Amount into Values adds a total', (await page.getByLabel('Figure 2: what to work out').count()) === 1 && (await page.getByLabel('Figure 2: what to work out').inputValue()) === 'sum');
-  if (name !== 'phone') await page.getByLabel('Group by box').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+  await page.getByLabel('Group by box').evaluate((el) => el.scrollIntoView({ block: 'start' }));
   await page.getByRole('button', { name: /^State\./ }).dragTo(page.getByLabel('Group by box'));
   c.ok('dragging State into Group by groups by it', (await page.getByLabel('Group by box').textContent()).includes('State'));
   await page.getByRole('button', { name: /^Member\./ }).click();
   await page.getByRole('group', { name: 'Where should Member go?' }).getByRole('button', { name: 'Filter by' }).click();
   c.ok('tapping a field and choosing Filter by adds a filter', (await page.getByLabel('Filters box').getByLabel('Filter 1: field').inputValue()) === 'member');
-  await page.getByRole('button', { name: 'Remove filter 1' }).click();
+  await page.getByRole('button', { name: 'Remove filter 1', exact: true }).click();
   await page.getByRole('button', { name: /^Member\./ }).click();
   await page.getByRole('group', { name: 'Where should Member go?' }).getByRole('button', { name: 'Group by' }).click();
   await page.getByRole('button', { name: /^Member\./ }).click();
@@ -158,49 +164,48 @@ for (const [name, viewport] of Object.entries(sizes)) {
 
   // Staff metrics
   await dataset.selectOption({ label: 'Clients seen' });
-  await page.getByRole('radio', { name: 'Summarise' }).click();
+  await show.selectOption('count:');
   await page.getByRole('button', { name: /^Coach\./ }).click();
   await page.getByRole('group', { name: 'Where should Coach go?' }).getByRole('button', { name: 'Group by' }).click();
   await page.getByLabel('Figure 1: what to work out').selectOption({ label: 'Different values' });
   await page.getByLabel('Figure 1: of which field').selectOption({ label: 'Client' });
-  await c.has('clients seen by coach', paper.getByRole('heading', { name: 'Clients seen: summary' }));
-  c.ok('the figure is named and counts people, not visits', (await paper.locator('thead th').allInnerTexts()).join('|') === 'Coach|Different values of Client' && (await paper.locator('tbody tr').first().textContent()).includes('Coach Cara'));
+  await c.has('clients seen by coach', page.getByRole('figure', { name: 'Clients seen: summary' }));
+  c.ok('the figure is named and counts people, not visits', await readPaper(async (p) => (await p.locator('thead th').allInnerTexts()).join('|') === 'Coach|Different values of Client' && (await p.locator('tbody tr').first().textContent()).includes('Coach Cara')));
   await dataset.selectOption({ label: 'Staff' });
-  c.ok('staff: the team with scheduled hours', (await paper.getByRole('heading', { name: 'Staff' }).count()) === 1 && (await paper.getByText('2 rows', { exact: true }).count()) === 1);
+  await c.has('staff: the team as a list', page.getByLabel('Report table').getByText('2 rows', { exact: true }));
   await page.getByRole('button', { name: /^Scheduled hours a week\./ }).click();
   await page.getByRole('group', { name: 'Where should Scheduled hours a week go?' }).getByRole('button', { name: 'Add as a column' }).click();
-  c.ok('working hours per week: 8 for Cara (Monday 09:00 to 17:00)', (await paper.locator('tbody tr').first().textContent()).includes('8'));
+  c.ok('working hours per week: 8 for Cara (Monday 09:00 to 17:00)', (await page.getByLabel('Report table').locator('tbody tr').first().textContent()).includes('8'));
   c.ok('hourly pay is marked personal', (await page.getByRole('button', { name: /^Hourly pay\./ }).locator('.tag').count()) === 1);
 
   // Downloads
   await dataset.selectOption({ label: 'Payments' });
-  await page.getByRole('radio', { name: 'List the rows' }).click();
-  await page.getByRole('radio', { name: 'CSV' }).click();
+  await show.selectOption('list:');
   const csv = await saved(page, () => page.getByRole('button', { name: 'Download CSV' }).click());
   const text = csv.bytes.toString('utf8');
   c.ok('the CSV has every row and the chosen columns', text.trim().split('\r\n').length === 131 && text.startsWith('﻿Member,Charge date,Amount,State,Provider\r\n'));
   c.ok('money is in pounds and names are protected', text.includes('£59.99') && text.includes(`"'=HYPERLINK(""http://evil.example"")"`));
   c.ok('file name', /^puffin-performance-payments-\d{4}-\d{2}-\d{2}\.csv$/.test(csv.name));
-  await page.getByRole('radio', { name: 'Excel' }).click();
   const xl = await saved(page, () => page.getByRole('button', { name: 'Download Excel' }).click());
   c.ok('Excel is a real workbook', xl.name.endsWith('.xlsx') && xl.bytes.subarray(0, 2).toString() === 'PK');
-  await page.getByRole('radio', { name: 'PDF' }).click();
   const pdf = await saved(page, () => page.getByRole('button', { name: 'Download PDF' }).click());
   c.ok('PDF is a real PDF', pdf.name.endsWith('.pdf') && pdf.bytes.subarray(0, 4).toString() === '%PDF');
 
   // Save on this device, reload, bring it back
-  await page.getByRole('radio', { name: 'Summarise' }).click();
+  await show.selectOption('count:');
   await page.getByRole('button', { name: /^State\./ }).click();
   await page.getByRole('group', { name: 'Where should State go?' }).getByRole('button', { name: 'Group by' }).click();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save report' }).click();
   await c.has('a name is needed', page.getByText('Give the report a name to save it.'));
-  await page.getByLabel('Save this report').fill('Payments by state');
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Save this report' }).fill('Payments by state');
+  await page.getByRole('dialog').getByRole('button', { name: 'Save report' }).click();
   await c.has('saved message', page.getByText('Saved "Payments by state" on this device.'));
   await page.reload();
   await page.getByRole('tab', { name: 'Report builder', exact: true }).click();
   await c.has('the saved report is listed after a reload', page.getByLabel('My saved reports'));
   await page.getByLabel('My saved reports').selectOption('Payments by state');
+  await openFine();
   c.ok('loading it restores the choices', (await dataset.inputValue()) === 'payments' && (await page.getByLabel('Group by box').textContent()).includes('State'));
   await page.getByRole('button', { name: 'Remove', exact: true }).click();
   c.ok('it can be removed', (await page.getByLabel('My saved reports').count()) === 0);

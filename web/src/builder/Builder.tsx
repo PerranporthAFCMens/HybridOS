@@ -13,15 +13,17 @@ import { DATASETS } from './datasets';
 import { FN_LABEL, OPS_FOR, build, chartsAllowed, defaultSpec, filtersForGroup, isNumeric, needsValue, rowsInGroup, sanitise, show, type ChartKind, type Field as DField, type Filter, type Fn, type Measure, type Op, type Spec } from './engine';
 import { loadSaved, storeSaved, type SavedReport } from './saved';
 import { STARTERS } from './starters';
-import { sparkPath, trend, trendText } from './trend';
+import { trend, trendText } from './trend';
 import '../reports/paper.css';
 import '../charts/charts.css';
+import '../reports/reports.css';
 import './builder.css';
 
 const FORMATS: { id: Format; label: string; ext: string }[] = [{ id: 'csv', label: 'CSV', ext: 'csv' }, { id: 'xlsx', label: 'Excel', ext: 'xlsx' }, { id: 'pdf', label: 'PDF', ext: 'pdf' }];
 const CHART_LABEL: Record<ChartKind, string> = { table: 'Table', column: 'Columns', bar: 'Bars', line: 'Line', donut: 'Ring' };
 const TYPE_TAG: Record<DField['type'], string> = { text: 'Abc', number: '123', money: '£', date: 'Date' };
 export const BUILDER_PAPER_ROWS = 25;
+const PRINT_ROWS = 200;
 const DRILL_ROWS = 100;
 const COUNT = '__count';
 
@@ -42,7 +44,9 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
   const { gym } = useReadyAuth();
   const first = DATASETS[0];
   const [spec, setSpec] = useState<Spec>(() => defaultSpec(first?.id ?? '', first?.fields ?? []));
-  const [format, setFormat] = useState<Format>('xlsx');
+  const [fine, setFine] = useState(false);
+  const [showPaper, setShowPaper] = useState(false);
+  const [showSave, setShowSave] = useState(false);
   const [saved, setSaved] = useState<SavedReport[]>(() => loadSaved(gym.gymId, DATASETS));
   const [name, setName] = useState('');
   const [pickSaved, setPickSaved] = useState('');
@@ -62,7 +66,6 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
   const chart = allowed.includes(spec.chart) ? spec.chart : 'table';
   const byId = new Map(fields.map((f) => [f.id, f]));
   const numericFields = fields.filter((f) => isNumeric(f.type));
-  const chosen = FORMATS.find((f) => f.id === format) ?? FORMATS[0];
   const groupField = spec.groupBy ? byId.get(spec.groupBy) : undefined;
 
   const change = (patch: Partial<Spec>) => { setNote(null); setSpec((s) => ({ ...s, ...patch })); };
@@ -89,12 +92,12 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
   const over = (e: React.DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; };
   const moveCol = (i: number, by: -1 | 1) => { const c = spec.columns.slice(); const a = c[i]; const b = c[i + by]; if (a === undefined || b === undefined) return; c[i] = b; c[i + by] = a; change({ columns: c }); };
 
-  const doDownload = async () => {
+  const doDownload = async (format: Format) => {
     setBusy(true);
     setNote(null);
     try {
       await downloadTable(built.table, format, fileBase(gym.gymName, built.table.title, new Date()));
-      setNote({ text: `Downloaded ${built.table.rows.length} ${built.table.rows.length === 1 ? 'row' : 'rows'} as ${chosen?.label ?? format}. Charts are not part of the file.`, good: true });
+      setNote({ text: `Downloaded ${built.table.rows.length} ${built.table.rows.length === 1 ? 'row' : 'rows'} as ${FORMATS.find((f) => f.id === format)?.label ?? format}. Charts are not part of the file.`, good: true });
     } catch (e) {
       setNote({ text: e instanceof Error ? e.message : 'The download failed. Please try again.', good: false });
     } finally {
@@ -109,6 +112,7 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
     storeSaved(gym.gymId, next);
     setPickSaved(n);
     setNote({ text: `Saved "${n}" on this device.`, good: true });
+    setShowSave(false);
   };
   const loadOne = (n: string) => {
     setPickSaved(n);
@@ -154,23 +158,32 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
   );
 
   const measureOptions: { value: string; label: string }[] = [
+    { value: 'list:', label: 'Every row, as a list' },
     { value: 'count:', label: 'Number of rows' },
     ...numericFields.map((f) => ({ value: `sum:${f.id}`, label: `Total ${f.label}` })),
   ];
   const m0 = spec.measures[0];
-  const m0Value = m0 ? `${m0.fn}:${m0.field ?? ''}` : 'count:';
+  const m0Value = spec.mode === 'list' ? 'list:' : m0 ? `${m0.fn}:${m0.field ?? ''}` : 'count:';
   if (m0 && !measureOptions.some((o) => o.value === m0Value)) measureOptions.push({ value: m0Value, label: `${FN_LABEL[m0.fn]}${m0.field ? ` of ${byId.get(m0.field)?.label ?? ''}` : ''}` });
   const pickMeasure = (v: string) => {
+    if (v === 'list:') return change({ mode: 'list', chart: 'table' });
     const [fn, field] = v.split(':');
     const m = (fn === 'count' ? { fn: 'count', field: null } : { fn: fn as Fn, field: field ?? null }) as Measure;
-    change({ measures: spec.measures.length ? spec.measures.map((x, k) => (k === 0 ? m : x)) : [m] });
+    change({ mode: 'summary', chart: spec.mode === 'list' || spec.chart === 'table' ? 'column' : spec.chart, measures: spec.measures.length ? spec.measures.map((x, k) => (k === 0 ? m : x)) : [m] });
   };
+
+  const activeFilters = spec.filters.map((f, i) => {
+    const field = byId.get(f.field);
+    const op = OPS_FOR[field?.type ?? 'text'].find(([id]) => id === f.op)?.[1] ?? f.op;
+    return { i, text: `${field?.label ?? f.field} ${op.toLowerCase()}${needsValue(f.op) ? ` ${f.value || '…'}` : ''}` };
+  });
+  const listing = spec.mode === 'list' || chart === 'table';
 
   return (
     <div className="bld2">
       <div className="bld-bar">
-        <div className="bld-bar-left">
-          <Button aria-expanded={starters} onClick={() => setStarters((v) => !v)}>Start from a ready-made report {starters ? '▴' : '▾'}</Button>
+        <Button aria-expanded={starters} onClick={() => setStarters((v) => !v)}>Start from a ready-made report {starters ? '▴' : '▾'}</Button>
+        <div className="bld-bar-right">
           {saved.length > 0 && (
             <>
               <Select aria-label="My saved reports" value={pickSaved} onChange={(e) => loadOne(e.target.value)}>
@@ -180,116 +193,94 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
               {pickSaved && <Button onClick={removeOne}>Remove</Button>}
             </>
           )}
-        </div>
-        <div className="bld-bar-right">
-          <Input aria-label="Save this report" placeholder="Name this report to save it" value={name} onChange={(e) => { setName(e.target.value); setNote(null); }} />
-          <Button onClick={save}>Save</Button>
+          <Button onClick={() => { setNote(null); setShowSave(true); }}>Save</Button>
         </div>
       </div>
       {starters && (
         <ul className="bld-starters">
           {STARTERS.map((s) => (
-            <li key={s.id}><button type="button" className="bld-starter" onClick={() => startFrom(s.spec)}><b>{s.title}</b><span className="muted small">{s.text}</span></button></li>
+            <li key={s.id}><button type="button" className="bld-starter" onClick={() => startFrom(s.spec)}><b>{s.title}</b><span>{s.text}</span></button></li>
           ))}
         </ul>
       )}
 
-      <div className="bld2-main">
-        <div className="bld-canvas">
-          <Card>
-            <div className="bld-sentence">
-              <span>Look at</span>
-              <Select aria-label="Look at" className="bld-pill" value={spec.dataset} onChange={(e) => setDataset(e.target.value)}>
-                {DATASETS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
-              </Select>
-              <div className="bld-seg bld-mode" role="radiogroup" aria-label="How to show it">
-                {([['list', 'List the rows'], ['summary', 'Summarise']] as const).map(([id, label]) => (
-                  <button key={id} type="button" role="radio" aria-checked={spec.mode === id} className={`format-pick${spec.mode === id ? ' on' : ''}`} onClick={() => change({ mode: id, chart: id === 'list' ? 'table' : spec.chart })}><b>{label}</b></button>
-                ))}
-              </div>
-              {spec.mode === 'summary' ? (
-                <>
-                  <span>showing</span>
-                  <Select aria-label="Show" className="bld-pill" value={m0Value} onChange={(e) => pickMeasure(e.target.value)}>
-                    {measureOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </Select>
-                  <span>by</span>
-                  <Select aria-label="Split by" className="bld-pill" value={spec.groupBy ?? ''} onChange={(e) => change({ groupBy: e.target.value || null })}>
-                    <option value="">Nothing (one total)</option>
-                    {fields.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
-                  </Select>
-                </>
-              ) : <span>one line per row</span>}
-              <span>for {rangeLabel.toLowerCase()}</span>
-            </div>
-            {ds?.description && <p className="muted small bld-desc">{ds.description}</p>}
-            <div className="bld-toolbar">
-              {allowed.length > 1 && (
-                <div className="bld-charts" role="radiogroup" aria-label="Chart">
-                  {allowed.map((k) => <button key={k} type="button" role="radio" aria-checked={chart === k} className={`format-pick${chart === k ? ' on' : ''}`} onClick={() => change({ chart: k })}><b>{CHART_LABEL[k]}</b></button>)}
-                </div>
-              )}
-            </div>
-
-          </Card>
-
-          {note && <div className={`msg ${note.good ? '' : 'error'}`} role={note.good ? 'status' : 'alert'}>{note.text}</div>}
-
+      <Card className="bld-main">
+        <div className="bld-sentence">
+          <span>Show</span>
+          <Select aria-label="Show" className="bld-pill" value={m0Value} onChange={(e) => pickMeasure(e.target.value)}>
+            {measureOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </Select>
           {spec.mode === 'summary' && (
-            <ul className="bld-kpis" aria-label="Headline figures">
-              {built.totals.map((t, i) => {
-                const vals = built.groups.map((g) => g.values[i] ?? 0);
-                const tr = groupField?.type === 'date' ? trend(vals) : null;
-                const type = built.measureTypes[i] ?? 'number';
-                return (
-                  <li className="card bld-kpi" key={i}>
-                    <span className="muted small">{built.measureLabels[i]}</span>
-                    <b>{figure(t, type)}</b>
-                    {tr && (
-                      <span className={`bld-delta ${tr.direction}`}>{trendText(tr)}<span className="muted"> latest {built.groups[built.groups.length - 1]?.label ?? ''} vs {built.groups[built.groups.length - 2]?.label ?? ''}</span></span>
-                    )}
-                    {vals.length >= 2 && (
-                      <svg className="bld-spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">
-                        <path d={sparkPath(vals.slice(-24), 100, 30)} fill="none" stroke="var(--hybrid-pulse, #6b7cff)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                      </svg>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+            <>
+              <span>by</span>
+              <Select aria-label="Split by" className="bld-pill" value={spec.groupBy ?? ''} onChange={(e) => change({ groupBy: e.target.value || null })}>
+                <option value="">Nothing (one total)</option>
+                {fields.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+              </Select>
+            </>
           )}
-
-          {chart !== 'table' && (
-            <Card>
-              <SectionTitle title={built.table.title} action={<span className="muted">Click a bar to see its rows</span>} />
-              <ChartView chart={chart} built={built} onOpen={(g) => setDrill({ key: g.key, label: g.label })} />
-            </Card>
-          )}
-
-          <div className="paper-layout bld-paper-layout">
-            <div className="paper" aria-label="What you will download">
-              <div className="paper-gym">{gym.gymName}</div>
-              <h3 className="paper-title">{built.table.title}</h3>
-              <div className="paper-sub">{built.table.subtitle}</div>
-              <div className="paper-count">{built.table.rows.length} {built.table.rows.length === 1 ? 'row' : 'rows'}</div>
-              <DataTable table={{ ...built.table, rows: built.table.rows.slice(0, BUILDER_PAPER_ROWS) }} />
-              {built.table.rows.length > BUILDER_PAPER_ROWS && <p className="paper-more">Showing the first {BUILDER_PAPER_ROWS} of {built.table.rows.length} rows. The download has every row.</p>}
-            </div>
-            <div className="paper-controls">
-              <div className="paper-field" role="radiogroup" aria-label="File format">
-                <div className="paper-label">File format</div>
-                <div className="paper-formats">
-                  {FORMATS.map((f) => <button key={f.id} type="button" role="radio" aria-checked={format === f.id} className={`format-pick${format === f.id ? ' on' : ''}`} onClick={() => { setFormat(f.id); setNote(null); }}><b>{f.label}</b></button>)}
-                </div>
-              </div>
-              <div className="muted small paper-file">File name: <span>{`${fileBase(gym.gymName, built.table.title, new Date())}.${chosen?.ext ?? ''}`}</span></div>
-              <Button variant="primary" className="wide-btn" disabled={busy || built.table.rows.length === 0} onClick={() => void doDownload()}>{busy ? 'Preparing…' : `Download ${chosen?.label ?? ''}`}</Button>
-            </div>
-          </div>
+          <span>from</span>
+          <Select aria-label="Look at" className="bld-pill" value={spec.dataset} onChange={(e) => setDataset(e.target.value)}>
+            {DATASETS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+          </Select>
         </div>
+        <p className="muted bld-help">Change a highlighted word to change the report. {rangeLabel} · {ds?.description}</p>
+        {activeFilters.length > 0 && (
+          <ul className="bld-active" aria-label="Active filters">
+            {activeFilters.map((f) => (
+              <li key={f.i}><span>{f.text}</span><button type="button" aria-label={`Remove filter ${f.i + 1}: ${f.text}`} onClick={() => change({ filters: spec.filters.filter((_, k) => k !== f.i) })}>✕</button></li>
+            ))}
+          </ul>
+        )}
 
-        <aside className="bld-panel" aria-label="Fields and settings">
-          <Card>
+        {note && <div className={`msg ${note.good ? '' : 'error'}`} role={note.good ? 'status' : 'alert'}>{note.text}</div>}
+
+        {spec.mode === 'summary' && (
+          <ul className="stat-grid" aria-label="Headline figures">
+            {built.totals.map((t, i) => {
+              const vals = built.groups.map((g) => g.values[i] ?? 0);
+              const tr = groupField?.type === 'date' ? trend(vals) : null;
+              const type = built.measureTypes[i] ?? 'number';
+              return (
+                <li className="card stat" key={i}>
+                  <span className="muted">{built.measureLabels[i]}</span>
+                  <span className="stat-num">{figure(t, type)}</span>
+                  {tr && <span className={`stat-delta ${tr.direction}`}>{trendText(tr)} <span>{built.groups[built.groups.length - 1]?.label ?? ''} vs {built.groups[built.groups.length - 2]?.label ?? ''}</span></span>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        {allowed.length > 1 && (
+          <div className="bld-charts" role="radiogroup" aria-label="Chart">
+            {allowed.map((k) => <button key={k} type="button" role="radio" aria-checked={chart === k} className={`bld-seg-btn${chart === k ? ' on' : ''}`} onClick={() => change({ chart: k })}>{CHART_LABEL[k]}</button>)}
+          </div>
+        )}
+
+        {!listing ? (
+          <ChartView chart={chart} built={built} onOpen={(g) => setDrill({ key: g.key, label: g.label })} />
+        ) : (
+          <div className="bld-result" aria-label="Report table">
+            <div className="muted small">{built.table.rows.length} {built.table.rows.length === 1 ? 'row' : 'rows'}</div>
+            <DataTable table={{ ...built.table, rows: built.table.rows.slice(0, BUILDER_PAPER_ROWS) }} />
+            {built.table.rows.length > BUILDER_PAPER_ROWS && <p className="muted small">Showing the first {BUILDER_PAPER_ROWS} of {built.table.rows.length} rows. Downloads and the printable report have every row.</p>}
+          </div>
+        )}
+
+        <div className="bld-actions">
+          <span className="bld-actions-label">Get this report</span>
+          {FORMATS.map((f) => <Button key={f.id} disabled={busy || built.table.rows.length === 0} onClick={() => void doDownload(f.id)}>{busy ? 'Preparing…' : `Download ${f.label}`}</Button>)}
+          <Button disabled={built.table.rows.length === 0} onClick={() => setShowPaper(true)}>Print report</Button>
+        </div>
+      </Card>
+
+      <div className="bld-fine">
+        <Button aria-expanded={fine} onClick={() => setFine((v) => !v)}>Filters, columns and fields {fine ? '▴' : '▾'}</Button>
+        {fine && (
+          <div className="bld-fine-body">
+            <Card>
+              <p className="muted bld-help">Drag a field into a box, or tap a field to choose where it goes.</p>
             <div className="bld-wells">
               {spec.mode === 'list' ? (
                 <div className="bld-well" onDragOver={over} onDrop={drop('columns')} aria-label="Columns box">
@@ -362,17 +353,43 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
                 })}
               </div>
             </div>
-          </Card>
-          <Card className="bld-fields">
-            <div className="paper-label">Fields</div>
-            <p className="muted small bld-hint">Drag a field into a box below, or tap it.</p>
-            <ul className="bld-field-list">
-              {spec.mode === 'summary' && fieldButton(COUNT, 'Number of rows', '#')}
-              {fields.map((f) => fieldButton(f.id, f.label, TYPE_TAG[f.type], f.sensitive))}
-            </ul>
-          </Card>
-        </aside>
+            </Card>
+            <Card>
+              <div className="paper-label">Fields</div>
+              <ul className="bld-field-list">
+                {spec.mode === 'summary' && fieldButton(COUNT, 'Number of rows', '#')}
+                {fields.map((f) => fieldButton(f.id, f.label, TYPE_TAG[f.type], f.sensitive))}
+              </ul>
+            </Card>
+          </div>
+        )}
       </div>
+
+      {showSave && (
+        <Modal title="Save this report" onClose={() => setShowSave(false)}>
+          <SectionTitle title="Save this report" />
+          <p className="muted small">It is kept on this device only.</p>
+          <Input aria-label="Save this report" placeholder="Name this report" value={name} onChange={(e) => { setName(e.target.value); setNote(null); }} />
+          {note && !note.good && <div className="msg error" role="alert">{note.text}</div>}
+          <div className="drill-actions"><Button variant="primary" onClick={save}>Save report</Button><Button onClick={() => setShowSave(false)}>Cancel</Button></div>
+        </Modal>
+      )}
+
+      {showPaper && (
+        <Modal title="Printable report" onClose={() => setShowPaper(false)}>
+          <div className="paper-print">
+            <div className="paper" aria-label="What you will download">
+              <div className="paper-gym">{gym.gymName}</div>
+              <h3 className="paper-title">{built.table.title}</h3>
+              <div className="paper-sub">{built.table.subtitle}</div>
+              <div className="paper-count">{built.table.rows.length} {built.table.rows.length === 1 ? 'row' : 'rows'}</div>
+              <DataTable table={{ ...built.table, rows: built.table.rows.slice(0, PRINT_ROWS) }} />
+              {built.table.rows.length > PRINT_ROWS && <p className="paper-more">Showing the first {PRINT_ROWS} of {built.table.rows.length} rows. The download has every row.</p>}
+            </div>
+          </div>
+          <div className="drill-actions"><Button variant="primary" onClick={() => window.print()}>Print</Button><Button onClick={() => setShowPaper(false)}>Close</Button></div>
+        </Modal>
+      )}
 
       {drill && (
         <Modal title={`Rows behind ${drill.label}`} onClose={() => setDrill(null)}>
