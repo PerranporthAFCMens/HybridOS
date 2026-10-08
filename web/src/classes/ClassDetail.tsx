@@ -1,20 +1,38 @@
 import { useState } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
-import type { TimetableSession } from '../data/classes';
+import type { BookingAction, TimetableSession } from '../data/classes';
 import { Button } from '../ui/Button';
 import { SectionTitle } from '../ui/Card';
 import { Modal } from '../ui/Modal';
-import { BOOKING_STATUS_TEXT, bookedText, dayTitle, rosterSummary, sessionStatus, timeRange } from './calc';
-import { useRoster, useSetCancelled } from './useClasses';
+import { AddToClass } from './AddToClass';
+import { BOOKING_STATUS_TEXT, bookedText, dayTitle, rosterActions, rosterSummary, sessionStatus, timeRange } from './calc';
+import { useManageBooking, useRoster, useSetCancelled } from './useClasses';
 
 /** One class opened from the calendar: its facts, and cancel or bring it back. */
 export function ClassDetail({ session, onClose, onEdit }: { session: TimetableSession; onClose: () => void; onEdit: () => void }) {
   const { gym } = useReadyAuth();
   const setCancelled = useSetCancelled(gym.gymId);
   const roster = useRoster(gym.gymId, session.session_id);
+  const manage = useManageBooking(gym.gymId, session.session_id);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [rosterMessage, setRosterMessage] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [message, setMessage] = useState('');
   const status = sessionStatus(session);
+
+  const act = (userId: string, action: BookingAction) => {
+    setRosterMessage('');
+    manage.mutate(
+      { userId, action },
+      {
+        onSuccess: (r) => {
+          setRemoving(null);
+          if (!r.ok) setRosterMessage(r.errors.join(' ') || 'Could not change that booking.');
+        },
+        onError: (e) => setRosterMessage(e.message),
+      },
+    );
+  };
 
   const change = (cancelled: boolean) =>
     setCancelled.mutate({ sessionId: session.session_id, cancelled }, { onSuccess: onClose, onError: (e) => setMessage(e.message) });
@@ -41,14 +59,30 @@ export function ClassDetail({ session, onClose, onEdit }: { session: TimetableSe
           <p className="muted small">{rosterSummary(roster.data)}</p>
           <ol className="roster">
             {roster.data.map((r) => (
-              <li key={r.bookingId}>
+              <li key={r.bookingId} className="roster-row">
                 <span className="roster-name">{r.name}</span>
                 <span className={`tag ${r.status === 'attended' ? 'good' : r.status === 'no_show' ? 'warn' : ''}`.trim()}>{BOOKING_STATUS_TEXT[r.status]}</span>
+                <span className="roster-actions">
+                  {removing === r.userId ? (
+                    <>
+                      <Button disabled={manage.isPending} onClick={() => act(r.userId, 'cancel')}>Yes, remove</Button>
+                      <Button onClick={() => setRemoving(null)}>Keep</Button>
+                    </>
+                  ) : (
+                    rosterActions(r.status).map((a) => (
+                      <Button key={a.action} aria-label={`${a.label}: ${r.name}`} disabled={manage.isPending} onClick={() => (a.action === 'cancel' ? setRemoving(r.userId) : act(r.userId, a.action))}>
+                        {a.label}
+                      </Button>
+                    ))
+                  )}
+                </span>
               </li>
             ))}
           </ol>
         </>
       )}
+      {rosterMessage && <div className="assign-msg"><span className="msg error" role="alert">{rosterMessage}</span></div>}
+      {roster.data && <AddToClass sessionId={session.session_id} roster={roster.data} disabled={session.is_cancelled} />}
       {confirming && !session.is_cancelled && (
         <div className="schedule-check bad" role="alert">
           Cancel this class? It stays on the timetable marked Cancelled and you can bring it back. People who have booked are not told automatically.

@@ -60,6 +60,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const other = [];
   const validated = [];
   const updated = [];
+  const booking = [];
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, async ({ route, path, url, method, body }) => {
     if (path.endsWith('/rpc/get_class_calendar')) {
@@ -86,6 +87,14 @@ for (const [name, viewport] of Object.entries(sizes)) {
       const h = sessions[0];
       return reply(route, { id: h.session_id, class_type_id: 'ty1', name: h.name, description: h.description, starts_at: h.starts_at, ends_at: h.ends_at, capacity: 16, reserved_capacity: 0, reserved_release_minutes_before: null });
     }
+    if (path.endsWith('/rpc/admin_manage_class_booking')) {
+      booking.push(body);
+      if (body.p_user_id === 'u5') return reply(route, { ok: false, errors: ['This class is full (16). Raise the capacity first if you want to add someone.'], warnings: [] });
+      return reply(route, { ok: true, warnings: body.p_action === 'add' ? ['Their membership does not include classes.'] : [] });
+    }
+    if (path.endsWith('/gym_members') && url.searchParams.get('role') === 'eq.member') {
+      return reply(route, ['u1', 'u2', 'u3', 'u4', 'u5'].map((id) => ({ user_id: id, joined_at: '2026-01-01T00:00:00Z', attrition_on: null })));
+    }
     if (path.endsWith('/class_bookings') && method === 'GET') {
       if (url.searchParams.get('session_id') !== 'eq.h') return reply(route, []);
       return reply(route, [
@@ -94,7 +103,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
         { id: 'b3', user_id: 'u3', status: 'no_show', booked_at: '2026-10-01T12:00:00Z' },
       ]);
     }
-    if (path.endsWith('/profiles')) return reply(route, [{ id: 'u1', display_name: 'Amelia Hart', first_name: null, last_name: null }, { id: 'u2', display_name: null, first_name: 'Jack', last_name: 'Pengelly' }]);
+    if (path.endsWith('/profiles')) return reply(route, [{ id: 'u1', display_name: 'Amelia Hart', first_name: null, last_name: null }, { id: 'u2', display_name: null, first_name: 'Jack', last_name: 'Pengelly' }, { id: 'u4', display_name: 'Zara Menhenitt', first_name: null, last_name: null }, { id: 'u5', display_name: 'Full Person', first_name: null, last_name: null }]);
     if (path.endsWith('/class_session_staff')) return reply(route, []);
     if (path.endsWith('/class_types')) return reply(route, [{ id: 'ty1', name: 'HIIT', description: null, duration_minutes: 45, default_capacity: 16, is_active: true }]);
     return false;
@@ -143,6 +152,35 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('attended status', dialog.getByText('Attended', { exact: true }));
   await c.has('no-show status', dialog.getByText('No-show', { exact: true }));
   c.ok('roster is in booking order', (await dialog.locator('.roster li .roster-name').allTextContents()).join('|') === 'Amelia Hart|Jack Pengelly|Member');
+  // Attendance, removing and adding people
+  c.ok('layout (class details with the list and add box)', (await page.evaluate(layoutProblems)).length === 0);
+  await dialog.getByRole('button', { name: 'Attended: Amelia Hart' }).click();
+  await page.waitForTimeout(300);
+  c.ok('Attended sends the checked call for that person and class', booking.length === 1 && booking[0].p_action === 'attended' && booking[0].p_user_id === 'u1' && booking[0].p_session_id === 'h' && booking[0].p_gym_id === GYM);
+  await dialog.getByRole('button', { name: 'No-show: Amelia Hart' }).click();
+  await page.waitForTimeout(300);
+  c.ok('No-show sends no_show', booking.length === 2 && booking[1].p_action === 'no_show');
+  await dialog.getByRole('button', { name: 'Undo: Jack Pengelly' }).click();
+  await page.waitForTimeout(300);
+  c.ok('Undo sets the person back to booked', booking.length === 3 && booking[2].p_action === 'booked' && booking[2].p_user_id === 'u2');
+  await dialog.getByRole('button', { name: 'Remove: Jack Pengelly' }).click();
+  await c.has('asks before removing', dialog.getByRole('button', { name: 'Yes, remove' }));
+  c.ok('nothing sent until confirmed', booking.length === 3);
+  await dialog.getByRole('button', { name: 'Keep' }).click();
+  c.ok('Keep sends nothing', booking.length === 3);
+  await dialog.getByRole('button', { name: 'Remove: Jack Pengelly' }).click();
+  await dialog.getByRole('button', { name: 'Yes, remove' }).click();
+  await page.waitForTimeout(300);
+  c.ok('Remove sends cancel for that person', booking.length === 4 && booking[3].p_action === 'cancel' && booking[3].p_user_id === 'u2');
+  await dialog.getByLabel('Add someone to this class').fill('amel');
+  await c.has('people already on the list are not offered', dialog.getByText('No member found who is not already on the list.'));
+  await dialog.getByLabel('Add someone to this class').fill('zar');
+  await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+  await c.has('added with the owner warning shown', dialog.getByText('Zara Menhenitt added. Their membership does not include classes.'));
+  c.ok('Add sends add for that member', booking.length === 5 && booking[4].p_action === 'add' && booking[4].p_user_id === 'u4');
+  await dialog.getByLabel('Add someone to this class').fill('full');
+  await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+  await c.has('a refusal from the database is shown', dialog.getByText(/This class is full \(16\)/));
   await dialog.getByRole('button', { name: 'Cancel class' }).click();
   await c.has('asks before cancelling', dialog.getByText(/Cancel this class\?/));
   c.ok('nothing written yet', patches.length === 0);
@@ -158,6 +196,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   // Bring a cancelled class back
   await page.getByRole('button', { name: /^Lunch Yoga/ }).click();
   await c.has('cancelled status shown', dialog.getByText('Cancelled', { exact: true }));
+  c.ok('a cancelled class cannot take new people', await dialog.getByLabel('Add someone to this class').isDisabled());
   await dialog.getByRole('button', { name: 'Bring class back' }).click();
   c.ok('dialog closes after bringing back', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
   c.ok('reinstate wrote is_cancelled false', patches.length === 2 && patches[1].body.is_cancelled === false && patches[1].id === 'eq.y');

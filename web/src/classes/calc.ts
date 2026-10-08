@@ -1,4 +1,4 @@
-import type { BookingStatus, EditableClass, RosterEntry, SchedulingRules, TimetableSession } from '../data/classes';
+import type { BookingAction, BookingStatus, EditableClass, RosterEntry, SchedulingRules, TimetableSession } from '../data/classes';
 
 /** Monday 00:00 (local) of the week containing `d`. */
 export function startOfWeek(d: Date): Date {
@@ -332,3 +332,11 @@ export function rosterSummary(roster: Pick<RosterEntry, 'status'>[]): string {
   const noShow = roster.filter((r) => r.status === 'no_show').length;
   return [`${roster.length} booked`, attended ? `${attended} attended` : '', noShow ? `${noShow} no-show` : ''].filter(Boolean).join(' · ');
 }
+
+/** What can be done to someone already on the list, by their current status. */
+export function rosterActions(status: BookingStatus): { action: BookingAction; label: string }[] {
+  if (status === 'booked') return [{ action: 'attended', label: 'Attended' }, { action: 'no_show', label: 'No-show' }, { action: 'cancel', label: 'Remove' }];
+  return [{ action: 'booked', label: 'Undo' }, { action: 'cancel', label: 'Remove' }];
+}
+
+export const MAX_ADD_MATCHES = 6;
