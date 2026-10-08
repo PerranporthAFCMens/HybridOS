@@ -78,7 +78,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('hours summary and pay', page.getByText(/Head coach/));
   await c.has('qualification tag', page.getByText(/Spin instructor/).first());
   c.ok('owner is not editable here', (await page.getByRole('button', { name: 'Edit Olly Owner' }).count()) === 0);
-  c.ok('owner links to access page', (await page.getByRole('link', { name: 'Manage access' }).getAttribute('href')).includes('admin.html'));
+  c.ok('owner links to the owners and admins screen', (await page.getByRole('link', { name: 'Manage access' }).getAttribute('href')) === '#/owners');
   c.ok('layout (staff)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/staff-${name}.png`, fullPage: true });
 

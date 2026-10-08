@@ -109,7 +109,7 @@ function TeamItem({ m, d, now, confirming, busy, onEdit, onAskRemove, onCancelRe
             <Button onClick={onCancelRemove}>Keep</Button>
           </div>
         )}
-        {!operational && <LinkButton href={links['admin-access']}>Manage access</LinkButton>}
+        {!operational && <LinkButton href={links.owners}>Manage access</LinkButton>}
       </div>
     </li>
   );

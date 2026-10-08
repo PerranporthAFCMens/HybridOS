@@ -40,6 +40,14 @@ const STATES = {
   'class calendar': async (page) => { await page.goto(`${base}/next/#/classes`); await page.getByRole('button', { name: 'Day', exact: true }).click(); await page.getByRole('button', { name: /^Add a class on .* at 09:00$/ }).waitFor(); },
   'class form': async (page) => { await page.goto(`${base}/next/#/classes`); await page.getByRole('button', { name: 'Add class' }).click(); await page.getByRole('dialog').getByLabel('Class name').waitFor(); },
   'member record': async (page) => { await page.goto(`${base}/next/#/members`); await page.locator('.member-row').first().click(); await page.getByRole('dialog').getByText('Customer lifecycle').waitFor(); await page.getByRole('dialog').getByRole('heading', { name: /Hybrid Monthly/ }).waitFor(); },
+  settings: async (page) => { await page.goto(`${base}/next/#/settings`); await page.getByRole('heading', { name: 'Settings', level: 1 }).waitFor(); },
+  staff: async (page) => { await page.goto(`${base}/next/#/staff`); await page.getByText('No team accounts yet.').waitFor(); },
+  'staff form': async (page) => { await page.goto(`${base}/next/#/staff`); await page.getByRole('button', { name: 'Add staff login' }).click(); await page.getByRole('dialog').getByLabel('Name').waitFor(); },
+  rooms: async (page) => { await page.goto(`${base}/next/#/rooms`); await page.getByText('Nothing set up yet. Add your first room.').waitFor(); },
+  'rooms form': async (page) => { await page.goto(`${base}/next/#/rooms`); await page.getByRole('button', { name: 'Add room or equipment' }).click(); await page.getByRole('dialog').getByLabel('Name').waitFor(); },
+  access: async (page) => { await page.goto(`${base}/next/#/access`); await page.getByText('No access levels yet.').first().waitFor(); },
+  'access form': async (page) => { await page.goto(`${base}/next/#/access`); await page.getByRole('button', { name: 'New access level' }).click(); await page.getByRole('dialog').getByLabel('Level name').waitFor(); },
+  owners: async (page) => { await page.goto(`${base}/next/#/owners`); await page.getByText('No access invitations yet.').waitFor(); },
   menu: async (page, size) => { await page.goto(`${base}/next/#/today`); await page.getByText('Active members', { exact: true }).waitFor(); if (size.width < 900) { await page.getByRole('button', { name: 'Open menu' }).click(); await page.waitForTimeout(350); } },
 };
 
