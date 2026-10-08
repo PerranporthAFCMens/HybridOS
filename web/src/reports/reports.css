@@ -4,7 +4,7 @@
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 14px; margin-bottom: 16px; }
 .stat-grid > * { min-width: 0; }
 .stat-num { font-family: var(--hybrid-mono); font-weight: 500; letter-spacing: -.03em; color: #fff; font-size: 28px; margin-top: 6px; overflow-wrap: anywhere; }
-.report-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; margin-bottom: 16px; align-items: start; }
+.report-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; margin-bottom: 16px; align-items: stretch; }
 .report-cols > * { min-width: 0; }
 .bar-list { display: flex; flex-direction: column; gap: 10px; }
 .bar-row { display: grid; grid-template-columns: minmax(70px, 120px) minmax(0, 1fr) auto; gap: 12px; align-items: center; font-size: 13px; }
@@ -55,3 +55,10 @@ button.bar-row:hover { background: rgba(255, 255, 255, .04); }
 .stat .stat-num { display: block; }
 .report-tabs ~ .card { margin-bottom: 16px; }
 .stat-grid.wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
+
+/* Tiles: equal height, the figure always on the bottom line whatever the label wraps to, and the whole row used. */
+.stat { display: flex; flex-direction: column; justify-content: space-between; gap: 6px; min-height: 96px; }
+.stat .stat-num { margin-top: auto; }
+.stat-grid.eight { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 700px) { .stat-grid.eight { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1700px) { .stat-grid.eight { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
