@@ -5,7 +5,7 @@ import { downloadTable, fileBase, type Format, type ReportTable } from './downlo
 const FORMATS: [Format, string][] = [['csv', 'CSV'], ['xlsx', 'Excel'], ['pdf', 'PDF']];
 
 /** CSV, Excel and PDF buttons for one table. `build` makes the table when a button is pressed. */
-export function DownloadButtons({ gymName, build }: { gymName: string; build: () => ReportTable }) {
+export function DownloadButtons({ gymName, build, formats }: { gymName: string; build: () => ReportTable; /** Which buttons to show (all three by default). */ formats?: Format[] }) {
   const [busy, setBusy] = useState<Format | null>(null);
   const [error, setError] = useState('');
   const go = async (format: Format) => {
@@ -22,7 +22,7 @@ export function DownloadButtons({ gymName, build }: { gymName: string; build: ()
   };
   return (
     <div className="download-group" role="group" aria-label="Download">
-      {FORMATS.map(([f, label]) => (
+      {FORMATS.filter(([f]) => !formats || formats.includes(f)).map(([f, label]) => (
         <Button key={f} onClick={() => void go(f)} disabled={busy !== null}>{busy === f ? 'Preparing…' : label}</Button>
       ))}
       {error && <span className="msg error" role="alert">{error}</span>}

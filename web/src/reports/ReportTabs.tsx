@@ -10,15 +10,16 @@ import type { ReportTable } from './download';
 import { pounds, type LibraryContext } from './library';
 import { AttendanceChart, JoinsChart, MembersLineChart, PaymentStateDonut, PaymentsChart, PlanDonut } from './ReportCharts';
 import { ReportLibrary } from './ReportLibrary';
+import { XeroExport } from './XeroExport';
 import {
   atRiskTable, classPerformanceTable, classesTab, heatStep, membersTab, membershipsTab, membershipsTable, metricsOf, paymentsTab, topMembersTable,
   type ClassesTab, type MembersTab, type MembershipsTab, type PaymentsTab,
 } from './tabs';
 import { useLibraryData } from './useReports';
 
-export type TabKey = 'overview' | 'memberships' | 'classes' | 'members' | 'payments' | 'library';
+export type TabKey = 'overview' | 'memberships' | 'classes' | 'members' | 'payments' | 'xero' | 'library';
 export const TABS: [TabKey, string][] = [
-  ['overview', 'Overview'], ['memberships', 'Memberships'], ['classes', 'Classes'], ['members', 'Members'], ['payments', 'Payments'], ['library', 'Report library'],
+  ['overview', 'Overview'], ['memberships', 'Memberships'], ['classes', 'Classes'], ['members', 'Members'], ['payments', 'Payments'], ['xero', 'Accounting (Xero)'], ['library', 'Report library'],
 ];
 
 function StatCard({ label, value }: { label: string; value: string }): ReactNode {
@@ -44,6 +45,7 @@ export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: E
   if (tab === 'classes') return <ClassesPane d={d} ctx={ctx} gymName={gym.gymName} onOpenTable={onOpenTable} cp={cp} />;
   if (tab === 'members') return <MembersPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;
   if (tab === 'payments') return <PaymentsPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;
+  if (tab === 'xero') return <XeroExport key={gym.gymId} d={d} rangeLabel={rangeLabel} since={since} />;
   return <ReportLibrary data={d} rangeDays={rangeDays} rangeLabel={rangeLabel} />;
 }
 

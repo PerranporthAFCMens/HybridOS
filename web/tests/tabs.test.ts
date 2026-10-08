@@ -13,10 +13,10 @@ const base = (over: Partial<LibraryData> = {}): LibraryData => ({
     { id: 'p3', name: 'Gym', pricePence: 2900, interval: 'monthly', isActive: false },
   ],
   memberships: [
-    { userId: 'u1', planId: 'p1', status: 'active', startsOn: '', endsOn: '', provider: '', paymentStatus: '', updatedAt: '' },
-    { userId: 'u2', planId: 'p1', status: 'active', startsOn: '', endsOn: '', provider: '', paymentStatus: '', updatedAt: '' },
-    { userId: 'u3', planId: 'p2', status: 'active', startsOn: '', endsOn: '', provider: '', paymentStatus: '', updatedAt: '' },
-    { userId: 'u4', planId: 'p3', status: 'cancelled', startsOn: '', endsOn: '', provider: '', paymentStatus: '', updatedAt: '' },
+    { id: 'm-u1', userId: 'u1', planId: 'p1', status: 'active', startsOn: '', endsOn: '', provider: '', paymentStatus: '', updatedAt: '' },
+    { id: 'm-u2', userId: 'u2', planId: 'p1', status: 'active', startsOn: '', endsOn: '', provider: '', paymentStatus: '', updatedAt: '' },
+    { id: 'm-u3', userId: 'u3', planId: 'p2', status: 'active', startsOn: '', endsOn: '', provider: '', paymentStatus: '', updatedAt: '' },
+    { id: 'm-u4', userId: 'u4', planId: 'p3', status: 'cancelled', startsOn: '', endsOn: '', provider: '', paymentStatus: '', updatedAt: '' },
   ],
   gymMembers: [
     { userId: 'u1', joinedAt: '2026-10-01T10:00:00Z', attritionOn: '', isActive: true },
@@ -26,9 +26,9 @@ const base = (over: Partial<LibraryData> = {}): LibraryData => ({
   ],
   people: new Map([['u1', { name: 'Amelia Hart', dateOfBirth: '', gender: '' }], ['u2', { name: 'Jack Pengelly', dateOfBirth: '', gender: '' }], ['u3', { name: 'Priya Nair', dateOfBirth: '', gender: '' }]]),
   payments: [
-    { userId: 'u1', chargeDate: '2026-10-01', createdAt: '', amountPence: 5900, state: 'paid_out', provider: 'manual', failure: '' },
-    { userId: 'u2', chargeDate: '2026-10-01', createdAt: '', amountPence: 5900, state: 'failed', provider: 'manual', failure: 'insufficient_funds' },
-    { userId: 'u3', chargeDate: '2026-09-01', createdAt: '', amountPence: 2900, state: 'charged_back', provider: 'manual', failure: '' },
+    { id: 'pay-u1', membershipId: '', userId: 'u1', chargeDate: '2026-10-01', createdAt: '', amountPence: 5900, state: 'paid_out', provider: 'manual', failure: '' },
+    { id: 'pay-u2', membershipId: '', userId: 'u2', chargeDate: '2026-10-01', createdAt: '', amountPence: 5900, state: 'failed', provider: 'manual', failure: 'insufficient_funds' },
+    { id: 'pay-u3', membershipId: '', userId: 'u3', chargeDate: '2026-09-01', createdAt: '', amountPence: 2900, state: 'charged_back', provider: 'manual', failure: '' },
   ],
   purchases: [], assignments: [], workoutSessions: [], pt: [],
   // Mon 5 Oct 09:00 London (08:00Z) HIIT cap 10; Mon 5 Oct 18:00 London Yoga cap 5; Tue 6 Oct 12:30 HIIT cap 10; a future class.
