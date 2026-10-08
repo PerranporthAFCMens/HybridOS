@@ -7,6 +7,7 @@ import type { TimetableSession } from '../data/classes';
 import { CalendarGrid } from './CalendarGrid';
 import { ClassDetail } from './ClassDetail';
 import { ClassForm } from './ClassForm';
+import { EditClass } from './EditClass';
 import { addDays, bookedText, dayTitle, sessionStatus, startOfWeek, timeRange, weekColumns, weekdayName, weekLabel, weekSummary } from './calc';
 import { useTimetable } from './useClasses';
 import '../members/members.css';
@@ -18,6 +19,7 @@ export function Classes() {
   const [view, setView] = useState<'day' | 'week' | 'list'>('day');
   const [adding, setAdding] = useState<{ date: string; start: string } | 'blank' | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const weekStart = startOfWeek(anchor);
   const step = view === 'day' ? 1 : 7;
   const q = useTimetable(gym.gymId, weekStart);
@@ -104,7 +106,18 @@ export function Classes() {
           }}
         />
       )}
-      {openedSession && <ClassDetail session={openedSession} onClose={() => setOpened(null)} />}
+      {openedSession && !editingId && <ClassDetail session={openedSession} onClose={() => setOpened(null)} onEdit={() => setEditingId(openedSession.session_id)} />}
+      {editingId && (
+        <EditClass
+          sessionId={editingId}
+          onClose={() => setEditingId(null)}
+          onSaved={(startsAt) => {
+            setAnchor(startsAt);
+            setEditingId(null);
+            setOpened(null);
+          }}
+        />
+      )}
     </>
   );
 }

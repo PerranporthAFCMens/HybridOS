@@ -58,6 +58,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const asked = [];
   const patches = [];
   const other = [];
+  const validated = [];
+  const updated = [];
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, async ({ route, path, url, method, body }) => {
     if (path.endsWith('/rpc/get_class_calendar')) {
@@ -71,6 +73,19 @@ for (const [name, viewport] of Object.entries(sizes)) {
       return false;
     }
     if (method !== 'GET' && method !== 'HEAD' && !path.includes('/rpc/') && !path.endsWith('/class_sessions')) other.push(`${method} ${path}`);
+    if (path.endsWith('/rpc/validate_class_schedule')) {
+      validated.push(body);
+      const bad = new Date(body.p_starts_at).getTime() === londonInstant(todayKey, '11:00').getTime();
+      return reply(route, bad ? { ok: false, errors: ['Studio A is already booked at this time.'], warnings: [] } : { ok: true, errors: [], warnings: [] });
+    }
+    if (path.endsWith('/rpc/update_validated_class_session')) {
+      updated.push(body);
+      return reply(route, { ok: true, overridden: !!body.p_override_reason, session_id: body.p_session_id });
+    }
+    if (path.endsWith('/class_sessions') && method === 'GET') {
+      const h = sessions[0];
+      return reply(route, { id: h.session_id, class_type_id: 'ty1', name: h.name, description: h.description, starts_at: h.starts_at, ends_at: h.ends_at, capacity: 16, reserved_capacity: 0, reserved_release_minutes_before: null });
+    }
     if (path.endsWith('/class_session_staff')) return reply(route, []);
     if (path.endsWith('/class_types')) return reply(route, [{ id: 'ty1', name: 'HIIT', description: null, duration_minutes: 45, default_capacity: 16, is_active: true }]);
     return false;
@@ -125,6 +140,43 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('dialog closes after bringing back', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
   c.ok('reinstate wrote is_cancelled false', patches.length === 2 && patches[1].body.is_cancelled === false && patches[1].id === 'eq.y');
 
+  // Edit a class: same form as Add class, filled in; checked against the gym rules ignoring the class itself
+  await page.getByRole('button', { name: /^Morning HIIT/ }).click();
+  await dialog.getByRole('button', { name: 'Edit class' }).click();
+  await c.has('edit form opens', dialog.getByText('Edit class', { exact: true }).first());
+  c.ok('edit form is filled in with the saved class', (await dialog.getByLabel('Class name').inputValue()) === 'Morning HIIT' && (await dialog.getByLabel('Start time').inputValue()) === '09:00' && (await dialog.getByLabel('Duration (minutes)').inputValue()) === '60' && (await dialog.getByLabel('Total capacity').inputValue()) === '16' && (await dialog.getByLabel('Date', { exact: true }).inputValue()) === todayKey);
+  c.ok('class type cannot be changed when editing', await dialog.getByLabel('Class type').isDisabled());
+  c.ok('no repeat option when editing', (await dialog.getByLabel('Repeat weekly').count()) === 0);
+  await dialog.getByLabel('Class name').fill('Morning HIIT Plus');
+  await dialog.getByLabel('Start time').fill('10:30');
+  await c.has('check passes', dialog.getByText('Coaches, working hours, rooms, equipment and clashes all check out.'));
+  c.ok('the check ignores the class being edited', validated.length > 0 && validated.every((v) => v.p_exclude_session_id === 'h'));
+  await dialog.getByRole('button', { name: 'Save changes' }).click();
+  c.ok('edit closes after saving', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
+  const u = updated[0];
+  c.ok('saved through the checked database call for that class', updated.length === 1 && u.p_session_id === 'h' && u.p_gym_id === GYM && u.p_name === 'Morning HIIT Plus' && u.p_capacity === 16 && new Date(u.p_starts_at).getTime() === londonInstant(todayKey, '10:30').getTime() && new Date(u.p_ends_at).getTime() === londonInstant(todayKey, '11:30').getTime());
+  c.ok('a normal change sends no override reason', !('p_override_reason' in u));
+
+  // A change that fails the checks can be saved anyway, with a reason
+  await page.getByRole('button', { name: /^Morning HIIT/ }).click();
+  await dialog.getByRole('button', { name: 'Edit class' }).click();
+  await dialog.getByLabel('Start time').fill('11:00');
+  await c.has('failing check shown', dialog.getByText('Studio A is already booked at this time.'));
+  c.ok('Save changes is off while the check fails', await dialog.getByRole('button', { name: 'Save changes' }).isDisabled());
+  c.ok('Save anyway is off until there is a reason', await dialog.getByRole('button', { name: 'Save anyway' }).isDisabled());
+  await dialog.getByLabel('Reason', { exact: true }).fill('Room swap agreed with the coach');
+  await dialog.getByRole('button', { name: 'Save anyway' }).click();
+  c.ok('override edit closes', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
+  c.ok('the reason is sent with the change', updated.length === 2 && updated[1].p_override_reason === 'Room swap agreed with the coach' && updated[1].p_session_id === 'h');
+
+  // Closing the edit form without saving writes nothing and returns to the class
+  await page.getByRole('button', { name: /^Morning HIIT/ }).click();
+  await dialog.getByRole('button', { name: 'Edit class' }).click();
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await c.has('back at the class details', dialog.getByRole('button', { name: 'Edit class' }));
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  c.ok('closing the edit form wrote nothing', updated.length === 2);
+
   // The List view is still there
   await page.getByRole('button', { name: 'List', exact: true }).click();
   await c.has('list view cards', page.getByRole('heading', { name: 'Morning HIIT' }));
@@ -145,7 +197,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   } else {
     c.ok('Week button is hidden on a phone', !(await page.getByRole('button', { name: 'Week', exact: true }).isVisible()));
   }
-  c.ok(`only the two cancel changes were written (${other.join(', ') || 'no other writes'})`, other.length === 0);
+  c.ok(`only the cancel changes and the edit calls were written (${other.join(', ') || 'no other writes'})`, other.length === 0);
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;
   await ctx.close();

@@ -8,7 +8,7 @@ import { bookedText, dayTitle, sessionStatus, timeRange } from './calc';
 import { useSetCancelled } from './useClasses';
 
 /** One class opened from the calendar: its facts, and cancel or bring it back. */
-export function ClassDetail({ session, onClose }: { session: TimetableSession; onClose: () => void }) {
+export function ClassDetail({ session, onClose, onEdit }: { session: TimetableSession; onClose: () => void; onEdit: () => void }) {
   const { gym } = useReadyAuth();
   const setCancelled = useSetCancelled(gym.gymId);
   const [confirming, setConfirming] = useState(false);
@@ -37,6 +37,7 @@ export function ClassDetail({ session, onClose }: { session: TimetableSession; o
         </div>
       )}
       <div className="assign-msg">{message && <span className="msg error" role="alert">{message}</span>}</div>
+      {!confirming && <Button variant="primary" className="wide-btn" onClick={onEdit}>Edit class</Button>}
       {session.is_cancelled ? (
         <Button variant="primary" className="wide-btn" disabled={setCancelled.isPending} onClick={() => change(false)}>{setCancelled.isPending ? 'Saving…' : 'Bring class back'}</Button>
       ) : confirming ? (

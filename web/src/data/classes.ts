@@ -155,6 +155,8 @@ export interface ScheduleProposal {
   capacity: number;
   /** User ids of the people to assign; the first is the lead. */
   staffIds: string[];
+  /** When editing: the class being changed, so it does not clash with itself. */
+  excludeSessionId?: string;
 }
 
 /** What the database says about a proposed class: ok, or a list of problems in plain English. */
@@ -187,6 +189,7 @@ export async function checkSchedule(gymId: string, p: ScheduleProposal): Promise
     p_ends_at: p.endsAt,
     p_capacity: p.capacity,
     p_staff_ids: p.staffIds,
+    ...(p.excludeSessionId ? { p_exclude_session_id: p.excludeSessionId } : {}),
   });
   if (error) throw error;
   return toVerdict(data);
@@ -237,4 +240,73 @@ export async function setClassCancelled(gymId: string, sessionId: string, cancel
     .eq('id', sessionId)
     .eq('gym_id', gymId);
   if (error) throw error;
+}
+
+/** What the edit form starts from: one saved class with its coaches and reserved plans. */
+export interface EditableClass {
+  sessionId: string;
+  classTypeId: string | null;
+  name: string;
+  description: string;
+  startsAt: string;
+  endsAt: string;
+  capacity: number;
+  reservedCapacity: number;
+  releaseMinutesBefore: number | null;
+  /** Coaches in order, lead first. */
+  staffIds: string[];
+  planIds: string[];
+}
+
+export async function loadClassForEdit(gymId: string, sessionId: string): Promise<EditableClass> {
+  const [session, staff, plans] = await Promise.all([
+    supabase
+      .from('class_sessions')
+      .select('id, class_type_id, name, description, starts_at, ends_at, capacity, reserved_capacity, reserved_release_minutes_before')
+      .eq('id', sessionId)
+      .eq('gym_id', gymId)
+      .single(),
+    supabase.from('class_session_staff').select('user_id, is_lead').eq('session_id', sessionId),
+    supabase.from('class_session_reserved_plans').select('plan_id').eq('session_id', sessionId),
+  ]);
+  if (session.error) throw session.error;
+  if (staff.error) throw staff.error;
+  if (plans.error) throw plans.error;
+  const s = session.data;
+  return {
+    sessionId: s.id,
+    classTypeId: s.class_type_id,
+    name: s.name,
+    description: s.description ?? '',
+    startsAt: s.starts_at,
+    endsAt: s.ends_at,
+    capacity: s.capacity,
+    reservedCapacity: s.reserved_capacity,
+    releaseMinutesBefore: s.reserved_release_minutes_before,
+    staffIds: (staff.data ?? []).sort((a, b) => Number(b.is_lead) - Number(a.is_lead)).map((r) => r.user_id),
+    planIds: (plans.data ?? []).map((r) => r.plan_id),
+  };
+}
+
+/**
+ * Saves changes to a class in ONE database call that runs the gym checks first (ignoring the class
+ * itself) and changes the class, its coaches and its reserved plans together or not at all.
+ */
+export async function updateClassSession(gymId: string, sessionId: string, c: NewClass): Promise<ScheduleVerdict> {
+  const { data, error } = await supabase.rpc('update_validated_class_session', {
+    p_gym_id: gymId,
+    p_session_id: sessionId,
+    p_name: c.name,
+    p_description: c.description as string,
+    p_starts_at: c.startsAt,
+    p_ends_at: c.endsAt,
+    p_capacity: c.capacity,
+    p_reserved_capacity: c.reservedCapacity,
+    p_reserved_release_minutes_before: c.releaseMinutesBefore as number,
+    p_staff_ids: c.staffIds,
+    p_plan_ids: c.reservedPlanIds,
+    ...(c.overrideReason ? { p_override_reason: c.overrideReason } : {}),
+  });
+  if (error) throw error;
+  return toVerdict(data);
 }
