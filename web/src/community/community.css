@@ -1,0 +1,17 @@
+.cm-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.cm-confirm > span { flex: 1 1 260px; }
+.cm-post { overflow-wrap: anywhere; }
+.cm-head { display: flex; align-items: center; gap: 10px; }
+.cm-meta { display: grid; flex: 1; min-width: 0; }
+.cm-avatar { width: 36px; height: 36px; flex: 0 0 36px; border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: var(--hybrid-line); font-size: 12px; font-weight: 600; }
+.cm-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.cm-body { margin: 10px 0; white-space: pre-wrap; }
+.cm-comments { margin-top: 10px; display: grid; gap: 8px; }
+.cm-comment { display: flex; gap: 8px; }
+.cm-comment.reply { margin-left: 28px; }
+.cm-main { flex: 1; min-width: 0; }
+.cm-bubble { background: var(--hybrid-bg); border-radius: 12px; padding: 8px 10px; white-space: pre-wrap; }
+.cm-actions { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+.cm-replying { margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cm-composer { display: flex; gap: 8px; margin-top: 10px; }
+.cm-composer > :first-child { flex: 1; min-width: 0; }

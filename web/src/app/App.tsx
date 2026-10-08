@@ -15,6 +15,7 @@ import { Access } from '../access/Access';
 import { Owners } from '../owners/Owners';
 import { Door } from '../door/Door';
 import { MemberView } from '../memberview/MemberView';
+import { Community } from '../community/Community';
 import { homeFor } from '../auth/access';
 
 function Leave({ to }: { to: string }) {
@@ -59,6 +60,7 @@ export function App() {
             <Route path="/owners" element={<Owners />} />
             <Route path="/door" element={<Door />} />
             <Route path="/member-view" element={<MemberView />} />
+            <Route path="/community" element={<Community />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/class-setup" element={<ClassSetup />} />
             <Route path="*" element={<Navigate to="/today" replace />} />
