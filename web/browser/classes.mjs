@@ -127,7 +127,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Today' }).click();
   await c.has('Today returns to this week', page.getByRole('heading', { name: /Strength and conditioning/ }));
-  c.ok('old class setup link kept (class types library)', (await page.getByRole('link', { name: 'Class setup' }).getAttribute('href')).includes('class-setup.html'));
+  c.ok('Class setup link goes to the new Class setup screen', (await page.getByRole('link', { name: 'Class setup' }).getAttribute('href')) === '#/class-setup');
   c.ok(`read-only: no writes (${writes.join(', ') || 'none'})`, writes.length === 0);
 
   // Add class: pick a class type, see what it needs, let the gym rules guide who can teach it
