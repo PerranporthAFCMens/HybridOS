@@ -42,13 +42,12 @@ export function spaceText(c: Pick<ClassRow, 'isBooked' | 'availableSpaces'>): st
   return `${c.availableSpaces} ${c.availableSpaces === 1 ? 'space' : 'spaces'} left`;
 }
 
-export interface Flags { classes: boolean; gym: boolean; pt: boolean; train: boolean }
+export interface Flags { classes: boolean; gym: boolean; pt: boolean }
 
-/** What this member has. No plan information means classes are shown (they may still drop in). Train appears when the plan has the gym or PT, or a workout has been sent. */
-export function flagsFor(plan: MyPlan | null, hasPt: boolean, hasWorkouts = false): Flags {
-  if (!plan) return { classes: true, gym: false, pt: hasPt, train: hasPt || hasWorkouts };
-  const pt = plan.includesPt || hasPt;
-  return { classes: plan.includesClasses, gym: plan.includesOpenGym, pt, train: plan.includesOpenGym || pt || hasWorkouts };
+/** What this member has. No plan information means classes are shown (they may still drop in). Everyone has the Workouts tab: any member can log their own training. */
+export function flagsFor(plan: MyPlan | null, hasPt: boolean): Flags {
+  if (!plan) return { classes: true, gym: false, pt: hasPt };
+  return { classes: plan.includesClasses, gym: plan.includesOpenGym, pt: plan.includesPt || hasPt };
 }
 
 export type Hero =

@@ -74,7 +74,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const c = runChecks();
   await page.goto(`${base}/next/#/m/today`);
   await c.has("today's workout is on top", page.getByRole('heading', { name: "Today's workout is ready" }));
-  c.ok('tabs: Today, Train, Me (no classes in this plan)', (await page.getByRole('navigation', { name: 'Member' }).getByRole('link').allInnerTexts()).join('|') === 'Today|Train|Me');
+  c.ok('tabs: Today, Workouts, Me (no classes in this plan)', (await page.getByRole('navigation', { name: 'Member' }).getByRole('link').allInnerTexts()).join('|') === 'Today|Workouts|Me');
   c.ok('layout (today)', (await page.evaluate(layoutProblems)).length === 0);
 
   await page.getByRole('link', { name: 'Start workout' }).click();
@@ -108,7 +108,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByLabel('How hard was it').selectOption('7');
   await page.getByLabel('Notes', { exact: true }).fill('Felt good');
   await page.getByRole('button', { name: 'Finish workout' }).click();
-  await c.has('back on Train with a message', page.getByText('Workout saved and marked as done.'));
+  await c.has('back on Workouts with a message', page.getByText('Workout saved and marked as done.'));
   const joined = writes.join('\n');
   c.ok('one session titled from the workout', writes.filter((w) => w.startsWith('session ')).length === 1 && joined.includes('"title":"Upper body"'));
   c.ok('two exercises saved, the swap noted', writes.filter((w) => w.startsWith('entry ')).length === 2 && joined.includes('"exercise_name":"Landmine press"') && joined.includes('Swapped from Overhead press'));
@@ -123,7 +123,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('layout (train)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/train-home-${name}.png` });
 
-  c.ok('personal bests are listed on Train', (await page.getByLabel('Personal bests', { exact: true }).textContent()).includes('Deadlift') && (await page.getByLabel('Personal bests', { exact: true }).textContent()).includes('145 kg'));
+  c.ok('personal bests are listed on Workouts', (await page.getByLabel('Personal bests', { exact: true }).textContent()).includes('Deadlift') && (await page.getByLabel('Personal bests', { exact: true }).textContent()).includes('145 kg'));
   c.ok('a PT card with the next session', (await page.getByLabel('Personal training').textContent()).includes('Next session'));
   await page.getByLabel('Personal training').getByRole('link', { name: 'See all' }).click();
   await c.has('the PT page', page.getByRole('heading', { name: 'Personal training' }));
@@ -131,7 +131,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('past sessions say done and missed', (await page.getByLabel('Past sessions').textContent()).includes('Done') && (await page.getByLabel('Past sessions').textContent()).includes('Missed'));
   c.ok('and who to ask to move one', (await page.getByText('To move or cancel a session, ask your coach.').count()) === 1);
   c.ok('layout (PT)', (await page.evaluate(layoutProblems)).length === 0);
-  await page.getByRole('link', { name: '‹ Train' }).click();
+  await page.getByRole('link', { name: '‹ Workouts' }).click();
   await page.getByLabel('Personal bests', { exact: true }).getByRole('link', { name: 'See all' }).click();
   await c.has('the personal bests page', page.getByRole('heading', { name: 'Personal bests' }));
   c.ok('a time is shown as minutes and seconds', (await page.getByRole('article', { name: '5k' }).textContent()).includes('24:18') && (await page.getByRole('article', { name: '5k' }).textContent()).includes('lower is better'));
@@ -154,7 +154,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('dialog').getByRole('button', { name: 'Remove', exact: true }).click();
   await c.has('removed', page.getByRole('heading', { name: 'Personal bests' }));
   c.ok('the delete was sent', writes.includes('DELETE pb'));
-  await page.getByRole('link', { name: '‹ Train' }).click();
+  await page.getByRole('link', { name: '‹ Workouts' }).click();
   writes.length = 0;
   await page.getByRole('link', { name: 'Start my own workout' }).click();
   await page.getByRole('button', { name: 'Finish workout' }).click();

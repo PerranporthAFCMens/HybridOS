@@ -101,7 +101,7 @@ export function Today() {
         </section>
       )}
 
-      {hero.kind !== 'workout' && due && d.flags.train && (
+      {hero.kind !== 'workout' && due && (
         <section className="mem-card" aria-label="Today's workout">
           <div className="mem-line"><div><h2>Today's workout</h2><div className="muted">{due.title}</div></div><Link className="btn secondary" to={`/m/train/${due.id}`}>{due.status === 'in_progress' ? 'Continue' : 'Start'}</Link></div>
         </section>

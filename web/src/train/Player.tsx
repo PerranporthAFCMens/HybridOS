@@ -100,7 +100,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
   return (
     <div className="mem-screen">
       <div>
-        <Link to="/m/train" className="mem-back">‹ Train</Link>
+        <Link to="/m/train" className="mem-back">‹ Workouts</Link>
         <h1 className="mem-title">{title || 'My workout'}</h1>
         {source && !isNew && <div className="mem-hi">From your coach. These are suggestions: change, swap or skip anything.</div>}
       </div>

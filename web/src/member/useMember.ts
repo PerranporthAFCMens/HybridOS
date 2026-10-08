@@ -33,7 +33,7 @@ export function useMemberData(): MemberCtx {
     pt: ptRows,
     plans: plans.data ?? [],
     plan: plan.data ?? null,
-    flags: flagsFor(plan.data ?? null, ptRows.length > 0, (plans.data ?? []).length > 0),
+    flags: flagsFor(plan.data ?? null, ptRows.length > 0),
     workoutsThisWeek: week.data ?? 0,
     today,
     now,
