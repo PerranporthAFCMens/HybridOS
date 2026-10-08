@@ -68,13 +68,12 @@ export async function loadLibraryData(gymId: string, since: string | null): Prom
     if (since) q = q.gte('starts_at', since);
     return q;
   });
-  const teamP = supabase.rpc('get_gym_team_accounts', { target_gym_id: gymId });
-  const profilesP = allRows((a, b) => supabase.from('staff_profiles').select('user_id, job_title, gross_hourly_rate_pence').eq('gym_id', gymId).order('user_id').range(a, b));
-  const hoursP = allRows((a, b) => supabase.from('staff_working_hours').select('id, user_id, weekday, is_working, start_time, end_time').eq('gym_id', gymId).order('id').range(a, b));
+  const teamP = Promise.resolve(supabase.rpc('get_gym_team_accounts', { target_gym_id: gymId })).then((r) => ({ data: r.error ? [] : r.data })).catch(() => ({ data: [] }));
+  const profilesP = allRows((a, b) => supabase.from('staff_profiles').select('user_id, job_title, gross_hourly_rate_pence').eq('gym_id', gymId).order('user_id').range(a, b)).catch(() => []);
+  const hoursP = allRows((a, b) => supabase.from('staff_working_hours').select('id, user_id, weekday, is_working, start_time, end_time').eq('gym_id', gymId).order('id').range(a, b)).catch(() => []);
   const [plans, memberships, gymMembers, payments, purchases, assignments, workoutSessions, pt, sessions, team, staffProfiles, staffHours] = await Promise.all([
     plansP, membershipsP, gymMembersP, paymentsP, purchasesP, assignmentsP, workoutSessionsP, ptP, sessionsP, teamP, profilesP, hoursP,
   ]);
-  if (team.error) throw new Error(team.error.message);
 
   // Bookings for those classes, asked in groups of classes so the web address stays short.
   const bookings: LibBooking[] = [];
@@ -88,7 +87,7 @@ export async function loadLibraryData(gymId: string, since: string | null): Prom
   const sessionStaff: LibSessionStaff[] = [];
   for (let i = 0; i < sessions.length; i += 50) {
     const ids = sessions.slice(i, i + 50).map((x) => x.id);
-    const rows = await allRows((a, b) => supabase.from('class_session_staff').select('id, session_id, user_id, is_lead').in('session_id', ids).order('id').range(a, b));
+    const rows = await allRows((a, b) => supabase.from('class_session_staff').select('id, session_id, user_id, is_lead').in('session_id', ids).order('id').range(a, b)).catch(() => []);
     for (const r of rows) sessionStaff.push({ sessionId: r.session_id, userId: r.user_id, isLead: r.is_lead });
   }
 
