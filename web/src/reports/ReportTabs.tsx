@@ -36,8 +36,9 @@ function StatCard({ label, value }: { label: string; value: string }): ReactNode
 export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: Exclude<TabKey, 'overview'>; rangeDays: number; rangeLabel: string; onOpenTable: (build: () => ReportTable) => void }) {
   const { gym } = useReadyAuth();
   const q = useLibraryData(gym.gymId, rangeDays, true);
+  const detail = q.error && typeof q.error === 'object' && 'message' in q.error ? String((q.error as { message: unknown }).message) : '';
   if (q.isPending) return <Card><Empty>Loading…</Empty></Card>;
-  if (q.isError) return <Card><Empty>Could not load this report. Refresh to try again.</Empty></Card>;
+  if (q.isError) return <Card><Empty>Could not load this report. Refresh to try again.</Empty>{detail && <p className="muted">Detail: {detail}</p>}</Card>;
   const d = q.data;
   const since = rangeStart(rangeDays, new Date());
   const ctx = (): LibraryContext => ({ gymName: gym.gymName, rangeLabel, now: new Date(), since });
