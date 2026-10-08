@@ -13,7 +13,7 @@ import {
 import { useActivePlans, useClassTypes, useCreateClass, useCreateSeries, useSchedulingRules, useScheduleCheck, useSeriesCheck, useStaffOptions } from './useClasses';
 
 /** Add a class to the timetable. `onSaved` receives the class's start so the timetable can jump to its week. */
-export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: (startsAt: Date) => void }) {
+export function ClassForm({ onClose, onSaved, initial }: { onClose: () => void; onSaved: (startsAt: Date) => void; /** Date (yyyy-mm-dd) and start time (HH:MM) to open with, e.g. from a tap on the calendar. */ initial?: { date: string; start: string } }) {
   const { gym } = useReadyAuth();
   const staff = useStaffOptions(gym.gymId);
   const plans = useActivePlans(gym.gymId);
@@ -21,7 +21,7 @@ export function ClassForm({ onClose, onSaved }: { onClose: () => void; onSaved: 
   const rules = useSchedulingRules(gym.gymId);
   const create = useCreateClass(gym.gymId);
   const series = useCreateSeries(gym.gymId);
-  const [form, setForm] = useState<Form>(() => emptyClassForm(new Date()));
+  const [form, setForm] = useState<Form>(() => ({ ...emptyClassForm(new Date()), ...(initial ?? {}) }));
   const [pickedStaff, setPickedStaff] = useState<string[]>([]);
   const [pickedPlans, setPickedPlans] = useState<string[]>([]);
   const [problems, setProblems] = useState<string[]>([]);

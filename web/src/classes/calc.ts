@@ -291,3 +291,16 @@ export function reasonOk(text: string): boolean {
   const n = text.trim().length;
   return n >= MIN_REASON && n <= MAX_REASON;
 }
+
+const LONG_DAY = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+const SHORT_DAY = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+
+/** "Thursday 8 October". */
+export function dayTitle(d: Date): string {
+  return LONG_DAY.format(d);
+}
+
+/** "Thu 8 Oct". */
+export function shortDay(d: Date): string {
+  return SHORT_DAY.format(d);
+}

@@ -228,3 +228,13 @@ export async function createClassSession(gymId: string, c: NewClass): Promise<Sc
   if (error) throw error;
   return toVerdict(data);
 }
+
+/** Cancels a class, or brings a cancelled one back. Owners and admins only (the database enforces it). */
+export async function setClassCancelled(gymId: string, sessionId: string, cancelled: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('class_sessions')
+    .update({ is_cancelled: cancelled, updated_at: new Date().toISOString() })
+    .eq('id', sessionId)
+    .eq('gym_id', gymId);
+  if (error) throw error;
+}

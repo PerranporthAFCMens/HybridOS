@@ -103,6 +103,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.goto(`${base}/next/#/classes`);
   const c = runChecks();
   await c.has('heading', page.getByRole('heading', { name: 'Classes', level: 1 }));
+  // The calendar is the default view; the card list is the List view (checked here, the calendar has its own check).
+  await page.getByRole('button', { name: 'List', exact: true }).click();
   await c.has('class card', page.getByRole('heading', { name: /Strength and conditioning/ }));
   await c.has('week summary', page.getByText('3 classes · 1 cancelled'));
   await c.has('time range', page.getByText('07:30–08:30'));
