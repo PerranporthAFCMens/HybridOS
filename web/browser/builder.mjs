@@ -162,6 +162,46 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('group', { name: 'Where should Number of rows go?' }).getByRole('button', { name: 'Add to Values' }).click();
   c.ok('Number of rows can be a value', (await page.getByLabel('Figure 2: what to work out').inputValue()) === 'count');
 
+  // Dates: quick choices, two dates, comparing
+  await dataset.selectOption({ label: 'Payments' });
+  await show.selectOption('list:');
+  const table = page.getByLabel('Report table');
+  c.ok('all time shows every payment', (await table.getByText('130 rows', { exact: true }).count()) === 1);
+  await page.getByRole('button', { name: /^Dates: All time/ }).click();
+  const dates = page.getByRole('dialog', { name: 'Choose dates' });
+  await dates.getByRole('button', { name: 'Last year', exact: true }).click();
+  await dates.getByRole('button', { name: 'Done' }).click();
+  c.ok('last year has none', (await table.getByText('0 rows', { exact: true }).count()) === 1);
+  await page.getByRole('button', { name: /^Dates: Last year/ }).click();
+  await dates.getByLabel('From date').fill('2030-02-01');
+  await dates.getByLabel('To date').fill('2030-01-01');
+  await dates.getByRole('button', { name: 'Use these dates' }).click();
+  c.ok('dates the wrong way round are refused', (await dates.getByText('The first date must not be after the second.').count()) === 1);
+  const todayIso = new Date().toISOString().slice(0, 10);
+  await dates.getByLabel('From date').fill(todayIso);
+  await dates.getByLabel('To date').fill(todayIso);
+  await dates.getByRole('button', { name: 'Use these dates' }).click();
+  await dates.getByRole('button', { name: 'Done' }).click();
+  c.ok('one chosen day keeps just that day', (await table.getByText('6 rows', { exact: true }).count()) === 1);
+  await page.getByRole('button', { name: /^Dates:/ }).click();
+  c.ok('layout (dates dialog open)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/builder-dates-${name}.png` });
+  await dates.getByRole('button', { name: 'Last 30 days', exact: true }).click();
+  c.ok('comparing is not offered for a list', await dates.getByRole('radio', { name: 'The period before' }).isDisabled());
+  await dates.getByRole('button', { name: 'Done' }).click();
+  await show.selectOption('count:');
+  await page.getByRole('button', { name: /^Dates:/ }).click();
+  await dates.getByRole('radio', { name: 'The period before' }).click();
+  await dates.getByRole('button', { name: 'Done' }).click();
+  c.ok('the sentence says what it is compared with', (await page.getByRole('button', { name: /^Dates:.* vs / }).count()) === 1);
+  c.ok('the headline figure shows the change', (await page.getByRole('list', { name: 'Headline figures' }).textContent()).includes('vs '));
+  await page.getByRole('button', { name: /^Dates:/ }).click();
+  await dates.getByRole('radio', { name: 'No comparison' }).click();
+  await dates.getByRole('button', { name: 'All time', exact: true }).click();
+  await dates.getByRole('button', { name: 'Done' }).click();
+  await dataset.selectOption({ label: 'Staff' });
+  c.ok('a dataset with no dates has no date choice', (await page.getByRole('button', { name: /^Dates:/ }).count()) === 0);
+
   // Staff metrics
   await dataset.selectOption({ label: 'Clients seen' });
   await show.selectOption('count:');

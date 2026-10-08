@@ -1,14 +1,17 @@
 // Ready-made starting points: open one, tweak it, save it. Every one uses only fields the datasets offer
 // (a test checks that), so a starter can never break when the datasets change.
 import type { Spec } from './engine';
+import type { Preset } from './period';
 
-export interface Starter { id: string; title: string; text: string; spec: Spec }
+export interface Starter { id: string; title: string; text: string; spec: Spec; /** The dates it opens with. */ period: Preset }
 
 const spec = (s: Partial<Spec> & Pick<Spec, 'dataset'>): Spec => ({
   mode: 'summary', columns: [], groupBy: null, dateBy: 'month', measures: [{ fn: 'count', field: null }], filters: [], chart: 'column', ...s,
 });
 
-export const STARTERS: Starter[] = [
+const PERIOD: Record<string, Preset> = { income: '12m', failed: '90', 'busy-days': '90', attendance: '90', joiners: '12m', bookings: '90', 'coach-classes': '90', 'coach-hours': '90', 'coach-clients': '90' };
+
+export const STARTERS: Starter[] = ([
   {
     id: 'income', title: 'Money in, by month', text: 'Payments added up for each month.',
     spec: spec({ dataset: 'payments', groupBy: 'date', measures: [{ fn: 'sum', field: 'amount' }], filters: [{ field: 'state', op: 'is_not', value: 'failed' }], chart: 'column' }),
@@ -57,4 +60,4 @@ export const STARTERS: Starter[] = [
     id: 'staff-hours', title: 'Scheduled working hours', text: 'The hours each person is set up to work in a week.',
     spec: spec({ dataset: 'staff', mode: 'list', columns: ['name', 'role', 'days', 'hours'], chart: 'table' }),
   },
-];
+] as Omit<Starter, 'period'>[]).map((x) => ({ ...x, period: PERIOD[x.id] ?? 'all' }));

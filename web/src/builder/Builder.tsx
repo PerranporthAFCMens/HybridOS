@@ -1,16 +1,20 @@
 import { useMemo, useState } from 'react';
+import { londonParts } from '../classes/calc';
 import { useReadyAuth } from '../auth/AuthProvider';
 import type { LibraryData } from '../data/reportLibrary';
 import { DataTable } from '../reports/DataTable';
+import { useLibraryData } from '../reports/useReports';
 import { downloadTable, fileBase, type Format } from '../reports/download';
 import { pounds } from '../reports/library';
 import { Button } from '../ui/Button';
-import { Card, SectionTitle } from '../ui/Card';
+import { Card, Empty, SectionTitle } from '../ui/Card';
 import { DateInput, Input, Select } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import { ChartView } from './ChartView';
+import { mergeBuilt } from './compare';
 import { DATASETS } from './datasets';
 import { FN_LABEL, OPS_FOR, build, chartsAllowed, defaultSpec, filtersForGroup, isNumeric, needsValue, rowsInGroup, sanitise, show, type ChartKind, type Field as DField, type Filter, type Fn, type Measure, type Op, type Spec } from './engine';
+import { PRESETS, type Preset, comparePeriod, customPeriod, periodFilters, periodFor, rangeText, type Compare, type PeriodSel } from './period';
 import { loadSaved, storeSaved, type SavedReport } from './saved';
 import { STARTERS } from './starters';
 import { trend, trendText } from './trend';
@@ -40,7 +44,16 @@ export function figure(n: number, type: DField['type']): string {
  * Columns and Filters, a big live visual with headline figures, click a bar to see the rows behind it, and a sheet of
  * paper to download. The owner can only use the fields each dataset offers.
  */
-export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: string }) {
+export function Builder() {
+  const { gym } = useReadyAuth();
+  // The builder picks its own dates, so it always loads everything and filters here.
+  const q = useLibraryData(gym.gymId, 0, true);
+  if (q.isPending) return <Card><Empty>Loading…</Empty></Card>;
+  if (q.isError) return <Card><Empty>Could not load this report. Refresh to try again.</Empty></Card>;
+  return <BuilderBody data={q.data} />;
+}
+
+function BuilderBody({ data }: { data: LibraryData }) {
   const { gym } = useReadyAuth();
   const first = DATASETS[0];
   const [spec, setSpec] = useState<Spec>(() => defaultSpec(first?.id ?? '', first?.fields ?? []));
@@ -53,6 +66,12 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
   const [note, setNote] = useState<Note>(null);
   const [busy, setBusy] = useState(false);
   const [starters, setStarters] = useState(false);
+  const [sel, setSel] = useState<PeriodSel>({ preset: 'all' });
+  const [compare, setCompare] = useState<Compare>('none');
+  const [showDates, setShowDates] = useState(false);
+  const [fromDraft, setFromDraft] = useState('');
+  const [toDraft, setToDraft] = useState('');
+  const [dateError, setDateError] = useState('');
   const [openField, setOpenField] = useState<string | null>(null);
   const [drill, setDrill] = useState<{ key: string; label: string } | null>(null);
 
@@ -60,16 +79,27 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
   const fields = useMemo(() => ds?.fields ?? [], [ds]);
   const rows = useMemo(() => (ds ? ds.rows(data, new Date()) : []), [ds, data]);
   const title = ds ? `${ds.label}${spec.mode === 'summary' ? ': summary' : ''}` : 'Report';
-  const subtitle = `${gym.gymName} · ${rangeLabel}${spec.filters.length ? ` · ${spec.filters.length} ${spec.filters.length === 1 ? 'filter' : 'filters'}` : ''}`;
-  const built = useMemo(() => build(spec, rows, fields, title, subtitle), [spec, rows, fields, title, subtitle]);
-  const allowed = chartsAllowed(spec);
+  const today = londonParts(new Date()).date;
+  const period = periodFor(sel, today);
+  const dateField = ds?.dateField;
+  const cmp = spec.mode === 'summary' && dateField ? comparePeriod(period, compare) : null;
+  const periodLabel = period.from ? rangeText(period.from, period.to) : 'All time';
+  const subtitle = `${gym.gymName}${dateField ? ` · ${periodLabel}${cmp ? ` compared with ${cmp.label}` : ''}` : ''}${spec.filters.length ? ` · ${spec.filters.length} ${spec.filters.length === 1 ? 'filter' : 'filters'}` : ''}`;
+  const specFor = (p: typeof period): Spec => ({ ...spec, filters: [...spec.filters, ...(dateField ? periodFilters(dateField, p) : [])] });
+  const effSpec = useMemo(() => specFor(period), [spec, period.from, period.to, dateField]); // eslint-disable-line react-hooks/exhaustive-deps
+  const cmpSpec = useMemo(() => (cmp ? specFor(cmp) : null), [spec, cmp?.from, cmp?.to, dateField]); // eslint-disable-line react-hooks/exhaustive-deps
+  const groupFieldType = fields.find((f) => f.id === spec.groupBy)?.type;
+  const builtA = useMemo(() => build(effSpec, rows, fields, title, subtitle), [effSpec, rows, fields, title, subtitle]);
+  const builtB = useMemo(() => (cmpSpec ? build(cmpSpec, rows, fields, title, subtitle) : null), [cmpSpec, rows, fields, title, subtitle]);
+  const built = useMemo(() => (builtB ? mergeBuilt(builtA, builtB, periodLabel, cmp?.label ?? '', groupFieldType === 'date') : builtA), [builtA, builtB, periodLabel, cmp?.label, groupFieldType]);
+  const allowed = chartsAllowed(spec).filter((k) => !(cmp && k === 'donut'));
   const chart = allowed.includes(spec.chart) ? spec.chart : 'table';
   const byId = new Map(fields.map((f) => [f.id, f]));
   const numericFields = fields.filter((f) => isNumeric(f.type));
   const groupField = spec.groupBy ? byId.get(spec.groupBy) : undefined;
 
   const change = (patch: Partial<Spec>) => { setNote(null); setSpec((s) => ({ ...s, ...patch })); };
-  const startFrom = (s: Spec) => { setNote(null); setSpec(s); setStarters(false); setPickSaved(''); };
+  const startFrom = (st: { spec: Spec; period: Preset }) => { setNote(null); setSpec(st.spec); setSel({ preset: st.period }); setCompare('none'); setStarters(false); setPickSaved(''); };
   const setDataset = (id: string) => { const d = DATASETS.find((x) => x.id === id); if (d) { setNote(null); setSpec(defaultSpec(d.id, d.fields)); } };
   const setMeasure = (i: number, patch: Partial<Measure>) => change({ measures: spec.measures.map((m, k) => (k === i ? { ...m, ...patch } : m)) });
   const setFilter = (i: number, patch: Partial<Filter>) => change({ filters: spec.filters.map((f, k) => (k === i ? { ...f, ...patch } : f)) });
@@ -104,10 +134,16 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
       setBusy(false);
     }
   };
+  const useDates = () => {
+    const p = customPeriod(fromDraft, toDraft);
+    if (!p) return setDateError(!fromDraft || !toDraft ? 'Pick both dates.' : fromDraft > toDraft ? 'The first date must not be after the second.' : 'Those dates are not valid.');
+    setSel({ from: fromDraft, to: toDraft });
+    setDateError('');
+  };
   const save = () => {
     const n = name.trim();
     if (!n) return setNote({ text: 'Give the report a name to save it.', good: false });
-    const next = [...saved.filter((s) => s.name.toLowerCase() !== n.toLowerCase()), { name: n, spec }];
+    const next = [...saved.filter((s) => s.name.toLowerCase() !== n.toLowerCase()), { name: n, spec, period: sel, compare }];
     setSaved(next);
     storeSaved(gym.gymId, next);
     setPickSaved(n);
@@ -118,7 +154,7 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
     setPickSaved(n);
     const s = saved.find((x) => x.name === n);
     const ok = s ? sanitise(s.spec, DATASETS) : null;
-    if (ok) { setSpec(ok); setName(n); setNote(null); setStarters(false); }
+    if (ok && s) { setSpec(ok); setSel(s.period); setCompare(s.compare); setName(n); setNote(null); setStarters(false); }
   };
   const removeOne = () => {
     const next = saved.filter((s) => s.name !== pickSaved);
@@ -134,7 +170,7 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
     setDrill(null);
     setNote({ text: `Narrowed the report to ${drill.label}. It is now a list of those rows.`, good: true });
   };
-  const drillRows = drill ? rowsInGroup(spec, rows, fields, drill.key) : [];
+  const drillRows = drill ? rowsInGroup(effSpec, rows, fields, drill.key) : [];
   const drillFields = fields.slice(0, 6);
 
   const fieldButton = (id: string, label: string, tag: string, personal?: boolean) => (
@@ -178,6 +214,7 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
     return { i, text: `${field?.label ?? f.field} ${op.toLowerCase()}${needsValue(f.op) ? ` ${f.value || '…'}` : ''}` };
   });
   const listing = spec.mode === 'list' || chart === 'table';
+  const chipText = ('preset' in sel ? period.label : periodLabel) + (cmp ? ` vs ${cmp.label}` : '');
 
   return (
     <div className="bld2">
@@ -199,7 +236,7 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
       {starters && (
         <ul className="bld-starters">
           {STARTERS.map((s) => (
-            <li key={s.id}><button type="button" className="bld-starter" onClick={() => startFrom(s.spec)}><b>{s.title}</b><span>{s.text}</span></button></li>
+            <li key={s.id}><button type="button" className="bld-starter" onClick={() => startFrom(s)}><b>{s.title}</b><span>{s.text}</span></button></li>
           ))}
         </ul>
       )}
@@ -223,8 +260,14 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
           <Select aria-label="Look at" className="bld-pill" value={spec.dataset} onChange={(e) => setDataset(e.target.value)}>
             {DATASETS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
           </Select>
+          {dateField && (
+            <>
+              <span>for</span>
+              <button type="button" className="bld-pill-btn" aria-label={`Dates: ${chipText}. Change.`} onClick={() => { setNote(null); setShowDates(true); }}>{chipText} ▾</button>
+            </>
+          )}
         </div>
-        <p className="muted bld-help">Change a highlighted word to change the report. {rangeLabel} · {ds?.description}</p>
+        <p className="muted bld-help">Change a highlighted word to change the report. {ds?.description}{dateField ? '' : ' It has no dates, so it is not filtered by date.'}</p>
         {activeFilters.length > 0 && (
           <ul className="bld-active" aria-label="Active filters">
             {activeFilters.map((f) => (
@@ -237,15 +280,17 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
 
         {spec.mode === 'summary' && (
           <ul className="stat-grid" aria-label="Headline figures">
-            {built.totals.map((t, i) => {
-              const vals = built.groups.map((g) => g.values[i] ?? 0);
-              const tr = groupField?.type === 'date' ? trend(vals) : null;
-              const type = built.measureTypes[i] ?? 'number';
+            {builtA.totals.map((t, i) => {
+              const vals = builtA.groups.map((g) => g.values[i] ?? 0);
+              const before = builtB?.totals[i];
+              const tr = before !== undefined ? trend([before, t]) : groupField?.type === 'date' ? trend(vals) : null;
+              const type = builtA.measureTypes[i] ?? 'number';
+              const against = before !== undefined ? `vs ${cmp?.label ?? ''}` : `${builtA.groups[builtA.groups.length - 1]?.label ?? ''} vs ${builtA.groups[builtA.groups.length - 2]?.label ?? ''}`;
               return (
                 <li className="card stat" key={i}>
-                  <span className="muted">{built.measureLabels[i]}</span>
+                  <span className="muted">{builtA.measureLabels[i]}</span>
                   <span className="stat-num">{figure(t, type)}</span>
-                  {tr && <span className={`stat-delta ${tr.direction}`}>{trendText(tr)} <span>{built.groups[built.groups.length - 1]?.label ?? ''} vs {built.groups[built.groups.length - 2]?.label ?? ''}</span></span>}
+                  {tr && <span className={`stat-delta ${tr.direction}`}>{trendText(tr)} <span>{against}</span></span>}
                 </li>
               );
             })}
@@ -364,6 +409,39 @@ export function Builder({ data, rangeLabel }: { data: LibraryData; rangeLabel: s
           </div>
         )}
       </div>
+
+      {showDates && (
+        <Modal title="Choose dates" onClose={() => setShowDates(false)}>
+          <SectionTitle title="Choose dates" action={<Button onClick={() => setShowDates(false)}>Done</Button>} />
+          <div className="bld-dates">
+            <div>
+              <div className="paper-label">Quick choices</div>
+              <div className="bld-quick" role="group" aria-label="Quick choices">
+                {PRESETS.map(([id, label]) => <button key={id} type="button" className={`bld-seg-btn${'preset' in sel && sel.preset === id ? ' on' : ''}`} aria-pressed={'preset' in sel && sel.preset === id} onClick={() => { setSel({ preset: id }); setDateError(''); }}>{label}</button>)}
+              </div>
+            </div>
+            <div>
+              <div className="paper-label">Or pick two dates</div>
+              <div className="bld-row">
+                <DateInput aria-label="From date" value={fromDraft} onChange={(e) => { setFromDraft(e.target.value); setDateError(''); }} />
+                <span className="muted">to</span>
+                <DateInput aria-label="To date" value={toDraft} onChange={(e) => { setToDraft(e.target.value); setDateError(''); }} />
+                <Button onClick={useDates}>Use these dates</Button>
+              </div>
+              {dateError && <div className="msg error" role="alert">{dateError}</div>}
+            </div>
+            <div>
+              <div className="paper-label">Compare with</div>
+              <div className="bld-quick" role="radiogroup" aria-label="Compare with">
+                {([['none', 'No comparison'], ['previous', 'The period before'], ['year', 'Same time last year']] as const).map(([id, label]) => (
+                  <button key={id} type="button" role="radio" aria-checked={compare === id} disabled={id !== 'none' && (!period.from || spec.mode === 'list')} className={`bld-seg-btn${compare === id ? ' on' : ''}`} onClick={() => setCompare(id)}>{label}</button>
+                ))}
+              </div>
+              <p className="muted small">{!period.from ? 'Pick a period to compare it with another.' : spec.mode === 'list' ? 'Comparing works on summaries, not on a list of rows.' : cmp ? `Comparing ${periodLabel} with ${cmp.label}.` : 'The chart will show both periods side by side.'}</p>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {showSave && (
         <Modal title="Save this report" onClose={() => setShowSave(false)}>

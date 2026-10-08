@@ -7,7 +7,7 @@ import { londonParts } from '../classes/calc';
 import { monthlyValue } from '../today/calc';
 import type { Field, Row } from './engine';
 
-export interface Dataset { id: string; label: string; description: string; fields: Field[]; rows: (d: LibraryData, now: Date) => Row[] }
+export interface Dataset { id: string; label: string; description: string; /** The date field the period filters on; none for datasets that have no dates. */ dateField?: string; fields: Field[]; rows: (d: LibraryData, now: Date) => Row[] }
 
 const day = (iso: string): string | null => (iso ? londonParts(new Date(iso)).date : null);
 const dateOnly = (v: string): string | null => (v ? v.slice(0, 10) : null);
@@ -17,7 +17,7 @@ const planOf = (d: LibraryData, id: string) => d.plans.find((p) => p.id === id);
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const members: Dataset = {
-  id: 'members', label: 'Members', description: 'One row per member of the gym.',
+  id: 'members', label: 'Members', description: 'One row per member of the gym.', dateField: 'joined',
   fields: [
     { id: 'name', label: 'Member', type: 'text' },
     { id: 'joined', label: 'Joined', type: 'date' },
@@ -43,7 +43,7 @@ const members: Dataset = {
 };
 
 const memberships: Dataset = {
-  id: 'memberships', label: 'Memberships', description: 'One row per membership: who has which plan.',
+  id: 'memberships', label: 'Memberships', description: 'One row per membership: who has which plan.', dateField: 'starts',
   fields: [
     { id: 'member', label: 'Member', type: 'text' },
     { id: 'plan', label: 'Plan', type: 'text' },
@@ -65,7 +65,7 @@ const memberships: Dataset = {
 };
 
 const payments: Dataset = {
-  id: 'payments', label: 'Payments', description: 'One row per payment record: money taken, failed or pending.',
+  id: 'payments', label: 'Payments', description: 'One row per payment record: money taken, failed or pending.', dateField: 'date',
   fields: [
     { id: 'member', label: 'Member', type: 'text' },
     { id: 'date', label: 'Charge date', type: 'date' },
@@ -85,7 +85,7 @@ const payments: Dataset = {
 };
 
 const classes: Dataset = {
-  id: 'classes', label: 'Classes', description: 'One row per class that was scheduled, with how full it was.',
+  id: 'classes', label: 'Classes', description: 'One row per class that was scheduled, with how full it was.', dateField: 'date',
   fields: [
     { id: 'class', label: 'Class', type: 'text' },
     { id: 'date', label: 'Date', type: 'date' },
@@ -108,7 +108,7 @@ const classes: Dataset = {
 };
 
 const bookings: Dataset = {
-  id: 'bookings', label: 'Bookings and attendance', description: 'One row per class booking: who, which class, and whether they came.',
+  id: 'bookings', label: 'Bookings and attendance', description: 'One row per class booking: who, which class, and whether they came.', dateField: 'classDate',
   fields: [
     { id: 'member', label: 'Member', type: 'text' },
     { id: 'class', label: 'Class', type: 'text' },
@@ -148,7 +148,7 @@ const staff: Dataset = {
 };
 
 const delivered: Dataset = {
-  id: 'delivered', label: 'Classes delivered', description: 'One row for each class a coach or member of staff was on, with its length and how many came.',
+  id: 'delivered', label: 'Classes delivered', description: 'One row for each class a coach or member of staff was on, with its length and how many came.', dateField: 'date',
   fields: [
     { id: 'coach', label: 'Coach', type: 'text' },
     { id: 'class', label: 'Class', type: 'text' },
@@ -176,7 +176,7 @@ const delivered: Dataset = {
 };
 
 const seen: Dataset = {
-  id: 'seen', label: 'Clients seen', description: 'One row each time a coach saw a client: a class they attended, or a personal training session.',
+  id: 'seen', label: 'Clients seen', description: 'One row each time a coach saw a client: a class they attended, or a personal training session.', dateField: 'date',
   fields: [
     { id: 'coach', label: 'Coach', type: 'text' },
     { id: 'client', label: 'Client', type: 'text' },

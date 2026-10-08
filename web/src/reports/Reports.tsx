@@ -47,10 +47,14 @@ export function Reports() {
           <div className="muted">Membership, attendance and utilisation in one place.</div>
         </div>
         <div className="report-controls">
-          <label className="visually-hidden" htmlFor="report-range">Date range</label>
-          <Select id="report-range" value={range} onChange={(e) => setRange(e.target.value)}>
-            {RANGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </Select>
+          {tab !== 'builder' && (
+            <>
+              <label className="visually-hidden" htmlFor="report-range">Date range</label>
+              <Select id="report-range" value={range} onChange={(e) => setRange(e.target.value)}>
+                {RANGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </Select>
+            </>
+          )}
           <Button onClick={() => void q.refetch()} disabled={q.isFetching}>Refresh</Button>
         </div>
       </header>
