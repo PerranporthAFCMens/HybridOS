@@ -37,6 +37,7 @@ for (const role of ['member', 'owner']) {
     process.env.MOCK_ROLE = role;
     const calls = [];
     const writes = [];
+    const birthday = { value: null };
     const { ctx, page, errors } = await signedInPage(browser, { ...viewport });
     await mockSupabase(page, async ({ route, path, select, body }) => {
       if (path.endsWith('/rpc/member_class_schedule')) return reply(route, classes);
@@ -48,7 +49,7 @@ for (const role of ['member', 'owner']) {
       if (path.endsWith('/memberships')) return reply(route, select.includes('membership_plans')
         ? [{ status: 'active', membership_plans: { name: 'Classes Monthly', includes_classes: true, includes_open_gym: false, includes_pt: false } }]
         : [{ id: 'm1', status: 'active', ends_on: null, created_at: '2026-01-01T00:00:00Z' }]);
-      if (path.endsWith('/profiles')) return reply(route, [{ display_name: 'Jo Marsh', first_name: 'Jo', last_name: 'Marsh' }]);
+      if (path.endsWith('/profiles')) return reply(route, [{ display_name: 'Jo Marsh', first_name: 'Jo', last_name: 'Marsh', date_of_birth: birthday.value }]);
       if (path.endsWith('/pt_appointments')) return reply(route, []);
       return false;
     });
@@ -66,6 +67,8 @@ for (const role of ['member', 'owner']) {
       await ctx.close();
       continue;
     }
+    await c.has('no birthday yet, so it asks for one', page.getByLabel('Your birthday').getByText('Tell us your birthday'));
+    c.ok('and does not wish anyone happy birthday', (await page.getByRole('dialog', { name: 'Happy birthday' }).count()) === 0);
     await c.has('the first screen opens with the next class', page.getByRole('heading', { name: /^Your next class is / }));
     c.ok('the top card is the booked class', (await page.getByLabel('Next class').textContent()).includes('Strength and Conditioning'));
     c.ok('four tabs for a classes member', (await page.getByRole('navigation', { name: 'Member' }).getByRole('link').allInnerTexts()).join('|') === 'Today|Classes|Workouts|Me');
@@ -118,6 +121,16 @@ for (const role of ['member', 'owner']) {
     c.ok('and the classic app link', (await page.getByRole('link', { name: 'Open the classic app' }).getAttribute('href')).includes('member.html?gym_id='));
     c.ok('layout (me)', (await page.evaluate(layoutProblems)).length === 0);
 
+    // Add a birthday: asked for, checked, saved, and shown
+    await page.getByRole('button', { name: 'Add birthday' }).click();
+    await page.getByRole('button', { name: 'Save birthday' }).click();
+    await c.has('a birthday is needed', page.getByRole('alert').getByText('Choose your date of birth.'));
+    await page.getByLabel('Date of birth').fill('1990-03-14');
+    await page.getByRole('button', { name: 'Save birthday' }).click();
+    await c.has('birthday saved', page.getByText('Your birthday has been saved.'));
+    c.ok('the profile row got exactly that date', writes.some((w) => w.startsWith('PATCH profiles') && w.includes('"date_of_birth":"1990-03-14"')));
+    c.ok('layout (birthday)', (await page.evaluate(layoutProblems)).length === 0);
+
     // Change name, email and password
     await page.getByRole('button', { name: 'Change name' }).click();
     await page.getByLabel('Name shown to others').fill('');
@@ -156,6 +169,22 @@ for (const role of ['member', 'owner']) {
     await c.has('password saved', page.getByText('Your password has been changed.'));
     c.ok('the password request was sent', writes.some((w) => w.startsWith('PUT user') && w.includes('"password":"a-long-password-1"')));
     c.ok('layout (me after changes)', (await page.evaluate(layoutProblems)).length === 0);
+    // On their birthday the app says so once, with confetti, and not again that year
+    const londonToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
+    birthday.value = `1990-${londonToday.slice(5)}`;
+    await page.goto(`${base}/next/#/m/today`);
+    await page.reload();
+    await c.has('happy birthday appears on the day', page.getByRole('dialog', { name: 'Happy birthday' }));
+    c.ok('with their first name and the gym', (await page.getByRole('dialog', { name: 'Happy birthday' }).textContent()).includes('Happy birthday, Jo!') && (await page.getByRole('dialog', { name: 'Happy birthday' }).textContent()).includes('Puffin Performance'));
+    await page.waitForTimeout(900); // the card finishes growing in before it is measured
+    c.ok('layout (happy birthday)', (await page.evaluate(layoutProblems)).length === 0);
+    if (shots) await page.screenshot({ path: `${shots}/member-birthday-${name}.png` });
+    await page.getByRole('button', { name: 'Thank you' }).click();
+    c.ok('it closes', (await page.getByRole('dialog', { name: 'Happy birthday' }).count()) === 0);
+    await page.reload();
+    await page.getByRole('heading', { name: /./ }).first().waitFor();
+    await page.waitForTimeout(500);
+    c.ok('and does not come back the same year', (await page.getByRole('dialog', { name: 'Happy birthday' }).count()) === 0);
     c.ok('no page errors', errors.length === 0);
     if (!c.report(`${role} ${name}`)) allOk = false;
     await ctx.close();

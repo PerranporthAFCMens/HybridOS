@@ -2,15 +2,15 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOutletContext } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { changeMyEmail, changeMyPassword, getProfileNames, updateMyName } from '../data/profile';
+import { changeMyEmail, changeMyPassword, getMyBirthday, getProfileNames, saveMyBirthday, updateMyName } from '../data/profile';
 import { fullName } from '../shell/account';
 import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Field';
-import { checkEmail, checkName, checkPassword } from './account';
+import { DateInput, Input } from '../ui/Field';
+import { checkBirthday, checkEmail, checkName, checkPassword } from './account';
 import type { MemberCtx } from './useMember';
 
-type Section = 'name' | 'email' | 'password' | null;
+type Section = 'name' | 'email' | 'password' | 'birthday' | null;
 
 /** Who you are and how to change it, what plan you are on, and the way out. */
 export function Me() {
@@ -18,6 +18,8 @@ export function Me() {
   const d = useOutletContext<MemberCtx>();
   const qc = useQueryClient();
   const profile = useQuery({ queryKey: ['profile', auth.userId], queryFn: () => getProfileNames(auth.userId) });
+  const birthday = useQuery({ queryKey: ['birthday', auth.userId], queryFn: () => getMyBirthday(auth.userId) });
+  const [dob, setDob] = useState('');
   const [open, setOpen] = useState<Section>(null);
   const [name, setName] = useState({ display: '', first: '', last: '' });
   const [email, setEmail] = useState('');
@@ -28,6 +30,7 @@ export function Me() {
   const start = (s: Exclude<Section, null>) => {
     setMsg(null);
     if (s === 'name') setName({ display: profile.data?.displayName ?? fullName(profile.data, auth.email), first: profile.data?.firstName ?? '', last: profile.data?.lastName ?? '' });
+    if (s === 'birthday') setDob(birthday.data ?? '');
     if (s === 'email') setEmail('');
     if (s === 'password') setPw({ a: '', b: '' });
     setOpen(open === s ? null : s);
@@ -56,8 +59,10 @@ export function Me() {
         <b className="mem-big">{profile.isSuccess ? fullName(profile.data, auth.email) : auth.email}</b>
         <div className="muted">{auth.email}</div>
         <div className="muted">{auth.gym.gymName}</div>
+        {birthday.data && <div className="muted">Birthday {new Date(`${birthday.data}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</div>}
         <div className="mem-actions">
           <Button aria-expanded={open === 'name'} onClick={() => start('name')}>Change name</Button>
+          <Button aria-expanded={open === 'birthday'} onClick={() => start('birthday')}>{birthday.data ? 'Change birthday' : 'Add birthday'}</Button>
           <Button aria-expanded={open === 'email'} onClick={() => start('email')}>Change email</Button>
           <Button aria-expanded={open === 'password'} onClick={() => start('password')}>Change password</Button>
         </div>
@@ -74,6 +79,19 @@ export function Me() {
             await qc.invalidateQueries({ queryKey: ['profile'] });
             return 'Your name has been updated.';
           })}>Save name</Button>
+        </section>
+      )}
+
+      {open === 'birthday' && (
+        <section className="mem-card" aria-label="Your birthday">
+          <h2>Your birthday</h2>
+          <p className="muted small">We use it to say happy birthday, and for the gym's records.</p>
+          <DateInput aria-label="Date of birth" max={new Date().toISOString().slice(0, 10)} value={dob} onChange={(e) => setDob(e.target.value)} />
+          <Button variant="primary" disabled={busy} onClick={() => void run(checkBirthday(dob, new Date()), async () => {
+            await saveMyBirthday(auth.userId, dob);
+            await qc.invalidateQueries({ queryKey: ['birthday'] });
+            return 'Your birthday has been saved.';
+          })}>Save birthday</Button>
         </section>
       )}
 

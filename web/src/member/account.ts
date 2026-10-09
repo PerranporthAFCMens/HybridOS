@@ -21,3 +21,14 @@ export function checkPassword(a: string, b: string): string | null {
   if (a !== b) return 'The two passwords do not match.';
   return null;
 }
+
+/** A date of birth the member typed: required, a real date in the past, and not before 1900. */
+export function checkBirthday(dob: string, now: Date): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob.trim());
+  if (!m) return 'Choose your date of birth.';
+  const d = new Date(`${dob.trim()}T00:00:00Z`);
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== dob.trim()) return 'That is not a real date.';
+  if (d.getTime() > now.getTime()) return 'Your date of birth cannot be in the future.';
+  if (d.getUTCFullYear() < 1900) return 'Please check the year.';
+  return null;
+}
