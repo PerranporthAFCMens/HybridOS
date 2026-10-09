@@ -1,0 +1,9 @@
+# Reports: birthdays, class heatmap, cancellations by notice
+
+Owner request (9 October 2026). Four reports added to the library (now 28) and the class heatmap extended. No database change: every figure comes from data the library already loads.
+
+- **Birthdays** (Lifecycle & retention): member, birthday, age they turn, days to go; ask for the next 7, 30 or 90 days, this calendar month, or everyone. Members who have left are left out. A last line says how many members have no date of birth. 29 February birthdays are marked on 28 February in years with no 29th. Dates are UK dates.
+- **Class heatmap** (Reports › Classes): the day-by-time grid now has a switch for Bookings (default), Revenue and Fill, shows the best slots for the chosen measure, and says what Revenue counts. **Revenue is paid drop-ins** (`class_booking_purchases` with status `paid`); classes inside a membership are covered by the monthly fee, so they show under Bookings. A downloadable **Class slots ranked** report in the library ranks the same slots by bookings, drop-in revenue or fill.
+- **Cancellations** (Classes & attendance): **Late cancellations** lists bookings cancelled within 1, 2, 4, 12 or 24 hours of the class (choose it on the report), with the hours of notice given; cancelling after the class started counts as within any window. **Cancellations by notice given** counts every cancellation in seven buckets (after the start, under 1 hour, 1 to 2, 2 to 4, 4 to 12, 12 to 24, more than 24 hours) with share and running total. The existing Cancellations list is unchanged.
+- A library report can now ask one question of its own (`LibraryReport.option`); it shows as a box above the file format and starts at the report's default for each report.
+- Not included yet: a "birthdays this week" tile on Today, and the sign-up date of birth and happy-birthday animation (next pull request, they touch the sign-up page and the member app).

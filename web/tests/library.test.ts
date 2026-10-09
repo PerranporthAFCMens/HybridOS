@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { LibraryData } from '../src/data/reportLibrary';
-import { LIBRARY, LIBRARY_COUNT, ageBand, ageOn, genderLabel, inRange, pounds, searchLibrary, type LibraryContext } from '../src/reports/library';
+import { LIBRARY, LIBRARY_COUNT, NOTICE_BUCKETS, ageBand, ageOn, genderLabel, hoursBefore, inRange, nextBirthday, pounds, searchLibrary, type LibraryContext } from '../src/reports/library';
+import { bestSlots, classesTab, relativeStep } from '../src/reports/tabs';
 
 const NOW = new Date('2026-10-08T12:00:00Z');
-const ctx = (since: string | null = null): LibraryContext => ({ gymName: 'Puffin Performance', rangeLabel: 'Test range', now: NOW, since });
-const run = (key: string, d: LibraryData, since: string | null = null) => {
+const ctx = (since: string | null = null, option?: string): LibraryContext => ({ gymName: 'Puffin Performance', rangeLabel: 'Test range', now: NOW, since, option });
+const run = (key: string, d: LibraryData, since: string | null = null, option?: string) => {
   const r = LIBRARY.flatMap((g) => g.reports).find((x) => x.key === key);
   if (!r) throw new Error(`no report ${key}`);
-  return r.build(ctx(since), d);
+  return r.build(ctx(since, option), d);
 };
 
 const data = (over: Partial<LibraryData> = {}): LibraryData => ({
@@ -65,10 +66,10 @@ const data = (over: Partial<LibraryData> = {}): LibraryData => ({
 });
 
 describe('library', () => {
-  it('has the 24 reports of the old page in five groups', () => {
-    expect(LIBRARY_COUNT).toBe(24);
+  it('has the 24 reports of the old page plus birthdays, late cancellations, cancellation timing and class slots, in five groups', () => {
+    expect(LIBRARY_COUNT).toBe(28);
     expect(LIBRARY.map((g) => g.group)).toEqual(['Membership & growth', 'Lifecycle & retention', 'Classes & attendance', 'Revenue & payments', 'Workouts & PT']);
-    expect(new Set(LIBRARY.flatMap((g) => g.reports.map((r) => r.key))).size).toBe(24);
+    expect(new Set(LIBRARY.flatMap((g) => g.reports.map((r) => r.key))).size).toBe(28);
   });
 
   it('builds every report with a title, subtitle and matching column counts, even with no data at all', () => {
@@ -220,5 +221,99 @@ describe('workout and PT reports', () => {
   it('sessions and PT appointments name both people', () => {
     expect(run('workout_sessions', data()).rows).toEqual([['Amelia Hart', 'Run', '04/10/2026 09:00', 'Easy']]);
     expect(run('pt_appointments', data()).rows).toEqual([['Amelia Hart', 'Coach Carla', '05/10/2026 10:00', '05/10/2026 11:00', 'booked', '']]);
+  });
+});
+
+describe('birthdays', () => {
+  it('finds the next birthday and how old they turn', () => {
+    expect(nextBirthday('1990-10-08', NOW)).toEqual({ month: 10, day: 8, turning: 36, inDays: 0 });
+    expect(nextBirthday('2010-01-01', NOW)).toEqual({ month: 1, day: 1, turning: 17, inDays: 85 });
+    expect(nextBirthday('1960-10-07', NOW)).toMatchObject({ turning: 67, inDays: 364 });
+  });
+  it('marks 29 February on the 28th in a year with no 29th, and on the 29th in a leap year', () => {
+    expect(nextBirthday('2000-02-29', NOW)).toMatchObject({ month: 2, day: 28, turning: 27 });
+    expect(nextBirthday('2000-02-29', new Date('2027-10-08T12:00:00Z'))).toMatchObject({ month: 2, day: 29, turning: 28 });
+  });
+  it('ignores blank or broken dates', () => {
+    expect(nextBirthday('', NOW)).toBeNull();
+    expect(nextBirthday('not a date', NOW)).toBeNull();
+    expect(nextBirthday('2000-13-40', NOW)).toBeNull();
+  });
+  it('lists today first, can be narrowed, and says who has no date of birth', () => {
+    const everyone = run('birthdays', data(), null, 'all');
+    expect(everyone.rows[0]).toEqual(['Amelia Hart', '8 Oct', 36, 'Today']);
+    expect(everyone.rows.map((r) => r[0])).toEqual(['Amelia Hart', 'Jack Pengelly', '1 member has no date of birth']);
+    const week = run('birthdays', data(), null, '7');
+    expect(week.rows.map((r) => r[0])).toEqual(['Amelia Hart', '1 member has no date of birth']);
+    expect(week.subtitle).toContain('In the next 7 days');
+    expect(run('birthdays', data(), null, 'month').rows[0]?.[0]).toBe('Amelia Hart');
+  });
+  it('leaves out members who have left', () => {
+    const d = data();
+    expect(everyoneNames(run('birthdays', d, null, 'all'))).not.toContain('Tom Trevorrow');
+  });
+});
+const everyoneNames = (t: { rows: (string | number)[][] }) => t.rows.map((r) => String(r[0]));
+
+describe('cancellation timing', () => {
+  const s1 = '2026-10-05T09:00:00Z';
+  it('counts hours between the cancellation and the class', () => {
+    expect(hoursBefore(s1, '2026-10-05T08:00:00Z')).toBe(1);
+    expect(hoursBefore(s1, '2026-10-05T09:30:00Z')).toBe(-0.5);
+    expect(hoursBefore(s1, '')).toBeNull();
+    expect(hoursBefore('', '2026-10-05T08:00:00Z')).toBeNull();
+  });
+  it('has one bucket for every number of hours', () => {
+    for (const h of [-5, -0.1, 0, 0.9, 1, 1.9, 2, 3.9, 4, 11.9, 12, 23.9, 24, 500]) {
+      expect(NOTICE_BUCKETS.filter((b) => b.test(h)).length).toBe(1);
+    }
+  });
+  const withCancels = () => data({
+    bookings: [
+      { sessionId: 's1', userId: 'u1', status: 'cancelled', bookedAt: '2026-10-01T10:00:00Z', cancelledAt: '2026-10-05T08:30:00Z' },
+      { sessionId: 's1', userId: 'u2', status: 'cancelled', bookedAt: '2026-10-01T10:00:00Z', cancelledAt: '2026-10-05T06:00:00Z' },
+      { sessionId: 's1', userId: 'u3', status: 'cancelled', bookedAt: '2026-10-01T10:00:00Z', cancelledAt: '2026-10-02T08:00:00Z' },
+      { sessionId: 's1', userId: 'u4', status: 'booked', bookedAt: '2026-10-01T10:00:00Z', cancelledAt: '' },
+    ],
+  });
+  it('lists only the cancellations inside the chosen window, closest to the class first', () => {
+    const one = run('late_cancellations', withCancels(), null, '1');
+    expect(one.rows.map((r) => [r[0], r[4]])).toEqual([['Amelia Hart', 0.5]]);
+    const four = run('late_cancellations', withCancels(), null, '4');
+    expect(four.rows.map((r) => r[0])).toEqual(['Amelia Hart', 'Jack Pengelly']);
+    expect(four.subtitle).toContain('cancelled within 4 hours of the class');
+  });
+  it('summarises by notice given', () => {
+    const t = run('cancellation_timing', withCancels());
+    expect(t.rows.map((r) => [r[0], r[1]])).toEqual([
+      ['After the class started', 0], ['Under 1 hour before', 1], ['1 to 2 hours before', 0], ['2 to 4 hours before', 1],
+      ['4 to 12 hours before', 0], ['12 to 24 hours before', 0], ['More than 24 hours before', 1],
+    ]);
+  });
+});
+
+describe('class slots', () => {
+  it('ranks day and time slots by bookings, revenue or fill', () => {
+    const d = data();
+    const byBookings = run('class_slots', d, null, 'bookings');
+    expect(byBookings.rows[0]).toEqual(['Mon', 'Daytime', 2, 3, '15%', '£8.00']);
+    const byRevenue = run('class_slots', d, null, 'revenue');
+    expect(byRevenue.rows[0]?.[5]).toBe('£8.00');
+  });
+  it('puts bookings and paid drop-in revenue into the heatmap cells', () => {
+    const heat = classesTab(data(), NOW).heat;
+    const mon = heat.find((r) => r.day === 'Mon')?.cells.find((c) => c.band === 'Daytime');
+    expect(mon).toBeDefined();
+    const all = heat.flatMap((r) => r.cells);
+    expect(all.reduce((n, c) => n + c.revenue, 0)).toBe(800);
+    expect(all.reduce((n, c) => n + c.bookings, 0)).toBe(4);
+  });
+  it('picks the best slots and relative colours', () => {
+    const heat = classesTab(data(), NOW).heat;
+    expect(bestSlots(heat, 'revenue', 1)[0]?.value).toBe(800);
+    expect(relativeStep(0, 10)).toBe(1);
+    expect(relativeStep(10, 10)).toBe(5);
+    expect(relativeStep(5, 10)).toBe(3);
+    expect(relativeStep(3, 0)).toBe(1);
   });
 });

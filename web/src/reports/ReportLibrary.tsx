@@ -28,16 +28,20 @@ export function ReportLibrary({ data, rangeDays, rangeLabel }: { data: LibraryDa
   const { gym } = useReadyAuth();
   const [key, setKey] = useState(FIRST);
   const [format, setFormat] = useState<Format>('xlsx');
+  const [option, setOption] = useState('');
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ text: string; good: boolean } | null>(null);
   const report: LibraryReport | undefined = useMemo(() => LIBRARY.flatMap((g) => g.reports).find((r) => r.key === key), [key]);
 
+  // The report's own question, if it has one; until it is changed the report's default applies.
+  const choice = report?.option ? (report.option.choices.some((c) => c.value === option) ? option : report.option.default) : undefined;
+
   // The sheet is made from the chosen report and range; a download is made fresh so "made at" is right.
   const make = (r: LibraryReport) => {
-    const ctx: LibraryContext = { gymName: gym.gymName, rangeLabel, now: new Date(), since: rangeStart(rangeDays, new Date()) };
+    const ctx: LibraryContext = { gymName: gym.gymName, rangeLabel, now: new Date(), since: rangeStart(rangeDays, new Date()), option: choice };
     return r.build(ctx, data);
   };
-  const table = useMemo(() => (report ? make(report) : null), [report, data, rangeDays, rangeLabel, gym.gymName]); // eslint-disable-line react-hooks/exhaustive-deps
+  const table = useMemo(() => (report ? make(report) : null), [report, data, rangeDays, rangeLabel, gym.gymName, choice]); // eslint-disable-line react-hooks/exhaustive-deps
   const chosen = FORMATS.find((f) => f.id === format) ?? FORMATS[0];
   const fileName = table && chosen ? `${fileBase(gym.gymName, table.title, new Date())}.${chosen.ext}` : '';
 
@@ -62,7 +66,7 @@ export function ReportLibrary({ data, rangeDays, rangeLabel }: { data: LibraryDa
       <div className="paper-layout">
         <div className="paper-controls">
           <Field label="Report" htmlFor="report-pick" hint={report?.description}>
-            <Select id="report-pick" value={key} onChange={(e) => { setKey(e.target.value); setNote(null); }}>
+            <Select id="report-pick" value={key} onChange={(e) => { setKey(e.target.value); setOption(''); setNote(null); }}>
               {LIBRARY.map((g) => (
                 <optgroup key={g.group} label={g.group}>
                   {g.reports.map((r) => <option key={r.key} value={r.key}>{r.title}</option>)}
@@ -70,6 +74,14 @@ export function ReportLibrary({ data, rangeDays, rangeLabel }: { data: LibraryDa
               ))}
             </Select>
           </Field>
+
+          {report?.option && (
+            <Field label={report.option.label} htmlFor="report-option">
+              <Select id="report-option" value={choice} onChange={(e) => { setOption(e.target.value); setNote(null); }}>
+                {report.option.choices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </Select>
+            </Field>
+          )}
 
           <div className="paper-field" role="radiogroup" aria-label="File format">
             <div className="paper-label">File format</div>

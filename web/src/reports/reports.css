@@ -67,3 +67,9 @@ button.bar-row:hover { background: rgba(255, 255, 255, .04); }
 .stat-grid.eight { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 700px) { .stat-grid.eight { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (min-width: 1700px) { .stat-grid.eight { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+
+.heat-pick { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 10px; }
+.heat-choice { min-height: 44px; padding: 0 16px; border: 1px solid var(--hybrid-line); border-radius: 999px; background: var(--hybrid-bg); color: var(--hybrid-muted); font: inherit; font-weight: 600; cursor: pointer; }
+.heat-choice.on { background: var(--hybrid-raised); color: var(--hybrid-ink); border-color: var(--hybrid-line-strong); }
+.heat-choice:focus-visible { outline: 2px solid var(--hybrid-pulse, #6b7cff); outline-offset: 2px; }
+.heat-best { margin: 10px 0 0; }

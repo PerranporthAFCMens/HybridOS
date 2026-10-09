@@ -47,13 +47,39 @@ export function membershipsTable(ctx: LibraryContext, t: MembershipsTab): Report
 // ---- Classes ----
 
 export interface TypeRow { name: string; sessions: number; bookings: number; attended: number; fill: number }
-export interface HeatRow { day: string; cells: { band: Band; fill: number }[] }
+export interface HeatCell { band: Band; fill: number; bookings: number; sessions: number; revenue: number }
+export interface HeatRow { day: string; cells: HeatCell[] }
+export type HeatMetric = 'fill' | 'bookings' | 'revenue';
+
+/** What a heat cell shows for the chosen measure (pence for revenue). */
+export const heatValue = (c: HeatCell, m: HeatMetric): number => (m === 'fill' ? c.fill : m === 'bookings' ? c.bookings : c.revenue);
+
+/** Heat colour step 1 to 5 for a bookings or revenue figure, relative to the busiest slot. Nothing at all is step 1. */
+export function relativeStep(value: number, max: number): 1 | 2 | 3 | 4 | 5 {
+  if (!max || value <= 0) return 1;
+  const r = value / max;
+  return r >= 0.85 ? 5 : r >= 0.7 ? 4 : r >= 0.5 ? 3 : r >= 0.25 ? 2 : 1;
+}
+
+/** The best slots for a measure, busiest first, leaving out empty ones. */
+export function bestSlots(heat: HeatRow[], m: HeatMetric, n = 3): { day: string; band: Band; value: number }[] {
+  return heat.flatMap((r) => r.cells.map((c) => ({ day: r.day, band: c.band, value: heatValue(c, m) })))
+    .filter((x) => x.value > 0)
+    .sort((a, b) => b.value - a.value || a.day.localeCompare(b.day))
+    .slice(0, n);
+}
 export interface ClassesTab { avgFill: number; attendances: number; noShows: number; sessions: number; byType: TypeRow[]; heat: HeatRow[] }
 
 export function classesTab(d: LibraryData, now: Date): ClassesTab {
   const metrics = metricsOf(d);
   const past = metrics.filter((s) => new Date(s.startsAt) < now);
   const fill = (rows: SessionMetric[]) => pct(sum(rows, (s) => s.demand), sum(rows, (s) => s.capacity));
+  const paid = new Map<string, number>();
+  for (const p of d.purchases) if (p.status === 'paid') paid.set(p.sessionId, (paid.get(p.sessionId) ?? 0) + (Number(p.amountPence) || 0));
+  const cell = (day: string, band: Band): HeatCell => {
+    const rows = metrics.filter((s) => s.day === day && s.band === band);
+    return { band, fill: fill(rows), bookings: sum(rows, (s) => s.demand), sessions: rows.length, revenue: sum(rows, (s) => paid.get(s.id) ?? 0) };
+  };
   const byType = [...new Set(metrics.map((s) => s.name))]
     .map((name) => {
       const a = metrics.filter((s) => s.name === name);
@@ -66,7 +92,7 @@ export function classesTab(d: LibraryData, now: Date): ClassesTab {
     noShows: sum(past, (s) => s.noShow),
     sessions: metrics.length,
     byType,
-    heat: DAYS.map((day) => ({ day, cells: BANDS.map((band) => ({ band, fill: fill(metrics.filter((s) => s.day === day && s.band === band)) })) })),
+    heat: DAYS.map((day) => ({ day, cells: BANDS.map((band) => cell(day, band)) })),
   };
 }
 
