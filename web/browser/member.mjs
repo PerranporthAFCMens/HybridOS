@@ -36,6 +36,7 @@ for (const role of ['member', 'owner']) {
   for (const [name, viewport] of Object.entries(sizes)) {
     process.env.MOCK_ROLE = role;
     const calls = [];
+    const writes = [];
     const { ctx, page, errors } = await signedInPage(browser, { ...viewport });
     await mockSupabase(page, async ({ route, path, select, body }) => {
       if (path.endsWith('/rpc/member_class_schedule')) return reply(route, classes);
@@ -50,6 +51,10 @@ for (const role of ['member', 'owner']) {
       if (path.endsWith('/profiles')) return reply(route, [{ display_name: 'Jo Marsh', first_name: 'Jo', last_name: 'Marsh' }]);
       if (path.endsWith('/pt_appointments')) return reply(route, []);
       return false;
+    });
+    page.on('request', (r) => {
+      const u = new URL(r.url());
+      if (['PATCH', 'PUT'].includes(r.method()) && (u.pathname.endsWith('/profiles') || u.pathname.endsWith('/auth/v1/user'))) writes.push(`${r.method()} ${u.pathname.split('/').pop()} ${r.postData() ?? ''}`);
     });
     const c = runChecks();
     await page.goto(`${base}/next/#/m/today`);
@@ -112,6 +117,45 @@ for (const role of ['member', 'owner']) {
     await c.has('me page shows the plan', page.getByLabel('Membership').getByText('Classes Monthly'));
     c.ok('and the classic app link', (await page.getByRole('link', { name: 'Open the classic app' }).getAttribute('href')).includes('member.html?gym_id='));
     c.ok('layout (me)', (await page.evaluate(layoutProblems)).length === 0);
+
+    // Change name, email and password
+    await page.getByRole('button', { name: 'Change name' }).click();
+    await page.getByLabel('Name shown to others').fill('');
+    await page.getByRole('button', { name: 'Save name' }).click();
+    await c.has('a name is needed', page.getByRole('alert').getByText('Add the name you want to be shown as.'));
+    await page.getByLabel('Name shown to others').fill('Joanna Marsh');
+    await page.getByLabel('First name').fill('Joanna');
+    await page.getByRole('button', { name: 'Save name' }).click();
+    await c.has('name saved', page.getByText('Your name has been updated.'));
+    c.ok('the profile and the sign-in account were both updated', writes.some((w) => w.startsWith('PATCH profiles') && w.includes('"display_name":"Joanna Marsh"') && w.includes('"first_name":"Joanna"')) && writes.some((w) => w.startsWith('PUT user') && w.includes('Joanna Marsh')));
+
+    await page.getByRole('button', { name: 'Change email' }).click();
+    await page.getByLabel('New email address').fill('nope');
+    await page.getByRole('button', { name: 'Send confirmation' }).click();
+    await c.has('a bad email is refused', page.getByRole('alert').getByText('Enter a valid email address.'));
+    await page.getByLabel('New email address').fill('OWNER@example.test');
+    await page.getByRole('button', { name: 'Send confirmation' }).click();
+    await c.has('the same email is refused', page.getByRole('alert').getByText('That is already your email address.'));
+    await page.getByLabel('New email address').fill('jo.new@example.test');
+    await page.getByRole('button', { name: 'Send confirmation' }).click();
+    await c.has('email change asks for confirmation', page.getByText(/Check jo\.new@example\.test/));
+    c.ok('it says the old address is kept until confirmed', (await page.getByRole('status').first().textContent()).includes('you sign in with owner@example.test'));
+    c.ok('the request carried the new address', writes.some((w) => w.startsWith('PUT user') && w.includes('"email":"jo.new@example.test"')));
+
+    await page.getByRole('button', { name: 'Change password' }).click();
+    await page.getByLabel('New password', { exact: true }).fill('short');
+    await page.getByLabel('New password again').fill('short');
+    await page.getByRole('button', { name: 'Save password' }).click();
+    await c.has('a short password is refused', page.getByRole('alert').getByText(/at least 8 characters/));
+    await page.getByLabel('New password', { exact: true }).fill('a-long-password-1');
+    await page.getByLabel('New password again').fill('a-different-one-2');
+    await page.getByRole('button', { name: 'Save password' }).click();
+    await c.has('mismatched passwords are refused', page.getByRole('alert').getByText('The two passwords do not match.'));
+    await page.getByLabel('New password again').fill('a-long-password-1');
+    await page.getByRole('button', { name: 'Save password' }).click();
+    await c.has('password saved', page.getByText('Your password has been changed.'));
+    c.ok('the password request was sent', writes.some((w) => w.startsWith('PUT user') && w.includes('"password":"a-long-password-1"')));
+    c.ok('layout (me after changes)', (await page.evaluate(layoutProblems)).length === 0);
     c.ok('no page errors', errors.length === 0);
     if (!c.report(`${role} ${name}`)) allOk = false;
     await ctx.close();
