@@ -11,6 +11,10 @@ The new app described in `REBUILD_PLAN.md`. TypeScript (strict), React, Vite, Ta
 | `src/shell/` | Sidebar and page frame (`Shell`), and `legacy.ts` (links into old pages not yet moved) | `auth/`, `ui/` |
 | `src/members/` | The Members screen: `Members.tsx` (directory), `MemberRecord.tsx` (record and writes), `useMembers.ts` (queries and mutations), `calc.ts` (pure rules, unit tested) | `auth/`, `ui/`, `data/` |
 | `src/today/` | The Today screen: `Today.tsx`, `useToday.ts` (queries), `calc.ts` (pure rules, unit tested), `MemberTrend.tsx` | `auth/`, `ui/`, `data/` |
+| `src/member/` | The member app (`#/m/*`, own bottom-tab shell `MemberShell`): Today, Classes, Pt, Me (account changes), `Membership.tsx` (pause, change plan, cancel), `useMember.ts` (shared member data), `calc.ts` | `auth/`, `ui/`, `data/`, `train/`, `membership/` |
+| `src/train/` | Member workout logging: `Player.tsx` (save each exercise, swap, skip or remove), `Pbs.tsx`, `calc.ts` (sets, reps then weight, left/right), `pb.ts` (personal-best rules), `activities.ts` (exercise name list and tracking guess) | `data/`, `ui/` |
+| `src/membership/` | Owner side of membership rules: `Rules.tsx`, `Requests.tsx`, `calc.ts` (form, validation, how the database's options are read) | `auth/`, `ui/`, `data/` |
+| `src/builder/` | The report builder: sentence, chart, date periods, compare, starters, print | `data/`, `ui/`, `charts/` |
 | `src/ui/` | Brand tokens (`tokens.css`) and shared components (Button, Card, Modal, and the form boxes in `Field.tsx`). The only place a raw `<input>`/`<select>` may appear. | nothing |
 | `src/app/` | Router and the sign-in / gym gate | everything |
 | `tests/` | Vitest unit and component tests | |
@@ -35,7 +39,14 @@ Colours, fonts and radii come from the shared brand layer `assets/brand/brand.cs
 
 ## Roles
 
-Only owners and admins use this Admin shell. Staff, coaches and members are sent to their own (old) app by `homeFor()` in `auth/access.ts` until those apps move.
+Only owners and admins use this Admin shell. Staff, coaches and members are sent to their own (old) app by `homeFor()` in `auth/access.ts` until those apps move. The member app routes (`/m/*`) open for anyone signed in to a gym, so owners and admins preview them from the sidebar ("Preview as member"); a team login can be given a membership from Members and then uses it like any member.
+
+## Serving rules that bit us
+
+- **Vercel runs with `trailingSlash: false`**, so `/next/` is redirected to `/next`. `index.html` therefore sets `<base href=".../next/">` in an inline script before anything loads, otherwise every relative file path resolves one folder too high and the screen is blank. GitHub Pages (dev) keeps the slash, so dev never shows this. `browser/back.mjs` serves the page at `/next` without the slash and fails without the fix.
+- `admin.html` opens the new app only when the browser has opted in (`?next=1`, turned off with `?next=0`) because the Auth journey check drives the old admin frame.
+- Pages in `web/` that need a page outside `/next/` use `../` links, which work with or without the slash.
+- Browser checks run from one list (`npm run browser`); a new check file must be added to the `browser` script in `package.json`. The layout audit skips the admin-only menu wait on `#/m/` screens.
 
 ## Commands (run in `web/`)
 

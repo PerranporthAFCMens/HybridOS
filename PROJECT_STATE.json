@@ -5,24 +5,24 @@
   "branches": {
     "production_source": "main",
     "development_source": "dev",
-    "production_main_sha": "cef17ce3d3aa591531c5aead61d8cbd97a965bd2",
+    "production_main_sha": "e7fe129c60169250204f61ad6ac6cdea3127c006",
     "verified_dev_application_sha": "db125d7e0f024ec5a828a3930c89ec3fa385fd29",
     "relationship": "main_is_ancestor_of_dev",
     "dev_ahead_by": 281,
     "dev_behind_by": 0,
     "merge_base_sha": "538312c56996de115326970f45e42f0fcd841571",
-    "note": "Production release completed at 538312c56996de115326970f45e42f0fcd841571. Dev has since advanced with test/docs-only routing verification updates."
+    "note": "Production release of 9 October 2026 completed at e7fe129c60169250204f61ad6ac6cdea3127c006 (Manual production release run 232). main is an ancestor of dev; dev is ahead only by the release-record pull request that restores the hold."
   },
   "release_gate": {
-    "production_hold": false,
-    "production_promotion_allowed": true,
-    "reason": "Owner authorised a production release on 9 October 2026 (the rebuilt admin screens, the new member app preview, report builder, membership rules, workouts and PBs). The hold is cleared only for this release and is restored straight after it."
+    "production_hold": true,
+    "production_promotion_allowed": false,
+    "reason": "Production release e7fe129c60169250204f61ad6ac6cdea3127c006 (9 October 2026) is complete and verified. Promotion is re-held until a future release is deliberately prepared and re-authorised."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
     "hybrid_hub_login": "https://www.hybridone.co.uk/hybrid-hub",
     "puffin_performance_login": "https://www.hybridone.co.uk/puffin-performance",
-    "deployed_source_sha": "cef17ce3d3aa591531c5aead61d8cbd97a965bd2",
+    "deployed_source_sha": "e7fe129c60169250204f61ad6ac6cdea3127c006",
     "deployment_state": "READY",
     "auth_model": "universal login in production; / is the sign-in entry, with gym-specific /hybrid-hub and /puffin-performance redirect shims",
     "canonical_routes": {
@@ -251,8 +251,8 @@
     "repeatable_browser_run_id": 36465324428
   },
   "release_candidate": {
-    "verified_at_sha": "538312c56996de115326970f45e42f0fcd841571",
-    "final_candidate_sha": "538312c56996de115326970f45e42f0fcd841571",
+    "verified_at_sha": "e7fe129c60169250204f61ad6ac6cdea3127c006",
+    "final_candidate_sha": "e7fe129c60169250204f61ad6ac6cdea3127c006",
     "main_ancestor_sha": "94803abaf78b3b994708bbd6c3e8f0f956a91d89",
     "manual_release_workflow": {
       "path": ".github/workflows/hourly-production.yml",
@@ -269,9 +269,9 @@
       "protected_routing_run_id": 37002385677,
       "production_routing_run_id": 37107898456,
       "production_routing_source_sha": "370873ea46b26d01e7bd99463cfa36be179f977f",
-      "released_source_sha": "538312c56996de115326970f45e42f0fcd841571",
-      "rollback_tag": "prod-2026-10-02",
-      "rollback_target_sha": "94803abaf78b3b994708bbd6c3e8f0f956a91d89"
+      "released_source_sha": "e7fe129c60169250204f61ad6ac6cdea3127c006",
+      "rollback_tag": "prod-2026-10-09-221045",
+      "rollback_target_sha": "bdc225bbdf7c45f613ff50eeed3e72b3662fcc4d"
     },
     "exact_sha_gates_required_after_merge": [
       "HybridOne smoke checks",
