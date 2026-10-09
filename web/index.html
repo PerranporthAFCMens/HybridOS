@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script>/* Production serves this page at /next (no trailing slash), which would make every relative file path resolve one folder up and leave the screen blank. Pin the base to /next/ so paths work with or without the slash. */(function(){var m=location.pathname.match(/^(.*\/next)\/?(?:index\.html)?$/);if(m)document.write('<base href="'+m[1]+'/">')})();</script>
 <title>HybridOne</title>
 <link rel="stylesheet" href="../assets/brand/brand.css">
 <link rel="preconnect" href="https://mzgnhmeydhhpzgxlgudh.supabase.co" crossorigin>
