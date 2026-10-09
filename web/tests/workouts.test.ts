@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSnapshot, dueAt, emptyWorkout, moveItem, newActivity, newBlock, parseTags, readPrescription, validateWodDate, validateWorkout, type BlockForm } from '../src/workouts/calc';
+import { programmeDates, buildSnapshot, dueAt, emptyWorkout, moveItem, newActivity, newBlock, parseTags, readPrescription, validateWodDate, validateWorkout, type BlockForm } from '../src/workouts/calc';
 
 const goodBlock = (): BlockForm => ({ ...newBlock(), activities: [{ ...newActivity(), name: ' Back squat ', prescription: ' 4 x 6 ', notes: ' cue ' }] });
 const goodForm = { ...emptyWorkout, title: ' Leg Day ', tags: 'Legs, Strength, legs ,', minutes: '50' };
@@ -76,5 +76,27 @@ describe('helpers', () => {
   it('builds the copy given to a member', () => {
     const snap = buildSnapshot({ id: 't1', title: 'Leg Day', description: null, workoutType: 'strength', focusTags: ['Legs'], estimatedMinutes: 45 }, []);
     expect(snap).toEqual({ template_id: 't1', title: 'Leg Day', description: null, workout_type: 'strength', focus_tags: ['Legs'], estimated_minutes: 45, blocks: [] });
+  });
+});
+
+describe('a weekly programme', () => {
+  it('gives the chosen days over the chosen weeks, in order', () => {
+    // 2026-10-12 is a Monday; Monday and Thursday for two weeks.
+    expect(programmeDates('2026-10-12', [0, 3], 2)).toEqual(['2026-10-12', '2026-10-15', '2026-10-19', '2026-10-22']);
+  });
+  it('counts from the start date, not from the start of that week', () => {
+    expect(programmeDates('2026-10-14', [0, 2], 1)).toEqual(['2026-10-14', '2026-10-19']);
+  });
+  it('works across a month and a year end', () => {
+    expect(programmeDates('2026-12-28', [0], 2)).toEqual(['2026-12-28', '2027-01-04']);
+  });
+  it('limits the weeks to 12 and the total to 60', () => {
+    expect(programmeDates('2026-10-12', [0], 50)?.length).toBe(12);
+    expect(programmeDates('2026-10-12', [0, 1, 2, 3, 4, 5, 6], 12)?.length).toBe(60);
+  });
+  it('no day gives none; a bad date gives null', () => {
+    expect(programmeDates('2026-10-12', [], 4)).toEqual([]);
+    expect(programmeDates('2026-02-30', [0], 4)).toBeNull();
+    expect(programmeDates('', [0], 4)).toBeNull();
   });
 });

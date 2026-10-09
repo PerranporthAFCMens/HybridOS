@@ -108,6 +108,25 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('assignment exact', as && as.method === 'POST' && as.body.gym_id === GYM && as.body.member_user_id === 'u-ben' && as.body.assigned_by === USER && as.body.source === 'pt' && as.body.status === 'todo' && as.body.template_id === 't-leg' && as.body.title === 'Leg Day' && as.body.due_at === '2026-07-10T22:59:00.000Z');
   c.ok('assignment carries a copy of the blocks', as && as.body.workout_snapshot.template_id === 't-leg' && as.body.workout_snapshot.blocks.length === 1 && as.body.workout_snapshot.blocks[0].activities.length === 2);
 
+  // A weekly programme: one request, one assignment per day
+  writes.length = 0;
+  await page.getByRole('button', { name: 'Assign to member' }).click();
+  await dialog.getByLabel('Member').selectOption('u-amy');
+  await dialog.getByLabel('How often').selectOption('weekly');
+  await dialog.getByLabel('Start date').fill('2026-10-12');
+  await dialog.getByRole('button', { name: 'Assign workout' }).click();
+  await c.has('a programme needs a day', dialog.getByText('Choose at least one day of the week.'));
+  await dialog.getByRole('group', { name: 'Days of the week' }).getByLabel('Monday').check();
+  await dialog.getByRole('group', { name: 'Days of the week' }).getByLabel('Thursday').check();
+  await dialog.getByLabel('For how many weeks').selectOption('2');
+  await c.has('it says how many workouts', dialog.getByText('4 workouts, from 12 Oct 2026 to 22 Oct 2026.'));
+  c.ok('layout (programme)', (await page.evaluate(layoutProblems)).length === 0);
+  await dialog.getByRole('button', { name: 'Assign 4 workouts' }).click();
+  await c.has('programme assigned message', page.getByText('Leg Day assigned to Amy Active on 4 days.'));
+  const prog = writes.filter((w) => w.table === 'workout_assignments');
+  c.ok('sent as one request with four assignments on the right days', prog.length === 1 && Array.isArray(prog[0].body) && prog[0].body.length === 4
+    && prog[0].body.map((b) => b.due_at.slice(0, 10)).join() === '2026-10-12,2026-10-15,2026-10-19,2026-10-22' && prog[0].body.every((b) => b.member_user_id === 'u-amy' && b.status === 'todo' && b.workout_snapshot.template_id === 't-leg'));
+
   // WOD
   writes.length = 0;
   await page.getByRole('button', { name: 'Publish as WOD' }).click();
