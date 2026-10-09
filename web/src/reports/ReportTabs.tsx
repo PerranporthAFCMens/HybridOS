@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
 import type { LibraryData } from '../data/reportLibrary';
 import { Card, Empty, SectionTitle } from '../ui/Card';
@@ -13,8 +13,8 @@ import { Builder } from '../builder/Builder';
 import { ReportLibrary } from './ReportLibrary';
 import { XeroExport } from './XeroExport';
 import {
-  atRiskTable, classPerformanceTable, classesTab, heatStep, membersTab, membershipsTab, membershipsTable, metricsOf, paymentsTab, topMembersTable,
-  type ClassesTab, type MembersTab, type MembershipsTab, type PaymentsTab,
+  atRiskTable, bestSlots, classPerformanceTable, classesTab, heatStep, heatValue, relativeStep, membersTab, membershipsTab, membershipsTable, metricsOf, paymentsTab, topMembersTable,
+  type ClassesTab, type HeatMetric, type HeatRow, type MembersTab, type MembershipsTab, type PaymentsTab,
 } from './tabs';
 import { useLibraryData } from './useReports';
 
@@ -22,6 +22,51 @@ export type TabKey = 'overview' | 'memberships' | 'classes' | 'members' | 'payme
 export const TABS: [TabKey, string][] = [
   ['overview', 'Overview'], ['memberships', 'Memberships'], ['classes', 'Classes'], ['members', 'Members'], ['payments', 'Payments'], ['xero', 'Accounting (Xero)'], ['library', 'Report library'], ['builder', 'Report builder'],
 ];
+
+const HEAT_CHOICES: [HeatMetric, string][] = [['bookings', 'Bookings'], ['revenue', 'Revenue'], ['fill', 'Fill']];
+const heatText = (m: HeatMetric, v: number) => (m === 'fill' ? `${v}%` : m === 'bookings' ? String(v) : v ? reportMoney(v) : '£0');
+
+/** Which days and times of day are busiest, or earn the most. Revenue is paid drop-ins; membership classes are in the monthly fee. */
+function HeatCard({ heat }: { heat: HeatRow[] }) {
+  const [metric, setMetric] = useState<HeatMetric>('bookings');
+  const max = Math.max(0, ...heat.flatMap((r) => r.cells.map((c) => heatValue(c, metric))));
+  const best = bestSlots(heat, metric);
+  const word = metric === 'fill' ? 'full' : metric === 'bookings' ? 'bookings' : 'in drop-in sales';
+  return (
+    <Card>
+      <SectionTitle title="Class heatmap" action={<span className="muted">By day and time</span>} />
+      <div className="heat-pick" role="radiogroup" aria-label="Show on the heatmap">
+        {HEAT_CHOICES.map(([id, label]) => (
+          <button key={id} type="button" role="radio" aria-checked={metric === id} className={`heat-choice${metric === id ? ' on' : ''}`} onClick={() => setMetric(id)}>{label}</button>
+        ))}
+      </div>
+      <table className="heat">
+        <caption className="visually-hidden">{metric === 'fill' ? 'Average fill' : metric === 'bookings' ? 'Bookings' : 'Drop-in revenue'} by day and time of day</caption>
+        <thead>
+          <tr><th scope="col"><span className="visually-hidden">Day</span></th>{heat[0]?.cells.map((c) => <th key={c.band} scope="col">{c.band}</th>)}</tr>
+        </thead>
+        <tbody>
+          {heat.map((r) => (
+            <tr key={r.day}>
+              <th scope="row">{r.day}</th>
+              {r.cells.map((c) => {
+                const v = heatValue(c, metric);
+                const step = metric === 'fill' ? heatStep(v) : relativeStep(v, max);
+                return <td key={c.band} className={`v${step}`} aria-label={`${r.day} ${c.band}: ${heatText(metric, v)}`}>{heatText(metric, v)}</td>;
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {best.length > 0 ? (
+        <p className="muted small heat-best">Best: {best.map((b) => `${b.day} ${b.band.toLowerCase()} (${heatText(metric, b.value)} ${metric === 'fill' ? 'full' : word})`).join(' · ')}</p>
+      ) : (
+        <p className="muted small heat-best">Nothing to show for this period yet.</p>
+      )}
+      {metric === 'revenue' && <p className="muted small">Revenue counts classes people paid for as a drop-in. Classes covered by a membership are in the monthly fee, so they show under Bookings.</p>}
+    </Card>
+  );
+}
 
 function StatCard({ label, value }: { label: string; value: string }): ReactNode {
   return (
@@ -95,23 +140,7 @@ function ClassesPane({ d, ctx, gymName, onOpenTable, cp }: PaneProps & { onOpenT
               onOpen={(name) => onOpenTable(() => classesTable(tctx(), `${name} sessions`, metrics, (s) => s.name === name))} />
           )}
         </Card>
-        <Card>
-          <SectionTitle title="Day × time heatmap" action={<span className="muted">Demand / capacity</span>} />
-          <table className="heat">
-            <caption className="visually-hidden">Average fill by day and time of day</caption>
-            <thead>
-              <tr><th scope="col"><span className="visually-hidden">Day</span></th>{t.heat[0]?.cells.map((c) => <th key={c.band} scope="col">{c.band}</th>)}</tr>
-            </thead>
-            <tbody>
-              {t.heat.map((r) => (
-                <tr key={r.day}>
-                  <th scope="row">{r.day}</th>
-                  {r.cells.map((c) => <td key={c.band} className={`v${heatStep(c.fill)}`} aria-label={`${r.day} ${c.band}: ${c.fill}%`}>{c.fill}%</td>)}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+        <HeatCard heat={t.heat} />
       </div>
       <Card>
         <SectionTitle title="Class performance detail" action={<DownloadButtons gymName={gymName} build={() => classPerformanceTable(ctx(), t)} />} />

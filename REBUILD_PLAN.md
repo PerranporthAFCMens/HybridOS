@@ -40,10 +40,12 @@ The new app lives in `web/` and is built to `_site/next/` by `scripts/build_site
 
 The word `/next/` goes away at the cutover below. Every piece of work is reported as one of: on a branch, on dev, or live.
 
-## Status (updated 8 Oct 2026, afternoon)
+## Status (updated 9 Oct 2026, night; dev and live are level at `e7fe129`)
 
-**Rebuilt, on dev and live (release #155):** Today, Members, Membership plans, Classes (calendar, add, edit, bookings, attendance), Class setup, Reports (Overview and four tabs, 24-report library, charts, CSV/Excel/PDF, Xero export), Staff, Settings hub, Rooms and equipment.
-**On dev, not yet live:** the gym logo in the old admin sidebar (#156).
+**Rebuilt and live (released 9 October 2026):** Today, Members (including the team, so owners and staff can hold a membership), Membership plans, Classes (calendar, add, edit, bookings, attendance), Class setup, Reports (Overview and four tabs, 24-report library, charts, CSV/Excel/PDF, Xero export, and the report builder with its sentence, chart, date picker and print), Staff, Access levels, Owners, Door access, Rooms and equipment, What members see, Community, Communications, Workout builder (weekly programmes), **Membership rules and Membership requests** (owner sets whether members can pause, cancel or change plan and whether each needs approval), Back links on sub-pages.
+**Member app (`#/m/*`), live but preview only for owners and admins:** Today, Classes, Workouts (save each exercise, suggestions as you type, reps then weight, remove a set or an exercise, personal bests), PT, Me (change name, email, password; pause, change plan or cancel within the gym's rules). Real members still use the classic app until the member cutover.
+**Not rebuilt, not linked from the new sidebar:** Channels chat (`index.html#community`), the detailed old Reporting page (replaced by the report builder). Gym layout is dropped (below).
+**Next, in this order:** (1) make the new app the default sign-in (rewrite the Auth journey and protected routing checks for the new app first; today it is the opt-in `admin.html?next=1`); (2) clean addresses (`/reports`, no `/next/`, no `#`; Vercel rewrites plus real routes; dev on GitHub Pages needs a fallback or a Vercel preview); (3) member app features still open (coach plan and PT link, notifications when a coach sends a workout, community and groups, join and onboarding, Strava); (4) member cutover, staff app, delete the old pages.
 
 ## Cutover decision (owner, 8 October 2026): finish everything first
 The owner chose to rebuild every remaining screen, then switch over in one go and delete every old page and the `/next/` address. Until then both run side by side. Order:

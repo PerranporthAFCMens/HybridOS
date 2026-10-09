@@ -67,6 +67,13 @@ A change is **not done** until you have shown me:
 - Lifting the production hold is its own PR. The merge commit of that PR is the release candidate, and all four gates must pass on that exact commit.
 - Never deploy a preview of the exact release-candidate commit (Vercel's Ignored Build Step skips previously deployed commits). Test a new preview-only commit that has an identical tree and prove it changes 0 files.
 - After a release, check Vercel deployed the exact SHA, run the production routing check, and check production on a real phone before calling it done. Then put the hold back with a small PR.
+- **Lessons from the 9 October 2026 release (read before the next one):**
+  - The ruleset on `main` (id 24254227) requires four checks, `smoke`, `auth-journeys`, `routing` and `verify`, and they must **start from the release commit's own push**. A check started by hand (`workflow_dispatch`) did not count and the push to `main` was refused with "2 of 4 required status checks are expected". When a change does not match the path filters of the Auth journey and protected routing workflows (for example `web/**` only), add a comment-only line to those two workflow files in the last pull request before the release, as earlier releases did.
+  - `main` must stay an ancestor of `dev`. If `main` gains a commit `dev` lacks (for example a pull request merged straight into `main`), open a zero-file "merge main into dev" pull request and merge it as a merge commit before releasing.
+  - A release is a **fresh "Run workflow"** (use workflow from `main`, paste the exact `dev` SHA). "Re-run failed jobs" reuses the old SHA.
+  - Do not merge anything into `dev` between getting the four green checks and running the release; the SHA must still be the head of `dev`.
+  - Vercel serves `/next` without a trailing slash; check the new app at `/next` (not only `/next/`) before telling anyone to try it. The Vercel connector lists the project only with no team filter (project `hybrid-one`, `prj_9DRBM2eBpXpXngPTCawtIwYID6rc`).
+  - After a release: check Vercel shows the exact SHA READY with the domain aliased, run the production routing workflow, restore the hold in its own pull request, and the owner disables the release workflow.
 - No feature work on the day of a match or a live gym event.
 - The release workflow stays disabled in the Actions tab except while a release is being run.
 

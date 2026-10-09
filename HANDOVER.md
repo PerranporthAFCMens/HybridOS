@@ -15,7 +15,7 @@ Current application/state head before this documentation checkpoint:
 - dev behind: **4**
 - merge base: `b7d83243e9248a64978677efec91c4f9d83c1052`
 
-Production hold: **ACTIVE**. Do not broadly merge dev into main.
+Production hold: **ACTIVE** (restored after the 9 October 2026 release, production `main` = `e7fe129c60169250204f61ad6ac6cdea3127c006`, rollback tag `prod-2026-10-09-221045`). Do not broadly merge dev into main. How to release, with the checks that bit us on 9 October, is in `AI_WORKING_RULES.md` section 5; what is live is at the top of `STATUS.md` and in `REBUILD_PLAN.md`.
 
 ### Current dev evidence
 
