@@ -16,11 +16,10 @@ Owner decisions so far: no real customers yet (so strict rules from day one, no 
 6. Declaration: accept the gym's terms and health declaration (tick-box, date and time recorded).
 7. Choose a plan, then confirmation with a link into the app.
 
-Each step saves as it goes so a refresh does not lose it. Step 7 only works if steps 2 to 6 are complete.
+The browser keeps the answers between steps (so a refresh does not lose them) and saves them to the database in one call after the emergency contact / guardian step. Step 7 only works if steps 2 to 6 are complete.
 
 ## Database changes (exact SQL to be approved before anything is applied)
-- `profiles`: add `address_line1`, `address_line2`, `town`, `postcode`.
-- New table `member_emergency_contacts` (one per member): `user_id`, `name`, `phone`, `relationship`. RLS: the member reads and writes their own; gym staff read for members of their gym.
+- Address, emergency contact and guardian go in one new table `member_details`, NOT on `profiles`: any member of a gym can read any other member's profile today, so an address there would be visible to the whole gym. Only the member and owner/admin/staff of their gym can read it, and it is written only through one database function that validates everything.
 - New table `member_declarations`: `user_id`, `gym_id`, `terms_version`, `accepted_at`. Insert-only for the member.
 - `gyms`: add `terms_text`, `health_declaration_text`, `terms_version` (the gym edits the wording).
 - `join_public_gym_with_membership` refuses unless all required details exist (guardian details when under 18, and a declaration for the gym's current terms version).
