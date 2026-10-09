@@ -109,3 +109,16 @@ export const ptMinutes = (r: Pick<PtRow, 'startsAt' | 'endsAt'>): number => Math
 export function ptPastTag(status: string): string {
   return status === 'completed' ? 'Done' : status === 'no_show' ? 'Missed' : '';
 }
+
+/** The key that remembers a member has already been wished happy birthday this year on this device. */
+export const birthdayKey = (userId: string, year: number): string => `hybrid-birthday-${userId}-${year}`;
+
+/** Is today (UK date) the member's birthday? A 29 February birthday is marked on 28 February in years with no 29th. */
+export function isBirthdayToday(dateOfBirth: string | null, now: Date): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateOfBirth ?? '');
+  if (!m) return false;
+  const [y, mo, d] = londonParts(now).date.split('-').map(Number);
+  const leap = ((y ?? 0) % 4 === 0 && (y ?? 0) % 100 !== 0) || (y ?? 0) % 400 === 0;
+  const day = Number(m[2]) === 2 && Number(m[3]) === 29 && !leap ? 28 : Number(m[3]);
+  return Number(m[2]) === mo && day === d;
+}

@@ -7,5 +7,7 @@ export default defineConfig({
   base: './',
   plugins: [react()],
   build: { outDir: '../_site/next', emptyOutDir: true, sourcemap: false },
+  // The live pages one folder up are read as text by tests/classic-pages.test.ts, so the dev server may read them.
+  server: { fs: { allow: ['..'] } },
   test: { environment: 'jsdom', include: ['tests/**/*.test.{ts,tsx}'] },
 });

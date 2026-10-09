@@ -3,10 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useOutletContext } from 'react-router-dom';
 import { londonParts } from '../classes/calc';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { getProfileNames } from '../data/profile';
+import { getMyBirthday, getProfileNames } from '../data/profile';
 import type { ClassRow } from '../data/member';
 import { Button } from '../ui/Button';
-import { chooseHero, dayLabel, dayOf, goalMessage, suggestions, timeOf, whenWords, spaceText } from './calc';
+import { BirthdayHello } from './Birthday';
+import { birthdayKey, chooseHero, dayLabel,isBirthdayToday, dayOf, goalMessage, suggestions, timeOf, whenWords, spaceText } from './calc';
 import { dueNow } from '../train/calc';
 import type { MemberCtx } from './useMember';
 import { useBooking } from './useBooking';
@@ -28,11 +29,20 @@ function greeting(now: Date): string {
 
 /** The first screen: the one thing that matters now on top, then what to book next, then the week. */
 export function Today() {
-  const { userId } = useReadyAuth();
+  const { userId, gym } = useReadyAuth();
   const d = useOutletContext<MemberCtx>();
   const booking = useBooking();
   const [goal, setGoal] = useState(readGoal);
   const profile = useQuery({ queryKey: ['profile', userId], queryFn: () => getProfileNames(userId) });
+  const birthday = useQuery({ queryKey: ['birthday', userId], queryFn: () => getMyBirthday(userId) });
+  const [wished, setWished] = useState(false);
+  const year = Number(d.today.slice(0, 4));
+  const wishedBefore = (() => { try { return localStorage.getItem(birthdayKey(userId, year)) === '1'; } catch { return false; } })();
+  const showBirthday = birthday.isSuccess && !wished && !wishedBefore && isBirthdayToday(birthday.data, d.now);
+  const closeBirthday = () => {
+    setWished(true);
+    try { localStorage.setItem(birthdayKey(userId, year), '1'); } catch { /* it may show again on this device, which is harmless */ }
+  };
   const due = dueNow(d.plans, d.today, dayOf)[0] ?? null;
   const hero = chooseHero(d.now, d.classes.data, d.pt, d.flags, due ? { id: due.id, title: due.title, status: due.status } : null);
   const first = profile.data?.firstName ?? profile.data?.displayName?.split(' ')[0] ?? '';
@@ -55,6 +65,14 @@ export function Today() {
   return (
     <div className="mem-screen">
       {booking.layer}
+      {showBirthday && <BirthdayHello first={first} gymName={gym.gymName} onClose={closeBirthday} />}
+      {birthday.isSuccess && !birthday.data && (
+        <section className="mem-card" aria-label="Your birthday">
+          <b>Tell us your birthday</b>
+          <div className="muted small">So we can say happy birthday when it comes round.</div>
+          <Link className="btn secondary" to="/m/me">Add my birthday</Link>
+        </section>
+      )}
       <div>
         <div className="mem-hi">{greeting(d.now)}{first ? `, ${first}` : ''}</div>
         <h1 className="mem-title">{headline}</h1>

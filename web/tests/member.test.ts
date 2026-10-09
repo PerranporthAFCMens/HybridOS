@@ -107,3 +107,29 @@ describe('personal training sessions', () => {
     expect(ptPastTag('booked')).toBe('');
   });
 });
+
+import { birthdayKey, isBirthdayToday } from '../src/member/calc';
+
+describe('birthdays', () => {
+  it('is the birthday on the same month and day in UK time', () => {
+    expect(isBirthdayToday('1990-10-08', NOW)).toBe(true);
+    expect(isBirthdayToday('1990-10-09', NOW)).toBe(false);
+    expect(isBirthdayToday('1990-09-08', NOW)).toBe(false);
+  });
+  it('uses the UK day, not the UTC day', () => {
+    expect(isBirthdayToday('1990-10-09', new Date('2026-10-08T23:30:00Z'))).toBe(true); // 00:30 BST on the 9th
+    expect(isBirthdayToday('1990-10-08', new Date('2026-10-08T23:30:00Z'))).toBe(false);
+  });
+  it('marks 29 February on the 28th in years with no 29th', () => {
+    expect(isBirthdayToday('2000-02-29', new Date('2026-02-28T12:00:00Z'))).toBe(true);
+    expect(isBirthdayToday('2000-02-29', new Date('2028-02-28T12:00:00Z'))).toBe(false);
+    expect(isBirthdayToday('2000-02-29', new Date('2028-02-29T12:00:00Z'))).toBe(true);
+  });
+  it('is never a birthday with no date', () => {
+    expect(isBirthdayToday(null, NOW)).toBe(false);
+    expect(isBirthdayToday('', NOW)).toBe(false);
+  });
+  it('remembers per person and year', () => {
+    expect(birthdayKey('u1', 2026)).toBe('hybrid-birthday-u1-2026');
+  });
+});

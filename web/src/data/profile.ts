@@ -17,6 +17,18 @@ export async function getProfileNames(userId: string): Promise<ProfileNames> {
   return { displayName: data?.display_name ?? null, firstName: data?.first_name ?? null, lastName: data?.last_name ?? null };
 }
 
+/** The member's own date of birth ("2000-03-14"), or null when they have not given one. */
+export async function getMyBirthday(userId: string): Promise<string | null> {
+  const { data, error } = await supabase.from('profiles').select('date_of_birth').eq('id', userId).maybeSingle();
+  if (error) throw error;
+  return data?.date_of_birth ?? null;
+}
+
+export async function saveMyBirthday(userId: string, dateOfBirth: string): Promise<void> {
+  const { error } = await supabase.from('profiles').update({ date_of_birth: dateOfBirth, updated_at: new Date().toISOString() }).eq('id', userId);
+  if (error) throw new Error(error.message);
+}
+
 /** Save the member's own name: the profile row, and the sign-in account so both agree. */
 export async function updateMyName(userId: string, n: { displayName: string; firstName: string; lastName: string }): Promise<void> {
   const p = await supabase.from('profiles').update({ display_name: n.displayName, first_name: n.firstName || null, last_name: n.lastName || null }).eq('id', userId);

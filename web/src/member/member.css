@@ -82,3 +82,15 @@
 
 .tr-del { flex: none; width: 44px; height: 44px; border: 0; border-radius: 10px; background: var(--hybrid-raised); color: var(--hybrid-muted); font: inherit; cursor: pointer; }
 .tr-del:focus-visible { outline: 2px solid var(--hybrid-pulse, #6b7cff); outline-offset: 2px; }
+
+/* Happy birthday */
+.bday-back { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 24px; background: rgba(7, 10, 22, .86); }
+.bday-card { width: min(92vw, 380px); text-align: center; display: grid; gap: 10px; justify-items: center; padding: 32px 24px; border-radius: 20px; background: var(--hybrid-panel, #121a33); border: 1px solid var(--hybrid-line-strong); animation: bday-in .6s cubic-bezier(.2, 1.4, .4, 1) both; }
+.bday-card h2 { margin: 6px 0 0; font-size: 28px; }
+.bday-card p { margin: 0 0 12px; color: var(--hybrid-muted); }
+.bday-cake { font-size: 64px; line-height: 1; display: block; animation: bday-bounce 1.4s ease-in-out infinite; }
+.bday-confetti { position: fixed; inset: 0; z-index: 91; pointer-events: none; }
+@keyframes bday-in { from { opacity: 0; transform: scale(.7) translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes bday-bounce { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-10px) rotate(4deg); } }
+@media (prefers-reduced-motion: reduce) { .bday-card, .bday-cake { animation: none; } }
+.bday-card .btn { min-height: 48px; padding: 0 28px; }
