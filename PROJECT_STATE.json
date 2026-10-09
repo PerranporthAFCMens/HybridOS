@@ -14,9 +14,9 @@
     "note": "Production release completed at 538312c56996de115326970f45e42f0fcd841571. Dev has since advanced with test/docs-only routing verification updates."
   },
   "release_gate": {
-    "production_hold": true,
-    "production_promotion_allowed": false,
-    "reason": "Production release cef17ce3d3aa591531c5aead61d8cbd97a965bd2 (7 October 2026) is complete and verified. Promotion is re-held until a future release is deliberately prepared and re-authorised."
+    "production_hold": false,
+    "production_promotion_allowed": true,
+    "reason": "Owner authorised a production release on 9 October 2026 (the rebuilt admin screens, the new member app preview, report builder, membership rules, workouts and PBs). The hold is cleared only for this release and is restored straight after it."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
