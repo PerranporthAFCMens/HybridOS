@@ -60,8 +60,7 @@ export function Shell() {
           <NavLink to="/communications" onClick={close}>Communications</NavLink>
           <NavLink to="/settings" onClick={close}>Settings and staff</NavLink>
           <div className="section">Preview</div>
-          <a href="../member.html?view=member">Preview as member</a>
-          <NavLink to="/m/today" onClick={close}>Preview new member app</NavLink>
+          <NavLink to="/m/today" onClick={close}>Preview as member</NavLink>
           <a href="../staff.html?view=staff">Preview as staff</a>
         </nav>
         <div className="account">
