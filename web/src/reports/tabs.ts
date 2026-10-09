@@ -46,7 +46,7 @@ export function membershipsTable(ctx: LibraryContext, t: MembershipsTab): Report
 
 // ---- Classes ----
 
-export interface TypeRow { name: string; sessions: number; bookings: number; attended: number; fill: number }
+export interface TypeRow { name: string; sessions: number; bookings: number; attended: number; fill: number; revenue: number }
 export interface HeatCell { band: Band; fill: number; bookings: number; sessions: number; revenue: number }
 export interface HeatRow { day: string; cells: HeatCell[] }
 export type HeatMetric = 'fill' | 'bookings' | 'revenue';
@@ -83,7 +83,7 @@ export function classesTab(d: LibraryData, now: Date): ClassesTab {
   const byType = [...new Set(metrics.map((s) => s.name))]
     .map((name) => {
       const a = metrics.filter((s) => s.name === name);
-      return { name, sessions: a.length, bookings: sum(a, (s) => s.demand), attended: sum(a, (s) => s.attended), fill: fill(a) };
+      return { name, sessions: a.length, bookings: sum(a, (s) => s.demand), attended: sum(a, (s) => s.attended), fill: fill(a), revenue: sum(a, (s) => paid.get(s.id) ?? 0) };
     })
     .sort((a, b) => b.fill - a.fill || a.name.localeCompare(b.name));
   return {
@@ -99,6 +99,16 @@ export function classesTab(d: LibraryData, now: Date): ClassesTab {
 /** Heat colour step 1 to 5 for a fill percentage, as on the old heatmap. */
 export function heatStep(fill: number): 1 | 2 | 3 | 4 | 5 {
   return fill >= 85 ? 5 : fill >= 70 ? 4 : fill >= 50 ? 3 : fill >= 25 ? 2 : 1;
+}
+
+/** What each class type has made, most first. Paid drop-ins only: membership classes are covered by the monthly fee. */
+export function incomeByType(t: ClassesTab): TypeRow[] {
+  return [...t.byType].sort((a, b) => b.revenue - a.revenue || a.name.localeCompare(b.name));
+}
+
+export function classIncomeTable(ctx: LibraryContext, t: ClassesTab): ReportTable {
+  return table(ctx, 'Income by class (paid drop-ins)', ['Class', 'Sessions', 'Paid drop-in income', 'Income per session'],
+    incomeByType(t).map((r) => [r.name, r.sessions, pounds(r.revenue), pounds(r.sessions ? Math.round(r.revenue / r.sessions) : 0)]));
 }
 
 export function classPerformanceTable(ctx: LibraryContext, t: ClassesTab): ReportTable {

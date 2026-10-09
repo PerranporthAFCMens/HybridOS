@@ -155,6 +155,14 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('fill shows percentages', (await page.locator('table.heat td').first().getAttribute('aria-label')).includes('%'));
   c.ok('layout (heatmap)', (await page.evaluate(layoutProblems)).length === 0);
   await c.has('attendance chart on the classes tab', page.getByRole('figure', { name: 'Attendance over time' }));
+  await c.has('income by class heading', page.getByRole('heading', { name: 'Income by class' }));
+  const income = page.getByRole('list', { name: 'Paid drop-in income by class' });
+  c.ok('income bars show what each class made', (await income.getByRole('button', { name: /^Past A: £8\.00/ }).count()) === 1 && (await income.getByRole('button', { name: /^Past B: £0\.00/ }).count()) === 1);
+  c.ok('the biggest earner is listed first and its bar is drawn', (await income.locator('.bar-row').first().textContent()).includes('Past A') && ((await income.locator('.bar-row .fill').first().boundingBox())?.width ?? 0) > 20);
+  await income.getByRole('button', { name: /^Past A/ }).click();
+  await c.has('an income bar opens that class', dialog.getByRole('heading', { name: 'Past A sessions' }));
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  c.ok('layout (income by class)', (await page.evaluate(layoutProblems)).length === 0);
   await page.getByRole('list', { name: 'Average fill by class type' }).getByRole('button', { name: /^Past A/ }).click();
   await c.has('a class type bar opens its sessions', dialog.getByRole('heading', { name: 'Past A sessions' }));
   await dialog.getByRole('button', { name: 'Close' }).click();

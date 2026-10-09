@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LibraryData } from '../src/data/reportLibrary';
-import { TOP_MEMBERS, atRiskTable, classPerformanceTable, classesTab, heatStep, membersTab, membershipsTab, membershipsTable, paymentsTab, topMembersTable } from '../src/reports/tabs';
+import { TOP_MEMBERS, atRiskTable, classIncomeTable, classPerformanceTable, classesTab, heatStep, incomeByType, membersTab, membershipsTab, membershipsTable, paymentsTab, topMembersTable } from '../src/reports/tabs';
 import type { LibraryContext } from '../src/reports/library';
 
 const NOW = new Date('2026-10-08T12:00:00Z');
@@ -69,6 +69,26 @@ describe('memberships tab', () => {
   it('has no divide-by-zero with nobody active', () => {
     const t = membershipsTab(base({ memberships: [] }), null);
     expect(t.plans.every((p) => p.share === 0)).toBe(true);
+  });
+});
+
+describe('income by class', () => {
+  const purchases = [
+    { userId: 'u1', sessionId: 's1', createdAt: '', amountPence: 800, status: 'paid' },
+    { userId: 'u2', sessionId: 's3', createdAt: '', amountPence: 800, status: 'paid' },
+    { userId: 'u3', sessionId: 's2', createdAt: '', amountPence: 1200, status: 'paid' },
+    { userId: 'u3', sessionId: 's1', createdAt: '', amountPence: 800, status: 'refunded' },
+    { userId: 'u3', sessionId: 's1', createdAt: '', amountPence: 800, status: 'pending' },
+  ];
+  const t = classesTab(base({ purchases }), NOW);
+  it('adds up paid drop-ins per class and ranks the biggest earner first', () => {
+    expect(incomeByType(t).map((r) => [r.name, r.revenue])).toEqual([['HIIT', 1600], ['Yoga', 1200]]);
+  });
+  it('ignores unpaid and refunded purchases, and shows nothing earned when there are none', () => {
+    expect(classesTab(base(), NOW).byType.every((r) => r.revenue === 0)).toBe(true);
+  });
+  it('the download has income and income per session', () => {
+    expect(classIncomeTable(ctx, t).rows).toEqual([['HIIT', 3, '£16.00', '£5.33'], ['Yoga', 1, '£12.00', '£12.00']]);
   });
 });
 

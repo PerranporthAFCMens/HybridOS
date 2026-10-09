@@ -13,7 +13,7 @@ import { Builder } from '../builder/Builder';
 import { ReportLibrary } from './ReportLibrary';
 import { XeroExport } from './XeroExport';
 import {
-  atRiskTable, bestSlots, classPerformanceTable, classesTab, heatStep, heatValue, relativeStep, membersTab, membershipsTab, membershipsTable, metricsOf, paymentsTab, topMembersTable,
+  atRiskTable, bestSlots, classIncomeTable, classPerformanceTable, incomeByType, classesTab, heatStep, heatValue, relativeStep, membersTab, membershipsTab, membershipsTable, metricsOf, paymentsTab, topMembersTable,
   type ClassesTab, type HeatMetric, type HeatRow, type MembersTab, type MembershipsTab, type PaymentsTab,
 } from './tabs';
 import { useLibraryData } from './useReports';
@@ -121,6 +121,7 @@ function MembershipsPane({ d, since, ctx, gymName, cp }: PaneProps & { since: st
 
 function ClassesPane({ d, ctx, gymName, onOpenTable, cp }: PaneProps & { onOpenTable: (build: () => ReportTable) => void }) {
   const t: ClassesTab = classesTab(d, new Date());
+  const income = incomeByType(t);
   const metrics = metricsOf(d);
   const tctx = (): TableContext => ctx();
   return (
@@ -132,6 +133,14 @@ function ClassesPane({ d, ctx, gymName, onOpenTable, cp }: PaneProps & { onOpenT
         <StatCard label="Sessions" value={String(t.sessions)} />
       </div>
       <AttendanceChart {...cp} />
+      <Card>
+        <SectionTitle title="Income by class" action={<DownloadButtons gymName={gymName} build={() => classIncomeTable(ctx(), t)} />} />
+        {income.every((r) => r.revenue === 0) ? <Empty>No paid drop-in income in this period.</Empty> : (
+          <Bars rows={income.slice(0, 10).map((r) => ({ label: r.name, value: r.revenue }))} format={(v) => pounds(v)} label="Paid drop-in income by class"
+            onOpen={(name) => onOpenTable(() => classesTable(tctx(), `${name} sessions`, metrics, (s) => s.name === name))} />
+        )}
+        <p className="muted small">Paid drop-ins only. Classes included in a membership are covered by the monthly fee, so they are not counted here.</p>
+      </Card>
       <div className="report-cols">
         <Card>
           <SectionTitle title="By class type" action={<DownloadButtons gymName={gymName} build={() => classPerformanceTable(ctx(), t)} />} />
