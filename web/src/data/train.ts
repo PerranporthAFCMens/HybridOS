@@ -72,54 +72,56 @@ export async function listLastTimes(userId: string, gymId: string): Promise<Map<
   return out;
 }
 
-export interface FinishInput {
-  gymId: string;
-  userId: string;
-  title: string;
-  notes: string | null;
-  entries: { name: string; tracking: Tracking; note: string | null; sets: DbSet[] }[];
-  assignment: { id: string; rpe: number | null; note: string | null } | null;
-}
+export interface ExerciseInput { name: string; tracking: Tracking; note: string | null; sets: DbSet[] }
 
 /**
- * Save a finished workout: the session, then each exercise with its sets, then (for a workout from a coach)
- * mark it done. If something fails part way, what was written is removed so nothing half-saved is left.
- * Returns whether the coach's workout was also marked done.
+ * Save one exercise now: the workout (created the first time), the exercise and its sets, then any personal best it sets.
+ * If the sets cannot be written the exercise is removed again, so nothing half-saved is left. A best that could not
+ * be recorded does not fail the save; it is reported.
  */
-export async function finishWorkout(input: FinishInput): Promise<{ marked: boolean; won: Won[]; pbError: string | null }> {
-  let sessionId: string | null = null;
-  const entryIds: string[] = [];
-  const undo = async () => {
-    for (const id of entryIds) {
-      await supabase.from('workout_sets').delete().eq('entry_id', id);
-      await supabase.from('workout_entries').delete().eq('id', id);
-    }
-    if (sessionId) await supabase.from('workout_sessions').delete().eq('id', sessionId);
-  };
-  if (input.entries.length > 0) {
-    try {
-      const s = await supabase.from('workout_sessions').insert({ gym_id: input.gymId, user_id: input.userId, title: input.title, notes: input.notes, performed_at: new Date().toISOString() }).select('id').single();
-      if (s.error) throw s.error;
-      sessionId = s.data.id;
-      let position = 0;
-      for (const e of input.entries) {
-        const r = await supabase.from('workout_entries').insert({ session_id: sessionId, gym_id: input.gymId, user_id: input.userId, exercise_name: e.name, tracking_type: e.tracking, notes: e.note, position: position++ }).select('id').single();
-        if (r.error) throw r.error;
-        entryIds.push(r.data.id);
-        const ins = await supabase.from('workout_sets').insert(e.sets.map((st, j) => ({ entry_id: r.data.id, set_number: j + 1, ...st })));
-        if (ins.error) throw ins.error;
-      }
-    } catch (e) {
-      await undo();
-      throw new Error(e instanceof Error ? e.message : (e as { message?: string }).message ?? 'Could not save the workout.', { cause: e });
-    }
+export async function saveExercise(
+  ctx: { gymId: string; userId: string; sessionId: string | null; title: string; position: number },
+  e: ExerciseInput,
+): Promise<{ sessionId: string; entryId: string; won: Won[]; pbError: string | null }> {
+  const fail = (err: unknown): never => { throw new Error(err instanceof Error ? err.message : (err as { message?: string }).message ?? 'Could not save the exercise.', { cause: err }); };
+  let sessionId = ctx.sessionId;
+  if (!sessionId) {
+    const s = await supabase.from('workout_sessions').insert({ gym_id: ctx.gymId, user_id: ctx.userId, title: ctx.title, performed_at: new Date().toISOString() }).select('id').single();
+    if (s.error) fail(s.error);
+    sessionId = s.data?.id ?? null;
+  }
+  if (!sessionId) return fail(new Error('Could not start the workout.'));
+  const r = await supabase.from('workout_entries').insert({ session_id: sessionId, gym_id: ctx.gymId, user_id: ctx.userId, exercise_name: e.name, tracking_type: e.tracking, notes: e.note, position: ctx.position }).select('id').single();
+  if (r.error || !r.data) return fail(r.error ?? new Error('Could not save the exercise.'));
+  const entryId = r.data.id;
+  const ins = await supabase.from('workout_sets').insert(e.sets.map((st, j) => ({ entry_id: entryId, set_number: j + 1, ...st })));
+  if (ins.error) {
+    await supabase.from('workout_entries').delete().eq('id', entryId);
+    return fail(ins.error);
   }
   let won: Won[] = [];
   let pbError: string | null = null;
   try {
-    won = await savePbs(input.userId, input.gymId, pbCandidatesFor(input.entries), new Date().toISOString());
-  } catch (e) {
-    pbError = e instanceof Error ? e.message : (e as { message?: string }).message ?? 'unknown error';
+    won = await savePbs(ctx.userId, ctx.gymId, candidatesFor(e.name, e.tracking, e.sets), new Date().toISOString());
+  } catch (err) {
+    pbError = err instanceof Error ? err.message : (err as { message?: string }).message ?? 'unknown error';
+  }
+  return { sessionId, entryId, won, pbError };
+}
+
+/** Take a saved exercise back out (to change it). Personal bests it set are kept. */
+export async function removeExercise(entryId: string): Promise<void> {
+  const a = await supabase.from('workout_sets').delete().eq('entry_id', entryId);
+  if (a.error) throw new Error(a.error.message);
+  const b = await supabase.from('workout_entries').delete().eq('id', entryId);
+  if (b.error) throw new Error(b.error.message);
+}
+
+/** Finish: name and note the workout, and mark the coach's workout done. Returns whether that was marked. */
+export async function completeWorkout(input: { sessionId: string | null; title: string; notes: string | null; assignment: { id: string; rpe: number | null; note: string | null } | null }): Promise<{ marked: boolean }> {
+  if (input.sessionId) {
+    const u = await supabase.from('workout_sessions').update({ title: input.title, notes: input.notes, updated_at: new Date().toISOString() }).eq('id', input.sessionId);
+    if (u.error) throw new Error(`Your exercises are saved, but the workout could not be finished: ${u.error.message}`);
   }
   let marked = false;
   if (input.assignment) {
@@ -127,7 +129,7 @@ export async function finishWorkout(input: FinishInput): Promise<{ marked: boole
     if (u.error) throw new Error(`Your workout is saved, but it could not be marked as done: ${u.error.message}`);
     marked = true;
   }
-  return { marked, won, pbError };
+  return { marked };
 }
 
 /** All the member's personal bests in this gym, newest first. */
@@ -174,6 +176,3 @@ export async function deletePb(id: string): Promise<void> {
   const { error } = await supabase.from('personal_bests').delete().eq('id', id);
   if (error) throw error;
 }
-
-/** The bests a finished workout could have set. */
-export const pbCandidatesFor = (entries: FinishInput['entries']): PbCandidate[] => entries.flatMap((e) => candidatesFor(e.name, e.tracking, e.sets));
