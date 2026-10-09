@@ -5,3 +5,5 @@
 .wk-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
 .wk-confirm > span { flex: 1 1 260px; }
 .wk-actions { margin-top: 14px; }
+
+.assign-days { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 4px 12px; }
