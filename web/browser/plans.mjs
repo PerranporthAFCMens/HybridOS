@@ -5,7 +5,7 @@
 import { GYM, base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
 
 const plansDb = [
-  { id: 'p1', name: 'Hybrid Monthly', description: 'All access', price_pence: 4500, billing_interval: 'monthly', access_type: 'hybrid', joining_fee_pence: 1000, classes_per_week: null, includes_open_gym: true, includes_classes: true, includes_pt: false, is_public: true, is_active: true },
+  { id: 'p1', name: 'Hybrid Monthly', description: 'All access', price_pence: 4500, billing_interval: 'monthly', access_type: 'hybrid', joining_fee_pence: 1000, classes_per_week: null, includes_open_gym: true, includes_classes: true, includes_pt: false, is_public: true, members_can_switch_to: false, is_active: true },
   { id: 'p2', name: 'Old Weekly Deal with a rather long plan name', description: null, price_pence: 1200, billing_interval: 'weekly', access_type: 'gym', joining_fee_pence: 0, classes_per_week: 3, includes_open_gym: true, includes_classes: false, includes_pt: true, is_public: false, is_active: false },
 ];
 
@@ -94,7 +94,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const created = writes.find((w) => w.method === 'POST');
   c.ok('create write', created && JSON.stringify(created.body) === JSON.stringify({
     gym_id: GYM, name: 'Student', description: 'For students', price_pence: 2999, billing_interval: 'quarterly', joining_fee_pence: 500,
-    access_type: 'hybrid', includes_open_gym: true, includes_classes: true, includes_pt: true, classes_per_week: 2, is_public: false,
+    access_type: 'hybrid', includes_open_gym: true, includes_classes: true, includes_pt: true, classes_per_week: 2, is_public: false, members_can_switch_to: false,
   }));
 
   // Edit p2: form is pre-filled; change the price only

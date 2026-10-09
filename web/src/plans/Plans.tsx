@@ -136,6 +136,7 @@ function PlanEditor({ plan, saving, onClose, onSave }: {
       <Checkbox label="Includes classes" checked={form.includesClasses} onChange={(v) => set('includesClasses', v)} />
       <Checkbox label="Includes PT" checked={form.includesPt} onChange={(v) => set('includesPt', v)} />
       <Checkbox label="Visible for new members to join" checked={form.isPublic} onChange={(v) => set('isPublic', v)} />
+      <Checkbox label="Members can switch to this plan themselves" checked={form.canSwitchTo} onChange={(v) => set('canSwitchTo', v)} />
       <div className="assign-msg">{error && <span className="msg error" role="alert">{error}</span>}</div>
       <Button variant="primary" className="wide-btn" disabled={saving} onClick={submit}>Save membership plan</Button>
     </Modal>

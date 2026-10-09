@@ -1100,6 +1100,7 @@ export type Database = {
           is_active: boolean
           is_public: boolean
           joining_fee_pence: number
+          members_can_switch_to: boolean
           name: string
           price_pence: number
           trial_days: number
@@ -1119,6 +1120,7 @@ export type Database = {
           is_active?: boolean
           is_public?: boolean
           joining_fee_pence?: number
+          members_can_switch_to?: boolean
           name: string
           price_pence: number
           trial_days?: number
@@ -1138,6 +1140,7 @@ export type Database = {
           is_active?: boolean
           is_public?: boolean
           joining_fee_pence?: number
+          members_can_switch_to?: boolean
           name?: string
           price_pence?: number
           trial_days?: number
@@ -1152,6 +1155,112 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      membership_requests: {
+        Row: {
+          applied_at: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          effective_on: string
+          fee_pence: number
+          from_plan_id: string | null
+          gym_id: string
+          id: string
+          kind: string
+          membership_id: string
+          reason: string | null
+          requested_at: string
+          rules_snapshot: Json
+          status: string
+          to_plan_id: string | null
+          until_on: string | null
+          user_id: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      membership_rules: {
+        Row: {
+          cancel_approval: string
+          cancel_ask_reason: boolean
+          cancel_early_fee_pence: number
+          cancel_early_mode: string
+          cancel_enabled: boolean
+          cancel_min_term_months: number
+          cancel_notice_days: number
+          cancel_offer_pause: boolean
+          change_approval: string
+          change_min_months: number
+          downgrade_enabled: boolean
+          downgrade_starts: string
+          gym_id: string
+          pause_approval: string
+          pause_enabled: boolean
+          pause_fee_pence: number
+          pause_max_per_year: number
+          pause_max_weeks: number
+          pause_min_weeks: number
+          pause_notice_days: number
+          updated_at: string
+          updated_by: string | null
+          upgrade_enabled: boolean
+          upgrade_starts: string
+        }
+        Insert: {
+          cancel_approval?: string
+          cancel_ask_reason?: boolean
+          cancel_early_fee_pence?: number
+          cancel_early_mode?: string
+          cancel_enabled?: boolean
+          cancel_min_term_months?: number
+          cancel_notice_days?: number
+          cancel_offer_pause?: boolean
+          change_approval?: string
+          change_min_months?: number
+          downgrade_enabled?: boolean
+          downgrade_starts?: string
+          gym_id: string
+          pause_approval?: string
+          pause_enabled?: boolean
+          pause_fee_pence?: number
+          pause_max_per_year?: number
+          pause_max_weeks?: number
+          pause_min_weeks?: number
+          pause_notice_days?: number
+          updated_at?: string
+          updated_by?: string | null
+          upgrade_enabled?: boolean
+          upgrade_starts?: string
+        }
+        Update: {
+          cancel_approval?: string
+          cancel_ask_reason?: boolean
+          cancel_early_fee_pence?: number
+          cancel_early_mode?: string
+          cancel_enabled?: boolean
+          cancel_min_term_months?: number
+          cancel_notice_days?: number
+          cancel_offer_pause?: boolean
+          change_approval?: string
+          change_min_months?: number
+          downgrade_enabled?: boolean
+          downgrade_starts?: string
+          gym_id?: string
+          pause_approval?: string
+          pause_enabled?: boolean
+          pause_fee_pence?: number
+          pause_max_per_year?: number
+          pause_max_weeks?: number
+          pause_min_weeks?: number
+          pause_notice_days?: number
+          updated_at?: string
+          updated_by?: string | null
+          upgrade_enabled?: boolean
+          upgrade_starts?: string
+        }
+        Relationships: []
       }
       memberships: {
         Row: {
@@ -3258,6 +3367,12 @@ export type Database = {
         Args: { target_invite_id: string }
         Returns: undefined
       }
+      decide_membership_request: { Args: { p_approve: boolean; p_note?: string; p_request_id: string }; Returns: undefined }
+      get_my_membership_options: { Args: { p_gym_id: string }; Returns: Json }
+      request_membership_cancel: { Args: { p_membership_id: string; p_reason?: string }; Returns: string }
+      request_membership_change: { Args: { p_membership_id: string; p_to_plan_id: string }; Returns: string }
+      request_membership_pause: { Args: { p_ends_on: string; p_membership_id: string; p_reason?: string; p_starts_on: string }; Returns: string }
+      withdraw_membership_request: { Args: { p_request_id: string }; Returns: undefined }
       member_book_class: { Args: { p_session_id: string }; Returns: Json }
       member_cancel_class: { Args: { p_session_id: string }; Returns: Json }
       member_class_schedule: {

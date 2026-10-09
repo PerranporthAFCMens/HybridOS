@@ -107,6 +107,10 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('radiogroup', { name: 'Landmine press set 1 side' }).getByRole('radio', { name: 'Left' }).click();
   c.ok('the choice is marked', (await page.getByRole('radiogroup', { name: 'Landmine press set 1 side' }).getByRole('radio', { name: 'Left' }).getAttribute('aria-checked')) === 'true');
   c.ok('layout (left and right)', (await page.evaluate(layoutProblems)).length === 0);
+  await page.getByRole('button', { name: 'Remove set 3 from Landmine press' }).click();
+  c.ok('a set can be taken out, and the rest renumber', (await page.getByLabel('Landmine press set 3 Weight').count()) === 0 && (await page.getByLabel('Landmine press set 2 Weight').count()) === 1 && (await page.getByRole('radiogroup', { name: /^Landmine press set \d side$/ }).count()) === 2);
+  await page.getByRole('button', { name: 'Remove set 2 from Landmine press' }).click();
+  c.ok('the last set cannot be removed', (await page.getByRole('button', { name: /^Remove set \d from Landmine press$/ }).count()) === 0 && (await page.getByLabel('Landmine press set 1 Weight').inputValue()) === '30');
   await page.getByRole('button', { name: 'Skip Stretch' }).click();
   c.ok('a skipped exercise says that is fine', (await page.getByText('Skipped. That is fine.').count()) === 1);
   await page.getByLabel('How hard was it').selectOption('7');

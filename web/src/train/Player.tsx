@@ -71,6 +71,8 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
 
   const patch = (k: string, p: Partial<Act>) => setActs((list) => list.map((a) => (a.key === k ? { ...a, ...p } : a)));
   const setSet = (k: string, i: number, field: string, value: string) => setActs((list) => list.map((a) => (a.key === k ? { ...a, sets: a.sets.map((s, j) => (j === i ? { ...s, [field]: value } : s)) } : a)));
+  /** Take one set out (at least one set always stays). */
+  const removeSet = (k: string, i: number) => setActs((list) => list.map((a) => (a.key === k && a.sets.length > 1 ? { ...a, sets: a.sets.filter((_, j) => j !== i) } : a)));
   const lastFor = (a: Act) => last.get(a.originalName.trim().toLowerCase());
   const copyLast = (a: Act) => {
     const l = lastFor(a);
@@ -207,6 +209,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
                           <Input key={f.id} className="tr-box" inputMode={f.id === 'time' ? 'text' : 'decimal'} aria-label={`${a.name} set ${i + 1} ${f.hint}`} placeholder={f.label}
                             value={s[f.id] ?? ''} onChange={(e) => setSet(a.key, i, f.id, e.target.value)} />
                         ))}
+                        {a.sets.length > 1 && <button type="button" className="tr-del" aria-label={`Remove set ${i + 1} from ${a.name}`} onClick={() => removeSet(a.key, i)}>✕</button>}
                       </div>
                       {a.sided && (
                         <div className="tr-side" role="radiogroup" aria-label={`${a.name} set ${i + 1} side`}>

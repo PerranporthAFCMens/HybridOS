@@ -60,6 +60,8 @@ const STATES = {
   'member bests': async (page) => { await page.goto(`${base}/next/#/m/train/pbs`); await page.getByText('No personal bests yet.').waitFor(); },
   'member pt': async (page) => { await page.goto(`${base}/next/#/m/train/pt`); await page.getByText('No sessions booked.').waitFor(); },
   'member me': async (page) => { await page.goto(`${base}/next/#/m/me`); await page.getByRole('button', { name: 'Sign out' }).waitFor(); },
+  'membership rules': async (page) => { await page.goto(`${base}/next/#/membership-rules`); await page.getByRole('button', { name: 'Save membership rules' }).waitFor(); },
+  'membership requests': async (page) => { await page.goto(`${base}/next/#/membership-requests`); await page.getByText('Nothing is waiting.').waitFor(); },
   owners: async (page) => { await page.goto(`${base}/next/#/owners`); await page.getByText('No access invitations yet.').waitFor(); },
   menu: async (page, size) => { await page.goto(`${base}/next/#/today`); await page.getByText('Active members', { exact: true }).waitFor(); if (size.width < 900) { await page.getByRole('button', { name: 'Open menu' }).click(); await page.waitForTimeout(350); } },
 };

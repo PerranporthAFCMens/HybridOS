@@ -26,6 +26,8 @@ const GROUPS: { title: string; items: { key: LinkKey; name: string; text: string
     title: 'Members',
     items: [
       { key: 'member-view', name: 'What members see', text: 'Choose and order the tiles on the member home, and the promo panel.', moved: true },
+      { key: 'membership-rules', name: 'Membership rules', text: 'What members can do themselves: pause, cancel or change plan, and what needs your approval.', moved: true },
+      { key: 'membership-requests', name: 'Membership requests', text: 'Approve or decline pause, cancel and plan change requests.', moved: true },
     ],
   },
 ];

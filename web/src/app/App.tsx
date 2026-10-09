@@ -27,6 +27,9 @@ import { Train } from '../train/Train';
 import { Player } from '../train/Player';
 import { Pbs } from '../train/Pbs';
 import { Pt } from '../member/Pt';
+import { Membership } from '../member/Membership';
+import { Rules } from '../membership/Rules';
+import { Requests } from '../membership/Requests';
 
 function Leave({ to }: { to: string }) {
   useEffect(() => {
@@ -69,6 +72,7 @@ export function App() {
             <Route path="/m/train/pt" element={<Pt />} />
             <Route path="/m/train/:id" element={<Player />} />
             <Route path="/m/me" element={<Me />} />
+            <Route path="/m/membership" element={<Membership />} />
             <Route path="/m/*" element={<Navigate to="/m/today" replace />} />
           </Route>
           <Route element={<Shell />}>
@@ -86,6 +90,8 @@ export function App() {
             <Route path="/community" element={<Community />} />
             <Route path="/communications" element={<Comms />} />
             <Route path="/workouts" element={<Workouts />} />
+            <Route path="/membership-rules" element={<Rules />} />
+            <Route path="/membership-requests" element={<Requests />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/class-setup" element={<ClassSetup />} />
             <Route path="*" element={<Navigate to="/today" replace />} />

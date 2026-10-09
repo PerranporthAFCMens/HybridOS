@@ -29,11 +29,12 @@ export interface PlanForm {
   includesClasses: boolean;
   includesPt: boolean;
   isPublic: boolean;
+  canSwitchTo: boolean;
 }
 
 export const emptyForm: PlanForm = {
   name: '', price: '', interval: 'monthly', accessType: 'hybrid', joiningFee: '0', classesPerWeek: '', description: '',
-  includesOpenGym: true, includesClasses: true, includesPt: false, isPublic: true,
+  includesOpenGym: true, includesClasses: true, includesPt: false, isPublic: true, canSwitchTo: false,
 };
 
 export function poundsText(pence: number): string {
@@ -45,7 +46,7 @@ export function formFromPlan(p: PlanDetail): PlanForm {
     name: p.name, price: poundsText(p.priceInPence), interval: p.interval, accessType: p.accessType,
     joiningFee: poundsText(p.joiningFeeInPence), classesPerWeek: p.classesPerWeek === null ? '' : String(p.classesPerWeek),
     description: p.description ?? '', includesOpenGym: p.includesOpenGym, includesClasses: p.includesClasses,
-    includesPt: p.includesPt, isPublic: p.isPublic,
+    includesPt: p.includesPt, isPublic: p.isPublic, canSwitchTo: p.canSwitchTo,
   };
 }
 
@@ -78,7 +79,7 @@ export function validatePlan(form: PlanForm): PlanCheck {
     input: {
       name, description: form.description.trim() || null, priceInPence: price, interval: form.interval, accessType: form.accessType,
       joiningFeeInPence: joining, classesPerWeek, includesOpenGym: form.includesOpenGym, includesClasses: form.includesClasses,
-      includesPt: form.includesPt, isPublic: form.isPublic,
+      includesPt: form.includesPt, isPublic: form.isPublic, canSwitchTo: form.canSwitchTo,
     },
   };
 }
