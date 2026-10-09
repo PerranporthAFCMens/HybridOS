@@ -52,7 +52,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     }
     if (path.endsWith('/workout_entries')) {
       if (method === 'POST') { writes.push(`entry ${JSON.stringify(body)}`); return reply(route, [{ id: `e${writes.length}` }]); }
-      if (method === 'DELETE') return reply(route, []);
+      if (method === 'DELETE') { writes.push('DELETE entry'); return reply(route, []); }
       return reply(route, [{ exercise_name: 'Dumbbell row', created_at: '2026-10-01T10:00:00Z', workout_sets: [{ set_number: 1, weight_kg: 24, reps: 10, duration_seconds: null, distance_m: null, calories: null }, { set_number: 2, weight_kg: 24, reps: 10, duration_seconds: null, distance_m: null, calories: null }] }]);
     }
     if (path.endsWith('/personal_bests')) {
@@ -94,6 +94,10 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('a refresh keeps what was typed', page.getByLabel('Dumbbell row set 3 Weight'));
   c.ok('the numbers are still there', (await page.getByLabel('Dumbbell row set 3 Weight').inputValue()) === '26');
 
+  await page.getByRole('button', { name: 'Save Dumbbell row' }).click();
+  await c.has('an exercise can be saved on its own', page.getByRole('region', { name: 'Dumbbell row' }).getByText('Saved', { exact: true }));
+  c.ok('that wrote the workout and the exercise straight away', writes.filter((w) => w.startsWith('session ')).length === 1 && writes.filter((w) => w.startsWith('entry ')).length === 1 && writes.some((w) => w.startsWith('sets ')));
+  c.ok('the saved numbers are shown', (await page.getByRole('region', { name: 'Dumbbell row' }).textContent()).includes('24 kg × 10'));
   await page.getByRole('button', { name: 'Swap Overhead press' }).click();
   await page.getByLabel('Swap Overhead press for').fill('Landmine press');
   await page.getByLabel('Landmine press set 1 Weight').fill('30');
@@ -159,13 +163,29 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('link', { name: 'Start my own workout' }).click();
   await page.getByRole('button', { name: 'Finish workout' }).click();
   await c.has('nothing to save says so', page.getByText('Add some numbers first, or go back.'));
-  await page.getByLabel('Exercise name').fill('Bench press');
+  await page.getByLabel('Exercise name', { exact: true }).fill('bench');
+  c.ok('suggestions appear as you type', (await page.getByRole('listbox', { name: 'Exercise name suggestions' }).getByRole('option').allInnerTexts()).includes('Barbell Bench Press'));
+  if (shots) await page.screenshot({ path: `${shots}/train-suggest-${name}.png` });
+  await page.getByLabel('Exercise name', { exact: true }).fill('dumbbell r');
+  c.ok('your own exercises come first', (await page.getByRole('listbox', { name: 'Exercise name suggestions' }).getByRole('option').first().innerText()) === 'Dumbbell row');
+  await page.getByLabel('Exercise name', { exact: true }).fill('pla');
+  await page.getByRole('option', { name: 'Plank', exact: true }).click();
+  c.ok('picking one fills the name', (await page.getByLabel('Exercise name', { exact: true }).inputValue()) === 'Plank');
+  c.ok('and a plank is timed', (await page.getByLabel('What to record').inputValue()) === 'time');
+  await page.getByLabel('Exercise name', { exact: true }).fill('Bench press');
+  await page.keyboard.press('Escape');
+  c.ok('typing a weights exercise goes back to weight and reps', (await page.getByLabel('What to record').inputValue()) === 'strength');
   await page.getByRole('button', { name: 'Add exercise' }).click();
   await page.getByLabel('Bench press set 1 Weight').fill('60');
   await page.getByLabel('Bench press set 1 Reps').fill('five');
   await page.getByRole('button', { name: 'Finish workout' }).click();
   await c.has('a box that is not a number is explained', page.getByRole('alert').getByText('Bench press: "five" is not a number.'));
   await page.getByLabel('Bench press set 1 Reps').fill('5');
+  await page.getByRole('button', { name: 'Save Bench press' }).click();
+  await c.has('saved on its own', page.getByRole('region', { name: 'Bench press' }).getByText('Saved', { exact: true }));
+  await page.getByRole('button', { name: 'Change Bench press' }).click();
+  await c.has('change reopens it', page.getByLabel('Bench press set 1 Reps'));
+  c.ok('and took it back out', writes.includes('DELETE entry'));
   await page.getByRole('button', { name: 'Finish workout' }).click();
   await c.has('own workout saved', page.getByText('Workout saved.', { exact: true }));
   c.ok('no coach workout was touched', !writes.some((w) => w.startsWith('PATCH')));
