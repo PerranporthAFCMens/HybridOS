@@ -30,6 +30,7 @@ import { Pt } from '../member/Pt';
 import { Membership } from '../member/Membership';
 import { Rules } from '../membership/Rules';
 import { Requests } from '../membership/Requests';
+import { Join } from '../join/Join';
 
 function Leave({ to }: { to: string }) {
   useEffect(() => {
@@ -59,9 +60,11 @@ function Gate({ children }: { children: ReactNode }) {
   }
 }
 
-export function App() {
+function Main() {
+  const wanted = new URLSearchParams(window.location.search).get('join');
+  // Back from the confirmation email: carry on with the sign-up link the person started from.
+  if (wanted && /^[a-z0-9-]+$/i.test(wanted)) return <Navigate to={`/join/${wanted}`} replace />;
   return (
-    <HashRouter>
       <Gate>
         <Routes>
           <Route element={<MemberShell />}>
@@ -98,6 +101,16 @@ export function App() {
           </Route>
         </Routes>
       </Gate>
+  );
+}
+
+export function App() {
+  return (
+    <HashRouter>
+      <Routes>
+        <Route path="/join/:slug" element={<Join />} />
+        <Route path="*" element={<Main />} />
+      </Routes>
     </HashRouter>
   );
 }
