@@ -2,6 +2,7 @@ import type { LibBooking, LibPerson, LibSession, LibraryData } from '../data/rep
 import { monthlyValue } from '../today/calc';
 import { pct, table, ukDate, ukDateTime, type TableContext } from './calc';
 import type { Cell, ReportTable } from './download';
+import { classesTab, heatValue } from './tabs';
 
 // The 24 reports from the old Reporting page's library, rebuilt as pure functions of plain rows (so they
 // are tested without a database). Same reports, same columns and the same meaning as the old page, with
@@ -12,13 +13,163 @@ import type { Cell, ReportTable } from './download';
 export interface LibraryContext extends TableContext {
   /** Start of the chosen range, or null for all time. */
   since: string | null;
+  /** The value chosen for the report's own choice (see `LibraryReport.option`), when it has one. */
+  option?: string;
+}
+
+/** A report can ask one question of its own, such as "within how many hours". */
+export interface ReportOption {
+  label: string;
+  choices: { value: string; label: string }[];
+  default: string;
 }
 
 export interface LibraryReport {
   key: string;
   title: string;
   description: string;
+  option?: ReportOption;
   build: (ctx: LibraryContext, d: LibraryData) => ReportTable;
+}
+
+// ---- Birthdays ----
+
+const LONDON_DATE = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' });
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Today's date in the gym's time (UK) as year, month (1 to 12) and day. */
+export function ukToday(now: Date): { y: number; m: number; d: number } {
+  const [y, m, d] = LONDON_DATE.format(now).split('-').map(Number);
+  return { y: y ?? 1970, m: m ?? 1, d: d ?? 1 };
+}
+
+const isLeap = (y: number) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+const dayNumber = (y: number, m: number, d: number) => Math.round(Date.UTC(y, m - 1, d) / 86400000);
+
+export interface Birthday { month: number; day: number; turning: number; inDays: number }
+
+/**
+ * The next birthday on or after today for a date of birth ("2000-03-14"), or null when it is blank or not a date.
+ * A 29 February birthday is marked on 28 February in years that have no 29th.
+ */
+export function nextBirthday(dateOfBirth: string, now: Date): Birthday | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateOfBirth);
+  if (!m) return null;
+  const by = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (!(month >= 1 && month <= 12 && day >= 1 && day <= 31) || Number.isNaN(by)) return null;
+  const t = ukToday(now);
+  const onYear = (y: number) => (month === 2 && day === 29 && !isLeap(y) ? 28 : day);
+  let year = t.y;
+  if (dayNumber(year, month, onYear(year)) < dayNumber(t.y, t.m, t.d)) year++;
+  return { month, day: onYear(year), turning: year - by, inDays: dayNumber(year, month, onYear(year)) - dayNumber(t.y, t.m, t.d) };
+}
+
+const BIRTHDAY_WINDOWS: ReportOption = {
+  label: 'Show birthdays',
+  default: '30',
+  choices: [
+    { value: '7', label: 'In the next 7 days' }, { value: '30', label: 'In the next 30 days' }, { value: '90', label: 'In the next 90 days' },
+    { value: 'month', label: 'This calendar month' }, { value: 'all', label: 'Everyone, next first' },
+  ],
+};
+
+function birthdayTable(ctx: LibraryContext, d: LibraryData): ReportTable {
+  const choice = ctx.option ?? BIRTHDAY_WINDOWS.default;
+  const t = ukToday(ctx.now);
+  const people = d.gymMembers.filter((m) => m.isActive && !m.attritionOn);
+  const rows = people.flatMap((m) => {
+    const p = person(d, m.userId);
+    const b = nextBirthday(p.dateOfBirth, ctx.now);
+    return b ? [{ name: p.name, b }] : [];
+  });
+  const noDate = people.length - rows.length;
+  const picked = (choice === 'month' ? rows.filter((r) => r.b.month === t.m) : choice === 'all' ? rows : rows.filter((r) => r.b.inDays <= Number(choice))).sort((a, b) => a.b.inDays - b.b.inDays || a.name.localeCompare(b.name));
+  const out: Cell[][] = picked.map(({ name, b }) => [name, `${b.day} ${MONTH_NAMES[b.month - 1] ?? ''}`, b.turning, b.inDays === 0 ? 'Today' : b.inDays]);
+  if (noDate > 0) out.push([`${noDate} ${noDate === 1 ? 'member has' : 'members have'} no date of birth`, '', '', '']);
+  const label = BIRTHDAY_WINDOWS.choices.find((c) => c.value === choice)?.label ?? '';
+  return table({ ...ctx, rangeLabel: label }, 'Birthdays', ['Member', 'Birthday', 'Turning', 'In (days)'], out);
+}
+
+// ---- Cancellations by how much notice was given ----
+
+const HOUR_MS = 3600000;
+
+/** Hours between a cancellation and the class start (negative when it was after the start); null if either time is missing. */
+export function hoursBefore(startsAt: string, cancelledAt: string): number | null {
+  if (!startsAt || !cancelledAt) return null;
+  const a = new Date(startsAt).getTime();
+  const c = new Date(cancelledAt).getTime();
+  return Number.isNaN(a) || Number.isNaN(c) ? null : (a - c) / HOUR_MS;
+}
+
+export const NOTICE_BUCKETS: { label: string; test: (h: number) => boolean }[] = [
+  { label: 'After the class started', test: (h) => h < 0 },
+  { label: 'Under 1 hour before', test: (h) => h >= 0 && h < 1 },
+  { label: '1 to 2 hours before', test: (h) => h >= 1 && h < 2 },
+  { label: '2 to 4 hours before', test: (h) => h >= 2 && h < 4 },
+  { label: '4 to 12 hours before', test: (h) => h >= 4 && h < 12 },
+  { label: '12 to 24 hours before', test: (h) => h >= 12 && h < 24 },
+  { label: 'More than 24 hours before', test: (h) => h >= 24 },
+];
+
+const LATE_WINDOWS: ReportOption = {
+  label: 'Cancelled within',
+  default: '2',
+  choices: [
+    { value: '1', label: '1 hour of the class' }, { value: '2', label: '2 hours of the class' }, { value: '4', label: '4 hours of the class' },
+    { value: '12', label: '12 hours of the class' }, { value: '24', label: '24 hours of the class' },
+  ],
+};
+
+interface Cancelled { b: LibBooking; className: string; sessionStart: string; hours: number | null }
+
+function cancelledRows(ctx: LibraryContext, d: LibraryData): Cancelled[] {
+  const byId = new Map(d.sessions.map((s) => [s.id, s]));
+  return d.bookings
+    .filter((b) => b.status === 'cancelled' && inRange(ctx.since, b.cancelledAt || b.bookedAt))
+    .map((b) => {
+      const s = byId.get(b.sessionId);
+      return { b, className: s?.name ?? '', sessionStart: s?.startsAt ?? '', hours: hoursBefore(s?.startsAt ?? '', b.cancelledAt) };
+    });
+}
+
+const hoursText = (h: number | null) => (h === null ? '' : h < 0 ? 'After the start' : Math.round(h * 10) / 10);
+
+function lateCancellationTable(ctx: LibraryContext, d: LibraryData): ReportTable {
+  const limit = Number(ctx.option ?? LATE_WINDOWS.default);
+  const rows = cancelledRows(ctx, d).filter((r) => r.hours !== null && r.hours <= limit).sort((a, b) => (a.hours ?? 0) - (b.hours ?? 0));
+  return table({ ...ctx, rangeLabel: `${ctx.rangeLabel} · cancelled within ${limit} ${limit === 1 ? 'hour' : 'hours'} of the class` }, 'Late cancellations', ['Member', 'Class', 'Session', 'Cancelled', 'Hours before'],
+    rows.map((r) => [who(d, r.b.userId), r.className, dateTime(r.sessionStart), dateTime(r.b.cancelledAt), hoursText(r.hours)]));
+}
+
+function cancellationTimingTable(ctx: LibraryContext, d: LibraryData): ReportTable {
+  const all = cancelledRows(ctx, d).filter((r) => r.hours !== null);
+  let running = 0;
+  const rows = NOTICE_BUCKETS.map((bucket) => {
+    const n = all.filter((r) => r.hours !== null && bucket.test(r.hours)).length;
+    running += n;
+    return [bucket.label, n, `${pct(n, all.length)}%`, running] as Cell[];
+  });
+  return table(ctx, 'Cancellations by notice given', ['Notice given', 'Cancellations', 'Share', 'Running total'], rows);
+}
+
+// ---- Class slots: which day and time bring the most bookings and revenue ----
+
+const SLOT_SORTS: ReportOption = {
+  label: 'Rank slots by',
+  default: 'bookings',
+  choices: [{ value: 'bookings', label: 'Bookings' }, { value: 'revenue', label: 'Drop-in revenue' }, { value: 'fill', label: 'Fill %' }],
+};
+
+function classSlotTable(ctx: LibraryContext, d: LibraryData): ReportTable {
+  const sort = (ctx.option ?? SLOT_SORTS.default) as 'bookings' | 'revenue' | 'fill';
+  const heat = classesTab(d, ctx.now).heat;
+  const rows = heat.flatMap((r) => r.cells.filter((c) => c.sessions > 0).map((c) => ({ day: r.day, c })))
+    .sort((a, b) => heatValue(b.c, sort) - heatValue(a.c, sort) || b.c.bookings - a.c.bookings || a.day.localeCompare(b.day));
+  return table(ctx, 'Class slots ranked', ['Day', 'Time of day', 'Classes', 'Bookings', 'Fill %', 'Drop-in revenue'],
+    rows.map(({ day, c }) => [day, c.band, c.sessions, c.bookings, `${c.fill}%`, pounds(c.revenue)]));
 }
 
 export interface LibraryGroup {
@@ -173,6 +324,10 @@ export const LIBRARY: LibraryGroup[] = [
         build: (ctx, d) => table(ctx, 'Age demographics', ['Age band', 'Members'], groupCount(d.gymMembers, (m) => ageBand(person(d, m.userId).dateOfBirth, ctx.now))),
       },
       {
+        key: 'birthdays', title: 'Birthdays', description: 'Who has a birthday coming up, how old they turn, and how many members have no date of birth yet.',
+        option: BIRTHDAY_WINDOWS, build: birthdayTable,
+      },
+      {
         key: 'gender_demographics', title: 'Gender demographics', description: 'Current member population by self-described gender.',
         build: (ctx, d) => table(ctx, 'Gender demographics', ['Gender', 'Members'], groupCount(d.gymMembers, (m) => genderLabel(person(d, m.userId).gender))),
       },
@@ -214,6 +369,18 @@ export const LIBRARY: LibraryGroup[] = [
         key: 'cancellations', title: 'Cancellations', description: 'Cancelled class bookings in the selected reporting window.',
         build: (ctx, d) => table(ctx, 'Cancellations', ['Member', 'Class', 'Session', 'Cancelled'],
           bookingRows(ctx, d).filter(({ b }) => b.status === 'cancelled').map(({ b, className, sessionStart }) => [who(d, b.userId), className, dateTime(sessionStart), dateTime(b.cancelledAt)])),
+      },
+      {
+        key: 'late_cancellations', title: 'Late cancellations', description: 'Bookings cancelled close to the start of the class, with how many hours of notice were given. Choose how close.',
+        option: LATE_WINDOWS, build: lateCancellationTable,
+      },
+      {
+        key: 'cancellation_timing', title: 'Cancellations by notice given', description: 'How much notice members give when they cancel, from after the class started to more than a day ahead.',
+        build: cancellationTimingTable,
+      },
+      {
+        key: 'class_slots', title: 'Class slots ranked', description: 'Which day and time of day bring the most bookings, fill and drop-in revenue. Membership classes are in the monthly fee, so revenue is paid drop-ins only.',
+        option: SLOT_SORTS, build: classSlotTable,
       },
       {
         key: 'member_attendance', title: 'Member attendance ranking', description: 'Member activity ranked by recorded class activity.',
