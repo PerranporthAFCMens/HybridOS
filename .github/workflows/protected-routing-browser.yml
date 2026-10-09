@@ -4,6 +4,7 @@ name: HybridOne protected routing browser
 # Release-candidate exact-SHA gate trigger.
 # Hold-lift exact-SHA gate trigger.
 # Cross-gate exact-SHA trigger.
+# 9 October release exact-SHA trigger (so every required check starts from the release commit itself).
 
 on:
   push:
