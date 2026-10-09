@@ -108,7 +108,7 @@ export function Me() {
             <div className="mem-line"><span>{d.plan.name}</span><span className="mem-pill">{d.plan.status}</span></div>
             <div className="muted small">{[d.plan.includesClasses && 'Classes', d.plan.includesOpenGym && 'Gym', d.plan.includesPt && 'Personal training'].filter(Boolean).join(' · ') || 'No services listed'}</div>
           </>
-        ) : <div className="muted">No membership found for this gym.</div>}
+        ) : <div className="muted">{auth.gym.role !== 'member' ? 'You are on the team, so you have no membership yet. An owner can give you one from Members.' : 'No membership found for this gym.'}</div>}
         {d.plan && <Link className="btn secondary" to="/m/membership">Pause, change or cancel</Link>}
       </section>
       <section className="mem-card">

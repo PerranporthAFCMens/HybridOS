@@ -7,16 +7,19 @@ const today = new Date().toISOString().slice(0, 10);
 const ADA = '33333333-3333-4333-8333-333333333333';
 const BOB = '44444444-4444-4444-8444-444444444444';
 const CAT = '55555555-5555-4555-8555-555555555555';
+const PAT = '66666666-6666-4666-8666-666666666666';
 
 const people = [
-  { user_id: ADA, joined_at: '2026-03-01T00:00:00', attrition_on: null },
-  { user_id: BOB, joined_at: '2026-05-01T00:00:00', attrition_on: null },
-  { user_id: CAT, joined_at: '2026-04-01T00:00:00', attrition_on: '2026-09-30' },
+  { user_id: ADA, role: 'member', joined_at: '2026-03-01T00:00:00', attrition_on: null },
+  { user_id: BOB, role: 'member', joined_at: '2026-05-01T00:00:00', attrition_on: null },
+  { user_id: CAT, role: 'member', joined_at: '2026-04-01T00:00:00', attrition_on: '2026-09-30' },
+  { user_id: PAT, role: 'owner', joined_at: '2026-02-01T00:00:00', attrition_on: null },
 ];
 const profiles = [
   { id: ADA, display_name: null, first_name: 'Ada', last_name: 'Zane' },
   { id: BOB, display_name: 'Bob Adams', first_name: null, last_name: null },
   { id: CAT, display_name: null, first_name: 'Cat', last_name: 'Young' },
+  { id: PAT, display_name: null, first_name: 'Pat', last_name: 'Boss' },
 ];
 
 const browser = await launch();
@@ -45,18 +48,30 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.goto(`${base}/next/#/members`);
   const c = runChecks();
   await c.has('heading', page.getByRole('heading', { name: 'Members' }));
-  await c.has('summary 3 users', page.getByText('3 gym users'));
+  await c.has('summary 3 users', page.getByText('4 gym users'));
   await c.has('plan and status on row', page.getByText('Hybrid Monthly · active'));
   await c.has('no membership yet', page.getByText('No membership yet').first());
 
   // Order by first name: Ada, Bob, Cat
   const order = await page.locator('.member-text b').allTextContents();
-  c.ok('sorted by first name', order.join('|') === 'Ada Zane|Bob Adams|Cat Young');
+  c.ok('sorted by first name', order.join('|') === 'Ada Zane|Bob Adams|Cat Young|Pat Boss');
 
   // Search narrows the list and the summary
   await page.getByLabel('Search members by name').fill('zan');
-  await c.has('search summary', page.getByText('1 of 3 gym users'));
+  await c.has('search summary', page.getByText('1 of 4 gym users'));
   await page.getByLabel('Search members by name').fill('');
+
+  // The team are listed too, marked by role, and can be filtered
+  c.ok('the owner is listed as an owner', (await page.locator('.member-row', { hasText: 'Pat Boss' }).textContent()).includes('Owner'));
+  await page.getByLabel('Show', { exact: true }).selectOption('team');
+  c.ok('team only', (await page.locator('.member-text b').allTextContents()).join('|') === 'Pat Boss');
+  await page.getByLabel('Show', { exact: true }).selectOption('members');
+  c.ok('members only', (await page.locator('.member-text b').allTextContents()).join('|') === 'Ada Zane|Bob Adams|Cat Young');
+  await page.getByLabel('Show', { exact: true }).selectOption('all');
+  await page.locator('.member-row', { hasText: 'Pat Boss' }).click();
+  await c.has('a team record explains itself and can be given a plan', page.getByRole('dialog').getByText(/This is a team login/));
+  c.ok('no member lifecycle dates for the team', (await page.getByRole('dialog').getByText('Customer lifecycle').count()) === 0 && (await page.getByRole('dialog').getByRole('button', { name: 'Assign membership' }).count()) === 1);
+  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
 
   // Jump letter: B only
   await page.locator('.member-jump button', { hasText: /^B$/ }).click();
