@@ -12,7 +12,7 @@ export function Pt() {
   return (
     <div className="mem-screen">
       <div>
-        <Link to="/m/train" className="mem-back">‹ Train</Link>
+        <Link to="/m/train" className="mem-back">‹ Workouts</Link>
         <h1 className="mem-title">Personal training</h1>
         <div className="mem-hi">To move or cancel a session, ask your coach.</div>
       </div>

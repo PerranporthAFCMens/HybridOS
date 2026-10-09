@@ -55,7 +55,7 @@ export function Pbs() {
   return (
     <div className="mem-screen">
       <div>
-        <Link to="/m/train" className="mem-back">‹ Train</Link>
+        <Link to="/m/train" className="mem-back">‹ Workouts</Link>
         <h1 className="mem-title">Personal bests</h1>
         <div className="mem-hi">Saved automatically when a workout beats them. You can add one by hand too.</div>
       </div>

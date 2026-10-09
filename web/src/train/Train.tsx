@@ -7,7 +7,7 @@ import { dayLabel, dayOf, timeOf } from '../member/calc';
 import type { MemberCtx } from '../member/useMember';
 import { comingUp, dueNow, planDay } from './calc';
 
-/** The Train tab: what is planned for today, what is coming, a way to start your own, and what you did lately. */
+/** The Workouts tab (for every member): what is planned for today, what is coming, a way to start your own, and what you did lately. */
 export function Train() {
   const { gym, userId } = useReadyAuth();
   const d = useOutletContext<MemberCtx>();
@@ -18,7 +18,7 @@ export function Train() {
   const later = comingUp(d.plans, d.today, dayOf);
   return (
     <div className="mem-screen">
-      <h1 className="mem-title">Train</h1>
+      <h1 className="mem-title">Workouts</h1>
       {state?.saved && <div className="mem-card mem-ok" role="status">{state.saved}</div>}
       {state?.pb && <div className="mem-card mem-pbwin" role="status">{state.pb}</div>}
       {state?.pbError && <div className="mem-error" role="alert">Your workout is saved, but a personal best could not be saved: {state.pbError}</div>}

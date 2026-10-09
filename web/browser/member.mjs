@@ -63,7 +63,7 @@ for (const role of ['member', 'owner']) {
     }
     await c.has('the first screen opens with the next class', page.getByRole('heading', { name: /^Your next class is / }));
     c.ok('the top card is the booked class', (await page.getByLabel('Next class').textContent()).includes('Strength and Conditioning'));
-    c.ok('three tabs for a classes member', (await page.getByRole('navigation', { name: 'Member' }).getByRole('link').allInnerTexts()).join('|') === 'Today|Classes|Me');
+    c.ok('four tabs for a classes member', (await page.getByRole('navigation', { name: 'Member' }).getByRole('link').allInnerTexts()).join('|') === 'Today|Classes|Workouts|Me');
     c.ok('no preview banner for a member', (await page.getByText(/Previewing/).count()) === 0);
     c.ok('greets by first name', (await page.getByText(/^Good (morning|afternoon|evening), Jo$/).count()) === 1);
     c.ok('layout (today)', (await page.evaluate(layoutProblems)).length === 0);
@@ -105,6 +105,9 @@ for (const role of ['member', 'owner']) {
     c.ok('layout (classes)', (await page.evaluate(layoutProblems)).length === 0);
     if (shots) await page.screenshot({ path: `${shots}/member-classes-${name}.png` });
 
+    await page.getByRole('navigation', { name: 'Member' }).getByRole('link', { name: 'Workouts' }).click();
+    await c.has('a classes-only member can still log their own workout', page.getByRole('link', { name: 'Start my own workout' }));
+    c.ok('layout (workouts)', (await page.evaluate(layoutProblems)).length === 0);
     await page.getByRole('navigation', { name: 'Member' }).getByRole('link', { name: 'Me' }).click();
     await c.has('me page shows the plan', page.getByLabel('Membership').getByText('Classes Monthly'));
     c.ok('and the classic app link', (await page.getByRole('link', { name: 'Open the classic app' }).getAttribute('href')).includes('member.html?gym_id='));

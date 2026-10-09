@@ -5,7 +5,7 @@ import { ptMinutes, ptPastTag, splitPt, addDay, chooseHero, dayLabel, dayOf, day
 const cls = (id: string, startsAt: string, patch: Partial<ClassRow> = {}): ClassRow => ({ sessionId: id, name: id, description: '', startsAt, endsAt: new Date(new Date(startsAt).getTime() + 3600000).toISOString(), capacity: 10, bookedCount: 0, availableSpaces: 5, isBooked: false, ...patch });
 const pt = (id: string, startsAt: string, status = 'scheduled'): PtRow => ({ id, startsAt, endsAt: new Date(new Date(startsAt).getTime() + 3600000).toISOString(), status });
 const NOW = new Date('2026-10-08T10:00:00Z');
-const ALL = { classes: true, gym: true, pt: true, train: true };
+const ALL = { classes: true, gym: true, pt: true };
 
 describe('days', () => {
   it('reads the gym day, not the UTC day', () => {
@@ -36,11 +36,10 @@ describe('spaces and plan', () => {
   });
   it('what a member has comes from the plan', () => {
     const plan = (p: Partial<MyPlan>): MyPlan => ({ name: 'P', status: 'active', includesClasses: false, includesOpenGym: false, includesPt: false, ...p });
-    expect(flagsFor(plan({ includesClasses: true }), false)).toEqual({ classes: true, gym: false, pt: false, train: false });
-    expect(flagsFor(plan({ includesOpenGym: true }), false)).toEqual({ classes: false, gym: true, pt: false, train: true });
+    expect(flagsFor(plan({ includesClasses: true }), false)).toEqual({ classes: true, gym: false, pt: false });
+    expect(flagsFor(plan({ includesOpenGym: true }), false)).toEqual({ classes: false, gym: true, pt: false });
     expect(flagsFor(plan({ includesOpenGym: true }), true).pt).toBe(true);
-    expect(flagsFor(null, false)).toEqual({ classes: true, gym: false, pt: false, train: false });
-    expect(flagsFor(plan({ includesClasses: true }), false, true).train).toBe(true);
+    expect(flagsFor(null, false)).toEqual({ classes: true, gym: false, pt: false });
   });
 });
 
@@ -60,7 +59,7 @@ describe('the one thing on top', () => {
   });
   it('invites a booking, or just welcomes someone with no classes', () => {
     expect(chooseHero(NOW, [], [], ALL)).toEqual({ kind: 'book' });
-    expect(chooseHero(NOW, [], [], { classes: false, gym: false, pt: false, train: false })).toEqual({ kind: 'welcome' });
+    expect(chooseHero(NOW, [], [], { classes: false, gym: false, pt: false })).toEqual({ kind: 'welcome' });
   });
   it('suggests classes with room, not booked, soonest first', () => {
     const list = [cls('late', '2026-10-12T10:00:00Z'), cls('full', '2026-10-09T10:00:00Z', { availableSpaces: 0 }), cls('mine', '2026-10-09T11:00:00Z', { isBooked: true }), cls('soon', '2026-10-09T12:00:00Z'), cls('past', '2026-10-07T12:00:00Z')];
