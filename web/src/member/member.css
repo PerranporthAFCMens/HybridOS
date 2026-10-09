@@ -72,3 +72,10 @@
 .mem-pbwin { background: #3a3210; border-color: #7a6a1f; color: #ffe9a0; font-weight: 700; }
 .pb-value { font-size: 22px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; text-align: right; }
 .mem-row a, .mem-back { min-height: 44px; display: inline-flex; align-items: center; }
+
+.tr-pick { position: relative; }
+.tr-menu { position: absolute; z-index: 15; left: 0; right: 0; top: calc(100% + 4px); max-height: 280px; overflow: auto; background: var(--hybrid-panel); border: 1px solid var(--hybrid-line-strong); border-radius: 12px; padding: 4px; box-shadow: 0 10px 28px rgba(0, 0, 0, .45); }
+.tr-option { display: block; width: 100%; min-height: 44px; text-align: left; padding: 8px 12px; border: 0; border-radius: 9px; background: none; color: var(--hybrid-ink); font: inherit; cursor: pointer; }
+.tr-option:hover, .tr-option:focus-visible { background: var(--hybrid-raised); outline: none; }
+.tr-saved { display: flex; flex-direction: column; gap: 4px; }
+.tr-ok { color: var(--hybrid-volt, #c8ff3d); font-weight: 700; font-size: 13px; }

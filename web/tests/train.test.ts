@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ACTIVITIES, guessTracking, matchExercises } from '../src/train/activities';
 import { assignmentNote, blankSets, comingUp, dueNow, formatDuration, fromDbSet, parseDuration, prepareFinish, readSnapshot, setText, toDbSet, type PlayedActivity } from '../src/train/calc';
 
 const dayOf = (iso: string) => iso.slice(0, 10);
@@ -110,5 +111,28 @@ describe('what is planned', () => {
   });
   it('coming up', () => {
     expect(comingUp(plans, '2026-10-08', dayOf).map((x) => x.id)).toEqual(['later']);
+  });
+});
+
+describe('the exercise list', () => {
+  it('has the classic list', () => { expect(ACTIVITIES.length).toBe(264); });
+  it('matches as you type, best first, your own exercises ahead of the list', () => {
+    expect(matchExercises('')).toEqual([]);
+    expect(matchExercises('deadl')[0]).toBe('Deadlift');
+    expect(matchExercises('bench', [], 3)).toHaveLength(3);
+    expect(matchExercises('zzzz')).toEqual([]);
+  });
+  it('your own come first among equal matches, and nothing repeats', () => {
+    const r = matchExercises('dumbbell row', ['dumbbell row']);
+    expect(r.filter((n) => n.toLowerCase() === 'dumbbell row')).toHaveLength(1);
+    expect(r[0]).toBe('dumbbell row');
+  });
+  it('guesses what to record', () => {
+    expect(guessTracking('Plank')).toBe('time');
+    expect(guessTracking('Dead Hang')).toBe('time');
+    expect(guessTracking('Run 5K')).toBe('distance');
+    expect(guessTracking('Concept2 RowErg')).toBe('distance');
+    expect(guessTracking('Back Squat')).toBe('strength');
+    expect(guessTracking('Farmer carry')).toBe('time');
   });
 });

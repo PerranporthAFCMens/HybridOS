@@ -31,3 +31,8 @@ Not in this step:
 
 ## The tab is now "Workouts" and everyone has it (step 5)
 Owner asked "there is no workout tab?". The tab was called Train and only showed for plans that include the gym or PT (or when a workout had been sent), so an owner previewing (no plan), or a classes-only member, did not see it. It is now called Workouts and every member has it; the first screen still adapts to what the member has.
+
+## Save each exercise, and an exercise list as you type (step 6)
+Owner: "no save exercise button once you have added the weight and reps and L/R/both" and "the exercise list isn't there so it doesn't pre-populate as you type".
+- Each exercise now has **Save exercise**. It writes that exercise straight away (the workout is created by the first one), works out any personal best, and the card shows Saved with the numbers and a **Change** button (which takes it back out so it can be edited; a best already set is kept). Finish saves anything still unsaved, names the workout, and marks the coach's workout done. A refresh after saving keeps the saved state.
+- Names are suggested as you type, in Add an exercise and in Swap: the member's own exercises first, then the same 264-name list the classic app uses. Picking one fills the name and guesses what to record (a plank or hang is timed, runs, rows, skis and bikes are distance, anything else weight and reps).

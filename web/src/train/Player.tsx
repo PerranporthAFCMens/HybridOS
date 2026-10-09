@@ -2,14 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { finishWorkout, getMyAssignment, listLastTimes, markStarted, type LastTime } from '../data/train';
+import { completeWorkout, getMyAssignment, listLastTimes, markStarted, removeExercise, saveExercise, type LastTime } from '../data/train';
 import { Button } from '../ui/Button';
-import { wonMessage } from './pb';
+import { wonMessage, type Won } from './pb';
+import { guessTracking } from './activities';
+import { ExercisePicker } from './ExercisePicker';
 import { Checkbox, Input, Select } from '../ui/Field';
 import { FIELDS, SIDES, assignmentNote, blankSets, fromDbSet, prepareFinish, readSnapshot, setText, type PlayedActivity, type SetValues, type Tracking } from './calc';
 
-interface Act extends PlayedActivity { key: string; plan: string; planNote: string; block: string }
-interface Draft { acts: Act[]; rpe: string; notes: string }
+interface Act extends PlayedActivity { key: string; plan: string; planNote: string; block: string; entryId?: string; savedText?: string }
+interface Draft { acts: Act[]; rpe: string; notes: string; sessionId?: string | null }
 
 const draftKey = (gymId: string, id: string) => `hybrid-train-draft:${gymId}:${id}`;
 const readDraft = (key: string): Draft | null => {
@@ -54,11 +56,18 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
   const [adding, setAdding] = useState({ name: '', tracking: 'strength' as Tracking });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(initial.sessionId ?? null);
+  const [won, setWon] = useState<Won[]>([]);
+  const [pbIssue, setPbIssue] = useState<string | null>(null);
+  const [cardError, setCardError] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<string | null>(null);
+  const [manualTracking, setManualTracking] = useState(false);
+  const own = useMemo(() => [...last.values()].map((l) => l.name), [last]);
 
   useEffect(() => { if (!isNew) void markStarted(id); }, [id, isNew]);
   useEffect(() => {
-    try { localStorage.setItem(key, JSON.stringify({ acts, rpe, notes } satisfies Draft)); } catch { /* the draft is a convenience */ }
-  }, [key, acts, rpe, notes]);
+    try { localStorage.setItem(key, JSON.stringify({ acts, rpe, notes, sessionId } satisfies Draft)); } catch { /* the draft is a convenience */ }
+  }, [key, acts, rpe, notes, sessionId]);
 
   const patch = (k: string, p: Partial<Act>) => setActs((list) => list.map((a) => (a.key === k ? { ...a, ...p } : a)));
   const setSet = (k: string, i: number, field: string, value: string) => setActs((list) => list.map((a) => (a.key === k ? { ...a, sets: a.sets.map((s, j) => (j === i ? { ...s, [field]: value } : s)) } : a)));
@@ -72,24 +81,80 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
     if (!name) return;
     setActs((list) => [...list, { key: `n${Date.now()}`, name, originalName: '', tracking: adding.tracking, sets: blankSets(adding.tracking), done: false, skipped: false, note: '', plan: '', planNote: '', block: '' }]);
     setAdding({ name: '', tracking: adding.tracking });
+    setManualTracking(false);
+  };
+  const typeName = (name: string) => setAdding((x) => ({ name, tracking: manualTracking ? x.tracking : guessTracking(name) }));
+
+  const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: ['m-assignments'] }), qc.invalidateQueries({ queryKey: ['m-week'] }), qc.invalidateQueries({ queryKey: ['m-sessions'] }), qc.invalidateQueries({ queryKey: ['m-last'] }), qc.invalidateQueries({ queryKey: ['m-pbs'] })]);
+  const titleFor = (first: string) => title || first || 'Workout';
+
+  /** Save one exercise now. */
+  const saveOne = async (a: Act, quiet = false): Promise<boolean> => {
+    setCardError((e) => ({ ...e, [a.key]: '' }));
+    const r = prepareFinish([a]);
+    if (!r.ok) { setCardError((e) => ({ ...e, [a.key]: r.message })); return false; }
+    const entry = r.entries[0];
+    if (!entry) { if (!quiet) setCardError((e) => ({ ...e, [a.key]: 'Add some numbers first.' })); return false; }
+    setSaving(a.key);
+    try {
+      const res = await saveExercise({ gymId: gym.gymId, userId, sessionId, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length }, entry);
+      setSessionId(res.sessionId);
+      patch(a.key, { entryId: res.entryId, savedText: a.sets.map((s) => setText(a.tracking, s)).filter(Boolean).join(', ') });
+      setWon((w) => [...w, ...res.won]);
+      if (res.pbError) setPbIssue(res.pbError);
+      return true;
+    } catch (e) {
+      setCardError((m) => ({ ...m, [a.key]: e instanceof Error ? e.message : 'Could not save that exercise.' }));
+      return false;
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  /** Take a saved exercise back so it can be changed. */
+  const change = async (a: Act) => {
+    if (!a.entryId) return;
+    setSaving(a.key);
+    try {
+      await removeExercise(a.entryId);
+      patch(a.key, { entryId: undefined, savedText: undefined });
+    } catch (e) {
+      setCardError((m) => ({ ...m, [a.key]: e instanceof Error ? e.message : 'Could not change that exercise.' }));
+    } finally {
+      setSaving(null);
+    }
   };
 
   const finish = async () => {
     setError('');
-    const r = prepareFinish(acts);
-    if (!r.ok) return setError(r.message);
-    if (isNew && r.entries.length === 0) return setError('Add some numbers first, or go back.');
+    const overview = prepareFinish(acts.map((a) => (a.entryId ? { ...a, sets: [] } : a)));
+    if (!overview.ok) return setError(overview.message);
+    const pending = acts.filter((a) => !a.entryId && !a.skipped);
     setBusy(true);
+    let session = sessionId;
+    const newWins: Won[] = [];
     try {
-      const first = r.entries[0]?.name ?? '';
-      const result = await finishWorkout({
-        gymId: gym.gymId, userId, title: title || (first ? first : 'Workout'), notes: notes.trim() || null, entries: r.entries,
-        assignment: isNew ? null : { id, rpe: rpe ? Number(rpe) : null, note: assignmentNote(notes, r.skipped, r.swapped) },
-      });
+      let anySaved = acts.some((a) => a.entryId);
+      for (const a of pending) {
+        const r = prepareFinish([a]);
+        if (!r.ok) return setError(r.message);
+        const entry = r.entries[0];
+        if (!entry) continue;
+        const res = await saveExercise({ gymId: gym.gymId, userId, sessionId: session, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length + (anySaved ? 1 : 0) }, entry);
+        session = res.sessionId;
+        anySaved = true;
+        newWins.push(...res.won);
+        if (res.pbError) setPbIssue(res.pbError);
+        patch(a.key, { entryId: res.entryId });
+      }
+      setSessionId(session);
+      if (isNew && !anySaved) return setError('Add some numbers first, or go back.');
+      const firstName = acts.find((a) => a.name.trim())?.name.trim() ?? '';
+      const result = await completeWorkout({ sessionId: session, title: titleFor(firstName), notes: notes.trim() || null, assignment: isNew ? null : { id, rpe: rpe ? Number(rpe) : null, note: assignmentNote(notes, overview.skipped, overview.swapped) } });
       try { localStorage.removeItem(key); } catch { /* nothing to clear */ }
-      await Promise.all([qc.invalidateQueries({ queryKey: ['m-assignments'] }), qc.invalidateQueries({ queryKey: ['m-week'] }), qc.invalidateQueries({ queryKey: ['m-sessions'] }), qc.invalidateQueries({ queryKey: ['m-last'] }), qc.invalidateQueries({ queryKey: ['m-pbs'] })]);
-      const pb = wonMessage(result.won);
-      navigate('/m/train', { state: { saved: result.marked ? 'Workout saved and marked as done.' : 'Workout saved.', pb, pbError: result.pbError } });
+      await refresh();
+      const pb = wonMessage([...won, ...newWins]);
+      navigate('/m/train', { state: { saved: result.marked ? 'Workout saved and marked as done.' : 'Workout saved.', pb, pbError: pbIssue } });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save the workout.');
     } finally {
@@ -122,7 +187,13 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
               </div>
               {a.skipped && <Button onClick={() => patch(a.key, { skipped: false })} aria-label={`Undo skip ${a.name}`}>Undo</Button>}
             </div>
-            {a.skipped ? <div className="muted">Skipped. That is fine.</div> : a.tracking === 'instruction' ? (
+            {a.skipped ? <div className="muted">Skipped. That is fine.</div> : a.entryId ? (
+              <div className="tr-saved">
+                <span className="tr-ok">Saved</span>
+                {a.savedText && <div className="muted">{a.savedText}</div>}
+                <Button disabled={saving === a.key} onClick={() => void change(a)} aria-label={`Change ${a.name}`}>Change</Button>
+              </div>
+            ) : a.tracking === 'instruction' ? (
               <Checkbox label="Done" checked={a.done} onChange={(v) => patch(a.key, { done: v })} />
             ) : (
               <>
@@ -152,16 +223,18 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
                   <Button onClick={() => patch(a.key, { sided: !a.sided })} aria-pressed={!!a.sided} aria-label={`Left and right for ${a.name}`}>{a.sided ? 'Left / right: on' : 'Left / right'}</Button>
                   {l && l.sets.length > 0 && <Button onClick={() => copyLast(a)} aria-label={`Copy last time for ${a.name}`}>Copy last time</Button>}
                 </div>
+                <Button variant="primary" disabled={saving === a.key} onClick={() => void saveOne(a)} aria-label={`Save ${a.name}`}>{saving === a.key ? 'Saving…' : 'Save exercise'}</Button>
               </>
             )}
-            {!a.skipped && (
+            {cardError[a.key] && <div className="mem-error" role="alert">{cardError[a.key]}</div>}
+            {!a.skipped && !a.entryId && (
               <div className="mem-actions tr-tools">
                 <Button onClick={() => setSwapping(swapping === a.key ? null : a.key)} aria-expanded={swapping === a.key} aria-label={`Swap ${a.name}`}>Swap</Button>
                 <Button onClick={() => patch(a.key, { skipped: true })} aria-label={`Skip ${a.name}`}>Skip</Button>
               </div>
             )}
-            {swapping === a.key && !a.skipped && (
-              <Input aria-label={`Swap ${a.name} for`} placeholder="What did you do instead?" value={a.name} onChange={(e) => patch(a.key, { name: e.target.value })} />
+            {swapping === a.key && !a.skipped && !a.entryId && (
+              <ExercisePicker label={`Swap ${a.name} for`} placeholder="What did you do instead?" value={a.name} own={own} onChange={(v) => patch(a.key, { name: v })} onPick={(n) => patch(a.key, { name: n })} />
             )}
           </section>
         );
@@ -169,8 +242,8 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
 
       <section className="mem-card" aria-label="Add an exercise">
         <h2>Add an exercise</h2>
-        <Input aria-label="Exercise name" placeholder="Exercise name" value={adding.name} onChange={(e) => setAdding({ ...adding, name: e.target.value })} />
-        <Select aria-label="What to record" value={adding.tracking} onChange={(e) => setAdding({ ...adding, tracking: e.target.value as Tracking })}>
+        <ExercisePicker label="Exercise name" placeholder="Start typing, like squat or row" value={adding.name} own={own} onChange={typeName} onPick={typeName} />
+        <Select aria-label="What to record" value={adding.tracking} onChange={(e) => { setManualTracking(true); setAdding({ ...adding, tracking: e.target.value as Tracking }); }}>
           {TRACK_CHOICES.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
         </Select>
         <Button disabled={!adding.name.trim()} onClick={addExercise}>Add exercise</Button>
@@ -185,6 +258,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
         )}
         <Input aria-label="Notes" placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
         {error && <div className="mem-error" role="alert">{error}</div>}
+        {pbIssue && <div className="mem-error" role="alert">A personal best could not be saved: {pbIssue}</div>}
         <Button variant="primary" disabled={busy} onClick={() => void finish()}>{busy ? 'Saving…' : 'Finish workout'}</Button>
         <Link to="/m/train" className="btn secondary">Leave for now</Link>
       </section>
