@@ -7,6 +7,7 @@ name: HybridOne Auth journey browser
 # Hold-lift exact-SHA gate trigger.
 # Cross-gate exact-SHA trigger.
 # Post-Stage-2a live database verification trigger.
+# 9 October release exact-SHA trigger (so every required check starts from the release commit itself).
 
 on:
   workflow_dispatch:
