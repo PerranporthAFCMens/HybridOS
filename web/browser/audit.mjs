@@ -11,7 +11,7 @@ const at = (h, m = 0, d = 0) => { const x = new Date(); x.setDate(x.getDate() + 
 const SIZES = { phone320: { width: 320, height: 640 }, phone390: { width: 390, height: 844 }, desktop: { width: 1280, height: 800 } };
 
 const handle = async ({ route, url, path, select }) => {
-  if (path.endsWith('/gym_members')) return reply(route, [{ user_id: ADA, joined_at: '2026-03-01T00:00:00', attrition_on: null }, { user_id: 'b', joined_at: '2026-05-01T00:00:00', attrition_on: null }]);
+  if (path.endsWith('/gym_members')) return reply(route, [{ user_id: ADA, role: 'member', joined_at: '2026-03-01T00:00:00', attrition_on: null }, { user_id: 'b', role: 'member', joined_at: '2026-05-01T00:00:00', attrition_on: null }]);
   if (path.endsWith('/profiles')) {
     // Like the real database: a request for one person (id=eq.X) gets only that person.
     const rows = [

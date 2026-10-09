@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   availableLetters, dateInputValue, filterAndSort, initials, jumpLetter, labelStatus, nameOf, nameParts,
-  paymentHint, summaryText, validateLifecycle,
+  paymentHint, summaryText, validateLifecycle, isTeam, showOnly,
 } from '../src/members/calc';
 import type { MemberRow } from '../src/data/members';
 
 const m = (over: Partial<MemberRow>): MemberRow => ({
-  userId: 'u', displayName: null, firstName: null, lastName: null, joinedAt: '2026-01-01T00:00:00', attritionOn: null, latest: null, ...over,
+  userId: 'u', role: 'member', displayName: null, firstName: null, lastName: null, joinedAt: '2026-01-01T00:00:00', attritionOn: null, latest: null, ...over,
 });
 const ada = m({ userId: '1', firstName: 'Ada', lastName: 'Zane', joinedAt: '2026-03-01T00:00:00' });
 const bob = m({ userId: '2', displayName: 'Bob Adams', joinedAt: '2026-05-01T00:00:00' });
@@ -72,5 +72,19 @@ describe('record forms', () => {
     expect(dateInputValue(null)).toBe('');
     expect(paymentHint('manual')).toMatch(/Manual mode/);
     expect(paymentHint('gocardless')).toMatch(/GoCardless mandate/);
+  });
+});
+
+describe('team members in the directory', () => {
+  const boss = m({ userId: '9', role: 'owner', firstName: 'Pat' });
+  it('shows everyone, only members, or only the team', () => {
+    expect(showOnly([ada, boss], 'all')).toHaveLength(2);
+    expect(showOnly([ada, boss], 'members')).toEqual([ada]);
+    expect(showOnly([ada, boss], 'team')).toEqual([boss]);
+  });
+  it('knows who is on the team', () => {
+    expect(isTeam(boss)).toBe(true);
+    expect(isTeam(ada)).toBe(false);
+    expect(isTeam(m({ role: 'coach' }))).toBe(true);
   });
 });

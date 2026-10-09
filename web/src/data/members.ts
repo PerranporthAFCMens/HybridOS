@@ -7,6 +7,8 @@ export type PaymentState = Database['public']['Enums']['payment_state'];
 
 export interface MemberRow {
   userId: string;
+  /** owner, admin, staff, coach or member. Team members can hold a membership like anyone else. */
+  role: string;
   displayName: string | null;
   firstName: string | null;
   lastName: string | null;
@@ -35,13 +37,12 @@ function chunks<T>(items: T[]): T[][] {
   return out;
 }
 
-/** Everyone with the member role in this gym, with profile names and newest membership. */
+/** Everyone with a login at this gym (members and the team), with profile names and newest membership. */
 export async function listMemberDirectory(gymId: string): Promise<MemberRow[]> {
   const { data: people, error } = await supabase
     .from('gym_members')
-    .select('user_id, joined_at, attrition_on')
+    .select('user_id, joined_at, attrition_on, role')
     .eq('gym_id', gymId)
-    .eq('role', 'member')
     .order('joined_at');
   if (error) throw error;
   const rows = people ?? [];
@@ -73,6 +74,7 @@ export async function listMemberDirectory(gymId: string): Promise<MemberRow[]> {
     const p = profiles.get(r.user_id);
     return {
       userId: r.user_id,
+      role: r.role,
       displayName: p?.display_name ?? null,
       firstName: p?.first_name ?? null,
       lastName: p?.last_name ?? null,

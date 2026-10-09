@@ -50,6 +50,17 @@ export function availableLetters(rows: MemberRow[], mode: SortMode): Set<string>
   return new Set(rows.map((m) => jumpLetter(m, mode)));
 }
 
+/** Owners, admins, staff and coaches. */
+export const isTeam = (m: Pick<MemberRow, 'role'>): boolean => m.role !== 'member';
+
+export const ROLE_LABEL: Record<string, string> = { owner: 'Owner', admin: 'Admin', staff: 'Staff', coach: 'Coach', member: 'Member' };
+
+export type Show = 'all' | 'members' | 'team';
+
+export function showOnly(rows: MemberRow[], show: Show): MemberRow[] {
+  return show === 'all' ? rows : rows.filter((m) => isTeam(m) === (show === 'team'));
+}
+
 export function summaryText(shown: number, total: number): string {
   return shown === total ? `${total} gym users` : `${shown} of ${total} gym users`;
 }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { Card, Empty } from '../ui/Card';
 import { Input, Select } from '../ui/Field';
-import { availableLetters, filterAndSort, formatRegistered, initials, jumpLetter, labelStatus, nameOf, summaryText, type SortMode } from './calc';
+import { availableLetters, filterAndSort, formatRegistered, initials, jumpLetter, labelStatus, nameOf, ROLE_LABEL, showOnly, summaryText, type Show, type SortMode } from './calc';
 import { MemberRecord } from './MemberRecord';
 import { useMemberDirectory } from './useMembers';
 import './members.css';
@@ -16,12 +16,14 @@ export function Members() {
   const [sort, setSort] = useState<SortMode>('first');
   const [letter, setLetter] = useState('');
   const [openId, setOpenId] = useState('');
+  const [show, setShow] = useState<Show>('all');
 
-  const all = q.data ?? [];
+  const everyone = q.data ?? [];
+  const all = showOnly(everyone, show);
   const rows = filterAndSort(all, { search, sort, letter });
   const letters = availableLetters(all, sort);
   const byDate = sort.startsWith('registered');
-  const open = all.find((m) => m.userId === openId);
+  const open = everyone.find((m) => m.userId === openId);
 
   let lastGroup = '';
   return (
@@ -47,6 +49,14 @@ export function Members() {
               setLetter('');
             }}
           />
+          <label className="member-sort">
+            <span className="muted">Show</span>
+            <Select aria-label="Show" value={show} onChange={(e) => { setShow(e.target.value as Show); setLetter(''); }}>
+              <option value="all">Members and team</option>
+              <option value="members">Members only</option>
+              <option value="team">Team only</option>
+            </Select>
+          </label>
           <label className="member-sort">
             <span className="muted">Sort by</span>
             <Select
@@ -99,7 +109,7 @@ export function Members() {
                     <span className="member-text">
                       <b>{name}</b>
                       <span className="muted">
-                        {m.latest ? `${m.latest.planName || 'Membership'} · ${labelStatus(m.latest.status)}` : 'No membership yet'} · member
+                        {m.latest ? `${m.latest.planName || 'Membership'} · ${labelStatus(m.latest.status)}` : 'No membership yet'} · {ROLE_LABEL[m.role] ?? 'Member'}
                       </span>
                       <span className="member-reg">Registered {formatRegistered(m.joinedAt)}</span>
                     </span>

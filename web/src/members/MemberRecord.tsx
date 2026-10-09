@@ -5,7 +5,7 @@ import { Empty, SectionTitle } from '../ui/Card';
 import { DateInput, Field, FieldRow, Select } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import { money } from '../today/calc';
-import { dateInputValue, formatDate, formatRegistered, labelStatus, nameOf, nameParts, paymentHint, validateLifecycle } from './calc';
+import { dateInputValue, isTeam, ROLE_LABEL, formatDate, formatRegistered, labelStatus, nameOf, nameParts, paymentHint, validateLifecycle } from './calc';
 import { useMemberMemberships, useMemberWrites, usePlans } from './useMembers';
 
 type Message = { text: string; tone: 'good' | 'error' } | null;
@@ -16,6 +16,7 @@ function Msg({ m }: { m: Message }) {
 
 export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gymId: string; onClose: () => void }) {
   const name = nameOf(member);
+  const team = isTeam(member);
   const parts = nameParts(member);
   const memberships = useMemberMemberships(gymId, member.userId);
   const plans = usePlans(gymId);
@@ -75,7 +76,8 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
         title={name}
         action={<Button onClick={onClose}>Close</Button>}
       />
-      <div className="muted">Gym role: member</div>
+      <div className="muted">Gym role: {(ROLE_LABEL[member.role] ?? 'Member').toLowerCase()}</div>
+      {team && <div className="notice">This is a team login. Give them a membership below so they see the member app like any member (classes, workouts and so on).</div>}
 
       <div className="profile">
         <div><small>Name</small><b>{name}</b></div>
@@ -84,7 +86,7 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
         <div><small>Surname</small><b>{member.lastName || parts.surname || '—'}</b></div>
       </div>
 
-      <section className="record-section">
+      {!team && <section className="record-section">
         <h3>Customer lifecycle</h3>
         <div className="muted small">Joined date drives new customer reporting. Add an attrition date when they leave.</div>
         <FieldRow>
@@ -99,7 +101,7 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
           {writes.saveLifecycle.isPending ? 'Saving…' : 'Save lifecycle dates'}
         </Button>{' '}
         <Msg m={lifecycleMsg} />
-      </section>
+      </section>}
 
       <section className="record-section">
         {memberships.isError ? (
