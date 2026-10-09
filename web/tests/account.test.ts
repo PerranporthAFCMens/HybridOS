@@ -1,28 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { fullName, roleLabel } from '../src/shell/account';
+import { checkEmail, checkName, checkPassword } from '../src/member/account';
 
-const names = (displayName: string | null, firstName: string | null, lastName: string | null) => ({ displayName, firstName, lastName });
-
-describe('fullName', () => {
-  it('prefers the display name', () => {
-    expect(fullName(names('Adam Turner', 'A', 'T'), 'a@b.c')).toBe('Adam Turner');
+describe('account details', () => {
+  it('a name needs something to show', () => {
+    expect(checkName('  ', 'A', 'B')).not.toBeNull();
+    expect(checkName('Jo Marsh', '', '')).toBeNull();
+    expect(checkName('x'.repeat(121), '', '')).toBe('That name is too long.');
   });
-  it('falls back to first and last name', () => {
-    expect(fullName(names(null, 'Adam', 'Turner'), 'a@b.c')).toBe('Adam Turner');
-    expect(fullName(names('  ', 'Adam', null), 'a@b.c')).toBe('Adam');
+  it('an email must look like one and be different', () => {
+    expect(checkEmail('nope', 'a@b.co')).toBe('Enter a valid email address.');
+    expect(checkEmail('A@B.co', 'a@b.co')).toBe('That is already your email address.');
+    expect(checkEmail(' new@b.co ', 'a@b.co')).toBeNull();
   });
-  it('falls back to the start of the email when there is no name, or the profile is missing', () => {
-    expect(fullName(names(null, null, null), 'adam.t+gym@example.com')).toBe('adam.t+gym');
-    expect(fullName(undefined, 'adam@example.com')).toBe('adam');
-  });
-});
-
-describe('roleLabel', () => {
-  it('words every role', () => {
-    expect(roleLabel('owner')).toBe('Owner');
-    expect(roleLabel('admin')).toBe('Admin');
-    expect(roleLabel('staff')).toBe('Staff');
-    expect(roleLabel('coach')).toBe('Coach');
-    expect(roleLabel('member')).toBe('Member');
+  it('a password is long enough and typed twice', () => {
+    expect(checkPassword('short', 'short')).toContain('at least 8');
+    expect(checkPassword('longenough1', 'different1')).toBe('The two passwords do not match.');
+    expect(checkPassword('longenough1', 'longenough1')).toBeNull();
   });
 });
