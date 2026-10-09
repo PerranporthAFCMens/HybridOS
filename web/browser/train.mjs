@@ -81,7 +81,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('the workout opens', page.getByRole('heading', { name: 'Upper body' }));
   c.ok('says these are suggestions', (await page.getByText(/suggestions: change, swap or skip anything/).count()) === 1);
   c.ok('the exercises are listed with their plan', (await page.getByRole('region', { name: 'Dumbbell row' }).textContent()).includes('Suggested: 3 x 10') && (await page.getByRole('region', { name: 'Overhead press' }).textContent()).includes('Controlled'));
-  c.ok('last time is shown', (await page.getByRole('region', { name: 'Dumbbell row' }).textContent()).includes('Last time: 24 kg × 10, 24 kg × 10'));
+  c.ok('last time is shown', (await page.getByRole('region', { name: 'Dumbbell row' }).textContent()).includes('Last time: 10 × 24 kg, 10 × 24 kg'));
   await page.getByRole('button', { name: 'Copy last time for Dumbbell row' }).click();
   c.ok('copy last time fills the boxes', (await page.getByLabel('Dumbbell row set 1 Weight').inputValue()) === '24' && (await page.getByLabel('Dumbbell row set 2 Reps').inputValue()) === '10');
   await page.getByRole('button', { name: 'Add a set to Dumbbell row' }).click();
@@ -97,7 +97,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('button', { name: 'Save Dumbbell row' }).click();
   await c.has('an exercise can be saved on its own', page.getByRole('region', { name: 'Dumbbell row' }).getByText('Saved', { exact: true }));
   c.ok('that wrote the workout and the exercise straight away', writes.filter((w) => w.startsWith('session ')).length === 1 && writes.filter((w) => w.startsWith('entry ')).length === 1 && writes.some((w) => w.startsWith('sets ')));
-  c.ok('the saved numbers are shown', (await page.getByRole('region', { name: 'Dumbbell row' }).textContent()).includes('24 kg × 10'));
+  c.ok('the saved numbers are shown', (await page.getByRole('region', { name: 'Dumbbell row' }).textContent()).includes('10 × 24 kg'));
   await page.getByRole('button', { name: 'Swap Overhead press' }).click();
   await page.getByLabel('Swap Overhead press for').fill('Landmine press');
   await page.getByLabel('Landmine press set 1 Weight').fill('30');

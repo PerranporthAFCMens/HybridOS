@@ -42,7 +42,7 @@ describe('numbers', () => {
   it('and back, for last time', () => {
     const v = fromDbSet('strength', { weight_kg: 24, reps: 10 });
     expect(v).toEqual({ weight: '24', reps: '10' });
-    expect(setText('strength', v)).toBe('24 kg × 10');
+    expect(setText('strength', v)).toBe('10 × 24 kg');
     expect(fromDbSet('distance', { distance_m: 5500 })).toEqual({ distance: '5.5' });
     expect(setText('time', { time: '12:30' })).toBe('12:30');
   });
@@ -63,7 +63,7 @@ describe('left and right', () => {
   it('comes back for last time', () => {
     const v = fromDbSet('strength', { weight_kg: 20, reps: 8, side: 'right' });
     expect(v.side).toBe('right');
-    expect(setText('strength', v)).toBe('20 kg × 8 (right)');
+    expect(setText('strength', v)).toBe('8 × 20 kg (right)');
     expect(fromDbSet('strength', { weight_kg: 20, side: null }).side).toBeUndefined();
   });
   it('is saved only for an exercise switched to left and right', () => {
