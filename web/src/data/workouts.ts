@@ -81,15 +81,17 @@ export async function loadAssignableMembers(gymId: string): Promise<MemberOption
   return (data ?? []).flatMap((m) => (m.user_id ? [{ userId: m.user_id, name: m.display_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || 'Member' }] : []));
 }
 
-/** A coach assigns a saved workout to one member: the workout is copied into the assignment as it is now. */
-export async function assignWorkout(gymId: string, userId: string, t: TemplateRow, memberUserId: string, dueAt: string | null): Promise<void> {
+/** A coach assigns a saved workout to one member, once or on several days: the workout is copied into each assignment as it is now. */
+export async function assignWorkout(gymId: string, userId: string, t: TemplateRow, memberUserId: string, dueAts: (string | null)[]): Promise<void> {
   const { blocks, activities } = await loadParts(t.id);
   const snapBlocks: SnapshotBlock[] = blocks.map((b) => ({ ...b, activities: activities.filter((a) => a.block_id === b.id).map((a) => ({ block_id: a.block_id, activity_name: a.activity_name, activity_type: a.activity_type, tracking_type: a.tracking_type, position: a.position, prescription: a.prescription, notes: a.notes })) }));
   const snapshot = buildSnapshot(t, snapBlocks);
-  const { error } = await supabase.from('workout_assignments').insert({
+  const rows = dueAts.map((dueAt) => ({
     gym_id: gymId, template_id: t.id, member_user_id: memberUserId, assigned_by: userId, source: 'pt', title: t.title, workout_type: t.workoutType, focus_tags: t.focusTags,
     workout_snapshot: JSON.parse(JSON.stringify(snapshot)) as never, due_at: dueAt, status: 'todo',
-  });
+  }));
+  // One request, so a programme is given in full or not at all.
+  const { error } = await supabase.from('workout_assignments').insert(rows.length === 1 ? (rows[0] as (typeof rows)[number]) : rows);
   if (error) throw error;
 }
 
