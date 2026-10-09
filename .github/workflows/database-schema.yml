@@ -44,10 +44,10 @@ jobs:
             select count(*) into v_triggers from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace tn on tn.oid=c.relnamespace join pg_proc p on p.oid=t.tgfoid join pg_namespace fn on fn.oid=p.pronamespace where not t.tgisinternal and (tn.nspname in ('public','private') or fn.nspname in ('public','private'));
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
-            if v_tables<>63 then raise exception 'Expected 63 app tables, got %',v_tables; end if;
-            if v_functions<>87 then raise exception 'Expected 87 committed app functions, got %',v_functions; end if;
-            if v_policies<>168 then raise exception 'Expected 168 app/storage policies, got %',v_policies; end if;
-            if v_triggers<>25 then raise exception 'Expected 25 app-related triggers, got %',v_triggers; end if;
+            if v_tables<>65 then raise exception 'Expected 65 app tables, got %',v_tables; end if;
+            if v_functions<>102 then raise exception 'Expected 102 committed app functions, got %',v_functions; end if;
+            if v_policies<>173 then raise exception 'Expected 173 app/storage policies, got %',v_policies; end if;
+            if v_triggers<>26 then raise exception 'Expected 26 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
             if exists(select 1 from public.profiles) then raise exception 'Baseline must not contain live profile rows'; end if;
@@ -64,6 +64,28 @@ jobs:
           if grep -E ' \| f$' /tmp/membership_status_check.txt; then echo 'A membership status verification check is false'; exit 1; fi
           # twelve personas x two gyms, run as the authenticated role with real JWT claims; rolls itself back
           psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/membership_status_personas.sql
+      - name: Membership rules verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261010150000_membership_rules.sql
+          # read-only verification query: every row must say ok
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261010_membership_rules_check.sql > /tmp/membership_rules_check.txt
+          cat /tmp/membership_rules_check.txt
+          if grep -v ' | ok$' /tmp/membership_rules_check.txt; then echo 'A membership rules verification check is not ok'; exit 1; fi
+          # personas (owner, admin, staff, members, another gym) run as the authenticated role; rolls itself back
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/membership_rules.sql
+          # the rollback removes everything it added, and applying the migration again restores the same catalog
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/rules_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261010_drop_membership_rules.sql
+          snap /tmp/rules_after_rollback.txt
+          if diff -q /tmp/rules_after_migration.txt /tmp/rules_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          if psql "$DB_URL" -X -At -c "select count(*) from information_schema.tables where table_schema='public' and table_name in ('membership_rules','membership_requests')" | grep -qv '^0$'; then echo 'Rollback left a table behind'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/rules_after_reapply.txt
+          if diff -u /tmp/rules_after_migration.txt /tmp/rules_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Prove the rollback file restores the pre-migration state exactly
         shell: bash
         run: |

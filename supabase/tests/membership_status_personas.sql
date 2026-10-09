@@ -313,7 +313,12 @@ insert into pt.fn_allow values
  ('private.active_owner_count(uuid)','internal ownership helper; private schema is not exposed over the API'),
  ('private.has_active_owner(uuid)','internal ownership helper; private schema is not exposed over the API'),
  ('private.execute_ownership_action(uuid)','internal; called only from the owner-gated approve_ownership_action; private schema not exposed'),
- ('private.member_has_paid_class(uuid,uuid)','internal helper for the booking RPCs; private schema not exposed');
+ ('private.member_has_paid_class(uuid,uuid)','internal helper for the booking RPCs; private schema not exposed'),
+ ('get_my_membership_options(uuid)','scoped to the caller''s own membership by auth.uid(); returns nothing for anyone else (tested in membership_rules.sql)'),
+ ('request_membership_pause(uuid,date,date,text)','scoped to the caller''s own membership by auth.uid(); refuses anyone else''s (tested in membership_rules.sql)'),
+ ('request_membership_cancel(uuid,text)','scoped to the caller''s own membership by auth.uid(); refuses anyone else''s (tested in membership_rules.sql)'),
+ ('request_membership_change(uuid,uuid)','scoped to the caller''s own membership by auth.uid(); refuses anyone else''s (tested in membership_rules.sql)'),
+ ('withdraw_membership_request(uuid)','scoped to the caller''s own request by auth.uid(); refuses anyone else''s (tested in membership_rules.sql)');
 create table pt.fn_audit as
 select p.oid::regprocedure::text as fn,
        case when p.prorettype = 'trigger'::regtype then 'trigger function'
@@ -403,7 +408,7 @@ select pt.check('P ungated auth.uid() policies are exactly the reviewed list',
   (select coalesce(string_agg(tablename||' / '||policyname, '; ' order by tablename, policyname),'none') from pg_policies
     where schemaname='public' and (coalesce(qual,'')||' '||coalesce(with_check,'')) ~ 'auth.uid'
       and (coalesce(qual,'')||' '||coalesce(with_check,'')) !~ 'private\.(member_status_allows|is_gym_member|can_write_gym|has_gym_role|is_pending_admin|staff_has_permission|has_gym_staff_permission|can_manage_gym_member|can_view_profile)'),
-  'class_bookings / assigned class staff can view bookings; class_sessions / coaches can view assigned session details; gym_communication_settings / Gym admins manage communication settings; gym_email_templates / Gym admins manage email templates; gym_members / members read own gym member row; gyms / authenticated users can create gyms; personal_bests / staff_view_gym_personal_bests; profiles / users can update own profile; pt_appointments / pt appointments select; staff_profiles / staff can view own profile; strava_activities / users_view_own_strava_activities; strava_connections / users_disconnect_own_strava_connection; strava_connections / users_view_own_strava_connection; workout_entries / staff_view_gym_workout_entries; workout_sessions / staff_view_gym_workout_sessions; workout_sets / staff_view_sets_for_gym_entries');
+  'class_bookings / assigned class staff can view bookings; class_sessions / coaches can view assigned session details; gym_communication_settings / Gym admins manage communication settings; gym_email_templates / Gym admins manage email templates; gym_members / members read own gym member row; gyms / authenticated users can create gyms; membership_requests / members read their own membership requests; personal_bests / staff_view_gym_personal_bests; profiles / users can update own profile; pt_appointments / pt appointments select; staff_profiles / staff can view own profile; strava_activities / users_view_own_strava_activities; strava_connections / users_disconnect_own_strava_connection; strava_connections / users_view_own_strava_connection; workout_entries / staff_view_gym_workout_entries; workout_sessions / staff_view_gym_workout_sessions; workout_sets / staff_view_sets_for_gym_entries');
 
 -- 4. helper functions are status aware (guards against someone restoring the permissive bodies)
 select pt.check('P is_gym_member is status aware', (pg_get_functiondef('private.is_gym_member(uuid)'::regprocedure) like '%member_status_allows%')::text,'true');
