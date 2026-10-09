@@ -79,3 +79,6 @@
 .tr-option:hover, .tr-option:focus-visible { background: var(--hybrid-raised); outline: none; }
 .tr-saved { display: flex; flex-direction: column; gap: 4px; }
 .tr-ok { color: var(--hybrid-volt, #c8ff3d); font-weight: 700; font-size: 13px; }
+
+.tr-del { flex: none; width: 44px; height: 44px; border: 0; border-radius: 10px; background: var(--hybrid-raised); color: var(--hybrid-muted); font: inherit; cursor: pointer; }
+.tr-del:focus-visible { outline: 2px solid var(--hybrid-pulse, #6b7cff); outline-offset: 2px; }
