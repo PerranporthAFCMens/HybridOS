@@ -1,0 +1,13 @@
+# Date of birth at sign-up, and happy birthday
+
+Owner request (9 October 2026): the date of birth must be taken when someone signs up, and on their birthday the app shows a happy birthday animation when they open it.
+
+- **Sign-up (`join.html`, the live member sign-up page):** a required Date of birth box on "Create your account" (not shown when signing in). Sign-up stops with "Enter your date of birth." without a real past date (not before 1900). The date goes into the sign-up details and is saved to `profiles.date_of_birth` straight away, and again after the email is confirmed (same two paths the mobile number already uses), so it is kept whether or not the gym needs email confirmation. No database change: `profiles.date_of_birth` already exists and a member can already update their own profile.
+- **Happy birthday (classic member app, `member.html`):** once the app is on screen, if today (UK date) is their birthday a card with a bouncing cake, "Happy birthday, <first name>!" and the gym name appears over falling confetti until they tap Thank you. Shown once a year per person per device (key `hybrid-birthday-<user>-<year>`); people who ask their phone for less motion get the card without confetti. It cannot break the app (wrapped in try/catch). 29 February birthdays are marked on 28 February in years with no 29th.
+- **Happy birthday (new member app):** the same card on Today, using the same key, so someone is not wished twice by the two apps.
+- **Existing members with no date of birth:** the new member app shows "Tell us your birthday" on Today and an Add / Change birthday button on Me. The classic app already shows the date of birth on the profile page.
+- **Birthdays report** (separate pull request) lists upcoming birthdays and counts members with no date of birth.
+
+**Not done, needs the owner's decision (database):** the date of birth is required by the sign-up *page*, not by the database, so a hand-built request could still create an account without one. To make the database refuse, the `join_public_gym_with_membership` function (and any other way into the gym) would check `profiles.date_of_birth is not null`. That also stops existing members who have no date of birth from joining a second gym until they add one, so the join page would first need to ask them for it. Say if you want that, and I will write the exact SQL for you to approve before anything is applied.
+
+Tests: `tests/classic-pages.test.ts` runs the real sign-up and classic app code (the date check, the animation card, once a year, same key as the new app); the member browser check covers asking for a birthday, saving it (exact request), the animation on the day, closing it, and not again the same year.

@@ -18,3 +18,22 @@ describe('account details', () => {
     expect(checkPassword('longenough1', 'longenough1')).toBeNull();
   });
 });
+
+import { checkBirthday } from '../src/member/account';
+
+describe('checkBirthday', () => {
+  const now = new Date('2026-10-08T12:00:00Z');
+  it('accepts a real date in the past', () => {
+    expect(checkBirthday('1990-10-08', now)).toBeNull();
+    expect(checkBirthday('2026-10-08', now)).toBeNull();
+  });
+  it('asks for a date when there is none or it is not a date', () => {
+    expect(checkBirthday('', now)).toMatch(/Choose/);
+    expect(checkBirthday('hello', now)).toMatch(/Choose/);
+  });
+  it('refuses impossible, future and very old dates', () => {
+    expect(checkBirthday('2001-02-30', now)).toMatch(/not a real date/);
+    expect(checkBirthday('2027-01-01', now)).toMatch(/future/);
+    expect(checkBirthday('1899-12-31', now)).toMatch(/year/);
+  });
+});
