@@ -39,6 +39,7 @@ export interface PlanDetail {
   includesClasses: boolean;
   includesPt: boolean;
   isPublic: boolean;
+  canSwitchTo: boolean;
   isActive: boolean;
 }
 
@@ -55,6 +56,7 @@ export interface PlanInput {
   includesClasses: boolean;
   includesPt: boolean;
   isPublic: boolean;
+  canSwitchTo: boolean;
 }
 
 export async function listPlanDetails(gymId: string): Promise<PlanDetail[]> {
@@ -77,6 +79,7 @@ export async function listPlanDetails(gymId: string): Promise<PlanDetail[]> {
     includesClasses: p.includes_classes,
     includesPt: p.includes_pt,
     isPublic: p.is_public,
+    canSwitchTo: p.members_can_switch_to,
     isActive: p.is_active,
   }));
 }
@@ -94,6 +97,7 @@ function toRow(input: PlanInput) {
     includes_pt: input.includesPt,
     classes_per_week: input.classesPerWeek,
     is_public: input.isPublic,
+    members_can_switch_to: input.canSwitchTo,
   };
 }
 

@@ -4,7 +4,7 @@ import type { PlanDetail } from '../src/data/plans';
 
 const plan = (over: Partial<PlanDetail> = {}): PlanDetail => ({
   id: 'p1', name: 'Hybrid Monthly', description: null, priceInPence: 4500, interval: 'monthly', accessType: 'hybrid',
-  joiningFeeInPence: 0, classesPerWeek: null, includesOpenGym: true, includesClasses: true, includesPt: false, isPublic: true, isActive: true, ...over,
+  joiningFeeInPence: 0, classesPerWeek: null, includesOpenGym: true, includesClasses: true, includesPt: false, isPublic: true, canSwitchTo: false, isActive: true, ...over,
 });
 
 describe('money', () => {
@@ -37,7 +37,7 @@ describe('validatePlan', () => {
       ok: true,
       input: {
         name: 'Unlimited', description: 'All access', priceInPence: 4200, interval: 'monthly', accessType: 'hybrid', joiningFeeInPence: 1000,
-        classesPerWeek: 3, includesOpenGym: true, includesClasses: true, includesPt: true, isPublic: false,
+        classesPerWeek: 3, includesOpenGym: true, includesClasses: true, includesPt: true, isPublic: false, canSwitchTo: false,
       },
     });
   });

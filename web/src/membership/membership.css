@@ -1,0 +1,9 @@
+.rules-card { display: grid; gap: 12px; }
+.rules-card h3 { margin: 0; }
+.req-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.req-item { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--hybrid-line); }
+.req-item:first-child { border-top: 0; padding-top: 0; }
+.req-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+.req-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.req-actions > * { flex: 1 1 140px; }
+.req-status { font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 99px; background: var(--hybrid-raised); }

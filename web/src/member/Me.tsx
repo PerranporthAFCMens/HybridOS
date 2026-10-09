@@ -4,6 +4,7 @@ import { useOutletContext } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { changeMyEmail, changeMyPassword, getProfileNames, updateMyName } from '../data/profile';
 import { fullName } from '../shell/account';
+import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Field';
 import { checkEmail, checkName, checkPassword } from './account';
@@ -108,6 +109,7 @@ export function Me() {
             <div className="muted small">{[d.plan.includesClasses && 'Classes', d.plan.includesOpenGym && 'Gym', d.plan.includesPt && 'Personal training'].filter(Boolean).join(' · ') || 'No services listed'}</div>
           </>
         ) : <div className="muted">No membership found for this gym.</div>}
+        {d.plan && <Link className="btn secondary" to="/m/membership">Pause, change or cancel</Link>}
       </section>
       <section className="mem-card">
         <h2>More</h2>
