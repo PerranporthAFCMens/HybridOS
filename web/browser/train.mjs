@@ -190,6 +190,14 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('button', { name: 'Change Bench press' }).click();
   await c.has('change reopens it', page.getByLabel('Bench press set 1 Reps'));
   c.ok('and took it back out', writes.includes('DELETE entry'));
+  await page.getByLabel('Exercise name', { exact: true }).fill('Squat');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Add exercise' }).click();
+  await c.has('a second exercise is added', page.getByRole('region', { name: 'Squat' }));
+  c.ok('an exercise you added says Remove, not Skip', (await page.getByRole('button', { name: 'Skip Squat' }).count()) === 0);
+  await page.getByRole('button', { name: 'Remove Squat' }).click();
+  c.ok('and Remove takes it out of the workout', (await page.getByRole('region', { name: 'Squat' }).count()) === 0);
+  c.ok('the other one stays', (await page.getByRole('region', { name: 'Bench press' }).count()) === 1);
   await page.getByRole('button', { name: 'Finish workout' }).click();
   await c.has('own workout saved', page.getByText('Workout saved.', { exact: true }));
   c.ok('no coach workout was touched', !writes.some((w) => w.startsWith('PATCH')));

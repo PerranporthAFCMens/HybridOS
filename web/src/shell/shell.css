@@ -47,3 +47,7 @@
   .main { padding: 14px; padding-top: 66px; }
 }
 @media (prefers-reduced-motion: reduce) { .side { transition: none; } }
+
+.back-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; margin-bottom: 4px; background: none; border: 0; color: var(--hybrid-muted); font: inherit; cursor: pointer; }
+.back-link:hover { color: var(--hybrid-ink); }
+.back-link:focus-visible { outline: 2px solid var(--hybrid-pulse, #6b7cff); outline-offset: 2px; }

@@ -3,6 +3,7 @@
 <head>
 <link rel="preconnect" href="https://mzgnhmeydhhpzgxlgudh.supabase.co" crossorigin><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script src="./supabase-request-guard.js"></script>
 <meta charset="utf-8">
+<script>/* Owners and admins open the new app straight away. Old pages still open through ?view=… (anything other than the plain dashboard). */(function(){try{var q=new URLSearchParams(location.search),v=q.get('view'),g=q.get('gym_id');if(v&&v!=='index.html')return;if(g)sessionStorage.setItem('hybrid-gym-id',g);location.replace('./next/#/today')}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b1020">
 <title>HybridOne Admin</title>

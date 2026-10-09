@@ -39,7 +39,7 @@ export function Membership() {
   const o = q.data;
   return (
     <div className="mem-screen">
-      <Link className="muted" to="/m/me">‹ Me</Link>
+      <Link className="mem-back" to="/m/me">‹ Me</Link>
       <h1 className="mem-title">My membership</h1>
       {msg && <div className={msg.good ? 'mem-card mem-ok' : 'mem-error'} role={msg.good ? 'status' : 'alert'}>{msg.text}</div>}
       {q.isPending && <div className="muted">Loading…</div>}

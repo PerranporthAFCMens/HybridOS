@@ -72,6 +72,8 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
   const patch = (k: string, p: Partial<Act>) => setActs((list) => list.map((a) => (a.key === k ? { ...a, ...p } : a)));
   const setSet = (k: string, i: number, field: string, value: string) => setActs((list) => list.map((a) => (a.key === k ? { ...a, sets: a.sets.map((s, j) => (j === i ? { ...s, [field]: value } : s)) } : a)));
   /** Take one set out (at least one set always stays). */
+  // An exercise the member added (not one the coach sent) can be taken out completely; the coach's can only be skipped.
+  const isOwn = (a: Act) => a.originalName === '';
   const removeSet = (k: string, i: number) => setActs((list) => list.map((a) => (a.key === k && a.sets.length > 1 ? { ...a, sets: a.sets.filter((_, j) => j !== i) } : a)));
   const lastFor = (a: Act) => last.get(a.originalName.trim().toLowerCase());
   const copyLast = (a: Act) => {
@@ -122,6 +124,19 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
       patch(a.key, { entryId: undefined, savedText: undefined });
     } catch (e) {
       setCardError((m) => ({ ...m, [a.key]: e instanceof Error ? e.message : 'Could not change that exercise.' }));
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  /** Take an exercise the member added themselves out of the workout, saved or not. */
+  const drop = async (a: Act) => {
+    setSaving(a.key);
+    try {
+      if (a.entryId) await removeExercise(a.entryId);
+      setActs((list) => list.filter((x) => x.key !== a.key));
+    } catch (e) {
+      setCardError((m) => ({ ...m, [a.key]: e instanceof Error ? e.message : 'Could not remove that exercise.' }));
     } finally {
       setSaving(null);
     }
@@ -194,6 +209,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
                 <span className="tr-ok">Saved</span>
                 {a.savedText && <div className="muted">{a.savedText}</div>}
                 <Button disabled={saving === a.key} onClick={() => void change(a)} aria-label={`Change ${a.name}`}>Change</Button>
+                {isOwn(a) && <Button disabled={saving === a.key} onClick={() => void drop(a)} aria-label={`Remove ${a.name}`}>Remove</Button>}
               </div>
             ) : a.tracking === 'instruction' ? (
               <Checkbox label="Done" checked={a.done} onChange={(v) => patch(a.key, { done: v })} />
@@ -233,7 +249,9 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
             {!a.skipped && !a.entryId && (
               <div className="mem-actions tr-tools">
                 <Button onClick={() => setSwapping(swapping === a.key ? null : a.key)} aria-expanded={swapping === a.key} aria-label={`Swap ${a.name}`}>Swap</Button>
-                <Button onClick={() => patch(a.key, { skipped: true })} aria-label={`Skip ${a.name}`}>Skip</Button>
+                {isOwn(a)
+                  ? <Button onClick={() => void drop(a)} aria-label={`Remove ${a.name}`}>Remove</Button>
+                  : <Button onClick={() => patch(a.key, { skipped: true })} aria-label={`Skip ${a.name}`}>Skip</Button>}
               </div>
             )}
             {swapping === a.key && !a.skipped && !a.entryId && (

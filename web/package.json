@@ -10,7 +10,7 @@
     "test": "vitest run",
     "build": "tsc --noEmit && vite build",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "browser": "node browser/signed-out.mjs && node browser/today.mjs && node browser/members.mjs && node browser/plans.mjs && node browser/classes.mjs && node browser/classes-calendar.mjs && node browser/classsetup.mjs && node browser/staff.mjs && node browser/rooms.mjs && node browser/access.mjs && node browser/owners.mjs && node browser/door.mjs && node browser/memberview.mjs && node browser/community.mjs && node browser/comms.mjs && node browser/workouts.mjs && node browser/reports.mjs && node browser/reports-drill.mjs && node browser/reports-library.mjs && node browser/builder.mjs && node browser/member.mjs && node browser/train.mjs && node browser/membership.mjs && node browser/audit.mjs"
+    "browser": "node browser/signed-out.mjs && node browser/today.mjs && node browser/members.mjs && node browser/plans.mjs && node browser/classes.mjs && node browser/classes-calendar.mjs && node browser/classsetup.mjs && node browser/staff.mjs && node browser/rooms.mjs && node browser/access.mjs && node browser/owners.mjs && node browser/door.mjs && node browser/memberview.mjs && node browser/community.mjs && node browser/comms.mjs && node browser/workouts.mjs && node browser/reports.mjs && node browser/reports-drill.mjs && node browser/reports-library.mjs && node browser/builder.mjs && node browser/member.mjs && node browser/train.mjs && node browser/membership.mjs && node browser/back.mjs && node browser/audit.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",

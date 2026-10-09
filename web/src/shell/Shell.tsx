@@ -1,12 +1,28 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { getProfileNames } from '../data/profile';
 import { Button } from '../ui/Button';
 import { fullName, roleLabel } from './account';
 import { gymLogo } from './gymBrand';
 import './shell.css';
+
+/** The pages in the sidebar. Every other page was opened from one of them, so it gets a Back link. */
+const TOP_PAGES = ['/today', '/members', '/plans', '/classes', '/workouts', '/reports', '/community', '/communications', '/settings'];
+
+function BackLink() {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  if (TOP_PAGES.includes(pathname)) return null;
+  // Go back to wherever they came from; when the page was opened directly, go to Settings (where most of these live).
+  const canGoBack = typeof window.history.state?.idx === 'number' && window.history.state.idx > 0;
+  return (
+    <button type="button" className="back-link" onClick={() => { if (canGoBack) void navigate(-1); else void navigate('/settings'); }}>
+      ‹ Back
+    </button>
+  );
+}
 
 export function Shell() {
   const auth = useReadyAuth();
@@ -63,6 +79,7 @@ export function Shell() {
         </div>
       </aside>
       <main className="main">
+        <BackLink />
         <Outlet />
       </main>
     </div>
