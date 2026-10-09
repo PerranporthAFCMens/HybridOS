@@ -92,8 +92,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
       if (body.p_user_id === 'u5') return reply(route, { ok: false, errors: ['This class is full (16). Raise the capacity first if you want to add someone.'], warnings: [] });
       return reply(route, { ok: true, warnings: body.p_action === 'add' ? ['Their membership does not include classes.'] : [] });
     }
-    if (path.endsWith('/gym_members') && url.searchParams.get('role') === 'eq.member') {
-      return reply(route, ['u1', 'u2', 'u3', 'u4', 'u5'].map((id) => ({ user_id: id, joined_at: '2026-01-01T00:00:00Z', attrition_on: null })));
+    if (path.endsWith('/gym_members') && url.searchParams.get('select')?.includes('attrition_on')) {
+      return reply(route, ['u1', 'u2', 'u3', 'u4', 'u5'].map((id) => ({ user_id: id, role: 'member', joined_at: '2026-01-01T00:00:00Z', attrition_on: null })));
     }
     if (path.endsWith('/class_bookings') && method === 'GET') {
       if (url.searchParams.get('session_id') !== 'eq.h') return reply(route, []);
