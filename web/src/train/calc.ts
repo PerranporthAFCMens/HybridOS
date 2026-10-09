@@ -34,7 +34,7 @@ export function readSnapshot(raw: unknown): { title: string; activities: Planned
 
 export type Field = 'weight' | 'reps' | 'time' | 'distance' | 'calories';
 export const FIELDS: Record<Tracking, { id: Field; label: string; hint: string }[]> = {
-  strength: [{ id: 'weight', label: 'kg', hint: 'Weight' }, { id: 'reps', label: 'reps', hint: 'Reps' }],
+  strength: [{ id: 'reps', label: 'reps', hint: 'Reps' }, { id: 'weight', label: 'kg', hint: 'Weight' }],
   reps: [{ id: 'reps', label: 'reps', hint: 'Reps' }],
   time: [{ id: 'time', label: 'time', hint: 'Time, like 12:30' }],
   distance: [{ id: 'distance', label: 'km', hint: 'Distance in km' }],
@@ -114,12 +114,12 @@ export function fromDbSet(tracking: Tracking, r: StoredSet): SetValues {
   return out;
 }
 
-/** "24 kg × 10" style words for one set. */
+/** "10 × 24 kg" (reps, then weight) style words for one set. */
 export function setText(tracking: Tracking, v: SetValues): string {
   const parts: string[] = [];
   const side = asSide(v.side);
   const tail = side ? ` (${side})` : '';
-  if (tracking === 'strength') return [v.weight ? `${v.weight} kg` : '', v.reps ? `${v.reps}` : ''].filter(Boolean).join(' × ') + tail;
+  if (tracking === 'strength') return [v.reps ? `${v.reps}` : '', v.weight ? `${v.weight} kg` : ''].filter(Boolean).join(' × ') + tail;
   if (v.reps) parts.push(`${v.reps} ${tracking === 'intervals' ? 'rounds' : 'reps'}`);
   if (v.time) parts.push(v.time);
   if (v.distance) parts.push(`${v.distance} km`);
