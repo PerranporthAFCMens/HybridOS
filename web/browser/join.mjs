@@ -150,7 +150,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('no terms step when the gym has none', page.getByRole('heading', { name: 'Choose your membership' }));
   c.ok('guardian details were sent', state.saved?.p_guardian_name === 'Sam Penrose' && state.saved?.p_guardian_phone === '+447700900123');
 
-  c.ok('no script errors', errors.length === 0);
+  c.ok(`no script errors ${errors.join(' | ').slice(0, 400)}`, errors.length === 0);
   if (!c.report(name)) allOk = false;
   await ctx.close();
 }
