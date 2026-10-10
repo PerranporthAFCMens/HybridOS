@@ -103,7 +103,9 @@ jobs:
           set -euo pipefail
           DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
           MIG=supabase/migrations/20261005120000_membership_status_enforcement.sql
-          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          # join_public_gym_with_membership is redefined again by the later member details migration (20261011090000), so its body
+          # legitimately differs between "without 20261005" and "after the 20261005 rollback". Everything else must match exactly.
+          snap() { psql "$DB_URL" -X -q -v skip='join_public_gym_with_membership(text,uuid)' -f supabase/tests/catalog_snapshot.sql > "$1"; }
           snap /tmp/snap_after_migration.txt
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261005_restore_pre_membership_status.sql
           snap /tmp/snap_after_rollback.txt
