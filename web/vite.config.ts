@@ -1,11 +1,15 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
-// Built to _site/next/ by scripts/build_site.py. A relative base plus hash
-// routing lets one build run on GitHub Pages (dev) and Vercel (live).
+// Built to _site/next/ by scripts/build_site.py. The folder name is internal: people see clean addresses (/today, /join/<gym>),
+// which the server (Vercel rewrites; a 404 fallback page on the GitHub Pages dev preview) hands to this app.
+// VITE_SITE_ROOT is where the site lives: '/' live, '/HybridOS/' on the dev preview.
+declare const process: { env: Record<string, string | undefined> };
+const site = process.env.VITE_SITE_ROOT || '/';
 export default defineConfig({
-  base: './',
-  plugins: [react()],
+  base: `${site}next/`,
+  define: { 'import.meta.env.VITE_SITE_ROOT': JSON.stringify(site) },
+  plugins: [react(), { name: 'site-root', transformIndexHtml: (html: string) => html.replaceAll('__SITE__', site) }],
   // The signed-copy edge function (supabase/functions/finalise-signature) imports its PDF library the way Deno does; tests run it with the npm copy.
   resolve: {
     alias: [

@@ -1,3 +1,4 @@
+import { BASENAME } from '../app/site';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
@@ -39,7 +40,7 @@ export function SignupProcess() {
     onSuccess: () => { setNote({ text: 'Members will no longer be asked to sign it. Anyone who already signed keeps their record.', good: true }); return qc.invalidateQueries({ queryKey: ['signup-docs', gym.gymId] }); },
     onError: (e) => setNote({ text: e instanceof Error ? e.message : 'Could not do that.', good: false }),
   });
-  const link = slug.data ? joinLink(window.location.origin, slug.data) : '';
+  const link = slug.data ? joinLink(window.location.origin + BASENAME, slug.data) : '';
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(link);

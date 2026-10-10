@@ -1,3 +1,4 @@
+import { siteUrl } from '../app/site';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Session } from '@supabase/supabase-js';
@@ -7,8 +8,8 @@ import { resolveAccess, type Access } from './access';
 import { clearSelectedGymId, getSelectedGymId, setSelectedGymId } from './gymStorage';
 
 /** Legacy pages that own sign-in and gym choice until those screens move. */
-export const LEGACY_LOGIN = '../login.html';
-export const LEGACY_CHOOSER = '../choose-gym.html';
+export const LEGACY_LOGIN = siteUrl('login.html');
+export const LEGACY_CHOOSER = siteUrl('choose-gym.html');
 
 export type AuthState =
   | { status: 'loading' }

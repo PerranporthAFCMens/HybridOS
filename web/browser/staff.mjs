@@ -65,20 +65,20 @@ for (const [name, viewport] of Object.entries(sizes)) {
   });
 
   // Settings hub
-  await page.goto(`${base}/next/#/settings`);
+  await page.goto(`${base}/settings`);
   const c = runChecks();
   await c.has('settings heading', page.getByRole('heading', { name: 'Settings', level: 1 }));
   await c.has('hub lists staff', page.getByText('Logins, hours, qualifications and removing access.'));
   c.ok('layout (settings)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/settings-${name}.png`, fullPage: true });
 
-  await page.goto(`${base}/next/#/staff`);
+  await page.goto(`${base}/staff`);
   await c.has('staff heading', page.getByRole('heading', { name: 'Staff', level: 1 }));
   await c.has('team member shown', page.getByText('Sam Coach').first());
   await c.has('hours summary and pay', page.getByText(/Head coach/));
   await c.has('qualification tag', page.getByText(/Spin instructor/).first());
   c.ok('owner is not editable here', (await page.getByRole('button', { name: 'Edit Olly Owner' }).count()) === 0);
-  c.ok('owner links to the owners and admins screen', (await page.getByRole('link', { name: 'Manage access' }).getAttribute('href')) === '#/owners');
+  c.ok('owner links to the owners and admins screen', (await page.getByRole('link', { name: 'Manage access' }).getAttribute('href')) === '/owners');
   c.ok('layout (staff)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/staff-${name}.png`, fullPage: true });
 

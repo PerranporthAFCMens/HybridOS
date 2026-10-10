@@ -1,3 +1,4 @@
+import { siteUrl } from '../app/site';
 import { supabase } from './client';
 import type { Json } from './database.types';
 import type { JoinDocument, JoinPlan, JoinQuestion } from '../join/calc';
@@ -49,8 +50,7 @@ export async function getSignupDocuments(slug: string): Promise<JoinDocument[]> 
 }
 
 export async function createAccount(email: string, password: string, slug: string, gymName: string): Promise<{ signedIn: boolean }> {
-  const back = new URL('./', window.location.href);
-  back.searchParams.set('join', slug);
+  const back = new URL(siteUrl(`join/${encodeURIComponent(slug)}`), window.location.origin);
   const { data, error } = await supabase.auth.signUp({
     email: email.trim().toLowerCase(),
     password,

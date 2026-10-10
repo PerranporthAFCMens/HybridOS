@@ -57,7 +57,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/profiles')) return reply(route, profiles);
     return false;
   });
-  await page.goto(`${base}/next/#/community`);
+  await page.goto(`${base}/community`);
   const c = runChecks();
   await c.has('heading', page.getByRole('heading', { name: 'Community', level: 1 }));
   await c.has('newest post first', page.locator('article').first().getByText('Summer challenge starts Monday'));

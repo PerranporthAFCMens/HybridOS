@@ -3,12 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<script>/* A gym's sign-up link is hybridone.co.uk/join/<gym>. The server hands this page out for it; carry on to the real address of the sign-up screen. */(function(){var j=location.pathname.match(/^\/join\/([a-z0-9-]+)\/?$/i);if(j)location.replace('/next/#/join/'+j[1].toLowerCase())})();</script>
-<script>/* Production serves this page at /next (no trailing slash), which would make every relative file path resolve one folder up and leave the screen blank. Pin the base to /next/ so paths work with or without the slash. */(function(){var m=location.pathname.match(/^(.*\/next)\/?(?:index\.html)?$/);if(m)document.write('<base href="'+m[1]+'/">')})();</script>
+<script>/* Old bookmarks and emailed links look like /next/#/members. Carry on to the clean address (/members). */(function(){var h=location.hash.match(/^#(\/.*)$/);if(h&&/\/next\/?$/.test(location.pathname))location.replace(location.pathname.replace(/next\/?$/,'').replace(/\/$/,'')+h[1])})();</script>
 <title>HybridOne</title>
-<link rel="stylesheet" href="../assets/brand/brand.css">
+<link rel="stylesheet" href="__SITE__assets/brand/brand.css">
 <link rel="preconnect" href="https://mzgnhmeydhhpzgxlgudh.supabase.co" crossorigin>
-<link rel="icon" href="../assets/brand/icons/favicon.svg" type="image/svg+xml"><link rel="icon" href="../assets/brand/icons/favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="../assets/brand/icons/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="../assets/brand/icons/apple-touch-icon.png"></head>
+<link rel="icon" href="__SITE__assets/brand/icons/favicon.svg" type="image/svg+xml"><link rel="icon" href="__SITE__assets/brand/icons/favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="__SITE__assets/brand/icons/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="__SITE__assets/brand/icons/apple-touch-icon.png"></head>
 <body>
 <div id="root"></div>
 <script type="module" src="/src/main.tsx"></script>

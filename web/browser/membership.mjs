@@ -57,9 +57,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
       return false;
     });
     const c = runChecks();
-    await page.goto(`${base}/next/#/settings`);
+    await page.goto(`${base}/settings`);
     await c.has('settings lists the rules', page.getByText('Membership rules', { exact: true }));
-    await page.goto(`${base}/next/#/membership-rules`);
+    await page.goto(`${base}/membership-rules`);
     await c.has('rules heading', page.getByRole('heading', { name: 'Membership rules', level: 1 }));
     c.ok('everything starts off', !(await page.getByLabel('Members can ask to pause their membership').isChecked()) && (await page.getByLabel('Pause fee (£)').count()) === 0);
     await page.getByLabel('Members can ask to pause their membership').check();
@@ -84,7 +84,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     c.ok('one upsert for this gym', writes.length === 1 && w.query.on_conflict === 'gym_id' && w.body.gym_id === GYM);
     c.ok('the exact rules were saved', w && w.body.pause_enabled === true && w.body.pause_min_weeks === 3 && w.body.pause_max_weeks === 6 && w.body.pause_fee_pence === 500 && w.body.cancel_enabled === true && w.body.cancel_min_term_months === 6 && w.body.cancel_early_mode === 'fee' && w.body.cancel_early_fee_pence === 2500 && w.body.upgrade_enabled === true && w.body.upgrade_starts === 'next_month' && w.body.downgrade_enabled === false && w.body.pause_approval === 'admin');
 
-    await page.goto(`${base}/next/#/membership-requests`);
+    await page.goto(`${base}/membership-requests`);
     await c.has('waiting request shows the member', page.getByRole('listitem', { name: 'Jo Marsh Pause' }));
     c.ok('and the recent one', (await page.getByRole('listitem', { name: 'Sam Lee Change plan' }).textContent()).includes('All Access'));
     c.ok('only waiting requests can be decided', (await page.getByRole('button', { name: 'Approve' }).count()) === 1);
@@ -120,7 +120,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
       return false;
     });
     const c = runChecks();
-    await page.goto(`${base}/next/#/m/me`);
+    await page.goto(`${base}/m/me`);
     await page.getByRole('link', { name: 'Pause, change or cancel' }).click();
     await c.has('membership page', page.getByRole('heading', { name: 'My membership' }));
     c.ok('shows the plan and price', (await page.getByLabel('Current membership').textContent()).includes('£35.00'));

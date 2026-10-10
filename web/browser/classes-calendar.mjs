@@ -109,7 +109,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     return false;
   });
 
-  await page.goto(`${base}/next/#/classes`);
+  await page.goto(`${base}/classes`);
   const c = runChecks();
   await c.has('heading', page.getByRole('heading', { name: 'Classes', level: 1 }));
   // Week is the default where there is room for it; a phone opens on the day (it has no Week button).

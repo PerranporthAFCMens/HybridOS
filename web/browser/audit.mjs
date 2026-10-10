@@ -23,7 +23,7 @@ const handle = async ({ route, url, path, select }) => {
     return reply(route, url.searchParams.get('id')?.startsWith('eq.') ? rows.filter((r) => r.id === eq) : rows);
   }
   if (path.endsWith('/memberships') && select.includes('starts_on')) return reply(route, [{ id: 'm1', status: 'active', starts_on: '2026-03-01', ends_on: null, payment_provider: 'manual', payment_status: 'confirmed', membership_plans: { name: 'Hybrid Monthly with a long plan name', price_pence: 4500, billing_interval: 'monthly' } }]);
-  if (path.endsWith('/memberships') && select.includes('membership_plans')) return reply(route, [{ user_id: ADA, status: 'active', membership_plans: { name: 'Hybrid Monthly' } }]);
+  if (path.endsWith('/memberships') && select.includes('membership_plans')) return reply(route, [{ user_id: ADA, status: 'active', membership_plans: { name: 'Hybrid Monthly', includes_classes: true, includes_open_gym: true, includes_pt: false } }]);
   if (path.endsWith('/membership_plans')) return reply(route, [{ id: 'p1', name: 'Hybrid Monthly with a long plan name', price_pence: 4500, billing_interval: 'monthly', access_type: 'hybrid', is_active: true, description: 'Everything included, with a longer description to wrap over a few lines on a narrow phone screen', joining_fee_pence: 1000, classes_per_week: null, includes_open_gym: true, includes_classes: true, includes_pt: false, is_public: true }]);
   if (path.endsWith('/channels')) return reply(route, [{ id: 'c1', name: 'general', description: 'Everyone' }]);
   if (path.endsWith('/rpc/get_class_calendar')) return reply(route, [{ session_id: 's1', name: 'Strength and conditioning with a long name', starts_at: at(7, 30), ends_at: at(8, 30), booked_count: 9, capacity: 12, is_cancelled: false, spaces_left: 3, description: '', availability_note: '', bookable_for_me: true, my_booking_status: '', reserved_capacity: 0, reserved_eligible: false, reserved_plan_names: [], reserved_release_minutes_before: 0 }]);
@@ -32,38 +32,38 @@ const handle = async ({ route, url, path, select }) => {
 
 // Each state: how to get to it. Add new screens and pop-ups here.
 const STATES = {
-  today: async (page) => { await page.goto(`${base}/next/#/today`); await page.getByText('Active members', { exact: true }).waitFor(); await page.getByText('Strength and conditioning').first().waitFor(); },
-  members: async (page) => { await page.goto(`${base}/next/#/members`); await page.locator('.member-row').first().waitFor(); },
-  plans: async (page) => { await page.goto(`${base}/next/#/plans`); await page.getByRole('heading', { name: /Hybrid Monthly/ }).waitFor(); },
-  'plan form': async (page) => { await page.goto(`${base}/next/#/plans`); await page.getByRole('button', { name: 'New plan' }).click(); await page.getByRole('dialog').getByLabel('Name').waitFor(); },
-  classes: async (page) => { await page.goto(`${base}/next/#/classes`); await page.getByRole('button', { name: 'List', exact: true }).click(); await page.getByRole('heading', { name: /Strength and conditioning/ }).waitFor(); },
-  'class calendar': async (page) => { await page.goto(`${base}/next/#/classes`); await page.getByRole('button', { name: 'Day', exact: true }).click(); await page.getByRole('button', { name: /^Add a class on .* at 09:00$/ }).waitFor(); },
-  'class form': async (page) => { await page.goto(`${base}/next/#/classes`); await page.getByRole('button', { name: 'Add class' }).click(); await page.getByRole('dialog').getByLabel('Class name').waitFor(); },
-  'member record': async (page) => { await page.goto(`${base}/next/#/members`); await page.locator('.member-row').first().click(); await page.getByRole('dialog').getByText('Customer lifecycle').waitFor(); await page.getByRole('dialog').getByRole('heading', { name: /Hybrid Monthly/ }).waitFor(); },
-  settings: async (page) => { await page.goto(`${base}/next/#/settings`); await page.getByRole('heading', { name: 'Settings', level: 1 }).waitFor(); },
-  staff: async (page) => { await page.goto(`${base}/next/#/staff`); await page.getByText('No team accounts yet.').waitFor(); },
-  'staff form': async (page) => { await page.goto(`${base}/next/#/staff`); await page.getByRole('button', { name: 'Add staff login' }).click(); await page.getByRole('dialog').getByLabel('Name').waitFor(); },
-  rooms: async (page) => { await page.goto(`${base}/next/#/rooms`); await page.getByText('Nothing set up yet. Add your first room.').waitFor(); },
-  'rooms form': async (page) => { await page.goto(`${base}/next/#/rooms`); await page.getByRole('button', { name: 'Add room or equipment' }).click(); await page.getByRole('dialog').getByLabel('Name').waitFor(); },
-  access: async (page) => { await page.goto(`${base}/next/#/access`); await page.getByText('No access levels yet.').first().waitFor(); },
-  'access form': async (page) => { await page.goto(`${base}/next/#/access`); await page.getByRole('button', { name: 'New access level' }).click(); await page.getByRole('dialog').getByLabel('Level name').waitFor(); },
-  door: async (page) => { await page.goto(`${base}/next/#/door`); await page.getByRole('button', { name: 'Save door access' }).waitFor(); },
-  'member view': async (page) => { await page.goto(`${base}/next/#/member-view`); await page.getByRole('button', { name: 'Save member view' }).waitFor(); },
-  community: async (page) => { await page.goto(`${base}/next/#/community`); await page.getByText('No community posts yet.').waitFor(); },
-  communications: async (page) => { await page.goto(`${base}/next/#/communications`); await page.getByRole('button', { name: 'Save template' }).waitFor(); },
-  workouts: async (page) => { await page.goto(`${base}/next/#/workouts`); await page.getByText('No workouts yet. Build your first one.').waitFor(); },
-  'workout editor': async (page) => { await page.goto(`${base}/next/#/workouts`); await page.getByRole('button', { name: 'New workout' }).click(); await page.getByLabel('Workout name').waitFor(); },
-  'report builder': async (page) => { await page.goto(`${base}/next/#/reports`); await page.getByRole('tab', { name: 'Report builder', exact: true }).click(); await page.getByLabel('Look at').waitFor(); },
-  'member today': async (page) => { await page.goto(`${base}/next/#/m/today`); await page.getByRole('heading', { name: 'Ready for your next class?' }).waitFor(); },
-  'member classes': async (page) => { await page.goto(`${base}/next/#/m/classes`); await page.getByText('No classes on this day.').waitFor(); },
-  'member train': async (page) => { await page.goto(`${base}/next/#/m/train`); await page.getByRole('button', { name: 'Start my own workout' }).or(page.getByRole('link', { name: 'Start my own workout' })).waitFor(); },
-  'member bests': async (page) => { await page.goto(`${base}/next/#/m/train/pbs`); await page.getByText('No personal bests yet.').waitFor(); },
-  'member pt': async (page) => { await page.goto(`${base}/next/#/m/train/pt`); await page.getByText('No sessions booked.').waitFor(); },
-  'member me': async (page) => { await page.goto(`${base}/next/#/m/me`); await page.getByRole('button', { name: 'Sign out' }).waitFor(); },
-  'membership rules': async (page) => { await page.goto(`${base}/next/#/membership-rules`); await page.getByRole('button', { name: 'Save membership rules' }).waitFor(); },
-  'membership requests': async (page) => { await page.goto(`${base}/next/#/membership-requests`); await page.getByText('Nothing is waiting.').waitFor(); },
-  owners: async (page) => { await page.goto(`${base}/next/#/owners`); await page.getByText('No access invitations yet.').waitFor(); },
-  menu: async (page, size) => { await page.goto(`${base}/next/#/today`); await page.getByText('Active members', { exact: true }).waitFor(); if (size.width < 900) { await page.getByRole('button', { name: 'Open menu' }).click(); await page.waitForTimeout(350); } },
+  today: async (page) => { await page.goto(`${base}/today`); await page.getByText('Active members', { exact: true }).waitFor(); await page.getByText('Strength and conditioning').first().waitFor(); },
+  members: async (page) => { await page.goto(`${base}/members`); await page.locator('.member-row').first().waitFor(); },
+  plans: async (page) => { await page.goto(`${base}/plans`); await page.getByRole('heading', { name: /Hybrid Monthly/ }).waitFor(); },
+  'plan form': async (page) => { await page.goto(`${base}/plans`); await page.getByRole('button', { name: 'New plan' }).click(); await page.getByRole('dialog').getByLabel('Name').waitFor(); },
+  classes: async (page) => { await page.goto(`${base}/classes`); await page.getByRole('button', { name: 'List', exact: true }).click(); await page.getByRole('heading', { name: /Strength and conditioning/ }).waitFor(); },
+  'class calendar': async (page) => { await page.goto(`${base}/classes`); await page.getByRole('button', { name: 'Day', exact: true }).click(); await page.getByRole('button', { name: /^Add a class on .* at 09:00$/ }).waitFor(); },
+  'class form': async (page) => { await page.goto(`${base}/classes`); await page.getByRole('button', { name: 'Add class' }).click(); await page.getByRole('dialog').getByLabel('Class name').waitFor(); },
+  'member record': async (page) => { await page.goto(`${base}/members`); await page.locator('.member-row').first().click(); await page.getByRole('dialog').getByText('Customer lifecycle').waitFor(); await page.getByRole('dialog').getByRole('heading', { name: /Hybrid Monthly/ }).waitFor(); },
+  settings: async (page) => { await page.goto(`${base}/settings`); await page.getByRole('heading', { name: 'Settings', level: 1 }).waitFor(); },
+  staff: async (page) => { await page.goto(`${base}/staff`); await page.getByText('No team accounts yet.').waitFor(); },
+  'staff form': async (page) => { await page.goto(`${base}/staff`); await page.getByRole('button', { name: 'Add staff login' }).click(); await page.getByRole('dialog').getByLabel('Name').waitFor(); },
+  rooms: async (page) => { await page.goto(`${base}/rooms`); await page.getByText('Nothing set up yet. Add your first room.').waitFor(); },
+  'rooms form': async (page) => { await page.goto(`${base}/rooms`); await page.getByRole('button', { name: 'Add room or equipment' }).click(); await page.getByRole('dialog').getByLabel('Name').waitFor(); },
+  access: async (page) => { await page.goto(`${base}/access`); await page.getByText('No access levels yet.').first().waitFor(); },
+  'access form': async (page) => { await page.goto(`${base}/access`); await page.getByRole('button', { name: 'New access level' }).click(); await page.getByRole('dialog').getByLabel('Level name').waitFor(); },
+  door: async (page) => { await page.goto(`${base}/door`); await page.getByRole('button', { name: 'Save door access' }).waitFor(); },
+  'member view': async (page) => { await page.goto(`${base}/member-view`); await page.getByRole('button', { name: 'Save member view' }).waitFor(); },
+  community: async (page) => { await page.goto(`${base}/community`); await page.getByText('No community posts yet.').waitFor(); },
+  communications: async (page) => { await page.goto(`${base}/communications`); await page.getByRole('button', { name: 'Save template' }).waitFor(); },
+  workouts: async (page) => { await page.goto(`${base}/workouts`); await page.getByText('No workouts yet. Build your first one.').waitFor(); },
+  'workout editor': async (page) => { await page.goto(`${base}/workouts`); await page.getByRole('button', { name: 'New workout' }).click(); await page.getByLabel('Workout name').waitFor(); },
+  'report builder': async (page) => { await page.goto(`${base}/reports`); await page.getByRole('tab', { name: 'Report builder', exact: true }).click(); await page.getByLabel('Look at').waitFor(); },
+  'member today': async (page) => { await page.goto(`${base}/m/today`); await page.getByRole('heading', { name: 'Ready for your next class?' }).waitFor(); },
+  'member classes': async (page) => { await page.goto(`${base}/m/classes`); await page.getByText('No classes on this day.').waitFor(); },
+  'member train': async (page) => { await page.goto(`${base}/m/train`); await page.getByRole('button', { name: 'Start my own workout' }).or(page.getByRole('link', { name: 'Start my own workout' })).waitFor(); },
+  'member bests': async (page) => { await page.goto(`${base}/m/train/pbs`); await page.getByText('No personal bests yet.').waitFor(); },
+  'member pt': async (page) => { await page.goto(`${base}/m/train/pt`); await page.getByText('No sessions booked.').waitFor(); },
+  'member me': async (page) => { await page.goto(`${base}/m/me`); await page.getByRole('button', { name: 'Sign out' }).waitFor(); },
+  'membership rules': async (page) => { await page.goto(`${base}/membership-rules`); await page.getByRole('button', { name: 'Save membership rules' }).waitFor(); },
+  'membership requests': async (page) => { await page.goto(`${base}/membership-requests`); await page.getByText('Nothing is waiting.').waitFor(); },
+  owners: async (page) => { await page.goto(`${base}/owners`); await page.getByText('No access invitations yet.').waitFor(); },
+  menu: async (page, size) => { await page.goto(`${base}/today`); await page.getByText('Active members', { exact: true }).waitFor(); if (size.width < 900) { await page.getByRole('button', { name: 'Open menu' }).click(); await page.waitForTimeout(350); } },
 };
 
 // Runs inside the page. Returns a list of problems in plain words.
@@ -117,10 +117,19 @@ for (const [sizeName, viewport] of Object.entries(SIZES)) {
     document.addEventListener('DOMContentLoaded', () => document.head.appendChild(s));
   });
   for (const [stateName, go] of Object.entries(STATES)) {
-    try { await go(page, viewport); } catch (e) { c.ok(`${sizeName} / ${stateName}: could not open (${String(e).split('\n')[0].slice(0, 80)})`, false); continue; }
+    const navs = [];
+    const onNav = (fr) => { if (fr === page.mainFrame()) navs.push(fr.url()); };
+    page.on('framenavigated', onNav);
+    try { await go(page, viewport); } catch (e) {
+      c.ok(`${sizeName} / ${stateName}: could not open (${String(e).split('\n')[0].slice(0, 80)})`, false);
+      console.log(`  ${sizeName} / ${stateName}: page errors: ${errors.slice(-3).join(' | ').slice(0, 400)}; navigations: ${navs.length} (${[...new Set(navs)].slice(0, 4).join(', ')}); body: ${(await page.locator('body').innerText().catch(() => '')).slice(0, 200).replace(/\n/g, ' / ')}`);
+      page.off('framenavigated', onNav);
+      continue;
+    }
+    page.off('framenavigated', onNav);
     // the menu's name loads separately; audit with it in place (the test person has a very long surname)
     // Only admin screens have this menu; the member app has none, so waiting for it there just burns 15 seconds a screen.
-    if (!page.url().includes('#/m/')) await page.locator('.account .who-name').waitFor({ state: 'attached', timeout: 15000 }).catch(() => undefined);
+    if (!page.url().includes('/m/')) await page.locator('.account .who-name').waitFor({ state: 'attached', timeout: 15000 }).catch(() => undefined);
     await page.waitForTimeout(150);
     const problems = await page.evaluate(audit);
     if (shots) await page.screenshot({ path: `${shots}/audit-${sizeName}-${stateName.replace(/ /g, '-')}.png`, fullPage: false });

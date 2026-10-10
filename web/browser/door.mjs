@@ -39,7 +39,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     }
     return false;
   });
-  await page.goto(`${base}/next/#/door`);
+  await page.goto(`${base}/door`);
   const c = runChecks();
   await c.has('heading', page.getByRole('heading', { name: 'Door access', level: 1 }));
   c.ok('prefilled', (await page.getByLabel('Door PIN / access code').inputValue()) === '4826' && (await page.getByLabel('Label members see').inputValue()) === 'Front door' && (await page.getByLabel('Show door access to members').isChecked()));

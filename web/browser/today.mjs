@@ -34,7 +34,7 @@ let allOk = true;
 for (const [name, viewport] of Object.entries(sizes)) {
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, handle);
-  await page.goto(`${base}/next/#/today`);
+  await page.goto(`${base}/today`);
   const c = runChecks();
   await c.has('greeting', page.getByRole('heading', { name: /^Good (morning|afternoon|evening), Josh\.$/ }));
   await c.has('summary', page.getByText(/need(s)? a look|Nothing needs you/));

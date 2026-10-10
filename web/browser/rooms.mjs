@@ -53,7 +53,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     return false;
   });
 
-  await page.goto(`${base}/next/#/rooms`);
+  await page.goto(`${base}/rooms`);
   const c = runChecks();
   const dialog = page.getByRole('dialog');
   await c.has('heading', page.getByRole('heading', { name: 'Rooms and equipment', level: 1 }));

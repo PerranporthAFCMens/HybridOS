@@ -1,4 +1,4 @@
-// Browser gate: the new member app (#/m/today, #/m/classes, #/m/me) as a member on a phone and a desktop, and the
+// Browser gate: the new member app (/m/today, /m/classes, /m/me) as a member on a phone and a desktop, and the
 // "previewing" banner for an owner. Supabase is mocked at the network layer; booking and cancelling are recorded.
 import { base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
 
@@ -58,11 +58,12 @@ for (const role of ['member', 'owner']) {
       if (['PATCH', 'PUT'].includes(r.method()) && (u.pathname.endsWith('/profiles') || u.pathname.endsWith('/auth/v1/user'))) writes.push(`${r.method()} ${u.pathname.split('/').pop()} ${r.postData() ?? ''}`);
     });
     const c = runChecks();
-    await page.goto(`${base}/next/#/m/today`);
+    await page.goto(`${base}/m/today`);
     if (role === 'owner') {
       await c.has('an owner sees the preview banner', page.getByText(/Previewing the new member app as owner/));
       c.ok('and a way back', (await page.getByRole('link', { name: 'Back to the admin' }).count()) === 1);
       c.ok('no page errors', errors.length === 0);
+    if (errors.length) console.log(`  page errors: ${errors.slice(0, 3).join(' | ').slice(0, 500)}`);
       if (!c.report(`${role} ${name}`)) allOk = false;
       await ctx.close();
       continue;
@@ -172,7 +173,7 @@ for (const role of ['member', 'owner']) {
     // On their birthday the app says so once, with confetti, and not again that year
     const londonToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
     birthday.value = `1990-${londonToday.slice(5)}`;
-    await page.goto(`${base}/next/#/m/today`);
+    await page.goto(`${base}/m/today`);
     await page.reload();
     await c.has('happy birthday appears on the day', page.getByRole('dialog', { name: 'Happy birthday' }));
     c.ok('with their first name and the gym', (await page.getByRole('dialog', { name: 'Happy birthday' }).textContent()).includes('Happy birthday, Jo!') && (await page.getByRole('dialog', { name: 'Happy birthday' }).textContent()).includes('Puffin Performance'));
@@ -186,6 +187,7 @@ for (const role of ['member', 'owner']) {
     await page.waitForTimeout(500);
     c.ok('and does not come back the same year', (await page.getByRole('dialog', { name: 'Happy birthday' }).count()) === 0);
     c.ok('no page errors', errors.length === 0);
+    if (errors.length) console.log(`  page errors: ${errors.slice(0, 3).join(' | ').slice(0, 500)}`);
     if (!c.report(`${role} ${name}`)) allOk = false;
     await ctx.close();
   }

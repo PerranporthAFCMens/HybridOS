@@ -1,3 +1,4 @@
+import { siteUrl } from '../app/site';
 import type { GymRole, MembershipRow } from '../data/memberships';
 
 export type Access = 'privileged' | 'active' | 'paused' | 'pending' | 'ended';
@@ -31,5 +32,5 @@ export function resolveAccess(role: GymRole, membership: MembershipRow | null, t
 export function homeFor(role: GymRole, gymId: string): 'admin' | string {
   if (role === 'owner' || role === 'admin') return 'admin';
   const page = role === 'staff' || role === 'coach' ? 'staff.html' : 'member.html';
-  return `../${page}?gym_id=${encodeURIComponent(gymId)}`;
+  return `${siteUrl(page)}?gym_id=${encodeURIComponent(gymId)}`;
 }

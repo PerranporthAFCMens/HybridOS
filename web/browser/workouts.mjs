@@ -58,7 +58,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/members')) return reply(route, [{ user_id: 'u-amy', display_name: 'Amy Active', first_name: null, last_name: null, email: null }, { user_id: 'u-ben', display_name: 'Ben Lifter', first_name: null, last_name: null, email: null }]);
     return false;
   });
-  await page.goto(`${base}/next/#/workouts`);
+  await page.goto(`${base}/workouts`);
   const c = runChecks();
   const dialog = page.getByRole('dialog');
   await c.has('heading', page.getByRole('heading', { name: 'Workout builder', level: 1 }));

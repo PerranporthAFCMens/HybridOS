@@ -1,3 +1,4 @@
+import { siteUrl } from '../app/site';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOutletContext } from 'react-router-dom';
@@ -132,10 +133,10 @@ export function Me() {
       <section className="mem-card">
         <h2>More</h2>
         <p className="muted small">Community and billing are still in the classic app while they are rebuilt here.</p>
-        <a className="btn secondary" href={`../member.html?gym_id=${encodeURIComponent(auth.gym.gymId)}`}>Open the classic app</a>
-        {auth.gyms.length > 1 && <a className="btn secondary" href="../choose-gym.html?switch=1">Switch gym</a>}
+        <a className="btn secondary" href={`${siteUrl('member.html')}?gym_id=${encodeURIComponent(auth.gym.gymId)}`}>Open the classic app</a>
+        {auth.gyms.length > 1 && <a className="btn secondary" href={`${siteUrl('choose-gym.html')}?switch=1`}>Switch gym</a>}
       </section>
-      <Button onClick={() => { void auth.signOut().then(() => window.location.assign('../login.html')); }}>Sign out</Button>
+      <Button onClick={() => { void auth.signOut().then(() => window.location.assign(siteUrl('login.html'))); }}>Sign out</Button>
     </div>
   );
 }

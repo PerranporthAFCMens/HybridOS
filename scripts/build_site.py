@@ -153,13 +153,21 @@ def add_brand_layer():
   f.write_text(s,encoding='utf-8')
 def write_deployment_manifest():
  (OUT/'deployment.json').write_text(json.dumps({'build_sha':BUILD_SHA,'build_version':VERSION},indent=2)+'\n',encoding='utf-8')
+def site_root():
+ # Where the site lives. '/' on hybridone.co.uk and in the local checks; the dev preview is a GitHub Pages project site under /<repository name>/.
+ explicit=os.environ.get('VITE_SITE_ROOT')
+ if explicit:return explicit if explicit.endswith('/') else explicit+'/'
+ if os.environ.get('GITHUB_WORKFLOW')=='HybridOne dev preview' and os.environ.get('GITHUB_REPOSITORY'):return '/'+os.environ['GITHUB_REPOSITORY'].split('/')[1]+'/'
+ return '/'
 def build_next_app():
  # New TypeScript/React app (REBUILD_PLAN.md): web/ -> _site/next/. Vite writes straight into _site/next.
  web=ROOT/'web'
  if not web.exists():return
- env={**os.environ,'CI':'1'}
+ site=site_root();env={**os.environ,'CI':'1','VITE_SITE_ROOT':site}
  subprocess.run(['npm','ci','--no-audit','--no-fund'],cwd=web,check=True,env=env)
  subprocess.run(['npm','run','build'],cwd=web,check=True,env=env)
  if not(OUT/'next'/'index.html').exists():raise RuntimeError('web build did not produce _site/next/index.html')
+ # Live (Vercel) hands app addresses to the app with rewrites in vercel.json. GitHub Pages cannot, so the dev preview answers an unknown address with the app's page instead.
+ if site!='/':shutil.copy2(OUT/'next'/'index.html',OUT/'404.html')
 def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();add_brand_layer();build_next_app();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
 if __name__=='__main__':build()

@@ -12,12 +12,12 @@ function gymLoginUrl(returnHere=true){
 }
 const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html']);
 const routes=[
- {key:'dashboard',label:'Today',icon:'home',href:'./next/#/today'},
- {key:'members',label:'Members',icon:'members',href:'./next/#/members'},
- {key:'classes',label:'Classes and workouts',icon:'classes',href:'./next/#/classes'},
- {key:'community',label:'Messages and community',icon:'community',href:'./next/#/community'},
- {key:'reporting',label:'Reports',icon:'reporting',href:'./next/#/reports'},
- {key:'settings',label:'Settings and staff',icon:'admin',href:'./next/#/settings'},
+ {key:'dashboard',label:'Today',icon:'home',href:'./today'},
+ {key:'members',label:'Members',icon:'members',href:'./members'},
+ {key:'classes',label:'Classes and workouts',icon:'classes',href:'./classes'},
+ {key:'community',label:'Messages and community',icon:'community',href:'./community'},
+ {key:'reporting',label:'Reports',icon:'reporting',href:'./reports'},
+ {key:'settings',label:'Settings and staff',icon:'admin',href:'./settings'},
  {key:'member-view',label:'Preview as member',icon:'profile',href:'./member.html?view=member',section:'Preview'},
  {key:'staff-view',label:'Preview as staff',icon:'staff',href:'./staff.html?view=staff'}
 ];

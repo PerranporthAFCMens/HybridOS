@@ -1,6 +1,6 @@
 # HybridOne web app architecture
 
-The new app described in `REBUILD_PLAN.md`. TypeScript (strict), React, Vite, TanStack Query, Supabase. It is built to `_site/next/` by `scripts/build_site.py` and uses hash routing (`/next/#/today`), so it runs on GitHub Pages (dev) and Vercel (live) without rewrites. The old pages keep working until each screen is moved and its old page deleted.
+The new app described in `REBUILD_PLAN.md`. TypeScript (strict), React, Vite, TanStack Query, Supabase. It is built to `_site/next/` by `scripts/build_site.py` and uses normal routing with clean addresses (`/today`, `/join/<gym>`). The `next` folder is only where the files sit. On Vercel (live) rewrites in `vercel.json` hand each app address to the app; on the GitHub Pages dev preview (a sub-path, `/HybridOS/`) the build also writes `404.html` as a copy of the app page, which does the same job. `VITE_SITE_ROOT` says where the site lives (set by `scripts/build_site.py`); use `siteUrl()` / `BASENAME` from `src/app/site.ts`, never a relative `../` path. A new screen needs its address added to the rewrite list in `vercel.json`. The old pages keep working until each screen is moved and its old page deleted.
 
 ## Folder layout
 

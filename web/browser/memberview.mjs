@@ -42,7 +42,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     }
     return false;
   });
-  await page.goto(`${base}/next/#/member-view`);
+  await page.goto(`${base}/member-view`);
   const c = runChecks();
   await c.has('heading', page.getByRole('heading', { name: 'What members see', level: 1 }));
   const order = async () => page.locator('.mv-screen [data-tile]').evaluateAll((els) => els.map((e) => e.getAttribute('data-tile')));

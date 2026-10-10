@@ -27,6 +27,6 @@ describe('App', () => {
       </QueryClientProvider>,
     );
     expect(screen.getByText('Loading…')).toBeTruthy();
-    await vi.waitFor(() => expect(replace).toHaveBeenCalledWith('../login.html'));
+    await vi.waitFor(() => expect(replace).toHaveBeenCalledWith('/login.html'));
   });
 });

@@ -47,7 +47,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     document.addEventListener('DOMContentLoaded', () => document.head.appendChild(s));
   });
 
-  await page.goto(`${base}/next/#/plans`);
+  await page.goto(`${base}/plans`);
   const c = runChecks();
   await c.has('heading', page.getByRole('heading', { name: 'Membership plans', level: 1 }));
   await c.has('summary', page.getByText('1 active · 2 total'));

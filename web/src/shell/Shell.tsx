@@ -1,3 +1,4 @@
+import { siteUrl } from '../app/site';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -38,7 +39,7 @@ export function Shell() {
       <button type="button" className="backdrop" aria-label="Close menu" onClick={close} />
       <aside className="side">
         <div className="brand">
-          <img src="../assets/brand/logo/svg/hybridone-logo-on-dark.svg" alt="HybridOne" height={34} />
+          <img src={siteUrl('assets/brand/logo/svg/hybridone-logo-on-dark.svg')} alt="HybridOne" height={34} />
         </div>
         <div className="gym">
           {logo?.uploaded && <img className="gym-tile" src={logo.src} alt="" />}
@@ -46,7 +47,7 @@ export function Shell() {
             {logo && !logo.uploaded && <img className="gym-wordmark" src={logo.src} alt="" />}
             <small>Current gym</small>
             <b>{auth.gym.gymName}</b>
-            {auth.gyms.length > 1 && <a href="../choose-gym.html?switch=1">Switch gym</a>}
+            {auth.gyms.length > 1 && <a href={`${siteUrl('choose-gym.html')}?switch=1`}>Switch gym</a>}
           </div>
         </div>
         <nav className="nav" aria-label="Main">
@@ -61,7 +62,7 @@ export function Shell() {
           <NavLink to="/settings" onClick={close}>Settings and staff</NavLink>
           <div className="section">Preview</div>
           <NavLink to="/m/today" onClick={close}>Preview as member</NavLink>
-          <a href="../staff.html?view=staff">Preview as staff</a>
+          <a href={`${siteUrl('staff.html')}?view=staff`}>Preview as staff</a>
         </nav>
         <div className="account">
           <div className="who" title={auth.email}>
@@ -70,7 +71,7 @@ export function Shell() {
           </div>
           <Button
             onClick={() => {
-              void auth.signOut().then(() => window.location.assign('../login.html'));
+              void auth.signOut().then(() => window.location.assign(siteUrl('login.html')));
             }}
           >
             Sign out

@@ -59,7 +59,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     return false;
   });
 
-  await page.goto(`${base}/next/#/class-setup`);
+  await page.goto(`${base}/class-setup`);
   const c = runChecks();
   const dialog = page.getByRole('dialog');
   await c.has('heading', page.getByRole('heading', { name: 'Class setup', level: 1 }));
@@ -136,7 +136,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.waitForTimeout(300);
   const on = writes.filter((w) => w.table === 'class_types').at(-1);
   c.ok('switch on', on && on.query.id === 'eq.type-yoga' && JSON.stringify(on.body) === JSON.stringify({ is_active: true }));
-  c.ok('link to rooms and equipment', (await page.getByRole('link', { name: 'Open rooms and equipment' }).getAttribute('href')) === '#/rooms');
+  c.ok('link to rooms and equipment', (await page.getByRole('link', { name: 'Open rooms and equipment' }).getAttribute('href')) === '/rooms');
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;
   await ctx.close();

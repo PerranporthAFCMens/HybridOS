@@ -9,7 +9,7 @@ describe('gymLogo', () => {
     expect(gymLogo(HUB, 'https://cdn.example/hub.png')).toEqual({ src: 'https://cdn.example/hub.png', uploaded: true });
   });
   it('falls back to the bundled logo for Hybrid Hub only', () => {
-    expect(gymLogo(HUB, null)).toEqual({ src: '../assets/hybrid-hub-logo-horizontal.svg', uploaded: false });
+    expect(gymLogo(HUB, null)).toEqual({ src: '/assets/hybrid-hub-logo-horizontal.svg', uploaded: false });
     expect(gymLogo('other', null)).toBeNull();
   });
   it('ignores a logo address that is not http or https', () => {

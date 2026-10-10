@@ -100,7 +100,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     return false;
   });
 
-  await page.goto(`${base}/next/#/classes`);
+  await page.goto(`${base}/classes`);
   const c = runChecks();
   await c.has('heading', page.getByRole('heading', { name: 'Classes', level: 1 }));
   // The calendar is the default view; the card list is the List view (checked here, the calendar has its own check).
@@ -130,7 +130,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Today' }).click();
   await c.has('Today returns to this week', page.getByRole('heading', { name: /Strength and conditioning/ }));
-  c.ok('Class setup link goes to the new Class setup screen', (await page.getByRole('link', { name: 'Class setup' }).getAttribute('href')) === '#/class-setup');
+  c.ok('Class setup link goes to the new Class setup screen', (await page.getByRole('link', { name: 'Class setup' }).getAttribute('href')) === '/class-setup');
   c.ok(`read-only: no writes (${writes.join(', ') || 'none'})`, writes.length === 0);
 
   // Add class: pick a class type, see what it needs, let the gym rules guide who can teach it

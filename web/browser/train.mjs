@@ -72,7 +72,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     return false;
   });
   const c = runChecks();
-  await page.goto(`${base}/next/#/m/today`);
+  await page.goto(`${base}/m/today`);
   await c.has("today's workout is on top", page.getByRole('heading', { name: "Today's workout is ready" }));
   c.ok('tabs: Today, Workouts, Me (no classes in this plan)', (await page.getByRole('navigation', { name: 'Member' }).getByRole('link').allInnerTexts()).join('|') === 'Today|Workouts|Me');
   c.ok('layout (today)', (await page.evaluate(layoutProblems)).length === 0);

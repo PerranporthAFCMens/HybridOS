@@ -11,7 +11,7 @@ Today the app is about 24 separate hand-written HTML pages. Inside the Admin she
 - Typed Supabase client from generated database types; screens never call the database directly (one typed data layer).
 - One owner for sign-in and gym context (replaces the per-page lookups).
 - Brand tokens as shared components (buttons, cards, tables, forms).
-- Hash routing so it works on GitHub Pages (dev) and Vercel (live) without rewrites.
+- Clean addresses (`/today`, no `#`, no `/next/`): Vercel rewrites on live, a 404 fallback page on the GitHub Pages dev preview (changed 10 October 2026; it started as hash routing).
 - Not Next.js (no public/SEO surface needed), no new backend or database.
 
 ## Tight rules (no technical debt)
@@ -24,7 +24,7 @@ Today the app is about 24 separate hand-written HTML pages. Inside the Admin she
 7. This file and an ARCHITECTURE note in the repo describe folder layout, naming and how to add a screen.
 
 ## Method (strangler)
-The new app lives in `web/` and is built to `_site/next/` by `scripts/build_site.py` (relative base, hash routing). Existing routes are untouched. Screens not yet moved keep working inside the new shell. Live is only changed on the owner's say-so.
+The new app lives in `web/` and is built to `_site/next/` by `scripts/build_site.py` (app addresses are clean, see ARCHITECTURE). Existing routes are untouched. Screens not yet moved keep working inside the new shell. Live is only changed on the owner's say-so.
 
 1. Foundation: scaffold, typed client, auth/gym context, shell, tests, CI gates, ARCHITECTURE note. Nothing visible changes.
 2. Shell and Today. Owner judges speed on dev.

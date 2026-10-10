@@ -101,7 +101,7 @@ describe('homeFor', () => {
   it('keeps owners and admins in the new Admin shell and sends others to their app', () => {
     expect(homeFor('owner', 'g')).toBe('admin');
     expect(homeFor('admin', 'g')).toBe('admin');
-    expect(homeFor('coach', 'g')).toBe('../staff.html?gym_id=g');
-    expect(homeFor('member', 'g')).toBe('../member.html?gym_id=g');
+    expect(homeFor('coach', 'g')).toBe('/staff.html?gym_id=g');
+    expect(homeFor('member', 'g')).toBe('/member.html?gym_id=g');
   });
 });

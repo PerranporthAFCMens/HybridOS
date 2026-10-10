@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { LEGACY_CHOOSER, LEGACY_LOGIN, useAuth } from '../auth/AuthProvider';
 import { Shell } from '../shell/Shell';
 import { Today } from '../today/Today';
@@ -32,6 +32,7 @@ import { Rules } from '../membership/Rules';
 import { Requests } from '../membership/Requests';
 import { SignupProcess } from '../signup/SignupProcess';
 import { Join } from '../join/Join';
+import { BASENAME } from './site';
 
 function Leave({ to }: { to: string }) {
   useEffect(() => {
@@ -108,11 +109,11 @@ function Main() {
 
 export function App() {
   return (
-    <HashRouter>
+    <BrowserRouter basename={BASENAME}>
       <Routes>
         <Route path="/join/:slug" element={<Join />} />
         <Route path="*" element={<Main />} />
       </Routes>
-    </HashRouter>
+    </BrowserRouter>
   );
 }

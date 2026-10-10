@@ -45,7 +45,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/gym_email_templates')) return reply(route, [{ subject: 'Join {{gym_name}}', preheader: null, heading: 'Welcome to {{gym_name}}', body_text: '{{invited_by}} invited you as {{role}}.', button_label: 'Join now' }]);
     return false;
   });
-  await page.goto(`${base}/next/#/communications`);
+  await page.goto(`${base}/communications`);
   const c = runChecks();
   const preview = page.getByLabel('Preview of the invitation email');
   await c.has('heading', page.getByRole('heading', { name: 'Communications', level: 1 }));

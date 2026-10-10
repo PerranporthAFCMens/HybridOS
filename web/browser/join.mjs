@@ -1,6 +1,6 @@
 // Browser gate: the sign-up link a gym sends to new members. Mocked network only; no real account.
 // Checks the whole journey for an adult and for an under-18, what is sent to the database, the refusals, and the layout.
-import { base, launch, mockSupabase, reply, runChecks, session, sizes } from './mock.mjs';
+import { base, launch, mockSupabase, reply, runChecks, session, sizes, serveApp } from './mock.mjs';
 
 const GYM = '33333333-3333-4333-8333-333333333333';
 const PLANS = [
@@ -37,6 +37,7 @@ const browser = await launch();
 let allOk = true;
 for (const [name, viewport] of Object.entries(sizes)) {
   const ctx = await browser.newContext({ viewport });
+  await serveApp(ctx);
   const page = await ctx.newPage();
   page.setDefaultTimeout(10000);
   const errors = [];
@@ -61,18 +62,16 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const next = (label) => page.getByRole('button', { name: label, exact: true }).click();
   const alert = page.getByRole('alert');
 
-  // The gym's link is hybridone.co.uk/join/<gym>: the server hands out the app page there (a rewrite in vercel.json), and the page carries on to the real address.
-  const appHtml = await (await page.request.get(`${base}/next/index.html`)).text();
-  await page.route(/\/join\/puffin$/, (route) => route.fulfill({ contentType: 'text/html', body: appHtml }));
+  // The gym's link is hybridone.co.uk/join/<gym>: the server hands out the app page there (a rewrite in vercel.json) and the address stays as it is.
   await page.goto(`${base}/join/puffin`);
   await c.has('the clean sign-up link opens the journey', page.getByRole('heading', { name: 'Join Puffin Performance' }));
-  c.ok('and ends at the real address of the sign-up screen', page.url().includes('/next/#/join/puffin'));
+  c.ok('and the address stays the clean link', page.url() === `${base}/join/puffin`);
   await page.unroute(/\/join\/puffin$/);
 
-  await page.goto(`${base}/next/#/join/nope`);
+  await page.goto(`${base}/join/nope`);
   await c.has('a bad link says so', page.getByText('This sign-up link is not valid'));
 
-  await page.goto(`${base}/next/#/join/puffin`);
+  await page.goto(`${base}/join/puffin`);
   await c.has('the link shows the gym', page.getByRole('heading', { name: 'Join Puffin Performance' }));
   await c.has('it starts at the account step', page.getByRole('heading', { name: 'Create your account' }));
   await next('Create account');
