@@ -44,7 +44,8 @@ export async function signedInPage(browser, viewport) {
   // click on a button that never exists into a 30 second wait, twice per run (it cost a minute of every CI run).
   page.setDefaultTimeout(10000);
   const errors = [];
-  page.on('pageerror', (e) => errors.push(String(e)));
+  // Safari reports a request cut off by a reload or a new page as a page error; that is not a fault in the app.
+  page.on('pageerror', (e) => { if (!/Fetch API cannot load .* due to access control checks/.test(String(e))) errors.push(String(e)); });
   return { ctx, page, errors };
 }
 
