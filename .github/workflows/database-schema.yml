@@ -44,15 +44,26 @@ jobs:
             select count(*) into v_triggers from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace tn on tn.oid=c.relnamespace join pg_proc p on p.oid=t.tgfoid join pg_namespace fn on fn.oid=p.pronamespace where not t.tgisinternal and (tn.nspname in ('public','private') or fn.nspname in ('public','private'));
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
-            if v_tables<>65 then raise exception 'Expected 65 app tables, got %',v_tables; end if;
-            if v_functions<>102 then raise exception 'Expected 102 committed app functions, got %',v_functions; end if;
-            if v_policies<>173 then raise exception 'Expected 173 app/storage policies, got %',v_policies; end if;
-            if v_triggers<>26 then raise exception 'Expected 26 app-related triggers, got %',v_triggers; end if;
+            if v_tables<>71 then raise exception 'Expected 71 app tables, got %',v_tables; end if;
+            if v_functions<>114 then raise exception 'Expected 114 committed app functions, got %',v_functions; end if;
+            if v_policies<>183 then raise exception 'Expected 183 app/storage policies, got %',v_policies; end if;
+            if v_triggers<>28 then raise exception 'Expected 28 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
             if exists(select 1 from public.profiles) then raise exception 'Baseline must not contain live profile rows'; end if;
           end $$;
           SQL
+      - name: Member details and sign-up documents verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          # read-only verification queries: every row must say ok
+          for f in supabase/verification/20261011_member_join_details_check.sql supabase/verification/20261011_signup_documents_check.sql; do
+            psql "$DB_URL" -X -At -F ' | ' -f "$f" > /tmp/check.txt
+            cat /tmp/check.txt
+            if grep -v ' | ok$' /tmp/check.txt; then echo "A verification check is not ok in $f"; exit 1; fi
+          done
       - name: Membership status verification query and persona tests
         shell: bash
         run: |
