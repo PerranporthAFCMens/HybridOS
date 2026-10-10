@@ -28,6 +28,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const writes = [];
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, async ({ route, url, path, select, method, body }) => {
+    if (path.endsWith('/rpc/get_members_missing_details')) return reply(route, [{ user_id: BOB, member_name: 'Bob Adams', missing: ['address', 'emergency contact'] }]);
     if (['PATCH', 'POST'].includes(method)) {
       writes.push({ method, path, query: Object.fromEntries(url.searchParams), body });
       await route.fulfill({ status: 204, body: '' });
@@ -60,6 +61,16 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByLabel('Search members by name').fill('zan');
   await c.has('search summary', page.getByText('1 of 4 gym users'));
   await page.getByLabel('Search members by name').fill('');
+
+  // Who is missing details is shown to the gym, and opens the record
+  await c.has('the missing details card', page.getByText('1 member is missing details'));
+  await page.getByText('1 member is missing details').click();
+  await c.has('it says who and what', page.getByText('Missing: address, emergency contact'));
+  c.ok('no horizontal overflow (missing details)', !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)));
+  c.ok('the Open button is a proper tap target', ((await page.locator('.missing-details').getByRole('button', { name: 'Open' }).boundingBox())?.height ?? 0) >= 40);
+  await page.locator('.missing-details').getByRole('button', { name: 'Open' }).click();
+  await c.has('Open shows that member\'s record', page.getByRole('dialog').getByText('Bob Adams'));
+  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
 
   // The team are listed too, marked by role, and can be filtered
   c.ok('the owner is listed as an owner', (await page.locator('.member-row', { hasText: 'Pat Boss' }).textContent()).includes('Owner'));

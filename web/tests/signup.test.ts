@@ -65,6 +65,6 @@ describe('words and paths', () => {
     expect(signerLine({ signerName: 'Sam Penrose', isGuardian: true }, 'Jo Penrose')).toBe('Sam Penrose (parent or guardian of Jo Penrose)');
   });
   it('builds the sign-up link', () => {
-    expect(joinLink('https://hybridone.co.uk', 'puffin')).toBe('https://hybridone.co.uk/next/#/join/puffin');
+    expect(joinLink('https://hybridone.co.uk', 'puffin')).toBe('https://hybridone.co.uk/join/puffin');
   });
 });

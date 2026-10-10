@@ -60,6 +60,14 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const next = (label) => page.getByRole('button', { name: label, exact: true }).click();
   const alert = page.getByRole('alert');
 
+  // The gym's link is hybridone.co.uk/join/<gym>: the server hands out the app page there (a rewrite in vercel.json), and the page carries on to the real address.
+  const appHtml = await (await page.request.get(`${base}/next/index.html`)).text();
+  await page.route(/\/join\/puffin$/, (route) => route.fulfill({ contentType: 'text/html', body: appHtml }));
+  await page.goto(`${base}/join/puffin`);
+  await c.has('the clean sign-up link opens the journey', page.getByRole('heading', { name: 'Join Puffin Performance' }));
+  c.ok('and ends at the real address of the sign-up screen', page.url().includes('/next/#/join/puffin'));
+  await page.unroute(/\/join\/puffin$/);
+
   await page.goto(`${base}/next/#/join/nope`);
   await c.has('a bad link says so', page.getByText('This sign-up link is not valid'));
 

@@ -92,5 +92,5 @@ export function signerLine(s: { signerName: string; isGuardian: boolean }, membe
 
 /** The sign-up link a gym sends out. */
 export function joinLink(origin: string, slug: string): string {
-  return `${origin}/next/#/join/${slug}`;
+  return `${origin}/join/${slug}`;
 }
