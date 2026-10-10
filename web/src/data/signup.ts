@@ -108,3 +108,12 @@ export async function signedCopyUrl(path: string): Promise<string> {
   if (error) throw new Error(error.message);
   return data.signedUrl;
 }
+
+export interface MissingDetails { userId: string; name: string; missing: string[] }
+
+/** Members who lack something the gym requires (details, emergency contact, a signature). For owners, admins and staff only. */
+export async function listMissingDetails(gymId: string): Promise<MissingDetails[]> {
+  const { data, error } = await supabase.rpc('get_members_missing_details', { p_gym_id: gymId });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => ({ userId: r.user_id, name: r.member_name, missing: r.missing }));
+}
