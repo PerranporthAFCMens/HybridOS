@@ -117,7 +117,16 @@ for (const [sizeName, viewport] of Object.entries(SIZES)) {
     document.addEventListener('DOMContentLoaded', () => document.head.appendChild(s));
   });
   for (const [stateName, go] of Object.entries(STATES)) {
-    try { await go(page, viewport); } catch (e) { c.ok(`${sizeName} / ${stateName}: could not open (${String(e).split('\n')[0].slice(0, 80)})`, false); continue; }
+    const navs = [];
+    const onNav = (fr) => { if (fr === page.mainFrame()) navs.push(fr.url()); };
+    page.on('framenavigated', onNav);
+    try { await go(page, viewport); } catch (e) {
+      c.ok(`${sizeName} / ${stateName}: could not open (${String(e).split('\n')[0].slice(0, 80)})`, false);
+      console.log(`  ${sizeName} / ${stateName}: page errors: ${errors.slice(-3).join(' | ').slice(0, 400)}; navigations: ${navs.length} (${[...new Set(navs)].slice(0, 4).join(', ')}); body: ${(await page.locator('body').innerText().catch(() => '')).slice(0, 200).replace(/\n/g, ' / ')}`);
+      page.off('framenavigated', onNav);
+      continue;
+    }
+    page.off('framenavigated', onNav);
     // the menu's name loads separately; audit with it in place (the test person has a very long surname)
     // Only admin screens have this menu; the member app has none, so waiting for it there just burns 15 seconds a screen.
     if (!page.url().includes('/m/')) await page.locator('.account .who-name').waitFor({ state: 'attached', timeout: 15000 }).catch(() => undefined);
