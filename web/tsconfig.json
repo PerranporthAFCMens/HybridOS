@@ -15,7 +15,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["vite/client"],
-    "paths": { "npm:pdf-lib@1.17.1": ["./node_modules/pdf-lib"] }
+    "paths": { "npm:pdf-lib@1.17.1": ["./node_modules/pdf-lib"], "jsr:@supabase/supabase-js@2.116.0": ["./node_modules/@supabase/supabase-js"] }
   },
   "include": ["src", "tests", "vite.config.ts"]
 }

@@ -6,6 +6,7 @@
 //
 // One file on purpose, so it can be pasted into the Supabase dashboard's function editor as well as deployed with the CLI.
 // The PDF builder at the top has no Deno-only code and is unit tested (web/tests/signedpdf.test.ts).
+import { createClient } from 'jsr:@supabase/supabase-js@2.116.0'
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'npm:pdf-lib@1.17.1'
 
 declare const Deno: {
@@ -202,8 +203,6 @@ async function handle(req: Request): Promise<Response> {
     const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     const resendKey = Deno.env.get('RESEND_API_KEY') ?? ''
     if (!url || !service) return reply(500, { error: 'Not configured' })
-    const spec = 'jsr:@supabase/supabase-js@2.116.0'
-    const { createClient } = await import(spec)
     const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } })
 
     stage = 'authenticate'
