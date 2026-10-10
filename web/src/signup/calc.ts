@@ -30,6 +30,7 @@ export const DEFAULT_ACCEPTANCE = 'I confirm I have read, understood and agree t
 export const MAX_PDF_BYTES = 10 * 1024 * 1024;
 export const MAX_TEXT = 60000;
 export const MAX_QUESTIONS = 40;
+export const MAX_ACCEPTANCE = 2000;
 
 export function emptyDraft(kind: DocKind): DocDraft {
   return { title: KIND_LABEL[kind], source: 'text', body: '', file: null, acceptance: DEFAULT_ACCEPTANCE, questions: [] };
@@ -53,7 +54,7 @@ export function checkDraft(d: DocDraft): string | null {
     if (d.body.trim().length > MAX_TEXT) return 'That wording is too long (60,000 characters at most).';
   }
   if (!d.acceptance.trim()) return 'Write the sentence members tick to agree.';
-  if (d.acceptance.trim().length > 300) return 'The tick-box sentence is too long (300 characters at most).';
+  if (d.acceptance.trim().length > MAX_ACCEPTANCE) return 'The tick-box wording is too long (2,000 characters at most).';
   if (d.questions.length > MAX_QUESTIONS) return `Use ${MAX_QUESTIONS} questions at most.`;
   for (const [i, q] of d.questions.entries()) {
     if (!q.prompt.trim()) return `Question ${i + 1} needs some wording.`;
