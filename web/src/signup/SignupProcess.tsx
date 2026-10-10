@@ -6,7 +6,7 @@ import { Button } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
 import { Checkbox, Field, FileInput, Input, Select, Textarea } from '../ui/Field';
 import { Modal } from '../ui/Modal';
-import { DEFAULT_ACCEPTANCE, KIND_LABEL, MAX_QUESTIONS, checkDraft, describeDoc, emptyDraft, joinLink, newQuestion, signerLine, toRpcQuestions, type DocDraft, type DocKind, type DocSource } from './calc';
+import { DEFAULT_ACCEPTANCE, KIND_LABEL, MAX_ACCEPTANCE, MAX_QUESTIONS, checkDraft, describeDoc, emptyDraft, joinLink, newQuestion, signerLine, toRpcQuestions, type DocDraft, type DocKind, type DocSource } from './calc';
 import '../members/members.css';
 import '../staff/staff.css';
 import './signup.css';
@@ -81,7 +81,7 @@ export function SignupProcess() {
               <>
                 <p><b>{d.title}</b></p>
                 <p className="muted">{describeDoc(d, d.questions.length)}. Added {when(d.uploadedAt)}.</p>
-                <p className="muted">Tick-box: “{d.acceptance}”</p>
+                <p className="muted">Tick-box: “{d.acceptance.length > 160 ? `${d.acceptance.slice(0, 160)}…` : d.acceptance}”</p>
                 {d.source === 'pdf' && d.filePath && <p><a href={publicPdfUrl(d.filePath)} target="_blank" rel="noreferrer">Open the PDF ({d.fileName})</a></p>}
                 {d.questions.length > 0 && (
                   <ol className="signup-qs">{d.questions.map((q) => <li key={q.id}>{q.prompt}{q.flagOnYes ? ' (flagged to staff if yes)' : ''}</li>)}</ol>
@@ -214,8 +214,8 @@ function Editor({ gymId, kind, existing, onClose, onSaved }: { gymId: string; ki
           <FileInput id="doc-file" accept="application/pdf,.pdf" onChange={(e) => { const f = e.target.files?.[0] ?? null; setNewFile(f); set({ file: f ? { name: f.name, size: f.size, type: f.type } : d.file }); }} />
         </Field>
       )}
-      <Field label="Tick-box sentence" htmlFor="doc-accept" hint="What the member ticks to agree. It is saved with their signature.">
-        <Input id="doc-accept" value={d.acceptance} onChange={(e) => set({ acceptance: e.target.value })} placeholder={DEFAULT_ACCEPTANCE} />
+      <Field label="Tick-box wording" htmlFor="doc-accept" hint={`What the member ticks to agree: a sentence or a few paragraphs (${d.acceptance.length} of ${MAX_ACCEPTANCE} characters). It is saved with their signature.`}>
+        <Textarea id="doc-accept" rows={4} value={d.acceptance} onChange={(e) => set({ acceptance: e.target.value })} placeholder={DEFAULT_ACCEPTANCE} />
       </Field>
 
       <h3>Questions (optional)</h3>
