@@ -29,7 +29,8 @@ describe('a document draft', () => {
     expect(checkDraft(text({ title: ' ' }))).toBe('Give the document a title.');
     expect(checkDraft(text({ title: 'x'.repeat(121) }))).toMatch(/too long/);
     expect(checkDraft(text({ acceptance: '' }))).toMatch(/tick/);
-    expect(checkDraft(text({ acceptance: 'x'.repeat(301) }))).toMatch(/300/);
+    expect(checkDraft(text({ acceptance: 'x'.repeat(2000) }))).toBeNull();
+    expect(checkDraft(text({ acceptance: 'x'.repeat(2001) }))).toMatch(/2,000/);
   });
   it('every question needs wording, and there is a limit', () => {
     expect(checkDraft(text({ questions: [{ ...newQuestion('a'), prompt: 'Heart condition?' }, newQuestion('b')] }))).toBe('Question 2 needs some wording.');

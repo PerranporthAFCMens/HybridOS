@@ -65,12 +65,15 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await fill('Question 1', 'Do you have a heart condition?');
   await dialog.getByLabel('Ask for details if yes').check({ force: true });
   await dialog.getByLabel('Show staff when the answer is yes').check({ force: true });
-  await fill('Tick-box sentence', 'I have read the waiver and accept the risk.');
+  await fill('Tick-box wording', 'x'.repeat(2001));
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await c.has('over-long tick-box wording is refused', dialog.getByRole('alert').filter({ hasText: 'too long (2,000 characters' }));
+  await fill('Tick-box wording', 'I have read the waiver and accept the risk. '.repeat(20).trim());
   c.ok('layout (editor)', (await page.evaluate(layoutProblems)).length === 0);
   await dialog.getByRole('button', { name: 'Save' }).click();
   await c.has('saved message', page.getByText(/Waiver saved/));
   const w = state.saved[0];
-  c.ok('the right things were sent', w?.p_kind === 'waiver' && w?.p_source === 'text' && w?.p_body_text === 'I accept the risks of training.' && w?.p_file_path === null && w?.p_acceptance_text === 'I have read the waiver and accept the risk.'
+  c.ok('the right things were sent', w?.p_kind === 'waiver' && w?.p_source === 'text' && w?.p_body_text === 'I accept the risks of training.' && w?.p_file_path === null && w?.p_acceptance_text === 'I have read the waiver and accept the risk. '.repeat(20).trim()
     && JSON.stringify(w?.p_questions) === JSON.stringify([{ prompt: 'Do you have a heart condition?', answer_type: 'yes_no', details_if_yes: true, is_required: true, flag_on_yes: true }]));
   await c.has('the waiver now shows', page.getByText('Version 1, wording typed in, 1 question'));
   await c.has('its question is listed', page.getByText(/Do you have a heart condition\?.*flagged to staff/));
