@@ -3315,6 +3315,30 @@ export type Database = {
       get_member_home_settings: { Args: { p_gym_id: string }; Returns: Json }
       get_my_training_groups: { Args: { p_gym_id: string }; Returns: Json }
       get_public_gym_brand: { Args: { p_gym_id: string }; Returns: Json }
+      accept_gym_terms: { Args: { p_gym_slug: string }; Returns: Json }
+      get_public_gym_join_terms: { Args: { p_gym_slug: string }; Returns: Json }
+      get_members_missing_details: {
+        Args: { p_gym_id: string }
+        Returns: { user_id: string; member_name: string; missing: string[] }[]
+      }
+      save_my_join_details: {
+        Args: {
+          p_first_name: string
+          p_last_name: string
+          p_date_of_birth: string
+          p_phone: string
+          p_address_line1: string
+          p_address_line2: string
+          p_town: string
+          p_postcode: string
+          p_emergency_name: string
+          p_emergency_phone: string
+          p_emergency_relationship: string
+          p_guardian_name: string
+          p_guardian_phone: string
+        }
+        Returns: Json
+      }
       get_public_gym_join_options: {
         Args: { p_gym_slug: string }
         Returns: Json
