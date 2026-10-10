@@ -1181,6 +1181,76 @@ export type Database = {
         Update: never
         Relationships: []
       }
+      gym_signup_documents: {
+        Row: {
+          acceptance_text: string
+          body_text: string | null
+          file_name: string | null
+          file_path: string | null
+          file_size: number | null
+          gym_id: string
+          id: string
+          is_current: boolean
+          kind: string
+          retired_at: string | null
+          source: string
+          title: string
+          uploaded_at: string
+          uploaded_by: string | null
+          version: number
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
+      gym_signup_questions: {
+        Row: {
+          answer_type: string
+          details_if_yes: boolean
+          document_id: string
+          flag_on_yes: boolean
+          id: string
+          is_required: boolean
+          position: number
+          prompt: string
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
+      member_signature_answers: {
+        Row: {
+          answer_text: string | null
+          answer_yes: boolean | null
+          id: string
+          question_id: string
+          signature_id: string
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
+      member_signatures: {
+        Row: {
+          agreed_text: string | null
+          email_error: string | null
+          emailed_at: string | null
+          gym_id: string
+          id: string
+          signature_png: string
+          signed_at: string
+          signed_terms_path: string | null
+          signed_waiver_path: string | null
+          signer_is_guardian: boolean
+          signer_name: string
+          terms_document_id: string | null
+          user_id: string
+          waiver_document_id: string | null
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
       membership_rules: {
         Row: {
           cancel_approval: string
@@ -3315,6 +3385,27 @@ export type Database = {
       get_member_home_settings: { Args: { p_gym_id: string }; Returns: Json }
       get_my_training_groups: { Args: { p_gym_id: string }; Returns: Json }
       get_public_gym_brand: { Args: { p_gym_id: string }; Returns: Json }
+      add_gym_signup_document: {
+        Args: {
+          p_gym_id: string
+          p_kind: string
+          p_title: string
+          p_source: string
+          p_file_path: string | null
+          p_file_name: string | null
+          p_file_size: number | null
+          p_body_text: string | null
+          p_acceptance_text: string | null
+          p_questions: Json
+        }
+        Returns: Json
+      }
+      remove_gym_signup_document: { Args: { p_gym_id: string; p_kind: string }; Returns: Json }
+      get_public_gym_signup_documents: { Args: { p_gym_slug: string }; Returns: Json }
+      sign_gym_documents: {
+        Args: { p_gym_slug: string; p_signer_name: string; p_signature_png: string; p_answers: Json }
+        Returns: Json
+      }
       get_public_gym_join_options: {
         Args: { p_gym_slug: string }
         Returns: Json

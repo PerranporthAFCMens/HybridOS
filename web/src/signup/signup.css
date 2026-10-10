@@ -1,0 +1,9 @@
+.signup-note { margin: 8px 0 12px; font-size: 14px; }
+.signup-note.good { color: var(--hybrid-pulse); }
+.signup-note.bad { color: var(--hybrid-danger, #ff7b7b); }
+.signup-link { font-family: var(--hybrid-mono); font-size: 13px; overflow-wrap: anywhere; }
+.signup-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.signup-actions .btn { min-height: 44px; }
+.signup-footer { justify-content: flex-end; margin-top: 16px; }
+.signup-qs { margin: 6px 0 10px; padding-left: 20px; }
+.signup-q { padding: 10px 0; border-top: 1px solid var(--hybrid-line); }
