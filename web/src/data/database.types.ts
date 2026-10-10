@@ -3385,6 +3385,27 @@ export type Database = {
       get_member_home_settings: { Args: { p_gym_id: string }; Returns: Json }
       get_my_training_groups: { Args: { p_gym_id: string }; Returns: Json }
       get_public_gym_brand: { Args: { p_gym_id: string }; Returns: Json }
+      add_gym_signup_document: {
+        Args: {
+          p_gym_id: string
+          p_kind: string
+          p_title: string
+          p_source: string
+          p_file_path: string | null
+          p_file_name: string | null
+          p_file_size: number | null
+          p_body_text: string | null
+          p_acceptance_text: string | null
+          p_questions: Json
+        }
+        Returns: Json
+      }
+      remove_gym_signup_document: { Args: { p_gym_id: string; p_kind: string }; Returns: Json }
+      get_public_gym_signup_documents: { Args: { p_gym_slug: string }; Returns: Json }
+      sign_gym_documents: {
+        Args: { p_gym_slug: string; p_signer_name: string; p_signature_png: string; p_answers: Json }
+        Returns: Json
+      }
       accept_gym_terms: { Args: { p_gym_slug: string }; Returns: Json }
       get_public_gym_join_terms: { Args: { p_gym_slug: string }; Returns: Json }
       get_members_missing_details: {
@@ -3407,27 +3428,6 @@ export type Database = {
           p_guardian_name: string
           p_guardian_phone: string
         }
-        Returns: Json
-      }
-      add_gym_signup_document: {
-        Args: {
-          p_gym_id: string
-          p_kind: string
-          p_title: string
-          p_source: string
-          p_file_path: string | null
-          p_file_name: string | null
-          p_file_size: number | null
-          p_body_text: string | null
-          p_acceptance_text: string | null
-          p_questions: Json
-        }
-        Returns: Json
-      }
-      remove_gym_signup_document: { Args: { p_gym_id: string; p_kind: string }; Returns: Json }
-      get_public_gym_signup_documents: { Args: { p_gym_slug: string }; Returns: Json }
-      sign_gym_documents: {
-        Args: { p_gym_slug: string; p_signer_name: string; p_signature_png: string; p_answers: Json }
         Returns: Json
       }
       get_public_gym_join_options: {

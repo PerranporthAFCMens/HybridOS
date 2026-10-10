@@ -30,8 +30,8 @@ import { Pt } from '../member/Pt';
 import { Membership } from '../member/Membership';
 import { Rules } from '../membership/Rules';
 import { Requests } from '../membership/Requests';
-import { Join } from '../join/Join';
 import { SignupProcess } from '../signup/SignupProcess';
+import { Join } from '../join/Join';
 
 function Leave({ to }: { to: string }) {
   useEffect(() => {
