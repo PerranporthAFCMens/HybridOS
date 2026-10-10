@@ -30,6 +30,7 @@ import { Pt } from '../member/Pt';
 import { Membership } from '../member/Membership';
 import { Rules } from '../membership/Rules';
 import { Requests } from '../membership/Requests';
+import { SignupProcess } from '../signup/SignupProcess';
 import { Join } from '../join/Join';
 
 function Leave({ to }: { to: string }) {
@@ -95,6 +96,7 @@ function Main() {
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/membership-rules" element={<Rules />} />
             <Route path="/membership-requests" element={<Requests />} />
+            <Route path="/signup-process" element={<SignupProcess />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/class-setup" element={<ClassSetup />} />
             <Route path="*" element={<Navigate to="/today" replace />} />
