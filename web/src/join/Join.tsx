@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { createAccount, currentUserId, getJoinGym, getSignupDocuments, joinWithPlan, saveJoinDetails, signDocuments, signInToJoin } from '../data/join';
+import { createAccount, currentUserId, getJoinGym, getSignupDocuments, joinWithPlan, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin } from '../data/join';
 import { publicPdfUrl } from '../data/signup';
 import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -142,7 +142,8 @@ export function Join() {
     e.preventDefault();
     if (!docs) return;
     void run(checkSign({ docs, answers, ticked, name: signName, hasInk: !!signature }), async () => {
-      await signDocuments(slug, signName, signature ?? '', answersPayload(docs, answers));
+      const signatureId = await signDocuments(slug, signName, signature ?? '', answersPayload(docs, answers));
+      void sendSignedCopies(signatureId);
       next();
     });
   };
@@ -328,6 +329,7 @@ export function Join() {
           <div className="join-done">
             <h2>{joined.planName} is active</h2>
             <p>Welcome to {gym.name}, {d.firstName || 'and thanks for joining'}.</p>
+            {docs && docs.length > 0 && <p className="muted">A signed copy of what you agreed is on its way to your email. If it does not arrive in a few minutes, check your spam folder or ask {gym.name}.</p>}
             <LinkButton variant="primary" href={`../member.html?gym_id=${encodeURIComponent(joined.gymId)}`}>Open the member app</LinkButton>
           </div>
         )}
