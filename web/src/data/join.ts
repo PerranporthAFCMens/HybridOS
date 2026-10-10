@@ -83,10 +83,26 @@ export async function saveJoinDetails(args: SaveArgs): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-/** Signs everything the gym currently asks for, once, with the answers to its questions. */
-export async function signDocuments(slug: string, name: string, signaturePng: string, answers: Json): Promise<void> {
-  const { error } = await supabase.rpc('sign_gym_documents', { p_gym_slug: slug, p_signer_name: name.trim(), p_signature_png: signaturePng, p_answers: answers });
+/** Signs everything the gym currently asks for, once, with the answers to its questions. Returns the id of the signature. */
+export async function signDocuments(slug: string, name: string, signaturePng: string, answers: Json): Promise<string> {
+  const { data, error } = await supabase.rpc('sign_gym_documents', { p_gym_slug: slug, p_signer_name: name.trim(), p_signature_png: signaturePng, p_answers: answers });
   if (error) throw new Error(error.message);
+  return str(obj(data).signature_id);
+}
+
+/**
+ * Asks the server to make the signed copies and email them. Best effort: the signature is already saved, so a problem here
+ * never stops the person joining; the reason is kept on the signature for the gym to see.
+ */
+export async function sendSignedCopies(signatureId: string): Promise<boolean> {
+  if (!signatureId) return false;
+  try {
+    const { data, error } = await supabase.functions.invoke('finalise-signature', { body: { signature_id: signatureId } });
+    if (error) return false;
+    return obj(data as Json).emailed === true;
+  } catch {
+    return false;
+  }
 }
 
 export async function joinWithPlan(slug: string, planId: string): Promise<{ planName: string; gymId: string }> {

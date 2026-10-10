@@ -41,7 +41,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   page.setDefaultTimeout(10000);
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
-  const state = { saved: null, signed: null, joined: null, docs: true };
+  const state = { saved: null, signed: null, finalised: null, joined: null, docs: true };
   await mockSupabase(page, async ({ route, path, body }) => {
     if (path.endsWith('/rpc/get_public_gym_join_options')) {
       if (body?.p_gym_slug === 'nope') return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ message: 'Gym not found' }) }).then(() => true);
@@ -50,6 +50,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/rpc/get_public_gym_signup_documents')) return reply(route, state.docs ? DOCS : []);
     if (path.endsWith('/rpc/save_my_join_details')) { state.saved = body; return reply(route, { ok: true, under_18: !!body.p_guardian_name }); }
     if (path.endsWith('/rpc/sign_gym_documents')) { state.signed = body; return reply(route, { ok: true, signature_id: 'sig-1' }); }
+    if (path.endsWith('/functions/v1/finalise-signature')) { state.finalised = body; return reply(route, { ok: true, emailed: true }); }
     if (path.endsWith('/rpc/join_public_gym_with_membership')) { state.joined = body; return reply(route, { ok: true, gym_id: GYM, plan_name: 'Hybrid' }); }
     return false;
   });
@@ -156,6 +157,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.mouse.up();
   await page.getByRole('button', { name: 'Sign and continue' }).click();
   await c.has('signing moves on to the plan', page.getByRole('heading', { name: 'Choose your membership' }));
+  c.ok('the server was asked to make and email the signed copies', state.finalised?.signature_id === 'sig-1');
   const g = state.signed;
   c.ok('the signature, name and answers were sent', g?.p_gym_slug === 'puffin' && g?.p_signer_name === 'Sam Penrose' && g?.p_signature_png.startsWith('data:image/png;base64,') && g?.p_signature_png.length > 1500
     && JSON.stringify(g?.p_answers) === JSON.stringify([{ question_id: 'q-heart', yes: true, text: 'Mild, controlled' }]));
@@ -166,6 +168,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('layout (plans)', (await page.evaluate(layoutProblems)).length === 0);
   await page.getByRole('button', { name: 'Choose Hybrid' }).click();
   await c.has('done', page.getByRole('heading', { name: 'Hybrid is active' }));
+  await c.has('it says a signed copy is on its way', page.getByText(/signed copy of what you agreed is on its way/));
   c.ok('joined the chosen plan at this gym', state.joined?.p_gym_slug === 'puffin' && state.joined?.p_plan_id === 'plan-1');
   c.ok('layout (done)', (await page.evaluate(layoutProblems)).length === 0);
 
