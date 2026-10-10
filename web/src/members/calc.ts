@@ -101,3 +101,13 @@ export function paymentHint(payment: 'manual' | 'gocardless'): string {
     ? 'Creates the HybridOne membership now and leaves payment pending until a GoCardless mandate/subscription is linked.'
     : 'Manual mode lets the gym use HybridOne before GoCardless is connected.';
 }
+
+/** "3 members are missing details", "1 member is missing details". */
+export function missingSummary(n: number): string {
+  return n === 1 ? '1 member is missing details' : `${n} members are missing details`;
+}
+
+/** "address, emergency contact" for the line under a name. */
+export function missingList(missing: string[]): string {
+  return missing.join(', ');
+}

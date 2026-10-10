@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
+import { useQuery } from '@tanstack/react-query';
+import { listMissingDetails } from '../data/signup';
 import { Card, Empty } from '../ui/Card';
 import { Input, Select } from '../ui/Field';
-import { availableLetters, filterAndSort, formatRegistered, initials, jumpLetter, labelStatus, nameOf, ROLE_LABEL, showOnly, summaryText, type Show, type SortMode } from './calc';
+import { availableLetters, filterAndSort, formatRegistered, initials, jumpLetter, labelStatus, missingList, missingSummary, nameOf, ROLE_LABEL, showOnly, summaryText, type Show, type SortMode } from './calc';
 import { MemberRecord } from './MemberRecord';
 import { useMemberDirectory } from './useMembers';
+import '../staff/staff.css';
 import './members.css';
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -24,6 +27,9 @@ export function Members() {
   const letters = availableLetters(all, sort);
   const byDate = sort.startsWith('registered');
   const open = everyone.find((m) => m.userId === openId);
+  // Only owners, admins and staff may ask; for anyone else the database refuses and the card is simply not shown.
+  const missing = useQuery({ queryKey: ['missing-details', gym.gymId], queryFn: () => listMissingDetails(gym.gymId), retry: false });
+  const gaps = missing.data ?? [];
 
   let lastGroup = '';
   return (
@@ -35,6 +41,25 @@ export function Members() {
         </div>
         <span className="muted">{q.data ? summaryText(rows.length, all.length) : ''}</span>
       </header>
+
+      {gaps.length > 0 && (
+        <Card>
+          <details className="missing-details">
+            <summary><b>{missingSummary(gaps.length)}</b> <span className="muted">Tap to see who and what</span></summary>
+            <ul className="settings-list">
+              {gaps.map((g) => (
+                <li key={g.userId}>
+                  <div>
+                    <b>{g.name}</b>
+                    <div className="muted">Missing: {missingList(g.missing)}</div>
+                  </div>
+                  {everyone.some((m) => m.userId === g.userId) && <button type="button" className="btn secondary" onClick={() => setOpenId(g.userId)}>Open</button>}
+                </li>
+              ))}
+            </ul>
+          </details>
+        </Card>
+      )}
 
       <Card>
         <div className="member-directory-tools">

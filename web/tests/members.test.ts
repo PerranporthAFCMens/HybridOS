@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   availableLetters, dateInputValue, filterAndSort, initials, jumpLetter, labelStatus, nameOf, nameParts,
-  paymentHint, summaryText, validateLifecycle, isTeam, showOnly,
+  paymentHint, summaryText, validateLifecycle, isTeam, showOnly, missingList, missingSummary,
 } from '../src/members/calc';
 import type { MemberRow } from '../src/data/members';
 
@@ -86,5 +86,15 @@ describe('team members in the directory', () => {
     expect(isTeam(boss)).toBe(true);
     expect(isTeam(ada)).toBe(false);
     expect(isTeam(m({ role: 'coach' }))).toBe(true);
+  });
+});
+
+describe('missing details', () => {
+  it('says how many', () => {
+    expect(missingSummary(1)).toBe('1 member is missing details');
+    expect(missingSummary(3)).toBe('3 members are missing details');
+  });
+  it('lists what is missing', () => {
+    expect(missingList(['address', 'emergency contact'])).toBe('address, emergency contact');
   });
 });
