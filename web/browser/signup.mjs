@@ -45,9 +45,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
   });
   const c = runChecks();
   const fill = (label, value) => page.getByLabel(label, { exact: true }).fill(value);
-  await page.goto(`${base}/next/#/settings`);
+  await page.goto(`${base}/settings`);
   await c.has('settings lists Sign-up process', page.getByText('Sign-up process', { exact: true }));
-  await page.goto(`${base}/next/#/signup-process`);
+  await page.goto(`${base}/signup-process`);
   await c.has('page loads', page.getByRole('heading', { name: 'Sign-up process', level: 1 }));
   await c.has('the sign-up link is shown', page.getByText(/\/join\/puffin/));
   await c.has('nothing set up yet', page.getByText(/Not set up. New members are not asked to sign a waiver/));

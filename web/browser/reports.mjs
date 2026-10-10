@@ -68,7 +68,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/gym_members')) return reply(route, members);
     return false;
   });
-  await page.goto(`${base}/next/#/reports`);
+  await page.goto(`${base}/reports`);
   const c = runChecks();
   const stat = (label) => page.locator('.stat', { hasText: label }).locator('.stat-num');
   await c.has('heading', page.getByRole('heading', { name: 'Reporting', level: 1 }));

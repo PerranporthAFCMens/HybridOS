@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 
 type Variant = 'primary' | 'secondary';
@@ -15,5 +16,9 @@ export function LinkButton({
   className = '',
   ...rest
 }: AnchorHTMLAttributes<HTMLAnchorElement> & { variant?: Variant }) {
-  return <a className={`btn ${variant} ${className}`.trim()} {...rest} />;
+  const classes = `btn ${variant} ${className}`.trim();
+  const { href, ...others } = rest;
+  // A path inside the app (/members) moves within the app; anything else (old pages, files) is an ordinary link.
+  if (href && href.startsWith('/') && !href.includes('.')) return <Link className={classes} to={href} {...others} />;
+  return <a className={classes} href={href} {...others} />;
 }

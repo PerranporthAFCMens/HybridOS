@@ -61,7 +61,7 @@ async function run(role) {
       if (path.endsWith('/staff_access')) return reply(route, [{ user_id: 'u-sam', access_level_id: 'lvl-front' }]);
       return false;
     });
-    await page.goto(`${base}/next/#/access`);
+    await page.goto(`${base}/access`);
     const c = runChecks();
     const dialog = page.getByRole('dialog');
     await c.has('heading', page.getByRole('heading', { name: 'Access levels', level: 1 }));

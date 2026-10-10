@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { Card, Empty, SectionTitle } from '../ui/Card';
@@ -110,7 +111,7 @@ export function Today() {
         />
 
         <Card className="wide">
-          <SectionTitle title="Classes today" action={<a className="muted-link" href={links.classes}>Open timetable</a>} />
+          <SectionTitle title="Classes today" action={<Link className="muted-link" to={links.classes}>Open timetable</Link>} />
           {!q.sessions.data ? (
             <Empty>Loading classes…</Empty>
           ) : todays.length ? (
@@ -135,7 +136,7 @@ export function Today() {
         </Card>
 
         <Card className="wide">
-          <SectionTitle title="Membership plans" action={<a className="btn secondary" href={links.plans}>Manage</a>} />
+          <SectionTitle title="Membership plans" action={<Link className="btn secondary" to={links.plans}>Manage</Link>} />
           {!plans ? (
             <Empty>Loading plans…</Empty>
           ) : activePlans(plans).length ? (
@@ -151,7 +152,7 @@ export function Today() {
         </Card>
 
         <Card className="narrow">
-          <SectionTitle title="Community" action={<a className="muted-link" href={links.community}>Open</a>} />
+          <SectionTitle title="Community" action={<Link className="muted-link" to={links.community}>Open</Link>} />
           {!q.channels.data ? (
             <Empty>Loading channels…</Empty>
           ) : q.channels.data.length ? (

@@ -73,7 +73,7 @@ async function run(role) {
       if (path.endsWith('/gym_ownership_action_approvals')) return reply(route, [{ action_id: 'act-1', owner_user_id: 'u-ann' }]);
       return false;
     });
-    await page.goto(`${base}/next/#/owners`);
+    await page.goto(`${base}/owners`);
     const c = runChecks();
     await c.has('heading', page.getByRole('heading', { name: 'Owners and admins', level: 1 }));
     if (role === 'admin') {

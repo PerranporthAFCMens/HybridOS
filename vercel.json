@@ -32,6 +32,14 @@
     {
       "source": "/join/:slug",
       "destination": "/next/index.html"
+    },
+    {
+      "source": "/:screen(today|members|plans|classes|reports|staff|rooms|access|owners|door|member-view|community|communications|workouts|membership-rules|membership-requests|signup-process|settings|class-setup)",
+      "destination": "/next/index.html"
+    },
+    {
+      "source": "/m/:path*",
+      "destination": "/next/index.html"
     }
   ]
 }

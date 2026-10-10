@@ -20,8 +20,24 @@ export const session = {
 // BROWSER=webkit runs the checks in the Safari-style engine; the default is Chromium.
 export const launch = () => (process.env.BROWSER === 'webkit' ? webkit.launch() : chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined }));
 
+/**
+ * The live site hands every app address (/today, /join/<gym>) to the app; this test server only knows files.
+ * Do the same here: any address that is not a file and not under /next/ gets the app's page.
+ */
+export async function serveApp(ctx) {
+  let html = null;
+  await ctx.route(`${base}/**`, async (route) => {
+    const { pathname } = new URL(route.request().url());
+    const isAppAddress = route.request().resourceType() === 'document' && !pathname.includes('.') && !pathname.startsWith('/next/') && pathname !== '/';
+    if (!isAppAddress) return route.fallback();
+    html ??= await (await ctx.request.get(`${base}/next/index.html`)).text();
+    return route.fulfill({ status: 200, contentType: 'text/html', body: html });
+  });
+}
+
 export async function signedInPage(browser, viewport) {
   const ctx = await browser.newContext({ viewport });
+  await serveApp(ctx);
   await ctx.addInitScript(([key, value, gym]) => { localStorage.setItem(key, value); sessionStorage.setItem('hybrid-gym-id', gym); }, ['sb-mzgnhmeydhhpzgxlgudh-auth-token', JSON.stringify(session), GYM]);
   const page = await ctx.newPage();
   // Everything here is mocked and local, so 10 seconds is plenty. The default of 30 turned one mistaken

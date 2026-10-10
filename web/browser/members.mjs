@@ -46,7 +46,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     return false;
   });
 
-  await page.goto(`${base}/next/#/members`);
+  await page.goto(`${base}/members`);
   const c = runChecks();
   await c.has('heading', page.getByRole('heading', { name: 'Members' }));
   await c.has('summary 3 users', page.getByText('4 gym users'));

@@ -1,3 +1,4 @@
+import { siteUrl } from '../app/site';
 // Pure rules behind Owners and admins: who can do what to whom, how an invitation is described, and what to
 // tell the owner after each action. Same rules as the old Admin access page; the database enforces them again.
 
@@ -68,7 +69,7 @@ export const EXPIRY_DAYS = [3, 7, 14, 30] as const;
 
 /** The secure link the invited person opens. It still goes through the old landing page until the cutover. */
 export function inviteLink(base: string, token: string, email: string, gymName: string, role: string): string {
-  const u = new URL('../index.html', base);
+  const u = new URL(siteUrl('index.html'), base);
   u.search = '';
   u.hash = '';
   u.searchParams.set('access_invite', token);

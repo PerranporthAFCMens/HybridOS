@@ -1,7 +1,8 @@
+import { siteUrl } from '../app/site';
 // Which logo the sidebar shows for a gym. Same rule as the old tenant-branding.js:
 // an uploaded logo wins; Hybrid Hub falls back to its bundled logo; other gyms show the name only.
 const HYBRID_HUB_ID = '242f57c2-6e37-4977-b3c5-1c87de7d0b98';
-const HYBRID_HUB_LOGO = '../assets/hybrid-hub-logo-horizontal.svg';
+const HYBRID_HUB_LOGO = siteUrl('assets/hybrid-hub-logo-horizontal.svg');
 
 export interface GymLogo {
   src: string;

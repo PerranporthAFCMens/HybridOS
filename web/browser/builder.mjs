@@ -96,7 +96,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/workout_assignments') || path.endsWith('/workout_sessions')) return reply(route, []);
     return false;
   });
-  await page.goto(`${base}/next/#/reports`);
+  await page.goto(`${base}/reports`);
   const c = runChecks();
   await page.getByRole('tab', { name: 'Report builder', exact: true }).click();
   const paper = page.getByLabel('What you will download');

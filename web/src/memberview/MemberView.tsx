@@ -1,3 +1,4 @@
+import { siteUrl } from '../app/site';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
@@ -99,7 +100,7 @@ function Editor({ saved }: { saved: MemberViewSaved }) {
         <div className="membership-actions">
           <Button variant="primary" disabled={save.isPending} onClick={submit}>{save.isPending ? 'Saving…' : 'Save member view'}</Button>
           <Button onClick={() => { setNote({ text: 'Order reset here only. Press Save member view to publish it.', good: true }); setLayout(DEFAULT_LAYOUT.map((t) => ({ ...t }))); }}>Reset order</Button>
-          <LinkButton href="../member.html?view=member">View as member</LinkButton>
+          <LinkButton href={`${siteUrl('member.html')}?view=member`}>View as member</LinkButton>
         </div>
       </Card>
 

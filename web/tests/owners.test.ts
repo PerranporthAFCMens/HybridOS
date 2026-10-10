@@ -54,8 +54,8 @@ describe('invites', () => {
     expect(validateInvite(' Josh ', ' j@x.co ')).toEqual({ ok: true, name: 'Josh', email: 'j@x.co' });
   });
   it('builds the link to the old landing page with everything encoded', () => {
-    const url = new URL(inviteLink('https://h.example/HybridOS/next/#/owners', 'tok en', 'a+b@x.co', 'Puffin & Co', 'owner'));
-    expect(url.pathname).toBe('/HybridOS/index.html');
+    const url = new URL(inviteLink('https://h.example/today', 'tok en', 'a+b@x.co', 'Puffin & Co', 'owner'));
+    expect(url.pathname).toBe('/index.html');
     expect(url.hash).toBe('');
     expect(url.searchParams.get('access_invite')).toBe('tok en');
     expect(url.searchParams.get('invite_email')).toBe('a+b@x.co');

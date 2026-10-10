@@ -94,9 +94,9 @@ RENDER_BASELINE={
  'admin-shell.css':'ec3d5ab0faee0b01d383fbea29183e604430a53e',
  'admin-frame.css':'4af4cf23fa071d5fb4324bac9a12929428ee316b',
  'admin-embed.js':'73920d3e75684542819929736e15613d1d95c24e',
- 'admin-frame.js':'05648c7e1edd57d388f970508e45b01eef13cd8b',
+ 'admin-frame.js':'4675c057801dcf4138a35cc3ac69f97c98aee496',
  'app-stability.js':'661d84d7129dad37a84978f940b5995625bf1c75',
- 'shared-admin-nav.js':'3e5f4147f51c3bab5eb361991acda1c4564d3079',
+ 'shared-admin-nav.js':'51759cce2d19dbc21f28f1c3cd06ea4ceaedc8fe',
 }
 def git_blob_sha(path):
  import hashlib

@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { gymLogo } from '../shell/gymBrand';
 import { roleLabel } from '../shell/account';
@@ -20,7 +20,7 @@ export function MemberShell() {
     <div className="mem">
       {previewing && (
         <div className="mem-preview">
-          Previewing the new member app as {roleLabel(auth.gym.role).toLowerCase()}. <a href="#/today">Back to the admin</a>
+          Previewing the new member app as {roleLabel(auth.gym.role).toLowerCase()}. <Link to="/today">Back to the admin</Link>
         </div>
       )}
       <header className="mem-top">

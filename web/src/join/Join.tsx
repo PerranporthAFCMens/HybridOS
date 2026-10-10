@@ -1,3 +1,4 @@
+import { siteUrl } from '../app/site';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
@@ -330,7 +331,7 @@ export function Join() {
             <h2>{joined.planName} is active</h2>
             <p>Welcome to {gym.name}, {d.firstName || 'and thanks for joining'}.</p>
             {docs && docs.length > 0 && <p className="muted">A signed copy of what you agreed is on its way to your email. If it does not arrive in a few minutes, check your spam folder or ask {gym.name}.</p>}
-            <LinkButton variant="primary" href={`../member.html?gym_id=${encodeURIComponent(joined.gymId)}`}>Open the member app</LinkButton>
+            <LinkButton variant="primary" href={`${siteUrl('member.html')}?gym_id=${encodeURIComponent(joined.gymId)}`}>Open the member app</LinkButton>
           </div>
         )}
       </Card>
