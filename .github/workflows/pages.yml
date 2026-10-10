@@ -11,8 +11,10 @@ permissions:
   pages: write
   id-token: write
 
+# One group per branch. This workflow also starts (and is then skipped by the job's `if`) every time the smoke checks finish on a pull request;
+# in one shared group those skipped runs cancelled the real dev deploy that was in progress, so the dev gates timed out waiting for a revision that never published.
 concurrency:
-  group: pages
+  group: pages-${{ github.event.workflow_run.head_branch || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
