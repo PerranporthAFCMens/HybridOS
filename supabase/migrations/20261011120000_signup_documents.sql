@@ -1,4 +1,4 @@
--- Gym terms and waiver as uploaded PDFs, signed by each new member (drawn signature plus typed name), with the signed
+-- Gym terms and waiver as an uploaded PDF or typed wording, signed by each new member (drawn signature plus typed name), with the signed
 -- copies kept in storage and a record in the database.
 --
 -- Replaces the typed-wording approach from 20261011090000 (gyms.terms_text, member_declarations): that is not used by
@@ -10,7 +10,7 @@
 --   public.member_signatures     who signed which document versions, the drawn signature, and the signed copies
 --   storage 'gym-signup-documents' (public read, PDFs only, 10 MB, owner or admin of the gym writes to its own folder)
 --   storage 'signed-documents'     (private; the member and the gym's owner, admin and staff read; only the server writes)
---   public.add_gym_signup_document(...)       owner / admin record a newly uploaded PDF as the current version
+--   public.add_gym_signup_document(...)       owner / admin record an uploaded PDF, or typed wording, as the current version
 --   public.remove_gym_signup_document(...)    owner / admin stop requiring one (the old versions and signatures stay)
 --   public.get_public_gym_signup_documents()  what a joiner must read and sign
 --   public.sign_gym_documents(...)            the member signs everything current in one go
@@ -38,9 +38,16 @@ create table public.gym_signup_documents (
   kind text not null check (kind in ('terms', 'waiver')),
   version integer not null check (version >= 1),
   title text not null check (char_length(title) between 1 and 120),
-  file_path text not null check (char_length(file_path) between 1 and 300),
-  file_name text not null check (char_length(file_name) between 1 and 200),
-  file_size integer not null check (file_size > 0 and file_size <= 10485760),
+  -- an uploaded PDF, or wording typed or pasted in by the gym
+  source text not null check (source in ('pdf', 'text')),
+  file_path text check (file_path is null or char_length(file_path) between 1 and 300),
+  file_name text check (file_name is null or char_length(file_name) between 1 and 200),
+  file_size integer check (file_size is null or (file_size > 0 and file_size <= 10485760)),
+  body_text text check (body_text is null or char_length(btrim(body_text)) between 1 and 60000),
+  constraint gym_signup_documents_source_fields check (
+    (source = 'pdf' and file_path is not null and file_name is not null and file_size is not null and body_text is null)
+    or (source = 'text' and body_text is not null and file_path is null and file_name is null and file_size is null)
+  ),
   is_current boolean not null default true,
   uploaded_by uuid,
   uploaded_at timestamptz not null default now(),
@@ -113,13 +120,16 @@ create policy "members and gym staff read signed documents" on storage.objects f
 -- ---------------------------------------------------------------------------------------------------------------
 -- Gym: record an uploaded PDF as the current version, or stop requiring one
 -- ---------------------------------------------------------------------------------------------------------------
-create function public.add_gym_signup_document(p_gym_id uuid, p_kind text, p_title text, p_file_path text, p_file_name text, p_file_size integer)
-returns jsonb
+create function public.add_gym_signup_document(
+  p_gym_id uuid, p_kind text, p_title text, p_source text,
+  p_file_path text, p_file_name text, p_file_size integer, p_body_text text
+) returns jsonb
 language plpgsql security definer set search_path to 'public', 'private', 'pg_temp' as $$
 declare
   v_uid uuid := auth.uid();
   v_version integer;
   v_id uuid;
+  v_text text := nullif(btrim(coalesce(p_body_text, '')), '');
 begin
   if v_uid is null then raise exception 'Not authenticated'; end if;
   if not private.has_gym_role(p_gym_id, array['owner'::public.gym_member_role, 'admin'::public.gym_member_role]) then
@@ -127,23 +137,34 @@ begin
   end if;
   if p_kind not in ('terms', 'waiver') then raise exception 'Choose terms or waiver.'; end if;
   if btrim(coalesce(p_title, '')) = '' or char_length(p_title) > 120 then raise exception 'Give the document a title.'; end if;
-  if p_file_path is null or p_file_path not like p_gym_id::text || '/%' or lower(p_file_path) not like '%.pdf' then
-    raise exception 'The document must be a PDF uploaded to your gym''s folder.';
-  end if;
-  if p_file_size is null or p_file_size <= 0 or p_file_size > 10485760 then raise exception 'The PDF must be under 10 MB.'; end if;
-  if not exists (select 1 from storage.objects o where o.bucket_id = 'gym-signup-documents' and o.name = p_file_path) then
-    raise exception 'That file has not been uploaded.';
+
+  if p_source = 'pdf' then
+    if p_file_path is null or p_file_path not like p_gym_id::text || '/%' or lower(p_file_path) not like '%.pdf' then
+      raise exception 'The document must be a PDF uploaded to your gym''s folder.';
+    end if;
+    if p_file_size is null or p_file_size <= 0 or p_file_size > 10485760 then raise exception 'The PDF must be under 10 MB.'; end if;
+    if not exists (select 1 from storage.objects o where o.bucket_id = 'gym-signup-documents' and o.name = p_file_path) then
+      raise exception 'That file has not been uploaded.';
+    end if;
+    v_text := null;
+  elsif p_source = 'text' then
+    if v_text is null then raise exception 'Type or paste the wording.'; end if;
+    if char_length(v_text) > 60000 then raise exception 'That wording is too long (60,000 characters at most).'; end if;
+  else
+    raise exception 'Choose a PDF or typed wording.';
   end if;
 
   select coalesce(max(version), 0) + 1 into v_version from public.gym_signup_documents where gym_id = p_gym_id and kind = p_kind;
   update public.gym_signup_documents set is_current = false, retired_at = now() where gym_id = p_gym_id and kind = p_kind and is_current;
-  insert into public.gym_signup_documents(gym_id, kind, version, title, file_path, file_name, file_size, uploaded_by)
-  values (p_gym_id, p_kind, v_version, btrim(p_title), p_file_path, p_file_name, p_file_size, v_uid)
+  insert into public.gym_signup_documents(gym_id, kind, version, title, source, file_path, file_name, file_size, body_text, uploaded_by)
+  values (p_gym_id, p_kind, v_version, btrim(p_title), p_source,
+          case when p_source = 'pdf' then p_file_path end, case when p_source = 'pdf' then p_file_name end,
+          case when p_source = 'pdf' then p_file_size end, v_text, v_uid)
   returning id into v_id;
   return jsonb_build_object('ok', true, 'id', v_id, 'version', v_version);
 end$$;
-revoke all on function public.add_gym_signup_document(uuid, text, text, text, text, integer) from public, anon;
-grant execute on function public.add_gym_signup_document(uuid, text, text, text, text, integer) to authenticated;
+revoke all on function public.add_gym_signup_document(uuid, text, text, text, text, text, integer, text) from public, anon;
+grant execute on function public.add_gym_signup_document(uuid, text, text, text, text, text, integer, text) to authenticated;
 
 create function public.remove_gym_signup_document(p_gym_id uuid, p_kind text) returns jsonb
 language plpgsql security definer set search_path to 'public', 'private', 'pg_temp' as $$
@@ -170,7 +191,8 @@ begin
   if v_gym is null then raise exception 'Gym not found'; end if;
   return coalesce((
     select jsonb_agg(jsonb_build_object('id', d.id, 'kind', d.kind, 'version', d.version, 'title', d.title,
-                                        'file_path', d.file_path, 'file_name', d.file_name) order by d.kind desc)
+                                        'source', d.source, 'file_path', d.file_path, 'file_name', d.file_name,
+                                        'body_text', d.body_text) order by d.kind desc)
     from public.gym_signup_documents d where d.gym_id = v_gym and d.is_current
   ), '[]'::jsonb);
 end$$;

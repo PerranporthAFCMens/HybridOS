@@ -9,7 +9,7 @@ drop policy if exists "gym owners and admins upload signup documents" on storage
 drop function if exists public.sign_gym_documents(text, text, text);
 drop function if exists public.get_public_gym_signup_documents(text);
 drop function if exists public.remove_gym_signup_document(uuid, text);
-drop function if exists public.add_gym_signup_document(uuid, text, text, text, text, integer);
+drop function if exists public.add_gym_signup_document(uuid, text, text, text, text, text, integer, text);
 drop table if exists public.member_signatures;
 drop table if exists public.gym_signup_documents;
 drop function if exists private.safe_uuid(text);
