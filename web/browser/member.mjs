@@ -63,6 +63,7 @@ for (const role of ['member', 'owner']) {
       await c.has('an owner sees the preview banner', page.getByText(/Previewing the new member app as owner/));
       c.ok('and a way back', (await page.getByRole('link', { name: 'Back to the admin' }).count()) === 1);
       c.ok('no page errors', errors.length === 0);
+    if (errors.length) console.log(`  page errors: ${errors.slice(0, 3).join(' | ').slice(0, 500)}`);
       if (!c.report(`${role} ${name}`)) allOk = false;
       await ctx.close();
       continue;
@@ -186,6 +187,7 @@ for (const role of ['member', 'owner']) {
     await page.waitForTimeout(500);
     c.ok('and does not come back the same year', (await page.getByRole('dialog', { name: 'Happy birthday' }).count()) === 0);
     c.ok('no page errors', errors.length === 0);
+    if (errors.length) console.log(`  page errors: ${errors.slice(0, 3).join(' | ').slice(0, 500)}`);
     if (!c.report(`${role} ${name}`)) allOk = false;
     await ctx.close();
   }
