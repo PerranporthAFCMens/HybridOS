@@ -7,13 +7,15 @@
 --
 -- New:
 --   public.gym_signup_documents  the gym's terms and waiver PDFs, one current of each kind, every old version kept
+--   public.gym_signup_questions  questions that belong to one version of a document (health questions and the like)
 --   public.member_signatures     who signed which document versions, the drawn signature, and the signed copies
+--   public.member_signature_answers  what the member answered
 --   storage 'gym-signup-documents' (public read, PDFs only, 10 MB, owner or admin of the gym writes to its own folder)
 --   storage 'signed-documents'     (private; the member and the gym's owner, admin and staff read; only the server writes)
---   public.add_gym_signup_document(...)       owner / admin record an uploaded PDF, or typed wording, as the current version
+--   public.add_gym_signup_document(...)       owner / admin record an uploaded PDF, or typed wording, with its tick-box sentence and questions, as the current version
 --   public.remove_gym_signup_document(...)    owner / admin stop requiring one (the old versions and signatures stay)
 --   public.get_public_gym_signup_documents()  what a joiner must read and sign
---   public.sign_gym_documents(...)            the member signs everything current in one go
+--   public.sign_gym_documents(...)            the member answers the questions and signs everything current in one go
 --   private.safe_uuid(text)                   helper for the storage rules
 -- Nothing existing is changed or deleted. Rollback: supabase/rollback/20261011_drop_signup_documents.sql.
 -- Check: supabase/verification/20261011_signup_documents_check.sql.
@@ -48,6 +50,9 @@ create table public.gym_signup_documents (
     (source = 'pdf' and file_path is not null and file_name is not null and file_size is not null and body_text is null)
     or (source = 'text' and body_text is not null and file_path is null and file_name is null and file_size is null)
   ),
+  -- the sentence beside the tick-box for this document
+  acceptance_text text not null default 'I confirm I have read, understood and agree to this document.'
+    check (char_length(btrim(acceptance_text)) between 1 and 300),
   is_current boolean not null default true,
   uploaded_by uuid,
   uploaded_at timestamptz not null default now(),
@@ -63,6 +68,31 @@ create policy "gym staff read signup documents" on public.gym_signup_documents f
   using (private.has_gym_role(gym_id, array['owner'::public.gym_member_role, 'admin'::public.gym_member_role, 'staff'::public.gym_member_role]));
 
 -- ---------------------------------------------------------------------------------------------------------------
+-- Questions that belong to one version of a document (for example a health questionnaire)
+-- ---------------------------------------------------------------------------------------------------------------
+create table public.gym_signup_questions (
+  id uuid primary key default gen_random_uuid(),
+  document_id uuid not null references public.gym_signup_documents(id) on delete cascade,
+  position integer not null check (position >= 1),
+  prompt text not null check (char_length(btrim(prompt)) between 1 and 300),
+  answer_type text not null check (answer_type in ('yes_no', 'text')),
+  -- for a yes / no question: ask for details when the answer is yes
+  details_if_yes boolean not null default false,
+  is_required boolean not null default true,
+  -- show staff when the member answers yes
+  flag_on_yes boolean not null default false,
+  constraint gym_signup_questions_order unique (document_id, position)
+);
+
+alter table public.gym_signup_questions enable row level security;
+revoke all on table public.gym_signup_questions from anon, authenticated;
+grant select on table public.gym_signup_questions to authenticated;
+create policy "gym staff read signup questions" on public.gym_signup_questions for select to authenticated
+  using (exists (select 1 from public.gym_signup_documents d
+                 where d.id = document_id
+                   and private.has_gym_role(d.gym_id, array['owner'::public.gym_member_role, 'admin'::public.gym_member_role, 'staff'::public.gym_member_role])));
+
+-- ---------------------------------------------------------------------------------------------------------------
 -- Signatures
 -- ---------------------------------------------------------------------------------------------------------------
 create table public.member_signatures (
@@ -76,6 +106,8 @@ create table public.member_signatures (
   terms_document_id uuid references public.gym_signup_documents(id),
   waiver_document_id uuid references public.gym_signup_documents(id),
   signed_at timestamptz not null default now(),
+  -- the exact tick-box sentences the member agreed to
+  agreed_text text,
   -- the signed copies (storage paths in 'signed-documents') and the email, filled in by the server after signing
   signed_terms_path text,
   signed_waiver_path text,
@@ -91,6 +123,24 @@ grant select on table public.member_signatures to authenticated;
 create policy "members and gym staff read signatures" on public.member_signatures for select to authenticated
   using (user_id = (select auth.uid())
          or private.has_gym_role(gym_id, array['owner'::public.gym_member_role, 'admin'::public.gym_member_role, 'staff'::public.gym_member_role]));
+
+create table public.member_signature_answers (
+  id uuid primary key default gen_random_uuid(),
+  signature_id uuid not null references public.member_signatures(id) on delete cascade,
+  question_id uuid not null references public.gym_signup_questions(id),
+  answer_yes boolean,
+  answer_text text check (answer_text is null or char_length(answer_text) <= 2000),
+  constraint member_signature_answers_once unique (signature_id, question_id)
+);
+
+alter table public.member_signature_answers enable row level security;
+revoke all on table public.member_signature_answers from anon, authenticated;
+grant select on table public.member_signature_answers to authenticated;
+create policy "members and gym staff read answers" on public.member_signature_answers for select to authenticated
+  using (exists (select 1 from public.member_signatures s
+                 where s.id = signature_id
+                   and (s.user_id = (select auth.uid())
+                        or private.has_gym_role(s.gym_id, array['owner'::public.gym_member_role, 'admin'::public.gym_member_role, 'staff'::public.gym_member_role]))));
 
 -- ---------------------------------------------------------------------------------------------------------------
 -- Storage
@@ -122,7 +172,8 @@ create policy "members and gym staff read signed documents" on storage.objects f
 -- ---------------------------------------------------------------------------------------------------------------
 create function public.add_gym_signup_document(
   p_gym_id uuid, p_kind text, p_title text, p_source text,
-  p_file_path text, p_file_name text, p_file_size integer, p_body_text text
+  p_file_path text, p_file_name text, p_file_size integer, p_body_text text,
+  p_acceptance_text text, p_questions jsonb
 ) returns jsonb
 language plpgsql security definer set search_path to 'public', 'private', 'pg_temp' as $$
 declare
@@ -130,6 +181,11 @@ declare
   v_version integer;
   v_id uuid;
   v_text text := nullif(btrim(coalesce(p_body_text, '')), '');
+  v_accept text := coalesce(nullif(btrim(coalesce(p_acceptance_text, '')), ''), 'I confirm I have read, understood and agree to this document.');
+  v_q jsonb;
+  v_pos integer := 0;
+  v_prompt text;
+  v_type text;
 begin
   if v_uid is null then raise exception 'Not authenticated'; end if;
   if not private.has_gym_role(p_gym_id, array['owner'::public.gym_member_role, 'admin'::public.gym_member_role]) then
@@ -137,6 +193,7 @@ begin
   end if;
   if p_kind not in ('terms', 'waiver') then raise exception 'Choose terms or waiver.'; end if;
   if btrim(coalesce(p_title, '')) = '' or char_length(p_title) > 120 then raise exception 'Give the document a title.'; end if;
+  if char_length(v_accept) > 300 then raise exception 'The tick-box sentence is too long (300 characters at most).'; end if;
 
   if p_source = 'pdf' then
     if p_file_path is null or p_file_path not like p_gym_id::text || '/%' or lower(p_file_path) not like '%.pdf' then
@@ -154,17 +211,35 @@ begin
     raise exception 'Choose a PDF or typed wording.';
   end if;
 
+  if p_questions is not null and jsonb_typeof(p_questions) <> 'array' then raise exception 'The questions must be a list.'; end if;
+  if jsonb_array_length(coalesce(p_questions, '[]'::jsonb)) > 40 then raise exception 'Use 40 questions at most.'; end if;
+  for v_q in select * from jsonb_array_elements(coalesce(p_questions, '[]'::jsonb)) loop
+    v_prompt := btrim(coalesce(v_q->>'prompt', ''));
+    v_type := coalesce(v_q->>'answer_type', '');
+    if v_prompt = '' or char_length(v_prompt) > 300 then raise exception 'Each question needs some wording (300 characters at most).'; end if;
+    if v_type not in ('yes_no', 'text') then raise exception 'Each question must be yes or no, or a written answer.'; end if;
+  end loop;
+
   select coalesce(max(version), 0) + 1 into v_version from public.gym_signup_documents where gym_id = p_gym_id and kind = p_kind;
   update public.gym_signup_documents set is_current = false, retired_at = now() where gym_id = p_gym_id and kind = p_kind and is_current;
-  insert into public.gym_signup_documents(gym_id, kind, version, title, source, file_path, file_name, file_size, body_text, uploaded_by)
+  insert into public.gym_signup_documents(gym_id, kind, version, title, source, file_path, file_name, file_size, body_text, acceptance_text, uploaded_by)
   values (p_gym_id, p_kind, v_version, btrim(p_title), p_source,
           case when p_source = 'pdf' then p_file_path end, case when p_source = 'pdf' then p_file_name end,
-          case when p_source = 'pdf' then p_file_size end, v_text, v_uid)
+          case when p_source = 'pdf' then p_file_size end, v_text, v_accept, v_uid)
   returning id into v_id;
-  return jsonb_build_object('ok', true, 'id', v_id, 'version', v_version);
+
+  for v_q in select * from jsonb_array_elements(coalesce(p_questions, '[]'::jsonb)) loop
+    v_pos := v_pos + 1;
+    insert into public.gym_signup_questions(document_id, position, prompt, answer_type, details_if_yes, is_required, flag_on_yes)
+    values (v_id, v_pos, btrim(v_q->>'prompt'), v_q->>'answer_type',
+            coalesce((v_q->>'details_if_yes')::boolean, false) and (v_q->>'answer_type') = 'yes_no',
+            coalesce((v_q->>'is_required')::boolean, true),
+            coalesce((v_q->>'flag_on_yes')::boolean, false) and (v_q->>'answer_type') = 'yes_no');
+  end loop;
+  return jsonb_build_object('ok', true, 'id', v_id, 'version', v_version, 'questions', v_pos);
 end$$;
-revoke all on function public.add_gym_signup_document(uuid, text, text, text, text, text, integer, text) from public, anon;
-grant execute on function public.add_gym_signup_document(uuid, text, text, text, text, text, integer, text) to authenticated;
+revoke all on function public.add_gym_signup_document(uuid, text, text, text, text, text, integer, text, text, jsonb) from public, anon;
+grant execute on function public.add_gym_signup_document(uuid, text, text, text, text, text, integer, text, text, jsonb) to authenticated;
 
 create function public.remove_gym_signup_document(p_gym_id uuid, p_kind text) returns jsonb
 language plpgsql security definer set search_path to 'public', 'private', 'pg_temp' as $$
@@ -192,14 +267,19 @@ begin
   return coalesce((
     select jsonb_agg(jsonb_build_object('id', d.id, 'kind', d.kind, 'version', d.version, 'title', d.title,
                                         'source', d.source, 'file_path', d.file_path, 'file_name', d.file_name,
-                                        'body_text', d.body_text) order by d.kind desc)
+                                        'body_text', d.body_text, 'acceptance_text', d.acceptance_text,
+                                        'questions', coalesce((
+                                          select jsonb_agg(jsonb_build_object('id', q.id, 'prompt', q.prompt, 'answer_type', q.answer_type,
+                                                                              'details_if_yes', q.details_if_yes, 'is_required', q.is_required) order by q.position)
+                                          from public.gym_signup_questions q where q.document_id = d.id), '[]'::jsonb)) order by d.kind desc)
     from public.gym_signup_documents d where d.gym_id = v_gym and d.is_current
   ), '[]'::jsonb);
 end$$;
 revoke all on function public.get_public_gym_signup_documents(text) from public, anon;
 grant execute on function public.get_public_gym_signup_documents(text) to authenticated;
 
-create function public.sign_gym_documents(p_gym_slug text, p_signer_name text, p_signature_png text) returns jsonb
+create function public.sign_gym_documents(p_gym_slug text, p_signer_name text, p_signature_png text, p_answers jsonb)
+returns jsonb
 language plpgsql security definer set search_path to 'public', 'private', 'pg_temp' as $$
 declare
   v_uid uuid := auth.uid();
@@ -209,6 +289,11 @@ declare
   v_dob date;
   v_id uuid;
   v_name text := btrim(coalesce(p_signer_name, ''));
+  v_agreed text;
+  q record;
+  a jsonb;
+  v_yes boolean;
+  v_text text;
 begin
   if v_uid is null then raise exception 'Not authenticated'; end if;
   select id into v_gym from public.gyms where slug = p_gym_slug limit 1;
@@ -217,26 +302,53 @@ begin
   if p_signature_png is null or p_signature_png not like 'data:image/png;base64,%' or char_length(p_signature_png) > 400000 then
     raise exception 'Draw your signature.';
   end if;
-  -- an empty box encodes to a tiny image; a real signature is bigger
   if char_length(p_signature_png) < 1500 then raise exception 'Draw your signature.'; end if;
+  if p_answers is not null and jsonb_typeof(p_answers) <> 'array' then raise exception 'The answers must be a list.'; end if;
 
   select id into v_terms from public.gym_signup_documents where gym_id = v_gym and kind = 'terms' and is_current;
   select id into v_waiver from public.gym_signup_documents where gym_id = v_gym and kind = 'waiver' and is_current;
   if v_terms is null and v_waiver is null then raise exception 'This gym has nothing to sign.'; end if;
 
+  -- every required question on the current documents must be answered
+  for q in
+    select qu.* from public.gym_signup_questions qu
+    where qu.document_id in (v_terms, v_waiver)
+  loop
+    select x into a from jsonb_array_elements(coalesce(p_answers, '[]'::jsonb)) x where x->>'question_id' = q.id::text limit 1;
+    v_yes := case when a is null then null else (a->>'yes')::boolean end;
+    v_text := nullif(btrim(coalesce(a->>'text', '')), '');
+    if q.is_required then
+      if q.answer_type = 'yes_no' and v_yes is null then raise exception 'Answer every question: %', q.prompt; end if;
+      if q.answer_type = 'text' and v_text is null then raise exception 'Answer every question: %', q.prompt; end if;
+    end if;
+    if q.answer_type = 'yes_no' and v_yes and q.details_if_yes and v_text is null then
+      raise exception 'Give details for: %', q.prompt;
+    end if;
+  end loop;
+
+  select string_agg(d.title || ': ' || d.acceptance_text, E'\n' order by d.kind desc) into v_agreed
+  from public.gym_signup_documents d where d.id in (v_terms, v_waiver);
+
   select date_of_birth into v_dob from public.profiles where id = v_uid;
 
-  insert into public.member_signatures(gym_id, user_id, signer_name, signer_is_guardian, signature_png, terms_document_id, waiver_document_id)
-  values (v_gym, v_uid, v_name, coalesce(v_dob > (current_date - interval '18 years')::date, false), p_signature_png, v_terms, v_waiver)
+  insert into public.member_signatures(gym_id, user_id, signer_name, signer_is_guardian, signature_png, terms_document_id, waiver_document_id, agreed_text)
+  values (v_gym, v_uid, v_name, coalesce(v_dob > (current_date - interval '18 years')::date, false), p_signature_png, v_terms, v_waiver, v_agreed)
   returning id into v_id;
+
+  for q in select qu.* from public.gym_signup_questions qu where qu.document_id in (v_terms, v_waiver) loop
+    select x into a from jsonb_array_elements(coalesce(p_answers, '[]'::jsonb)) x where x->>'question_id' = q.id::text limit 1;
+    if a is not null then
+      insert into public.member_signature_answers(signature_id, question_id, answer_yes, answer_text)
+      values (v_id, q.id,
+              case when q.answer_type = 'yes_no' then (a->>'yes')::boolean end,
+              left(nullif(btrim(coalesce(a->>'text', '')), ''), 2000));
+    end if;
+  end loop;
   return jsonb_build_object('ok', true, 'signature_id', v_id);
 end$$;
-revoke all on function public.sign_gym_documents(text, text, text) from public, anon;
-grant execute on function public.sign_gym_documents(text, text, text) to authenticated;
+revoke all on function public.sign_gym_documents(text, text, text, jsonb) from public, anon;
+grant execute on function public.sign_gym_documents(text, text, text, jsonb) to authenticated;
 
--- ---------------------------------------------------------------------------------------------------------------
--- What is missing: now also the signature on the gym's CURRENT terms and waiver (the rest is as in 20261011090000)
--- ---------------------------------------------------------------------------------------------------------------
 create or replace function private.member_gaps(p_user_id uuid, p_gym_id uuid) returns text[]
 language plpgsql stable security definer set search_path to 'public', 'private', 'pg_temp' as $$
 declare

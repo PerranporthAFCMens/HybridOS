@@ -6,11 +6,13 @@ drop policy if exists "members and gym staff read signed documents" on storage.o
 drop policy if exists "gym owners and admins delete signup documents" on storage.objects;
 drop policy if exists "gym owners and admins replace signup documents" on storage.objects;
 drop policy if exists "gym owners and admins upload signup documents" on storage.objects;
-drop function if exists public.sign_gym_documents(text, text, text);
+drop function if exists public.sign_gym_documents(text, text, text, jsonb);
 drop function if exists public.get_public_gym_signup_documents(text);
 drop function if exists public.remove_gym_signup_document(uuid, text);
-drop function if exists public.add_gym_signup_document(uuid, text, text, text, text, text, integer, text);
+drop function if exists public.add_gym_signup_document(uuid, text, text, text, text, text, integer, text, text, jsonb);
+drop table if exists public.member_signature_answers;
 drop table if exists public.member_signatures;
+drop table if exists public.gym_signup_questions;
 drop table if exists public.gym_signup_documents;
 drop function if exists private.safe_uuid(text);
 create or replace function private.member_gaps(p_user_id uuid, p_gym_id uuid) returns text[]

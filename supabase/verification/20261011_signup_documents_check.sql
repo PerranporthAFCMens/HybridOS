@@ -5,11 +5,18 @@ union all
 select 'signatures table exists with row level security',
        case when (select relrowsecurity from pg_class where oid = to_regclass('public.member_signatures')) then 'ok' else 'MISSING OR OPEN' end
 union all
-select 'nobody can write the two tables directly',
+select 'questions and answers tables exist with row level security',
+       case when (select relrowsecurity from pg_class where oid = to_regclass('public.gym_signup_questions'))
+             and (select relrowsecurity from pg_class where oid = to_regclass('public.member_signature_answers')) then 'ok' else 'MISSING OR OPEN' end
+union all
+select 'nobody can write the tables directly',
        case when not has_table_privilege('authenticated', 'public.gym_signup_documents', 'insert')
              and not has_table_privilege('authenticated', 'public.gym_signup_documents', 'update')
              and not has_table_privilege('authenticated', 'public.member_signatures', 'insert')
              and not has_table_privilege('authenticated', 'public.member_signatures', 'update')
+             and not has_table_privilege('authenticated', 'public.gym_signup_questions', 'insert')
+             and not has_table_privilege('authenticated', 'public.member_signature_answers', 'insert')
+             and not has_table_privilege('anon', 'public.member_signature_answers', 'select')
              and not has_table_privilege('anon', 'public.member_signatures', 'select') then 'ok' else 'WRONG' end
 union all
 select 'the two storage buckets exist, terms public and signed copies private',
