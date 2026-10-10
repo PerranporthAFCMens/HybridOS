@@ -15,3 +15,11 @@
 .join-price { font-family: var(--hybrid-mono); margin: 4px 0; }
 .join-plan .btn { width: 100%; min-height: 44px; }
 .join-done { text-align: center; padding: 8px 0; }
+.sig { margin: 12px 0; }
+.sig-label { font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+.sig-canvas { display: block; width: 100%; max-width: 100%; background: #fff; border: 1px solid var(--hybrid-line-strong); border-radius: var(--hybrid-control-radius); touch-action: none; cursor: crosshair; }
+.sig-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 6px; }
+.join-doc { padding: 12px 0; border-top: 1px solid var(--hybrid-line); }
+.join-doc h3 { margin: 0 0 6px; }
+.join-q { margin: 10px 0; }
+.join-q-text { font-size: 14px; font-weight: 600; margin-bottom: 4px; }

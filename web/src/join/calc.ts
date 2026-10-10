@@ -24,18 +24,18 @@ export const EMPTY_DETAILS: JoinDetails = {
   emergencyName: '', emergencyPhone: '', emergencyRelationship: '', guardianName: '', guardianPhone: '',
 };
 
-export type StepId = 'account' | 'about' | 'address' | 'emergency' | 'guardian' | 'terms' | 'plan' | 'done';
+export type StepId = 'account' | 'about' | 'address' | 'emergency' | 'guardian' | 'sign' | 'plan' | 'done';
 
 export const STEP_TITLES: Record<StepId, string> = {
   account: 'Your account', about: 'About you', address: 'Your address', emergency: 'Emergency contact',
-  guardian: 'Parent or guardian', terms: 'Terms and health declaration', plan: 'Choose your membership', done: 'Welcome',
+  guardian: 'Parent or guardian', sign: 'Read and sign', plan: 'Choose your membership', done: 'Welcome',
 };
 
-/** The steps this person goes through. Guardian only under 18; terms only when the gym has some. */
-export function stepsFor(opts: { under18: boolean; hasTerms: boolean }): StepId[] {
+/** The steps this person goes through. Guardian only under 18; reading and signing only when the gym has documents. */
+export function stepsFor(opts: { under18: boolean; hasDocuments: boolean }): StepId[] {
   const steps: StepId[] = ['account', 'about', 'address', 'emergency'];
   if (opts.under18) steps.push('guardian');
-  if (opts.hasTerms) steps.push('terms');
+  if (opts.hasDocuments) steps.push('sign');
   steps.push('plan', 'done');
   return steps;
 }
@@ -136,4 +136,49 @@ export interface JoinPlan {
 export function planPrice(p: Pick<JoinPlan, 'pricePence' | 'interval'>): string {
   const amount = `£${(p.pricePence / 100).toFixed(2)}`;
   return p.interval === 'one_off' ? amount : `${amount} / ${p.interval}`;
+}
+
+// ---- Reading and signing ----
+
+export interface JoinQuestion { id: string; prompt: string; answerType: 'yes_no' | 'text'; detailsIfYes: boolean; required: boolean }
+export interface JoinDocument {
+  id: string; kind: 'terms' | 'waiver'; version: number; title: string; source: 'pdf' | 'text';
+  filePath: string | null; fileName: string | null; body: string | null; acceptance: string; questions: JoinQuestion[];
+}
+export interface AnswerDraft { yes: boolean | null; text: string }
+export type Answers = Record<string, AnswerDraft>;
+
+/** The first thing the person still has to do before signing, in words for them, or null when they can sign. */
+export function checkSign(o: { docs: JoinDocument[]; answers: Answers; ticked: Record<string, boolean>; name: string; hasInk: boolean }): string | null {
+  for (const d of o.docs) {
+    for (const q of d.questions) {
+      const a = o.answers[q.id] ?? { yes: null, text: '' };
+      const hasText = a.text.trim() !== '';
+      if (q.required && ((q.answerType === 'yes_no' && a.yes === null) || (q.answerType === 'text' && !hasText))) return `Answer this question: ${q.prompt}`;
+      if (q.answerType === 'yes_no' && a.yes === true && q.detailsIfYes && !hasText) return `Give a few details for: ${q.prompt}`;
+    }
+  }
+  if (o.docs.some((d) => !o.ticked[d.id])) return 'Tick the box under each document to say you have read and agree.';
+  if (o.name.trim().length < 2) return 'Type your full name.';
+  if (!o.hasInk) return 'Draw your signature in the box.';
+  return null;
+}
+
+/** The answers as the database function wants them. Only questions that were answered are sent. */
+export function answersPayload(docs: JoinDocument[], answers: Answers): { question_id: string; yes?: boolean; text?: string }[] {
+  const out: { question_id: string; yes?: boolean; text?: string }[] = [];
+  for (const d of docs) {
+    for (const q of d.questions) {
+      const a = answers[q.id];
+      if (!a) continue;
+      const text = a.text.trim();
+      if (q.answerType === 'yes_no') {
+        if (a.yes === null) continue;
+        out.push({ question_id: q.id, yes: a.yes, ...(text ? { text } : {}) });
+      } else if (text) {
+        out.push({ question_id: q.id, text });
+      }
+    }
+  }
+  return out;
 }

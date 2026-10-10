@@ -1,6 +1,9 @@
 import { supabase } from './client';
 import type { Json } from './database.types';
-import type { JoinPlan } from '../join/calc';
+import type { JoinDocument, JoinPlan, JoinQuestion } from '../join/calc';
+
+const obj = (v: Json | null): Record<string, Json | undefined> => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+const str = (v: Json | undefined): string => (typeof v === 'string' ? v : '');
 
 export interface JoinGym {
   gymId: string;
@@ -8,11 +11,6 @@ export interface JoinGym {
   logoUrl: string | null;
   plans: JoinPlan[];
 }
-
-export interface JoinTerms { termsText: string; healthText: string; version: number }
-
-const obj = (v: Json | null): Record<string, Json | undefined> => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
-const str = (v: Json | undefined): string => (typeof v === 'string' ? v : '');
 
 /** The gym behind a sign-up link and the plans it offers publicly. Works before anyone is signed in. */
 export async function getJoinGym(slug: string): Promise<JoinGym> {
@@ -31,14 +29,24 @@ export async function getJoinGym(slug: string): Promise<JoinGym> {
   return { gymId: str(g.gym_id), name: str(g.gym_name) || 'your gym', logoUrl: str(g.logo_url) || null, plans };
 }
 
-export async function getJoinTerms(slug: string): Promise<JoinTerms> {
-  const { data, error } = await supabase.rpc('get_public_gym_join_terms', { p_gym_slug: slug });
-  if (error) throw new Error(error.message);
-  const t = obj(data);
-  return { termsText: str(t.terms_text), healthText: str(t.health_declaration_text), version: Number(t.terms_version) || 1 };
-}
+const arr = (v: Json | undefined): Json[] => (Array.isArray(v) ? v : []);
 
-export const hasTerms = (t: JoinTerms): boolean => t.termsText.trim() !== '' || t.healthText.trim() !== '';
+/** The documents a joiner must read and sign: the gym's current terms and waiver, with their questions. */
+export async function getSignupDocuments(slug: string): Promise<JoinDocument[]> {
+  const { data, error } = await supabase.rpc('get_public_gym_signup_documents', { p_gym_slug: slug });
+  if (error) throw new Error(error.message);
+  return arr(data ?? undefined).map((r): JoinDocument => {
+    const d = obj(r);
+    return {
+      id: str(d.id), kind: d.kind === 'waiver' ? 'waiver' : 'terms', version: Number(d.version) || 1, title: str(d.title), source: d.source === 'pdf' ? 'pdf' : 'text',
+      filePath: str(d.file_path) || null, fileName: str(d.file_name) || null, body: str(d.body_text) || null, acceptance: str(d.acceptance_text),
+      questions: arr(d.questions).map((x): JoinQuestion => {
+        const q = obj(x);
+        return { id: str(q.id), prompt: str(q.prompt), answerType: q.answer_type === 'text' ? 'text' : 'yes_no', detailsIfYes: q.details_if_yes === true, required: q.is_required !== false };
+      }),
+    };
+  });
+}
 
 export async function createAccount(email: string, password: string, slug: string, gymName: string): Promise<{ signedIn: boolean }> {
   const back = new URL('./', window.location.href);
@@ -75,8 +83,9 @@ export async function saveJoinDetails(args: SaveArgs): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-export async function acceptTerms(slug: string): Promise<void> {
-  const { error } = await supabase.rpc('accept_gym_terms', { p_gym_slug: slug });
+/** Signs everything the gym currently asks for, once, with the answers to its questions. */
+export async function signDocuments(slug: string, name: string, signaturePng: string, answers: Json): Promise<void> {
+  const { error } = await supabase.rpc('sign_gym_documents', { p_gym_slug: slug, p_signer_name: name.trim(), p_signature_png: signaturePng, p_answers: answers });
   if (error) throw new Error(error.message);
 }
 
