@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_DETAILS, checkAbout, checkAccount, checkAddress, checkEmergency, checkGuardian, isUnder18, normalisePhone, normalisePostcode, planPrice, stepsFor, toRpcArgs } from '../src/join/calc';
+import { EMPTY_DETAILS, answersPayload, checkAbout, checkAccount, checkAddress, checkEmergency, checkGuardian, checkSign, isUnder18, normalisePhone, normalisePostcode, planPrice, stepsFor, toRpcArgs, type JoinDocument } from '../src/join/calc';
 
 const NOW = new Date('2026-10-10T12:00:00Z');
 const good = { ...EMPTY_DETAILS, firstName: 'Sam', lastName: 'Penrose', dob: '1990-04-12', phone: '07700 900123', line1: '1 Cliff Road', town: 'Perranporth', postcode: 'pl28 8ab', emergencyName: 'Alex', emergencyPhone: '+44 7700 900124', emergencyRelationship: 'Partner' };
 
 describe('join steps', () => {
-  it('guardian only for under-18s, terms only when the gym has some', () => {
-    expect(stepsFor({ under18: false, hasTerms: false })).toEqual(['account', 'about', 'address', 'emergency', 'plan', 'done']);
-    expect(stepsFor({ under18: true, hasTerms: true })).toEqual(['account', 'about', 'address', 'emergency', 'guardian', 'terms', 'plan', 'done']);
+  it('guardian only for under-18s, signing only when the gym has documents', () => {
+    expect(stepsFor({ under18: false, hasDocuments: false })).toEqual(['account', 'about', 'address', 'emergency', 'plan', 'done']);
+    expect(stepsFor({ under18: true, hasDocuments: true })).toEqual(['account', 'about', 'address', 'emergency', 'guardian', 'sign', 'plan', 'done']);
   });
 });
 
@@ -88,5 +88,37 @@ describe('plan price', () => {
   it('shows the interval except for one-offs', () => {
     expect(planPrice({ pricePence: 5900, interval: 'monthly' })).toBe('£59.00 / monthly');
     expect(planPrice({ pricePence: 800, interval: 'one_off' })).toBe('£8.00');
+  });
+});
+
+const doc = (over: Partial<JoinDocument> = {}): JoinDocument => ({
+  id: 'd1', kind: 'waiver', version: 1, title: 'Waiver', source: 'text', filePath: null, fileName: null, body: 'Risks.', acceptance: 'I agree.',
+  questions: [
+    { id: 'q1', prompt: 'Heart condition?', answerType: 'yes_no', detailsIfYes: true, required: true },
+    { id: 'q2', prompt: 'Injuries?', answerType: 'text', detailsIfYes: false, required: false },
+  ],
+  ...over,
+});
+const ready = { docs: [doc()], answers: { q1: { yes: false, text: '' } }, ticked: { d1: true }, name: 'Sam Penrose', hasInk: true };
+
+describe('before signing', () => {
+  it('every required question must be answered, and a yes needs its details', () => {
+    expect(checkSign({ ...ready, answers: {} })).toBe('Answer this question: Heart condition?');
+    expect(checkSign({ ...ready, answers: { q1: { yes: true, text: '' } } })).toBe('Give a few details for: Heart condition?');
+    expect(checkSign({ ...ready, answers: { q1: { yes: true, text: 'Controlled' } } })).toBeNull();
+  });
+  it('optional questions can be left', () => {
+    expect(checkSign(ready)).toBeNull();
+  });
+  it('each document must be ticked, a name typed and a signature drawn', () => {
+    expect(checkSign({ ...ready, ticked: {} })).toMatch(/Tick the box/);
+    expect(checkSign({ ...ready, docs: [doc(), doc({ id: 'd2', title: 'Terms', questions: [] })] })).toMatch(/Tick the box/);
+    expect(checkSign({ ...ready, name: ' S ' })).toBe('Type your full name.');
+    expect(checkSign({ ...ready, hasInk: false })).toBe('Draw your signature in the box.');
+  });
+  it('sends only the questions that were answered', () => {
+    expect(answersPayload([doc()], { q1: { yes: true, text: ' Controlled ' }, q2: { yes: null, text: '' } })).toEqual([{ question_id: 'q1', yes: true, text: 'Controlled' }]);
+    expect(answersPayload([doc()], { q1: { yes: false, text: '' }, q2: { yes: null, text: 'Knee' } })).toEqual([{ question_id: 'q1', yes: false }, { question_id: 'q2', text: 'Knee' }]);
+    expect(answersPayload([doc()], {})).toEqual([]);
   });
 });
