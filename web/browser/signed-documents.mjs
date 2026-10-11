@@ -21,7 +21,9 @@ let allOk = true;
 for (const [name, viewport] of Object.entries(sizes)) {
   process.env.MOCK_ROLE = 'owner';
   const { ctx, page, errors } = await signedInPage(browser, viewport);
-  await mockSupabase(page, async ({ route, path, select }) => {
+  const calls = [];
+  await mockSupabase(page, async ({ route, path, select, body }) => {
+    if (path.endsWith('/functions/v1/finalise-signature')) { calls.push(body); return reply(route, { ok: true }); }
     if (path.endsWith('/member_signatures') && select.includes('signature_png') && !select.includes('*')) return reply(route, { signature_png: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', agreed_text: 'I have read the waiver.' });
     if (path.endsWith('/member_signatures')) return reply(route, SIGS);
     if (path.endsWith('/profiles')) return reply(route, [{ id: U.ann, display_name: 'Ann Archer', first_name: 'Ann', last_name: 'Archer' }, { id: U.ben, display_name: 'Ben Baker', first_name: 'Ben', last_name: 'Baker' }, { id: U.cat, display_name: 'Cat Cole', first_name: 'Cat', last_name: 'Cole' }]);
@@ -50,6 +52,14 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('PDF buttons only where a PDF exists', (await page.getByRole('button', { name: 'Terms PDF' }).count()) === 1 && (await page.getByRole('button', { name: 'Waiver PDF' }).count()) === 1);
   c.ok('and a plain note where none was made', (await page.getByText('No PDF made yet').count()) === 2);
   await c.has('a failed email shows its reason', page.getByText('Email failed: Failed at build_pdfs: boom'));
+  c.ok('Make PDF only on rows with no PDF', (await page.getByRole('button', { name: 'Make PDF' }).count()) === 2);
+  c.ok('Resend email on the row that was emailed', (await page.getByRole('button', { name: 'Resend email' }).count()) === 1);
+  await page.getByRole('button', { name: 'Make PDF' }).first().click();
+  await c.has('making a PDF says so', page.getByText(/Made the PDF for/));
+  c.ok('and asks only for the copies, without emailing the member', calls.length === 1 && calls[0].send_email === false && calls[0].resend === false && typeof calls[0].signature_id === 'string');
+  await page.getByRole('button', { name: 'Resend email' }).click();
+  await c.has('resending says so', page.getByText('Emailed the signed copies to Ben Baker.'));
+  c.ok('and asks for the email to be sent again', calls.length === 2 && calls[1].signature_id === 's2' && calls[1].send_email === true && calls[1].resend === true);
   await page.getByRole('button', { name: 'View signature' }).first().click();
   await c.has('the signature image opens', page.getByRole('img', { name: /Signature of/ }));
    await c.has('with what they agreed to', page.getByText('I have read the waiver.').first());

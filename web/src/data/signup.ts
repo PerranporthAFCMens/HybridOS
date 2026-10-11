@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { edgeErrorMessage } from './edge';
 import type { DocKind, DocSource } from '../signup/calc';
 import { pdfPath } from '../signup/calc';
 import type { Json } from './database.types';
@@ -17,6 +18,14 @@ export async function getSignatureDetail(signatureId: string): Promise<{ image: 
   const r = await supabase.from('member_signatures').select('signature_png, agreed_text').eq('id', signatureId).maybeSingle();
   if (r.error) throw new Error(r.error.message);
   return { image: r.data?.signature_png ?? '', agreedText: r.data?.agreed_text ?? '' };
+}
+/**
+ * Asks the server to make a signature's PDF copies (and, when `email` is set, to email them to the member again).
+ * Owners, admins and staff only. Returns nothing; a failure is thrown with the reason.
+ */
+export async function makeSignedCopies(signatureId: string, opts: { email: boolean; resend?: boolean }): Promise<void> {
+  const { error } = await supabase.functions.invoke('finalise-signature', { body: { signature_id: signatureId, send_email: opts.email, resend: !!opts.resend } });
+  if (error) throw new Error(await edgeErrorMessage(error, 'Could not do that. Try again.'));
 }
 export interface FlaggedAnswer { signatureId: string; member: string; prompt: string; details: string; signedAt: string }
 
