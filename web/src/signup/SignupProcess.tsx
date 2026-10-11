@@ -1,13 +1,14 @@
 import { BASENAME } from '../app/site';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { gymSlug, listDocuments, listFlagged, listSignatures, publicPdfUrl, removeDocument, saveDocument, signedCopyUrl, uploadPdf, type SignatureRow, type SignupDoc } from '../data/signup';
+import { gymSlug, listDocuments, listFlagged, listSignatures, publicPdfUrl, removeDocument, saveDocument, uploadPdf, type SignupDoc } from '../data/signup';
 import { Button } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
 import { Checkbox, Field, FileInput, Input, Select, Textarea } from '../ui/Field';
 import { Modal } from '../ui/Modal';
-import { DEFAULT_ACCEPTANCE, KIND_LABEL, MAX_ACCEPTANCE, MAX_QUESTIONS, checkDraft, describeDoc, emptyDraft, joinLink, newQuestion, signerLine, toRpcQuestions, type DocDraft, type DocKind, type DocSource } from './calc';
+import { DEFAULT_ACCEPTANCE, KIND_LABEL, MAX_ACCEPTANCE, MAX_QUESTIONS, checkDraft, describeDoc, emptyDraft, joinLink, newQuestion, toRpcQuestions, type DocDraft, type DocKind, type DocSource } from './calc';
 import '../members/members.css';
 import '../staff/staff.css';
 import './signup.css';
@@ -110,14 +111,8 @@ export function SignupProcess() {
       </Card>
 
       <Card>
-        <SectionTitle title="Who has signed" />
-        {sigs.isError && <Empty>Could not load signatures. Refresh to try again.</Empty>}
-        {sigs.data && sigs.data.length === 0 && <Empty>No one has signed yet.</Empty>}
-        {sigs.data && sigs.data.length > 0 && (
-          <ul className="settings-list">
-            {sigs.data.map((s) => <SignatureItem key={s.id} s={s} onProblem={(text) => setNote({ text, good: false })} />)}
-          </ul>
-        )}
+        <SectionTitle title="Who has signed" action={<Link className="btn secondary" to="/signed-documents">Open signed documents</Link>} />
+        <p className="muted">{sigs.data ? `${sigs.data.length} ${sigs.data.length === 1 ? 'person has' : 'people have'} signed.` : 'Search, sort and open every signed copy in Signed documents.'}</p>
       </Card>
 
       {editing && (
@@ -125,30 +120,6 @@ export function SignupProcess() {
           onSaved={() => { setEditing(null); setNote({ text: `${KIND_LABEL[editing]} saved. New members will see it from now on.`, good: true }); void qc.invalidateQueries({ queryKey: ['signup-docs', gym.gymId] }); }} />
       )}
     </>
-  );
-}
-
-function SignatureItem({ s, onProblem }: { s: SignatureRow; onProblem: (text: string) => void }) {
-  const open = async (path: string) => {
-    try {
-      window.open(await signedCopyUrl(path), '_blank', 'noopener');
-    } catch (e) {
-      onProblem(e instanceof Error ? e.message : 'Could not open the signed copy.');
-    }
-  };
-  const versions = [s.termsVersion != null ? `terms v${s.termsVersion}` : '', s.waiverVersion != null ? `waiver v${s.waiverVersion}` : ''].filter(Boolean).join(', ');
-  return (
-    <li>
-      <div>
-        <b>{s.name}</b>
-        <div className="muted">Signed by {signerLine({ signerName: s.signerName, isGuardian: s.isGuardian }, s.name)}, {when(s.signedAt)} ({versions})</div>
-        <div className="muted small">{s.emailedAt ? `Copy emailed ${when(s.emailedAt)}.` : s.emailError ? `Email failed: ${s.emailError}` : 'Signed copy not emailed yet.'}</div>
-      </div>
-      <div className="signup-actions">
-        {s.termsPath && <Button onClick={() => void open(s.termsPath ?? '')}>Terms copy</Button>}
-        {s.waiverPath && <Button onClick={() => void open(s.waiverPath ?? '')}>Waiver copy</Button>}
-      </div>
-    </li>
   );
 }
 

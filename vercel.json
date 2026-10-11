@@ -42,7 +42,7 @@
       "destination": "/data-deletion.html"
     },
     {
-      "source": "/:screen(today|members|plans|classes|reports|staff|rooms|access|owners|door|member-view|community|communications|workouts|membership-rules|membership-requests|signup-process|member-privacy|settings|class-setup)",
+      "source": "/:screen(today|members|plans|classes|reports|staff|rooms|access|owners|door|member-view|community|communications|workouts|membership-rules|membership-requests|signup-process|signed-documents|member-privacy|settings|class-setup)",
       "destination": "/next/index.html"
     },
     {
