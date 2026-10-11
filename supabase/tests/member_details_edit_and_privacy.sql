@@ -169,3 +169,26 @@ begin
   if bad <> '' then raise exception 'Member details privacy test failed:%', bad; end if;
   raise notice 'MEMBER DETAILS PRIVACY TESTS PASSED';
 end $$;
+
+-- Display name after the member's own join form (20261011200000_join_display_name.sql)
+reset role;
+update public.profiles set display_name = 'member@x' where id = '00000000-0000-0000-0000-0000000000c1';
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000c1', false);
+select public.save_my_join_details('Ada','Lovelace',date '1990-03-14','+447700900123','1 High St',null,'Truro','TR1 1AA','Jo Smith','+447700900456','Mother',null,null);
+do $$ begin
+  if (select display_name from public.profiles where id = '00000000-0000-0000-0000-0000000000c1') <> 'Ada Lovelace' then
+    raise exception 'Display name test failed: an email display name was not replaced';
+  end if;
+end $$;
+reset role;
+update public.profiles set display_name = 'Ace' where id = '00000000-0000-0000-0000-0000000000c1';
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000c1', false);
+select public.save_my_join_details('Ada','Lovelace',date '1990-03-14','+447700900123','1 High St',null,'Truro','TR1 1AA','Jo Smith','+447700900456','Mother',null,null);
+do $$ begin
+  if (select display_name from public.profiles where id = '00000000-0000-0000-0000-0000000000c1') <> 'Ace' then
+    raise exception 'Display name test failed: a name the person chose was overwritten';
+  end if;
+  raise notice 'JOIN DISPLAY NAME TESTS PASSED';
+end $$;
