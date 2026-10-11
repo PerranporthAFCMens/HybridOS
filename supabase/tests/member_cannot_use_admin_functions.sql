@@ -57,7 +57,16 @@ reset role;
 
 do $$
 declare got text; extra text;
-  allowed text[] := array['get_access_invite', 'get_admin_invite', 'get_class_calendar', 'get_member_home_settings', 'get_my_membership_options', 'get_my_private_profile', 'get_my_training_groups', 'member_class_schedule'];
+  -- Reviewed 11 October 2026. Each is member, self-service or public-by-design:
+  --   get_access_invite, get_admin_invite       an invited person reads their own invitation by its secret token
+  --   get_class_calendar, member_class_schedule, get_member_home_settings, get_my_membership_options, get_my_training_groups
+  --                                             what a member sees of their own gym, scoped to the caller
+  --   get_my_private_profile                    the caller's own date of birth and gender
+  --   get_public_gym_join_options / _terms / get_public_gym_signup_documents
+  --                                             what a person reads before joining a gym (public by design, by gym slug)
+  --   create_gym_for_current_user               anyone signed in can start their own NEW gym and becomes its owner; it gives no access to any existing gym
+  allowed text[] := array['get_access_invite', 'get_admin_invite', 'get_class_calendar', 'get_member_home_settings', 'get_my_membership_options', 'get_my_private_profile', 'get_my_training_groups', 'member_class_schedule',
+                          'get_public_gym_join_options', 'get_public_gym_join_terms', 'get_public_gym_signup_documents', 'create_gym_for_current_user'];
 begin
   select string_agg(distinct fn, ', ' order by fn) into got from guard_calls where outcome = 'went through';
   select string_agg(distinct fn, ', ' order by fn) into extra from guard_calls where outcome = 'went through' and fn <> all (allowed);
