@@ -4,6 +4,7 @@ import { LEGACY_CHOOSER, LEGACY_LOGIN, useAuth } from '../auth/AuthProvider';
 import { Shell } from '../shell/Shell';
 import { Today } from '../today/Today';
 import { Members } from '../members/Members';
+import { MemberFile } from '../members/MemberFile';
 import { Plans } from '../plans/Plans';
 import { Classes } from '../classes/Classes';
 import { Reports } from '../reports/Reports';
@@ -31,7 +32,6 @@ import { Membership } from '../member/Membership';
 import { Rules } from '../membership/Rules';
 import { Requests } from '../membership/Requests';
 import { SignupProcess } from '../signup/SignupProcess';
-import { SignedDocuments } from '../signup/SignedDocuments';
 import { Privacy } from '../members/Privacy';
 import { Join } from '../join/Join';
 import { BASENAME } from './site';
@@ -85,6 +85,7 @@ function Main() {
           <Route element={<Shell />}>
             <Route path="/today" element={<Today />} />
             <Route path="/members" element={<Members />} />
+            <Route path="/members/:userId" element={<MemberFile />} />
             <Route path="/plans" element={<Plans />} />
             <Route path="/classes" element={<Classes />} />
             <Route path="/reports" element={<Reports />} />
@@ -100,7 +101,6 @@ function Main() {
             <Route path="/membership-rules" element={<Rules />} />
             <Route path="/membership-requests" element={<Requests />} />
             <Route path="/signup-process" element={<SignupProcess />} />
-            <Route path="/signed-documents" element={<SignedDocuments />} />
             <Route path="/member-privacy" element={<Privacy />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/class-setup" element={<ClassSetup />} />

@@ -1,13 +1,17 @@
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useReadyAuth } from '../auth/AuthProvider';
 import type { MemberRow } from '../data/members';
 import { Button } from '../ui/Button';
-import { Empty, SectionTitle } from '../ui/Card';
+import { Empty } from '../ui/Card';
 import { DateInput, Field, FieldRow, Select } from '../ui/Field';
-import { Modal } from '../ui/Modal';
 import { money } from '../today/calc';
-import { dateInputValue, isTeam, ROLE_LABEL, formatDate, formatRegistered, labelStatus, nameOf, nameParts, paymentHint, validateLifecycle } from './calc';
+import { dateInputValue, initials, isTeam, ROLE_LABEL, formatDate, formatRegistered, labelStatus, nameOf, paymentHint, validateLifecycle } from './calc';
+import { MemberAgreements } from './MemberAgreements';
 import { MemberDetailsCard } from './MemberDetailsCard';
-import { useMemberMemberships, useMemberWrites, usePlans } from './useMembers';
+import { useMemberDirectory, useMemberMemberships, useMemberWrites, usePlans } from './useMembers';
+import '../staff/staff.css';
+import './members.css';
 
 type Message = { text: string; tone: 'good' | 'error' } | null;
 
@@ -15,10 +19,21 @@ function Msg({ m }: { m: Message }) {
   return m ? <span className={`msg ${m.tone}`} role="status">{m.text}</span> : null;
 }
 
-export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gymId: string; onClose: () => void }) {
+/** One person's file, as a page: everything about them in one place, opened from the Members list. */
+export function MemberFile() {
+  const { gym } = useReadyAuth();
+  const { userId = '' } = useParams();
+  const directory = useMemberDirectory(gym.gymId);
+  const member = directory.data?.find((m) => m.userId === userId);
+  if (directory.isError) return <Empty>Could not load this member. Refresh to try again.</Empty>;
+  if (!directory.data) return <Empty>Loading…</Empty>;
+  if (!member) return <Empty>That person is not in this gym.</Empty>;
+  return <MemberFileBody key={member.userId} member={member} gymId={gym.gymId} />;
+}
+
+function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string }) {
   const name = nameOf(member);
   const team = isTeam(member);
-  const parts = nameParts(member);
   const memberships = useMemberMemberships(gymId, member.userId);
   const plans = usePlans(gymId);
   const writes = useMemberWrites(gymId, member.userId);
@@ -71,41 +86,32 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
       },
     );
 
+  const latest = member.latest;
   return (
-    <Modal title={`Member record: ${name}`} onClose={onClose}>
-      <SectionTitle
-        title={name}
-        action={<Button onClick={onClose}>Close</Button>}
-      />
-      <div className="muted">Gym role: {(ROLE_LABEL[member.role] ?? 'Member').toLowerCase()}</div>
+    <>
+      <header className="file-head">
+        <span className="avatar big" aria-hidden="true">{initials(name)}</span>
+        <div>
+          <h1>{name}</h1>
+          <div className="file-sub">
+            <span className="chip">{ROLE_LABEL[member.role] ?? 'Member'}</span>
+            {latest && <span className={`chip ${latest.status === 'active' ? 'good' : latest.status === 'paused' ? 'warn' : ''}`}>{labelStatus(latest.status)}</span>}
+          </div>
+        </div>
+      </header>
       {team && <div className="notice">This is a team login. Give them a membership below so they see the member app like any member (classes, workouts and so on).</div>}
 
-      <div className="profile">
-        <div><small>Name</small><b>{name}</b></div>
-        <div><small>Joined</small><b>{formatRegistered(member.joinedAt)}</b></div>
-        <div><small>First name</small><b>{member.firstName || '—'}</b></div>
-        <div><small>Surname</small><b>{member.lastName || parts.surname || '—'}</b></div>
+      <div className="file-strip">
+        <div><small>Plan</small><b>{latest ? latest.planName || 'Membership' : 'None'}</b></div>
+        <div><small>Status</small><b>{latest ? labelStatus(latest.status) : 'No membership'}</b></div>
+        <div><small>Member since</small><b>{formatRegistered(member.joinedAt)}</b></div>
       </div>
 
-      <MemberDetailsCard gymId={gymId} member={member} team={team} />
+      <div className="file-cols">
+        <div>
+          <MemberDetailsCard gymId={gymId} member={member} team={team} />
 
-      {!team && <section className="record-section">
-        <h3>Customer lifecycle</h3>
-        <div className="muted small">Joined date drives new customer reporting. Add an attrition date when they leave.</div>
-        <FieldRow>
-          <Field label="Joined date" htmlFor="joinedDate">
-            <DateInput id="joinedDate" value={joined} onChange={(e) => setJoined(e.target.value)} />
-          </Field>
-          <Field label="Attrition date" htmlFor="attritionDate" hint="Leave blank while the customer is live.">
-            <DateInput id="attritionDate" value={attrition} onChange={(e) => setAttrition(e.target.value)} />
-          </Field>
-        </FieldRow>
-        <Button onClick={saveLifecycle} disabled={writes.saveLifecycle.isPending}>
-          {writes.saveLifecycle.isPending ? 'Saving…' : 'Save lifecycle dates'}
-        </Button>{' '}
-        <Msg m={lifecycleMsg} />
-      </section>}
-
+          <h3 className="file-heading">Membership</h3>
       <section className="record-section">
         {memberships.isError ? (
           <Empty>Could not load memberships.</Empty>
@@ -141,7 +147,7 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
         )}
       </section>
 
-      <hr className="rule" />
+      <section className="record-section">
       <h3>Assign membership</h3>
       <Field label="Membership plan" htmlFor="planSelect">
         <Select id="planSelect" value={chosenPlan} onChange={(e) => setPlanId(e.target.value)}>
@@ -177,6 +183,29 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
       <Button variant="primary" className="wide-btn" onClick={assign} disabled={writes.assign.isPending}>
         {writes.assign.isPending ? 'Assigning…' : 'Assign membership'}
       </Button>
-    </Modal>
+      </section>
+        </div>
+        <div>
+          <MemberAgreements gymId={gymId} userId={member.userId} name={name} />
+
+      {!team && <section className="record-section">
+        <h3>Customer lifecycle</h3>
+        <div className="muted small">Joined date drives new customer reporting. Add an attrition date when they leave.</div>
+        <FieldRow>
+          <Field label="Joined date" htmlFor="joinedDate">
+            <DateInput id="joinedDate" value={joined} onChange={(e) => setJoined(e.target.value)} />
+          </Field>
+          <Field label="Attrition date" htmlFor="attritionDate" hint="Leave blank while the customer is live.">
+            <DateInput id="attritionDate" value={attrition} onChange={(e) => setAttrition(e.target.value)} />
+          </Field>
+        </FieldRow>
+        <Button onClick={saveLifecycle} disabled={writes.saveLifecycle.isPending}>
+          {writes.saveLifecycle.isPending ? 'Saving…' : 'Save lifecycle dates'}
+        </Button>{' '}
+        <Msg m={lifecycleMsg} />
+      </section>}
+        </div>
+      </div>
+    </>
   );
 }

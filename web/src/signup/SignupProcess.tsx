@@ -1,6 +1,5 @@
 import { BASENAME } from '../app/site';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { gymSlug, listDocuments, listFlagged, listSignatures, publicPdfUrl, removeDocument, saveDocument, uploadPdf, type SignupDoc } from '../data/signup';
@@ -110,10 +109,6 @@ export function SignupProcess() {
         ) : <Empty>Nothing flagged. Questions you mark “show staff when yes” appear here.</Empty>}
       </Card>
 
-      <Card>
-        <SectionTitle title="Who has signed" action={<Link className="btn secondary" to="/signed-documents">Open signed documents</Link>} />
-        <p className="muted">{sigs.data ? `${sigs.data.length} ${sigs.data.length === 1 ? 'person has' : 'people have'} signed.` : 'Search, sort and open every signed copy in Signed documents.'}</p>
-      </Card>
 
       {editing && (
         <Editor key={editing} gymId={gym.gymId} kind={editing} existing={current(editing)} onClose={() => setEditing(null)}

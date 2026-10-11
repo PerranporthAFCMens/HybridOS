@@ -45,7 +45,10 @@ for (const [name, viewport] of Object.entries(sizes)) {
       return true;
     }
     if (path.endsWith('/gym_members')) return reply(route, people);
-    if (path.endsWith('/member_signatures')) return reply(route, [{ id: 'sig1', gym_id: GYM, user_id: ADA, signed_at: '2026-10-06T09:00:00Z', signer_name: 'Ada Zane', signer_is_guardian: false, signed_terms_path: 'u/g/sig1-terms.pdf', signed_waiver_path: null, emailed_at: '2026-10-06T09:01:00Z' }]);
+    if (path.endsWith('/gym_signup_documents')) return reply(route, [{ id: 'dw', kind: 'waiver', title: 'Waiver', version: 1, source: 'text', acceptance_text: 'I have read the waiver.' }]);
+    if (path.endsWith('/gym_signup_questions')) return reply(route, [{ id: 'q1', document_id: 'dw', prompt: 'Do you have a heart condition?', answer_type: 'yes_no', position: 1 }]);
+    if (path.endsWith('/member_signature_answers')) return reply(route, [{ signature_id: 'sig1', question_id: 'q1', answer_yes: false, answer_text: null }]);
+    if (path.endsWith('/member_signatures')) return reply(route, [{ id: 'sig1', gym_id: GYM, user_id: ADA, signed_at: '2026-10-06T09:00:00Z', signer_name: 'Ada Zane', signer_is_guardian: false, signature_png: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', terms_document_id: null, waiver_document_id: 'dw', signed_terms_path: 'u/g/sig1-terms.pdf', signed_waiver_path: null, emailed_at: '2026-10-06T09:01:00Z' }]);
     if (path.endsWith('/profiles')) return reply(route, profiles);
     if (path.endsWith('/memberships') && select.includes('starts_on')) {
       return reply(route, [{ id: 'm1', status: 'active', starts_on: '2026-03-01', ends_on: null, payment_provider: 'manual', payment_status: 'confirmed', membership_plans: { name: 'Hybrid Monthly', price_pence: 4500, billing_interval: 'monthly' } }]);
@@ -80,8 +83,10 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('no horizontal overflow (missing details)', !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)));
   c.ok('the Open button is a proper tap target', ((await page.locator('.missing-details').getByRole('button', { name: 'Open' }).boundingBox())?.height ?? 0) >= 40);
   await page.locator('.missing-details').getByRole('button', { name: 'Open' }).click();
-  await c.has('Open shows that member\'s record', page.getByRole('dialog').getByText('Bob Adams'));
-  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
+  await c.has('Open shows that member\'s file as a page', page.getByRole('heading', { name: 'Bob Adams', level: 1 }));
+  c.ok('the address is the member\'s own page', /\/members\/[0-9a-f-]+$/.test(page.url()));
+  await page.getByRole('button', { name: '‹ Back' }).click();
+  await page.locator('.member-row').first().waitFor();
 
   // The team are listed too, marked by role, and can be filtered
   c.ok('the owner is listed as an owner', (await page.locator('.member-row', { hasText: 'Pat Boss' }).textContent()).includes('Owner'));
@@ -91,9 +96,10 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('members only', (await page.locator('.member-text b').allTextContents()).join('|') === 'Ada Zane|Bob Adams|Cat Young');
   await page.getByLabel('Show', { exact: true }).selectOption('all');
   await page.locator('.member-row', { hasText: 'Pat Boss' }).click();
-  await c.has('a team record explains itself and can be given a plan', page.getByRole('dialog').getByText(/This is a team login/));
-  c.ok('no member lifecycle dates for the team', (await page.getByRole('dialog').getByText('Customer lifecycle').count()) === 0 && (await page.getByRole('dialog').getByRole('button', { name: 'Assign membership' }).count()) === 1);
-  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
+  await c.has('a team record explains itself and can be given a plan', page.getByText(/This is a team login/));
+  c.ok('no member lifecycle dates for the team', (await page.getByText('Customer lifecycle').count()) === 0 && (await page.getByRole('button', { name: 'Assign membership' }).count()) === 1);
+  await page.getByRole('button', { name: '‹ Back' }).click();
+  await page.locator('.member-row').first().waitFor();
 
   // Jump letter: B only
   await page.locator('.member-jump button', { hasText: /^B$/ }).click();
@@ -106,7 +112,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
 
   // Open Ada's record
   await page.locator('.member-row', { hasText: 'Ada Zane' }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = page.locator('main.main');
   await c.has('record opens', dialog.getByText('Customer lifecycle'));
   await c.has('existing membership', dialog.getByRole('heading', { name: 'Hybrid Monthly' }));
   // What the gym holds on the member: date of birth, mobile, address, emergency contact, and the signed copies
@@ -114,8 +120,14 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('mobile', dialog.getByText('07700 900123'));
   await c.has('address', dialog.getByText('12 High Street, Flat 2, Truro, TR1 2AB'));
   await c.has('emergency contact and relationship', dialog.getByText('Jo Zane (Mother), 07700 900456'));
-  await c.has('signed document is listed', dialog.getByText(/Signed 6 Oct 2026 by Ada Zane/));
-  c.ok('terms copy can be opened, waiver is not offered when absent', (await dialog.getByRole('button', { name: 'Terms (PDF)' }).count()) === 1 && (await dialog.getByRole('button', { name: 'Waiver (PDF)' }).count()) === 0);
+  await c.has('the file has a Signed agreements section', dialog.getByRole('heading', { name: 'Signed agreements' }));
+  await c.has('with the exact time to the second', dialog.getByText('Tuesday 6 October 2026 at 10:00:00 BST'));
+  await c.has('who signed', dialog.getByText('Signed by Ada Zane'));
+  await c.has('what they agreed to', dialog.getByText('I have read the waiver.'));
+  await c.has('and their answer', dialog.getByText(/Do you have a heart condition\?/));
+  await c.has('and their signature', dialog.getByRole('img', { name: 'Signature of Ada Zane' }));
+  c.ok('no Make PDF or Resend buttons on the file', (await dialog.getByRole('button', { name: /Make PDF|Resend|Send email/ }).count()) === 0);
+  if (shots) await page.screenshot({ path: `${shots}/member-file-${name}.png`, fullPage: true });
   c.ok('no horizontal overflow (details)', !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)));
 
   // Editing: the form starts from what is held, is checked, and saves through the checked database call
@@ -141,9 +153,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   // stay inside the lifecycle card instead of spilling past its edge.
   await page.addStyleTag({ content: 'input[type=date]::-webkit-datetime-edit{display:inline-block;min-width:330px}' });
   const spill = await page.evaluate(() => {
-    const card = document.querySelector('.record-section:has(input[type=date])').getBoundingClientRect();
-    const modal = document.querySelector('.modal-card');
-    return { worst: Math.max(...[...document.querySelectorAll('.record-section input[type=date]')].map((i) => i.getBoundingClientRect().right - card.right)), scrolls: modal.scrollWidth > modal.clientWidth + 1 };
+    return { worst: Math.max(...[...document.querySelectorAll('.record-section input[type=date]')].map((i) => i.getBoundingClientRect().right - i.closest('.record-section').getBoundingClientRect().right)), scrolls: document.documentElement.scrollWidth > innerWidth + 1 };
   });
   c.ok('date boxes stay inside the card with wide built-in width', spill.worst <= 0 && !spill.scrolls);
 
@@ -182,8 +192,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
 
   const overflowModal = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
   c.ok('no horizontal overflow (record)', !overflowModal);
-  await page.keyboard.press('Escape');
-  c.ok('Escape closes the record', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
+  await page.getByRole('button', { name: '‹ Back' }).click();
+  await page.locator('.member-row').first().waitFor();
 
   // When the owner has hidden mobile numbers and addresses from the team: they are not shown, and only the owner can edit
   hide = true;
@@ -192,7 +202,6 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('the mobile number and address are not on the screen', (await dialog.getByText('07700 900123').count()) === 0 && (await dialog.getByText('12 High Street').count()) === 0);
   c.ok('the emergency contact is still shown', (await dialog.getByText('Jo Zane (Mother), 07700 900456').count()) === 1);
   c.ok('no way to edit, and it says why', (await dialog.getByRole('button', { name: /Edit details|Add details/ }).count()) === 0 && (await dialog.getByText(/only the owner can edit/).count()) === 1);
-  await page.keyboard.press('Escape');
   hide = false;
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;

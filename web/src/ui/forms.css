@@ -9,7 +9,7 @@
   font: inherit;
 }
 .ctl:focus { border-color: var(--hybrid-pulse); outline: none; }
-.ctl-date { -webkit-appearance: none; appearance: none; text-align: left; }
+.ctl-date { -webkit-appearance: none; appearance: none; text-align: left; overflow: hidden; }
 select.ctl { width: 100%; }
 
 .field { margin: 10px 0; min-width: 0; }

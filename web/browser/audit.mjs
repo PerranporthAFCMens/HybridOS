@@ -41,7 +41,7 @@ const STATES = {
   classes: async (page) => { await page.goto(`${base}/classes`); await page.getByRole('button', { name: 'List', exact: true }).click(); await page.getByRole('heading', { name: /Strength and conditioning/ }).waitFor(); },
   'class calendar': async (page) => { await page.goto(`${base}/classes`); await page.getByRole('button', { name: 'Day', exact: true }).click(); await page.getByRole('button', { name: /^Add a class on .* at 09:00$/ }).waitFor(); },
   'class form': async (page) => { await page.goto(`${base}/classes`); await page.getByRole('button', { name: 'Add class' }).click(); await page.getByRole('dialog').getByLabel('Class name').waitFor(); },
-  'member record': async (page) => { await page.goto(`${base}/members`); await page.locator('.member-row').first().click(); await page.getByRole('dialog').getByText('Customer lifecycle').waitFor(); await page.getByRole('dialog').getByRole('heading', { name: /Hybrid Monthly/ }).waitFor(); },
+  'member record': async (page) => { await page.goto(`${base}/members`); await page.locator('.member-row').first().click(); await page.getByText('Customer lifecycle').waitFor(); await page.getByRole('heading', { name: /Hybrid Monthly/ }).waitFor(); },
   settings: async (page) => { await page.goto(`${base}/settings`); await page.getByRole('heading', { name: 'Settings', level: 1 }).waitFor(); },
   staff: async (page) => { await page.goto(`${base}/staff`); await page.getByText('No team accounts yet.').waitFor(); },
   'staff form': async (page) => { await page.goto(`${base}/staff`); await page.getByRole('button', { name: 'Add staff login' }).click(); await page.getByRole('dialog').getByLabel('Name').waitFor(); },
@@ -74,7 +74,10 @@ function audit() {
   const problems = [];
   const vw = window.innerWidth;
   const label = (e) => (e.tagName.toLowerCase() + (e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\s+/)[0] : '') + (e.textContent ? ` "${e.textContent.trim().slice(0, 24)}"` : ''));
-  if (document.documentElement.scrollWidth > vw + 1) problems.push('the page scrolls sideways');
+  if (document.documentElement.scrollWidth > vw + 1) {
+    const wide = [...document.querySelectorAll('#root *')].filter((e) => e.scrollWidth > vw + 1).slice(-3).map((e) => label(e));
+    problems.push(`the page scrolls sideways${wide.length ? ` (wide: ${wide.join('; ')})` : ''}`);
+  }
   const drawerClosed = vw < 900 && !document.querySelector('.shell.open');
   const root = document.querySelector('#root');
   for (const e of root.querySelectorAll('*')) {

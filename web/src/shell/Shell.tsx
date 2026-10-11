@@ -16,10 +16,10 @@ function BackLink() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   if (TOP_PAGES.includes(pathname)) return null;
-  // Go back to wherever they came from; when the page was opened directly, go to Settings (where most of these live).
+  // Go back to wherever they came from; when the page was opened directly, go to its list (a member's file) or Settings (where most of these live).
   const canGoBack = typeof window.history.state?.idx === 'number' && window.history.state.idx > 0;
   return (
-    <button type="button" className="back-link" onClick={() => { if (canGoBack) void navigate(-1); else void navigate('/settings'); }}>
+    <button type="button" className="back-link" onClick={() => { if (canGoBack) void navigate(-1); else void navigate(pathname.startsWith('/members/') ? '/members' : '/settings'); }}>
       ‹ Back
     </button>
   );
