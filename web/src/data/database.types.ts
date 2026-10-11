@@ -1230,6 +1230,18 @@ export type Database = {
         Update: Record<string, never>
         Relationships: []
       }
+      gym_privacy_settings: {
+        Row: {
+          gym_id: string
+          team_sees_address: boolean
+          team_sees_phone: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
       member_details: {
         Row: {
           address_line1: string
@@ -1240,6 +1252,7 @@ export type Database = {
           emergency_relationship: string
           guardian_name: string | null
           guardian_phone: string | null
+          phone: string | null
           postcode: string
           town: string
           updated_at: string
@@ -3430,6 +3443,38 @@ export type Database = {
       get_members_missing_details: {
         Args: { p_gym_id: string }
         Returns: { user_id: string; member_name: string; missing: string[] }[]
+      }
+      get_member_details: {
+        Args: { p_gym_id: string; p_user_id: string }
+        Returns: Json
+      }
+      get_member_contact_visibility: {
+        Args: { p_gym_id: string }
+        Returns: Json
+      }
+      set_member_contact_visibility: {
+        Args: { p_gym_id: string; p_team_sees_phone: boolean; p_team_sees_address: boolean }
+        Returns: Json
+      }
+      staff_save_member_details: {
+        Args: {
+          p_gym_id: string
+          p_user_id: string
+          p_first_name: string
+          p_last_name: string
+          p_date_of_birth: string
+          p_phone: string
+          p_address_line1: string
+          p_address_line2: string
+          p_town: string
+          p_postcode: string
+          p_emergency_name: string
+          p_emergency_phone: string
+          p_emergency_relationship: string
+          p_guardian_name: string
+          p_guardian_phone: string
+        }
+        Returns: Json
       }
       save_my_join_details: {
         Args: {

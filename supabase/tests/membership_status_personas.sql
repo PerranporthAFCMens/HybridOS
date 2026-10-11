@@ -285,13 +285,14 @@ do $$ declare p pt.persona;
 begin
   -- joining now needs the member's details: a brand-new user with none is refused, then the two people who should still be able to join get a complete set
   perform pt.check('J join: a brand-new user with no details is refused', pt.q('00000000-0000-4000-8000-0000000000d1','select (public.join_public_gym_with_membership(''persona-gym-a'',''c0000000-0000-4000-8000-000000000001''))->>''status'''),'ERROR:P0001:Complete your details before joining: first name, last name, date of birth, mobile number, address, emergency contact');
-  insert into public.profiles(id, first_name, last_name, date_of_birth, phone) values
-    ('00000000-0000-4000-8000-000000000008','Norow','Persona','1990-01-01','+447700900008'),
-    ('00000000-0000-4000-8000-0000000000d1','Brand','New','1990-01-01','+447700900009')
-  on conflict (id) do update set first_name=excluded.first_name, last_name=excluded.last_name, date_of_birth=excluded.date_of_birth, phone=excluded.phone;
-  insert into public.member_details(user_id, address_line1, town, postcode, emergency_name, emergency_phone, emergency_relationship) values
-    ('00000000-0000-4000-8000-000000000008','1 Test Road','Perranporth','PL28 8AB','Emergency Contact','+447700900010','Partner'),
-    ('00000000-0000-4000-8000-0000000000d1','2 Test Road','Perranporth','PL28 8AB','Emergency Contact','+447700900011','Partner');
+  insert into public.profiles(id, first_name, last_name, date_of_birth) values
+    ('00000000-0000-4000-8000-000000000008','Norow','Persona','1990-01-01'),
+    ('00000000-0000-4000-8000-0000000000d1','Brand','New','1990-01-01')
+  on conflict (id) do update set first_name=excluded.first_name, last_name=excluded.last_name, date_of_birth=excluded.date_of_birth;
+  -- the mobile number is kept with the address (member_details), not on profiles
+  insert into public.member_details(user_id, phone, address_line1, town, postcode, emergency_name, emergency_phone, emergency_relationship) values
+    ('00000000-0000-4000-8000-000000000008','+447700900008','1 Test Road','Perranporth','PL28 8AB','Emergency Contact','+447700900010','Partner'),
+    ('00000000-0000-4000-8000-0000000000d1','+447700900009','2 Test Road','Perranporth','PL28 8AB','Emergency Contact','+447700900011','Partner');
   for p in select * from pt.persona where class<>'priv' order by name loop
     perform pt.check('J join_public_gym_with_membership :: '||p.name, pt.q(p.uid,'select (public.join_public_gym_with_membership(''persona-gym-a'',''c0000000-0000-4000-8000-000000000001''))->>''status'''),
       case when p.name='norow_a' then 'active' else 'ERROR:P0001:You already have a membership at this gym. Contact your gym to change it.' end);
@@ -328,6 +329,10 @@ insert into pt.fn_allow values
  ('request_membership_cancel(uuid,text)','scoped to the caller''s own membership by auth.uid(); refuses anyone else''s (tested in membership_rules.sql)'),
  ('request_membership_change(uuid,uuid)','scoped to the caller''s own membership by auth.uid(); refuses anyone else''s (tested in membership_rules.sql)'),
  ('withdraw_membership_request(uuid)','scoped to the caller''s own request by auth.uid(); refuses anyone else''s (tested in membership_rules.sql)'),
+ ('staff_save_member_details(uuid,uuid,text,text,date,text,text,text,text,text,text,text,text,text,text)','checks in the function that the caller is an active owner, admin or staff member of the gym and the person is a member of it (tested in member_details_edit_and_privacy.sql)'),
+ ('get_member_details(uuid,uuid)','checks the caller is the gym''s owner, admin or staff and applies the owner''s privacy choice (tested in member_details_edit_and_privacy.sql)'),
+ ('set_member_contact_visibility(uuid,boolean,boolean)','owner of the gym only, checked in the function (tested in member_details_edit_and_privacy.sql)'),
+ ('get_member_contact_visibility(uuid)','the gym''s owner, admin and staff only, checked in the function (tested in member_details_edit_and_privacy.sql)'),
  ('save_my_join_details(text,text,date,text,text,text,text,text,text,text,text,text,text)','writes only the caller''s own profile and details by auth.uid() (tested in member_join_details_flow.sql)'),
  ('accept_gym_terms(text)','superseded by sign_gym_documents and no longer used; writes only the caller''s own row by auth.uid()'),
  ('get_public_gym_join_terms(text)','superseded and no longer used; returns a gym''s public wording to any signed-in person'),
@@ -423,7 +428,7 @@ select pt.check('P ungated auth.uid() policies are exactly the reviewed list',
   (select coalesce(string_agg(tablename||' / '||policyname, '; ' order by tablename, policyname),'none') from pg_policies
     where schemaname='public' and (coalesce(qual,'')||' '||coalesce(with_check,'')) ~ 'auth.uid'
       and (coalesce(qual,'')||' '||coalesce(with_check,'')) !~ 'private\.(member_status_allows|is_gym_member|can_write_gym|has_gym_role|is_pending_admin|staff_has_permission|has_gym_staff_permission|can_manage_gym_member|can_view_profile)'),
-  'class_bookings / assigned class staff can view bookings; class_sessions / coaches can view assigned session details; gym_communication_settings / Gym admins manage communication settings; gym_email_templates / Gym admins manage email templates; gym_members / members read own gym member row; gyms / authenticated users can create gyms; member_details / members and gym staff read member details; membership_requests / members read their own membership requests; personal_bests / staff_view_gym_personal_bests; profiles / users can update own profile; pt_appointments / pt appointments select; staff_profiles / staff can view own profile; strava_activities / users_view_own_strava_activities; strava_connections / users_disconnect_own_strava_connection; strava_connections / users_view_own_strava_connection; workout_entries / staff_view_gym_workout_entries; workout_sessions / staff_view_gym_workout_sessions; workout_sets / staff_view_sets_for_gym_entries');
+  'class_bookings / assigned class staff can view bookings; class_sessions / coaches can view assigned session details; gym_communication_settings / Gym admins manage communication settings; gym_email_templates / Gym admins manage email templates; gym_members / members read own gym member row; gym_privacy_settings / owners and admins read their gym privacy settings; gyms / authenticated users can create gyms; member_details / members read their own details; membership_requests / members read their own membership requests; personal_bests / staff_view_gym_personal_bests; profiles / users can update own profile; pt_appointments / pt appointments select; staff_profiles / staff can view own profile; strava_activities / users_view_own_strava_activities; strava_connections / users_disconnect_own_strava_connection; strava_connections / users_view_own_strava_connection; workout_entries / staff_view_gym_workout_entries; workout_sessions / staff_view_gym_workout_sessions; workout_sets / staff_view_sets_for_gym_entries');
 
 -- 4. helper functions are status aware (guards against someone restoring the permissive bodies)
 select pt.check('P is_gym_member is status aware', (pg_get_functiondef('private.is_gym_member(uuid)'::regprocedure) like '%member_status_allows%')::text,'true');

@@ -31,6 +31,7 @@ import { Membership } from '../member/Membership';
 import { Rules } from '../membership/Rules';
 import { Requests } from '../membership/Requests';
 import { SignupProcess } from '../signup/SignupProcess';
+import { Privacy } from '../members/Privacy';
 import { Join } from '../join/Join';
 import { BASENAME } from './site';
 
@@ -98,6 +99,7 @@ function Main() {
             <Route path="/membership-rules" element={<Rules />} />
             <Route path="/membership-requests" element={<Requests />} />
             <Route path="/signup-process" element={<SignupProcess />} />
+            <Route path="/member-privacy" element={<Privacy />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/class-setup" element={<ClassSetup />} />
             <Route path="*" element={<Navigate to="/today" replace />} />

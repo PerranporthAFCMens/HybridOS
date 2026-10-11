@@ -44,10 +44,10 @@ jobs:
             select count(*) into v_triggers from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace tn on tn.oid=c.relnamespace join pg_proc p on p.oid=t.tgfoid join pg_namespace fn on fn.oid=p.pronamespace where not t.tgisinternal and (tn.nspname in ('public','private') or fn.nspname in ('public','private'));
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
-            if v_tables<>71 then raise exception 'Expected 71 app tables, got %',v_tables; end if;
-            if v_functions<>114 then raise exception 'Expected 114 committed app functions, got %',v_functions; end if;
-            if v_policies<>183 then raise exception 'Expected 183 app/storage policies, got %',v_policies; end if;
-            if v_triggers<>28 then raise exception 'Expected 28 app-related triggers, got %',v_triggers; end if;
+            if v_tables<>72 then raise exception 'Expected 72 app tables, got %',v_tables; end if;
+            if v_functions<>119 then raise exception 'Expected 119 committed app functions, got %',v_functions; end if;
+            if v_policies<>184 then raise exception 'Expected 184 app/storage policies, got %',v_policies; end if;
+            if v_triggers<>29 then raise exception 'Expected 29 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
             if exists(select 1 from public.profiles) then raise exception 'Baseline must not contain live profile rows'; end if;
