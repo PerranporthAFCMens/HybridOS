@@ -1,6 +1,6 @@
 # Why no signed copy was ever made or emailed (2026-10-11)
 
-Status: migration written; NOT applied to the live database. Needs the owner's go-ahead.
+Status: APPLIED to the live database by the owner on 11 October 2026 (evening). Make PDF and Send email then worked and Resend delivered the email.
 
 ## What was wrong
 `finalise-signature` runs as the project's service role. This project strips the service role's table access on purpose, so the function could not read `member_signatures`: every call failed with "permission denied for table member_signatures". The function treated that as "no such signature", so nothing was made, nothing was emailed, and no reason was recorded (it only started recording reasons after the later fixes). Found when the Signed documents page's Make PDF showed "Could not read the signature: permission denied for table member_signatures".
