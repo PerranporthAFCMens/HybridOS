@@ -225,7 +225,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const pick = page.getByLabel('Report', { exact: true });
   const paper = page.getByLabel('What you will download');
   await c.has('library opens with a report to choose', pick);
-  c.ok('28 reports in the list, in five groups', (await pick.locator('option').count()) === 28 && (await pick.locator('optgroup').count()) === 5);
+  c.ok('29 reports in the list, in five groups', (await pick.locator('option').count()) === 29 && (await pick.locator('optgroup').count()) === 5);
   await pick.selectOption({ label: 'Birthdays' });
   const choice = page.getByLabel('Show birthdays');
   await c.has('birthdays asks how far ahead to look', choice);

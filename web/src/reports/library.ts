@@ -286,6 +286,19 @@ export const LIBRARY: LibraryGroup[] = [
         build: (ctx, d) => table(ctx, 'Membership changes', ['Member', 'Plan', 'Status', 'Starts', 'Ends', 'Updated'],
           d.memberships.filter((m) => inRange(ctx.since, m.updatedAt)).map((m) => [who(d, m.userId), planName(d, m.planId), m.status, m.startsOn, m.endsOn, dateTime(m.updatedAt)])),
       },
+      {
+        key: 'signed_documents', title: 'Signed documents', description: 'Who has signed the terms and waiver, exactly when, which versions they signed, and whether their signed copy was made and emailed.',
+        build: (ctx, d) => table(ctx, 'Signed documents', ['Member', 'Signed by', 'Signed at', 'Terms', 'Waiver', 'Signed copy', 'Emailed', 'Email problem'],
+          (d.signatures ?? [])
+            .filter((s) => inRange(ctx.since, s.signedAt))
+            .sort((a, b) => new Date(b.signedAt).getTime() - new Date(a.signedAt).getTime())
+            .map((s): Cell[] => [
+              who(d, s.userId), s.isGuardian ? `${s.signerName} (parent or guardian)` : s.signerName, ukDateTime(s.signedAt),
+              s.termsVersion != null ? `v${s.termsVersion}` : '', s.waiverVersion != null ? `v${s.waiverVersion}` : '',
+              s.hasTermsPdf && s.hasWaiverPdf ? 'Terms and waiver' : s.hasTermsPdf ? 'Terms only' : s.hasWaiverPdf ? 'Waiver only' : 'None made',
+              s.emailedAt ? ukDateTime(s.emailedAt) : 'No', s.emailError,
+            ])),
+      },
     ],
   },
   {

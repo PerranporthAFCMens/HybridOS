@@ -66,10 +66,10 @@ const data = (over: Partial<LibraryData> = {}): LibraryData => ({
 });
 
 describe('library', () => {
-  it('has the 24 reports of the old page plus birthdays, late cancellations, cancellation timing and class slots, in five groups', () => {
-    expect(LIBRARY_COUNT).toBe(28);
+  it('has the 24 reports of the old page plus birthdays, late cancellations, cancellation timing, class slots and signed documents, in five groups', () => {
+    expect(LIBRARY_COUNT).toBe(29);
     expect(LIBRARY.map((g) => g.group)).toEqual(['Membership & growth', 'Lifecycle & retention', 'Classes & attendance', 'Revenue & payments', 'Workouts & PT']);
-    expect(new Set(LIBRARY.flatMap((g) => g.reports.map((r) => r.key))).size).toBe(28);
+    expect(new Set(LIBRARY.flatMap((g) => g.reports.map((r) => r.key))).size).toBe(29);
   });
 
   it('builds every report with a title, subtitle and matching column counts, even with no data at all', () => {
@@ -315,5 +315,28 @@ describe('class slots', () => {
     expect(relativeStep(10, 10)).toBe(5);
     expect(relativeStep(5, 10)).toBe(3);
     expect(relativeStep(3, 0)).toBe(1);
+  });
+});
+
+describe('signed documents report', () => {
+  const sig = (over: Partial<NonNullable<LibraryData['signatures']>[number]>): NonNullable<LibraryData['signatures']>[number] => ({
+    id: 's', userId: 'u1', signerName: 'Amelia Hart', isGuardian: false, signedAt: '2026-10-11T15:29:12Z', termsVersion: 2, waiverVersion: 1,
+    hasTermsPdf: true, hasWaiverPdf: true, emailedAt: '2026-10-11T15:30:00Z', emailError: '', ...over,
+  });
+  const withSigs = (signatures: NonNullable<LibraryData['signatures']>) => data({ signatures });
+
+  it('lists newest first with the member, who signed, the exact time in UK time, the versions and the email state', () => {
+    const t = run('signed_documents', withSigs([
+      sig({ id: 'a', signedAt: '2026-10-09T10:00:00Z', userId: 'u2', signerName: 'Dad Pengelly', isGuardian: true, hasTermsPdf: false, hasWaiverPdf: false, emailedAt: '', emailError: 'Failed at build_pdfs: boom', termsVersion: null }),
+      sig({ id: 'b' }),
+    ]));
+    expect(t.headers).toEqual(['Member', 'Signed by', 'Signed at', 'Terms', 'Waiver', 'Signed copy', 'Emailed', 'Email problem']);
+    expect(t.rows[0]).toEqual(['Amelia Hart', 'Amelia Hart', '11/10/2026 16:29', 'v2', 'v1', 'Terms and waiver', '11/10/2026 16:30', '']);
+    expect(t.rows[1]).toEqual(['Jack Pengelly', 'Dad Pengelly (parent or guardian)', '09/10/2026 11:00', '', 'v1', 'None made', 'No', 'Failed at build_pdfs: boom']);
+  });
+
+  it('respects the chosen period and is empty, not broken, with no signatures', () => {
+    expect(run('signed_documents', withSigs([sig({ signedAt: '2026-08-01T10:00:00Z' }), sig({ id: 'n' })]), '2026-10-01T00:00:00Z').rows).toHaveLength(1);
+    expect(run('signed_documents', data()).rows).toHaveLength(0);
   });
 });

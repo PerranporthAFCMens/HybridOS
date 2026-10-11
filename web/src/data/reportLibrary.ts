@@ -35,6 +35,12 @@ export interface LibSessionStaff { sessionId: string; userId: string; isLead: bo
 export interface LibSession { id: string; name: string; startsAt: string; endsAt: string; capacity: number; dropInPence: number | null }
 export interface LibBooking { sessionId: string; userId: string; status: string; bookedAt: string; cancelledAt: string }
 
+/** One signed terms and waiver. The signature picture is never loaded for reports. */
+export interface LibSignature {
+  id: string; userId: string; signerName: string; isGuardian: boolean; signedAt: string;
+  termsVersion: number | null; waiverVersion: number | null; hasTermsPdf: boolean; hasWaiverPdf: boolean; emailedAt: string; emailError: string;
+}
+
 export interface LibraryData {
   plans: LibPlan[];
   memberships: LibMembership[];
@@ -52,6 +58,8 @@ export interface LibraryData {
   staffHours: LibStaffHours[];
   /** Which staff are on which class. */
   sessionStaff: LibSessionStaff[];
+  /** Who signed the gym's terms and waiver, newest first. Left out by older callers. */
+  signatures?: LibSignature[];
 }
 
 export async function loadLibraryData(gymId: string, since: string | null): Promise<LibraryData> {
@@ -91,7 +99,22 @@ export async function loadLibraryData(gymId: string, since: string | null): Prom
     for (const r of rows) sessionStaff.push({ sessionId: r.session_id, userId: r.user_id, isLead: r.is_lead });
   }
 
+  // Who signed the terms and waiver (the picture of the signature is not loaded), with the version of each document.
+  const sigRows = await allRows((a, b) => supabase.from('member_signatures').select('id, user_id, signer_name, signer_is_guardian, signed_at, terms_document_id, waiver_document_id, signed_terms_path, signed_waiver_path, emailed_at, email_error').eq('gym_id', gymId).order('signed_at', { ascending: false }).order('id').range(a, b)).catch(() => []);
+  const docVersions = new Map<string, number>();
+  if (sigRows.length) {
+    const docs = await supabase.from('gym_signup_documents').select('id, version').eq('gym_id', gymId);
+    for (const d of docs.data ?? []) docVersions.set(d.id, d.version);
+  }
+  const signatures: LibSignature[] = sigRows.map((r) => ({
+    id: r.id, userId: r.user_id, signerName: r.signer_name, isGuardian: r.signer_is_guardian, signedAt: r.signed_at,
+    termsVersion: r.terms_document_id ? docVersions.get(r.terms_document_id) ?? null : null,
+    waiverVersion: r.waiver_document_id ? docVersions.get(r.waiver_document_id) ?? null : null,
+    hasTermsPdf: !!r.signed_terms_path, hasWaiverPdf: !!r.signed_waiver_path, emailedAt: r.emailed_at ?? '', emailError: r.email_error ?? '',
+  }));
+
   const userIds = new Set<string>();
+  for (const s of signatures) userIds.add(s.userId);
   for (const m of memberships) if (m.user_id) userIds.add(m.user_id);
   for (const m of gymMembers) userIds.add(m.user_id);
   for (const p of payments) if (p.user_id) userIds.add(p.user_id);
@@ -122,6 +145,7 @@ export async function loadLibraryData(gymId: string, since: string | null): Prom
     memberships: memberships.map((m) => ({ id: m.id, userId: m.user_id ?? '', planId: m.plan_id ?? '', status: m.status, startsOn: m.starts_on ?? '', endsOn: m.ends_on ?? '', provider: m.payment_provider ?? '', paymentStatus: m.payment_status ?? '', updatedAt: m.updated_at })),
     gymMembers: gymMembers.map((m) => ({ userId: m.user_id, joinedAt: m.joined_at, attritionOn: m.attrition_on ?? '', isActive: m.is_active })),
     people,
+    signatures,
     payments: payments.map((p) => ({ id: p.id, membershipId: p.membership_id ?? '', userId: p.user_id ?? '', chargeDate: p.charge_date ?? '', createdAt: p.created_at, amountPence: p.amount_pence, state: p.state, provider: p.provider, failure: p.failure_message || p.failure_code || '' })),
     purchases: purchases.map((p) => ({ userId: p.user_id, sessionId: p.session_id, createdAt: p.created_at, amountPence: p.amount_pence, status: p.status })),
     assignments: assignments.map((w) => ({ userId: w.member_user_id, title: w.title, type: w.workout_type, source: w.source, status: w.status, scheduledFor: w.scheduled_for ?? '', completedAt: w.completed_at ?? '', rpe: w.member_rpe, createdAt: w.created_at })),
