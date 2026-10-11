@@ -114,8 +114,10 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('mobile', dialog.getByText('07700 900123'));
   await c.has('address', dialog.getByText('12 High Street, Flat 2, Truro, TR1 2AB'));
   await c.has('emergency contact and relationship', dialog.getByText('Jo Zane (Mother), 07700 900456'));
-  await c.has('signed document is listed', dialog.getByText(/Signed 6 Oct 2026 by Ada Zane/));
-  c.ok('terms copy can be opened, waiver is not offered when absent', (await dialog.getByRole('button', { name: 'Terms (PDF)' }).count()) === 1 && (await dialog.getByRole('button', { name: 'Waiver (PDF)' }).count()) === 0);
+  await c.has('the member file has a Signed documents section', dialog.getByRole('heading', { name: 'Signed documents' }));
+  await c.has('the signed document is listed with the exact time', dialog.getByText(/Ada Zane · Tuesday 6 October 2026 at 10:00:00 BST/));
+  c.ok('terms copy can be opened, waiver is not offered when absent', (await dialog.getByRole('button', { name: 'Terms PDF' }).count()) === 1 && (await dialog.getByRole('button', { name: 'Waiver PDF' }).count()) === 0);
+  c.ok('the team can send the copy again, and view the signature', (await dialog.getByRole('button', { name: 'Resend email' }).count()) === 1 && (await dialog.getByRole('button', { name: 'View signature' }).count()) === 1);
   c.ok('no horizontal overflow (details)', !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)));
 
   // Editing: the form starts from what is held, is checked, and saves through the checked database call

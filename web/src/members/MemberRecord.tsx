@@ -7,6 +7,7 @@ import { Modal } from '../ui/Modal';
 import { money } from '../today/calc';
 import { dateInputValue, isTeam, ROLE_LABEL, formatDate, formatRegistered, labelStatus, nameOf, nameParts, paymentHint, validateLifecycle } from './calc';
 import { MemberDetailsCard } from './MemberDetailsCard';
+import { MemberSignedDocuments } from './MemberSignedDocuments';
 import { useMemberMemberships, useMemberWrites, usePlans } from './useMembers';
 
 type Message = { text: string; tone: 'good' | 'error' } | null;
@@ -88,6 +89,8 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
       </div>
 
       <MemberDetailsCard gymId={gymId} member={member} team={team} />
+
+      <MemberSignedDocuments gymId={gymId} userId={member.userId} />
 
       {!team && <section className="record-section">
         <h3>Customer lifecycle</h3>

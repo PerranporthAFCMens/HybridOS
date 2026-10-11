@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import type { MemberDetails } from '../data/memberDetails';
 import type { MemberRow } from '../data/members';
-import { signedCopyUrl } from '../data/signup';
 import { isUnder18 } from '../join/calc';
 import { Button } from '../ui/Button';
 import { Empty } from '../ui/Card';
 import { DateInput, Field, FieldRow, Input } from '../ui/Field';
-import { addressText, checkDetailsDraft, draftFromDetails, dobText, emergencyText, formatRegistered, phoneText } from './calc';
+import { addressText, checkDetailsDraft, draftFromDetails, dobText, emergencyText, phoneText } from './calc';
 import { useMemberDetails, useSaveMemberDetails } from './useMembers';
 
 type Message = { text: string; tone: 'good' | 'error' } | null;
@@ -24,16 +23,7 @@ export function MemberDetailsCard({ gymId, member, team }: { gymId: string; memb
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(() => draftFromDetails(member, { dateOfBirth: null, phoneHidden: false, addressHidden: false, phone: null, hasDetails: false, address: null, emergency: null, guardian: null, signed: [] }));
   const [msg, setMsg] = useState<Message>(null);
-  const [copyMsg, setCopyMsg] = useState<Message>(null);
   const set = (p: Partial<typeof draft>) => setDraft((d) => ({ ...d, ...p }));
-
-  const openCopy = async (path: string) => {
-    try {
-      window.open(await signedCopyUrl(path), '_blank', 'noopener');
-    } catch (e) {
-      setCopyMsg({ text: e instanceof Error ? e.message : 'Could not open it.', tone: 'error' });
-    }
-  };
 
   const body = (d: MemberDetails) => {
     const canEdit = !d.phoneHidden && !d.addressHidden;
@@ -101,19 +91,6 @@ export function MemberDetailsCard({ gymId, member, team }: { gymId: string; memb
           ? <Button onClick={start}>{d.hasDetails ? 'Edit details' : 'Add details'}</Button>
           : <div className="muted small">The owner has hidden some of these from the team, so only the owner can edit them.</div>}{' '}
         <Msg m={msg} />
-        {d.signed.length > 0 && (
-          <div>
-            <small className="muted">Signed documents</small>
-            {d.signed.map((x) => (
-              <div key={x.id} className="muted small">
-                Signed {formatRegistered(x.signedAt)} by {x.signerName}{x.isGuardian ? ' (parent or guardian)' : ''}{' '}
-                {x.termsPath && <Button onClick={() => void openCopy(x.termsPath ?? '')}>Terms (PDF)</Button>}{' '}
-                {x.waiverPath && <Button onClick={() => void openCopy(x.waiverPath ?? '')}>Waiver (PDF)</Button>}
-              </div>
-            ))}
-            <Msg m={copyMsg} />
-          </div>
-        )}
       </>
     );
   };

@@ -79,8 +79,10 @@ export async function removeDocument(gymId: string, kind: DocKind): Promise<void
 }
 
 /** Who has signed, newest first, with the version of each document they signed. */
-export async function listSignatures(gymId: string, limit = 1000): Promise<SignatureRow[]> {
-  const s = await supabase.from('member_signatures').select('*').eq('gym_id', gymId).order('signed_at', { ascending: false }).limit(limit);
+export async function listSignatures(gymId: string, limit = 1000, userId?: string): Promise<SignatureRow[]> {
+  let q = supabase.from('member_signatures').select('*').eq('gym_id', gymId);
+  if (userId) q = q.eq('user_id', userId);
+  const s = await q.order('signed_at', { ascending: false }).limit(limit);
   if (s.error) throw new Error(s.error.message);
   const rows = s.data ?? [];
   const users = [...new Set(rows.map((r) => r.user_id))];
