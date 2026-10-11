@@ -1,0 +1,62 @@
+name: HybridOne web checks on every day of the week
+
+# Some browser checks build their sample data from "today" and can pass on one day and fail on another
+# (a week view that ends on Sunday, a label near the edge of a chart). This runs the date-sensitive checks
+# as if it were each day of the week, so a calendar-only failure shows up here, not on a random later day.
+# Reports only: it is not a required check. The same set runs every night so the first Sunday is never a surprise.
+
+on:
+  pull_request:
+    paths: ['web/**', 'scripts/build_site.py', '.github/workflows/web-days.yml']
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  day:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        # Days added to today. Seven in a row covers every day of the week once.
+        days: [0, 1, 2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+        working-directory: web
+
+      - name: Build the whole site
+        run: python3 scripts/build_site.py
+
+      - name: Cache the browser download
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('web/package-lock.json') }}
+
+      - name: Install browser (retries a stuck download)
+        run: |
+          for attempt in 1 2 3; do
+            if timeout 180 npx playwright install --with-deps chromium; then exit 0; fi
+            echo "browser install attempt $attempt failed or timed out"
+            sudo pkill -9 -x apt-get || true
+            sudo pkill -9 -x apt || true
+            sleep 3
+          done
+          exit 1
+        working-directory: web
+
+      - name: Date-sensitive browser checks, as if it were today + ${{ matrix.days }} days
+        run: |
+          python3 -m http.server 4173 --directory ../_site &
+          sleep 2
+          sh browser/days.sh ${{ matrix.days }}
+        working-directory: web
