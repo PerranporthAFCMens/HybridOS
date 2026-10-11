@@ -70,6 +70,12 @@ export async function currentUserId(): Promise<string | null> {
   return data.session?.user.id ?? null;
 }
 
+/** The email address the person signed in with, or '' when it is not known. */
+export async function currentUserEmail(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user.email ?? '';
+}
+
 type SaveArgs = {
   p_first_name: string; p_last_name: string; p_date_of_birth: string; p_phone: string;
   p_address_line1: string; p_address_line2: string; p_town: string; p_postcode: string;

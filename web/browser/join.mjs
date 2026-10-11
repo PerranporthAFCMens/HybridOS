@@ -85,6 +85,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await next('Create account');
 
   await c.has('about you step', page.getByRole('heading', { name: 'About you' }));
+  c.ok('the sign-in email is shown next to the mobile number, and cannot be edited', (await page.getByLabel('Email', { exact: true }).inputValue()) === session.user.email && (await page.getByLabel('Email', { exact: true }).isEditable()) === false);
   await next('Continue');
   await c.has('an empty name is refused', alert.filter({ hasText: 'first name' }));
   await fill('First name', 'Sam');

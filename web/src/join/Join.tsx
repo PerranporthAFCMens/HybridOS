@@ -2,7 +2,7 @@ import { siteUrl } from '../app/site';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { createAccount, currentUserId, getJoinGym, getSignupDocuments, joinWithPlan, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin } from '../data/join';
+import { createAccount, currentUserEmail, currentUserId, getJoinGym, getSignupDocuments, joinWithPlan, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin } from '../data/join';
 import { publicPdfUrl } from '../data/signup';
 import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -43,6 +43,7 @@ export function Join() {
   const now = useMemo(() => new Date(), []);
   const gymQ = useQuery({ queryKey: ['join-gym', slug], queryFn: () => getJoinGym(slug), enabled: !!slug, retry: false });
   const [userId, setUserId] = useState<string | null | undefined>(undefined);
+  const [signedInEmail, setSignedInEmail] = useState('');
   const [step, setStep] = useState<StepId>('account');
   const [d, setD] = useState<JoinDetails>(() => loadDraft(slug));
   const [mode, setMode] = useState<'signup' | 'signin'>('signup');
@@ -62,7 +63,10 @@ export function Join() {
       (id) => {
         if (!live) return;
         setUserId(id);
-        if (id) setStep((s) => (s === 'account' ? 'about' : s));
+        if (id) {
+          setStep((s) => (s === 'account' ? 'about' : s));
+          void currentUserEmail().then((e) => live && setSignedInEmail(e));
+        }
       },
       () => live && setUserId(null),
     );
@@ -115,6 +119,7 @@ export function Join() {
         await signInToJoin(acct.email, acct.password);
       }
       setUserId(await currentUserId());
+      setSignedInEmail(await currentUserEmail());
       setStep('about');
     });
   };
@@ -216,6 +221,7 @@ export function Join() {
             </Row>
             <Field label="Date of birth" htmlFor="join-dob"><DateInput id="join-dob" autoComplete="bday" value={d.dob} onChange={(e) => set({ dob: e.target.value })} /></Field>
             <Field label="Mobile number" htmlFor="join-phone" hint="UK numbers can start 07. For another country start with + and the country code."><Input id="join-phone" type="tel" autoComplete="tel" value={d.phone} onChange={(e) => set({ phone: e.target.value })} /></Field>
+            <Field label="Email" htmlFor="join-email-shown" hint="This is the email you signed in with. Signed copies and gym messages go here."><Input id="join-email-shown" type="email" value={signedInEmail} readOnly /></Field>
             {alertBox}
             {nav()}
           </form>
