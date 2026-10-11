@@ -198,6 +198,8 @@ const str = (v: unknown) => (typeof v === 'string' ? v : '')
 async function handle(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   let stage = 'start'
+  // Set once the signature is known, so a crash is written onto it instead of leaving a blank "not emailed yet".
+  let recordFailure: ((message: string) => Promise<void>) | null = null
   try {
     const url = Deno.env.get('SUPABASE_URL') ?? ''
     const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -221,6 +223,9 @@ async function handle(req: Request): Promise<Response> {
     const { data: sig } = (await admin.from('member_signatures').select('*').eq('id', sigId).maybeSingle()) as { data: Row | null }
     if (!sig || sig.user_id !== user.id) return reply(404, { error: 'Not found' })
     if (sig.emailed_at) return reply(200, { ok: true, emailed: true, already: true })
+    recordFailure = async (message) => {
+      await admin.from('member_signatures').update({ email_error: message.slice(0, 400) }).eq('id', sigId)
+    }
 
     stage = 'load_context'
     const gymId = str(sig.gym_id)
@@ -309,7 +314,9 @@ async function handle(req: Request): Promise<Response> {
     await admin.from('member_signatures').update(emailed ? { emailed_at: new Date().toISOString(), email_error: null } : { email_error: emailError }).eq('id', sigId)
     return reply(200, { ok: true, emailed, ...(emailError ? { email_error: emailError } : {}) })
   } catch (e) {
-    return reply(500, { error: e instanceof Error ? e.message : 'Something went wrong', stage })
+    const message = e instanceof Error ? e.message : 'Something went wrong'
+    try { await recordFailure?.(`Failed at ${stage}: ${message}`) } catch { /* best effort */ }
+    return reply(500, { error: message, stage })
   }
 }
 
