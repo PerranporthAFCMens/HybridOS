@@ -1,7 +1,7 @@
 import { siteUrl } from '../app/site';
 import { supabase } from './client';
 import type { Json } from './database.types';
-import type { JoinDocument, JoinPlan, JoinQuestion } from '../join/calc';
+import { BLOCKING_STATUSES, looksLikeExistingAccount, type JoinDocument, type JoinPlan, type JoinQuestion } from '../join/calc';
 
 const obj = (v: Json | null): Record<string, Json | undefined> => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
 const str = (v: Json | undefined): string => (typeof v === 'string' ? v : '');
@@ -49,20 +49,28 @@ export async function getSignupDocuments(slug: string): Promise<JoinDocument[]> 
   });
 }
 
-export async function createAccount(email: string, password: string, slug: string, gymName: string): Promise<{ signedIn: boolean }> {
+export async function createAccount(email: string, password: string, slug: string, gymName: string): Promise<{ signedIn: boolean; existing: boolean }> {
   const back = new URL(siteUrl(`join/${encodeURIComponent(slug)}`), window.location.origin);
   const { data, error } = await supabase.auth.signUp({
     email: email.trim().toLowerCase(),
     password,
     options: { emailRedirectTo: back.toString(), data: { signup_type: 'member', gym_slug: slug, gym_name: gymName } },
   });
+  if (looksLikeExistingAccount(error, data?.user)) return { signedIn: false, existing: true };
   if (error) throw new Error(error.message);
-  return { signedIn: !!data.session };
+  return { signedIn: !!data.session, existing: false };
 }
 
 export async function signInToJoin(email: string, password: string): Promise<void> {
   const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
   if (error) throw new Error(error.message);
+}
+
+/** The status of this person's membership at the gym ('active', 'paused' or 'pending'), or null when they have none. Each person can read their own. */
+export async function myMembershipAt(gymId: string, userId: string): Promise<string | null> {
+  const { data, error } = await supabase.from('memberships').select('status').eq('gym_id', gymId).eq('user_id', userId).in('status', [...BLOCKING_STATUSES]).limit(1);
+  if (error) throw new Error(error.message);
+  return data?.[0]?.status ?? null;
 }
 
 export async function currentUserId(): Promise<string | null> {

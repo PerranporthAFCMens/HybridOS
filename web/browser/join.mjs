@@ -1,6 +1,6 @@
 // Browser gate: the sign-up link a gym sends to new members. Mocked network only; no real account.
 // Checks the whole journey for an adult and for an under-18, what is sent to the database, the refusals, and the layout.
-import { base, launch, mockSupabase, reply, runChecks, session, sizes, serveApp } from './mock.mjs';
+import { base, launch, mockSupabase, reply, runChecks, session, sizes, serveApp, signedInPage } from './mock.mjs';
 
 const GYM = '33333333-3333-4333-8333-333333333333';
 const PLANS = [
@@ -200,6 +200,40 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await next('Save and continue');
   await c.has('no sign step when the gym has no documents', page.getByRole('heading', { name: 'Choose your membership' }));
   c.ok('guardian details were sent', state.saved?.p_guardian_name === 'Sam Penrose' && state.saved?.p_guardian_phone === '+447700900123');
+
+  // An email that already has an account is told so, and offered sign-in (in the page, and the sign-in page)
+  const freshCtx = await browser.newContext({ viewport });
+  await serveApp(freshCtx);
+  const again = await freshCtx.newPage();
+  again.setDefaultTimeout(10000);
+  await mockSupabase(again, async ({ route, path }) => {
+    if (path.endsWith('/rpc/get_public_gym_join_options')) return reply(route, { gym_id: GYM, gym_name: 'Puffin Performance', logo_url: null, plans: PLANS });
+    return false;
+  });
+  await again.route(/\/auth\/v1\/signup/, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'x', email: 'a@b.co', identities: [] }) }));
+  await again.goto(`${base}/join/puffin`);
+  await again.getByLabel('Email', { exact: true }).fill('ada@example.test');
+  await again.getByLabel('Password', { exact: true }).fill('a-long-password');
+  await again.getByLabel('Confirm password', { exact: true }).fill('a-long-password');
+  await again.getByRole('button', { name: 'Create account', exact: true }).click();
+  await c.has('an email that already has an account is told so', again.getByRole('alert').filter({ hasText: 'already has an account' }));
+  await c.has('and is offered sign-in on the page', again.getByRole('button', { name: 'Sign in', exact: true }));
+  c.ok('and the sign-in page', (await again.getByRole('link', { name: 'Go to the sign-in page' }).getAttribute('href')) === '/login.html');
+  c.ok('the email is kept', (await again.getByLabel('Email', { exact: true }).inputValue()) === 'ada@example.test');
+  await freshCtx.close();
+
+  // Someone signed in who already has a membership here never sees the steps or the plans
+  const member = await signedInPage(browser, viewport);
+  await mockSupabase(member.page, async ({ route, path }) => {
+    if (path.endsWith('/rpc/get_public_gym_join_options')) return reply(route, { gym_id: GYM, gym_name: 'Puffin Performance', logo_url: null, plans: PLANS });
+    if (path.endsWith('/memberships')) return reply(route, [{ status: 'active' }]);
+    return false;
+  });
+  await member.page.goto(`${base}/join/puffin`);
+  await c.has('an existing member is told they are already a member', member.page.getByRole('heading', { name: 'You are already a member of Puffin Performance' }));
+  c.ok('and is offered the member app', (await member.page.getByRole('link', { name: 'Open the member app' }).count()) === 1);
+  c.ok('and never sees the plans or the steps', (await member.page.getByText('Choose your membership').count()) === 0 && (await member.page.getByText(/^Step \d of/).count()) === 0);
+  await member.ctx.close();
 
   // Safari reports a request that was still in flight when the page was reloaded as a script error. That is the check's own reload, not the app.
   const real = errors.filter((e) => !/Fetch API cannot load .* due to access control checks/.test(e));

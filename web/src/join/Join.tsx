@@ -2,7 +2,7 @@ import { siteUrl } from '../app/site';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { createAccount, currentUserId, getJoinGym, getSignupDocuments, joinWithPlan, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin } from '../data/join';
+import { createAccount, currentUserId, getJoinGym, getSignupDocuments, joinWithPlan, myMembershipAt, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin } from '../data/join';
 import { publicPdfUrl } from '../data/signup';
 import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -71,6 +71,8 @@ export function Join() {
     };
   }, []);
 
+  // Someone who already has a membership here is never shown the join steps or the plan list.
+  const existingQ = useQuery({ queryKey: ['join-existing', gymQ.data?.gymId, userId], queryFn: () => myMembershipAt(gymQ.data?.gymId ?? '', userId ?? ''), enabled: !!userId && !!gymQ.data?.gymId, retry: false });
   const docsQ = useQuery({ queryKey: ['join-docs', slug, userId], queryFn: () => getSignupDocuments(slug), enabled: !!userId, retry: false });
   const docs = docsQ.data;
   const under18 = isUnder18(d.dob, now);
@@ -110,6 +112,11 @@ export function Join() {
     void run(mode === 'signup' ? checkAccount(acct.email, acct.password, acct.confirm) : acct.email && acct.password ? null : 'Enter your email and password.', async () => {
       if (mode === 'signup') {
         const r = await createAccount(acct.email, acct.password, slug, gym.name);
+        if (r.existing) {
+          setAcct((a) => ({ ...a, password: '', confirm: '' }));
+          setMode('signin');
+          return setMsg({ text: 'That email address already has an account. Sign in to carry on.', good: false });
+        }
         if (!r.signedIn) return setCheckEmail(true);
       } else {
         await signInToJoin(acct.email, acct.password);
@@ -163,6 +170,24 @@ export function Join() {
 
   if (gymQ.isLoading || userId === undefined) return <div className="center muted">Loading…</div>;
   if (gymQ.isError || !gym) return <div className="center">This sign-up link is not valid. Ask your gym for a new one.</div>;
+  if (userId && existingQ.isLoading) return <div className="center muted">Loading…</div>;
+  if (userId && existingQ.data && step !== 'done') {
+    const status = existingQ.data;
+    return (
+      <main className="join">
+        <header className="join-head">
+          {gym.logoUrl ? <img src={gym.logoUrl} alt={gym.name} className="join-logo" /> : null}
+          <h1>You are already a member of {gym.name}</h1>
+        </header>
+        <Card>
+          <div className="join-done">
+            <p>{status === 'active' ? 'Your membership is active.' : `Your membership is ${status}. Contact ${gym.name} if you need to change it.`}</p>
+            <LinkButton variant="primary" href={`${siteUrl('member.html')}?gym_id=${encodeURIComponent(gym.gymId)}`}>Open the member app</LinkButton>
+          </div>
+        </Card>
+      </main>
+    );
+  }
 
   const title = STEP_TITLES[step];
   const alertBox = msg && (
@@ -204,6 +229,7 @@ export function Join() {
             {alertBox}
             {nav(mode === 'signup' ? 'Create account' : 'Sign in', false)}
             <p><Button onClick={() => { setMsg(null); setMode(mode === 'signup' ? 'signin' : 'signup'); }}>{mode === 'signup' ? 'I already have an account' : 'Create a new account'}</Button></p>
+            {mode === 'signin' && <p className="muted small">Prefer the sign-in page? <a href={siteUrl('login.html')}>Go to the sign-in page</a>.</p>}
           </form>
         )}
 
