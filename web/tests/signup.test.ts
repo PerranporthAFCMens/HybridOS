@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_ACCEPTANCE, checkDraft, describeDoc, emptyDraft, joinLink, newQuestion, pdfPath, signerLine, toRpcQuestions, type DocDraft, filterSignatures, fullStamp } from '../src/signup/calc';
+import { DEFAULT_ACCEPTANCE, checkDraft, describeDoc, emptyDraft, joinLink, newQuestion, pdfPath, signerLine, toRpcQuestions, type DocDraft, fullStamp } from '../src/signup/calc';
 
 const text = (over: Partial<DocDraft> = {}): DocDraft => ({ ...emptyDraft('waiver'), body: 'I accept the risks.', ...over });
 const pdf = (over: Partial<DocDraft> = {}): DocDraft => ({ ...emptyDraft('terms'), source: 'pdf', file: { name: 'terms.pdf', size: 1000, type: 'application/pdf' }, ...over });
@@ -69,29 +69,7 @@ describe('words and paths', () => {
   });
 });
 
-describe('signed documents list', () => {
-  const rows = [
-    { name: 'Cat Cole', signerName: 'Cat Cole', signedAt: '2026-10-10T08:00:00Z' },
-    { name: 'Ann Archer', signerName: 'Ann Archer', signedAt: '2026-10-09T10:00:00Z' },
-    { name: 'Ben Baker', signerName: 'Pat Baker', signedAt: '2026-10-11T15:29:12Z' },
-  ];
-  const order = (search: string, sort: Parameters<typeof filterSignatures>[2]) => filterSignatures(rows, search, sort).map((r) => r.name);
-  it('sorts newest, oldest, A to Z and Z to A', () => {
-    expect(order('', 'newest')).toEqual(['Ben Baker', 'Cat Cole', 'Ann Archer']);
-    expect(order('', 'oldest')).toEqual(['Ann Archer', 'Cat Cole', 'Ben Baker']);
-    expect(order('', 'az')).toEqual(['Ann Archer', 'Ben Baker', 'Cat Cole']);
-    expect(order('', 'za')).toEqual(['Cat Cole', 'Ben Baker', 'Ann Archer']);
-  });
-  it('searches the member and the signer, ignoring case and spaces at the ends', () => {
-    expect(order('  pat ', 'newest')).toEqual(['Ben Baker']);
-    expect(order('ARCHER', 'newest')).toEqual(['Ann Archer']);
-    expect(order('nobody', 'newest')).toEqual([]);
-  });
-  it('does not change the list it is given', () => {
-    const before = rows.map((r) => r.name).join();
-    filterSignatures(rows, '', 'az');
-    expect(rows.map((r) => r.name).join()).toBe(before);
-  });
+describe('the exact moment of a signing', () => {
   it('writes the moment to the second with the UK time zone', () => {
     expect(fullStamp('2026-10-11T15:29:12Z')).toBe('Sunday 11 October 2026 at 16:29:12 BST');
     expect(fullStamp('2026-12-01T09:00:00Z')).toMatch(/Tuesday 1 December 2026 at 09:00:00 GMT/);

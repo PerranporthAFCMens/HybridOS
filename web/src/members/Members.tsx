@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { useQuery } from '@tanstack/react-query';
@@ -6,7 +6,6 @@ import { listMissingDetails } from '../data/signup';
 import { Card, Empty } from '../ui/Card';
 import { Input, Select } from '../ui/Field';
 import { availableLetters, filterAndSort, formatRegistered, initials, jumpLetter, labelStatus, missingList, missingSummary, nameOf, ROLE_LABEL, showOnly, summaryText, type Show, type SortMode } from './calc';
-import { MemberRecord } from './MemberRecord';
 import { useMemberDirectory } from './useMembers';
 import '../staff/staff.css';
 import './members.css';
@@ -15,11 +14,12 @@ const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 export function Members() {
   const { gym } = useReadyAuth();
+  const navigate = useNavigate();
+  const openFile = (userId: string) => void navigate(`/members/${userId}`);
   const q = useMemberDirectory(gym.gymId);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortMode>('first');
   const [letter, setLetter] = useState('');
-  const [openId, setOpenId] = useState('');
   const [show, setShow] = useState<Show>('all');
 
   const everyone = q.data ?? [];
@@ -27,7 +27,6 @@ export function Members() {
   const rows = filterAndSort(all, { search, sort, letter });
   const letters = availableLetters(all, sort);
   const byDate = sort.startsWith('registered');
-  const open = everyone.find((m) => m.userId === openId);
   // Only owners, admins and staff may ask; for anyone else the database refuses and the card is simply not shown.
   const missing = useQuery({ queryKey: ['missing-details', gym.gymId], queryFn: () => listMissingDetails(gym.gymId), retry: false });
   const gaps = missing.data ?? [];
@@ -40,10 +39,7 @@ export function Members() {
           <div className="eyebrow">People &amp; subscriptions</div>
           <h1>Members</h1>
         </div>
-        <div className="page-actions">
-          <span className="muted">{q.data ? summaryText(rows.length, all.length) : ''}</span>
-          <Link className="btn secondary" to="/signed-documents">Signed documents</Link>
-        </div>
+        <span className="muted">{q.data ? summaryText(rows.length, all.length) : ''}</span>
       </header>
 
       {gaps.length > 0 && (
@@ -57,7 +53,7 @@ export function Members() {
                     <b>{g.name}</b>
                     <div className="muted">Missing: {missingList(g.missing)}</div>
                   </div>
-                  {everyone.some((m) => m.userId === g.userId) && <button type="button" className="btn secondary" onClick={() => setOpenId(g.userId)}>Open</button>}
+                  {everyone.some((m) => m.userId === g.userId) && <button type="button" className="btn secondary" onClick={() => openFile(g.userId)}>Open</button>}
                 </li>
               ))}
             </ul>
@@ -132,7 +128,7 @@ export function Members() {
             return (
               <div key={m.userId}>
                 {label}
-                <button type="button" className="member-row" onClick={() => setOpenId(m.userId)}>
+                <button type="button" className="member-row" onClick={() => openFile(m.userId)}>
                   <span className="member-name">
                     <span className="avatar">{initials(name)}</span>
                     <span className="member-text">
@@ -153,7 +149,6 @@ export function Members() {
         )}
       </Card>
 
-      {open && <MemberRecord key={open.userId} member={open} gymId={gym.gymId} onClose={() => setOpenId('')} />}
     </>
   );
 }

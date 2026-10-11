@@ -95,18 +95,6 @@ export function joinLink(origin: string, slug: string): string {
   return `${origin}/join/${slug}`;
 }
 
-export type SigSort = 'newest' | 'oldest' | 'az' | 'za';
-export const SIG_SORT_LABEL: Record<SigSort, string> = { newest: 'Newest first', oldest: 'Oldest first', az: 'Name A to Z', za: 'Name Z to A' };
-
-/** Narrows the signed-documents list to a search (member or signer name) and puts it in the order chosen. */
-export function filterSignatures<T extends { name: string; signerName: string; signedAt: string }>(rows: T[], search: string, sort: SigSort): T[] {
-  const q = search.trim().toLowerCase();
-  const kept = q ? rows.filter((r) => r.name.toLowerCase().includes(q) || r.signerName.toLowerCase().includes(q)) : rows.slice();
-  const time = (r: T) => new Date(r.signedAt).getTime();
-  const byName = (a: T, b: T) => a.name.localeCompare(b.name, 'en-GB', { sensitivity: 'base' }) || time(b) - time(a);
-  return kept.sort(sort === 'newest' ? (a, b) => time(b) - time(a) : sort === 'oldest' ? (a, b) => time(a) - time(b) : sort === 'az' ? byName : (a, b) => byName(b, a));
-}
-
 /** The exact moment something was signed, to the second and with the time zone, for the record. Built from parts so every browser words it the same. */
 export function fullStamp(iso: string): string {
   const parts = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', timeZone: 'Europe/London', timeZoneName: 'short' }).formatToParts(new Date(iso));

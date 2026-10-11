@@ -27,6 +27,46 @@ export async function makeSignedCopies(signatureId: string, opts: { email: boole
   const { error } = await supabase.functions.invoke('finalise-signature', { body: { signature_id: signatureId, send_email: opts.email, resend: !!opts.resend } });
   if (error) throw new Error(await edgeErrorMessage(error, 'Could not do that. Try again.'));
 }
+export interface AgreementAnswer { prompt: string; answer: string }
+export interface AgreementDoc { kind: DocKind; title: string; version: number; source: DocSource; acceptance: string; answers: AgreementAnswer[] }
+/** One signing, in full: who signed, when, the documents with the answers given, and the signature itself. */
+export interface Agreement {
+  id: string; signedAt: string; signerName: string; isGuardian: boolean; image: string; emailedAt: string | null; emailError: string | null; docs: AgreementDoc[];
+}
+
+/** Everything one person signed at this gym, newest first, for their file. Owners, admins and staff only (the database refuses anyone else). */
+export async function getMemberAgreements(gymId: string, userId: string): Promise<Agreement[]> {
+  const s = await supabase.from('member_signatures').select('*').eq('gym_id', gymId).eq('user_id', userId).order('signed_at', { ascending: false });
+  if (s.error) throw new Error(s.error.message);
+  const sigs = s.data ?? [];
+  if (!sigs.length) return [];
+  const docIds = [...new Set(sigs.flatMap((r) => [r.terms_document_id, r.waiver_document_id]).filter((x): x is string => !!x))];
+  const [d, q, a] = await Promise.all([
+    supabase.from('gym_signup_documents').select('id, kind, title, version, source, acceptance_text').in('id', docIds),
+    supabase.from('gym_signup_questions').select('id, document_id, prompt, answer_type, position').in('document_id', docIds).order('position'),
+    supabase.from('member_signature_answers').select('signature_id, question_id, answer_yes, answer_text').in('signature_id', sigs.map((r) => r.id)),
+  ]);
+  for (const r of [d, q, a]) if (r.error) throw new Error(r.error.message);
+  const docs = new Map((d.data ?? []).map((x) => [x.id, x]));
+  const questions = q.data ?? [];
+  const answers = a.data ?? [];
+  const docFor = (sigId: string, docId: string | null): AgreementDoc | null => {
+    const doc = docId ? docs.get(docId) : undefined;
+    if (!doc) return null;
+    const given = questions.filter((x) => x.document_id === doc.id).flatMap((x) => {
+      const ans = answers.find((y) => y.signature_id === sigId && y.question_id === x.id);
+      if (!ans) return [];
+      const text = (ans.answer_text ?? '').trim();
+      const answer = x.answer_type === 'yes_no' ? `${ans.answer_yes ? 'Yes' : 'No'}${text ? `, ${text}` : ''}` : text;
+      return [{ prompt: x.prompt, answer }];
+    });
+    return { kind: asKind(doc.kind), title: doc.title, version: doc.version, source: doc.source === 'pdf' ? 'pdf' : 'text', acceptance: doc.acceptance_text, answers: given };
+  };
+  return sigs.map((r) => ({
+    id: r.id, signedAt: r.signed_at, signerName: r.signer_name, isGuardian: r.signer_is_guardian, image: r.signature_png, emailedAt: r.emailed_at, emailError: r.email_error,
+    docs: [docFor(r.id, r.terms_document_id), docFor(r.id, r.waiver_document_id)].filter((x): x is AgreementDoc => !!x),
+  }));
+}
 export interface FlaggedAnswer { signatureId: string; member: string; prompt: string; details: string; signedAt: string }
 
 const asKind = (v: string): DocKind => (v === 'waiver' ? 'waiver' : 'terms');
