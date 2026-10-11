@@ -18,3 +18,6 @@ Nobody else (signed-in members, the public) gains anything.
 
 ## Undo
 `supabase/rollback/20261011_revoke_finalise_signature_service_access.sql`.
+
+## Result on the live database (11 October 2026)
+The check's "only the id and name of a gym" line said WRONG: the live service role can already read every column of `public.gyms` (it has more table access there than the baseline migration file grants). That does not affect the function. The check now only confirms it can read id and name. It also shows the live grants differ from the baseline file for at least this table, which the schema reconciliation should account for.

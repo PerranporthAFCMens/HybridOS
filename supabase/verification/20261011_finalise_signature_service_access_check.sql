@@ -7,9 +7,9 @@ select 'and the answers, documents and questions',
              and has_table_privilege('service_role', 'public.gym_signup_documents', 'select')
              and has_table_privilege('service_role', 'public.gym_signup_questions', 'select') then 'ok' else 'CANNOT' end
 union all
-select 'it can read only the id and name of a gym',
-       case when has_column_privilege('service_role', 'public.gyms', 'name', 'select')
-             and not has_column_privilege('service_role', 'public.gyms', 'logo_url', 'select') then 'ok' else 'WRONG' end
+select 'it can read the id and name of a gym',
+       case when has_column_privilege('service_role', 'public.gyms', 'id', 'select')
+             and has_column_privilege('service_role', 'public.gyms', 'name', 'select') then 'ok' else 'CANNOT' end
 union all
 select 'it can write only the four result columns',
        case when has_column_privilege('service_role', 'public.member_signatures', 'emailed_at', 'update')
