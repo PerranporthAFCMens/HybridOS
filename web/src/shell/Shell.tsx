@@ -1,7 +1,6 @@
 import { siteUrl } from '../app/site';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LegalLinks } from '../legal/Legal';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { getProfileNames } from '../data/profile';
@@ -82,8 +81,7 @@ export function Shell() {
       <main className="main">
         <BackLink />
         <Outlet />
-        <LegalLinks />
-      </main>
+        </main>
     </div>
   );
 }

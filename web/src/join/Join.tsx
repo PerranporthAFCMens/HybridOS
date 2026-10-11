@@ -2,7 +2,6 @@ import { siteUrl } from '../app/site';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { LegalLinks } from '../legal/Legal';
 import { createAccount, currentUserId, getJoinGym, getSignupDocuments, joinWithPlan, myMembershipAt, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin } from '../data/join';
 import { publicPdfUrl } from '../data/signup';
 import { Button, LinkButton } from '../ui/Button';
@@ -362,7 +361,6 @@ export function Join() {
           </div>
         )}
       </Card>
-      <LegalLinks />
     </main>
   );
 }
