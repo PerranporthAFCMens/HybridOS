@@ -222,8 +222,9 @@ async function handle(req: Request): Promise<Response> {
     if (!sigId) return reply(400, { error: 'signature_id is required' })
 
     stage = 'load_signature'
-    const { data: sig } = (await admin.from('member_signatures').select('*').eq('id', sigId).maybeSingle()) as { data: Row | null }
-    if (!sig) return reply(404, { error: 'That signature could not be found.', stage })
+    const { data: sig, error: sigError } = (await admin.from('member_signatures').select('*').eq('id', sigId).maybeSingle()) as { data: Row | null; error: { message: string } | null }
+    if (sigError) return reply(500, { error: `Could not read the signature: ${sigError.message}`, stage })
+    if (!sig) return reply(404, { error: `That signature could not be found (id ${sigId.slice(0, 8)}…).`, stage })
     // The signer, or the gym's own owner, admin or staff, may act on a signature. Anyone else is refused, and told which check failed.
     const byMember = sig.user_id === user.id
     if (!byMember) {
