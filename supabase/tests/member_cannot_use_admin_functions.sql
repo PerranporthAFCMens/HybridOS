@@ -3,7 +3,7 @@
 -- and lists the ones that went through. Every one must be on the reviewed list below. A new function that does not check who
 -- is asking will go through, appear here, and fail this test until someone reviews it and adds it (or fixes it).
 -- Run on a scratch database only (it inserts a test gym and users).
-insert into auth.users(id,email) values ('00000000-0000-0000-0000-0000000000e1','plainmember@x'),('00000000-0000-0000-0000-0000000000e2','other@x') on conflict do nothing;
+insert into auth.users(id,email) values ('00000000-0000-0000-0000-0000000000e1','guard-plain@x'),('00000000-0000-0000-0000-0000000000e2','guard-other@x') on conflict do nothing;
 insert into public.profiles(id) values ('00000000-0000-0000-0000-0000000000e1'),('00000000-0000-0000-0000-0000000000e2') on conflict do nothing;
 insert into public.gyms(id,name,slug) values ('00000000-0000-0000-0000-0000000000e9','Guard gym','guard-gym') on conflict do nothing;
 insert into public.gym_members(gym_id,user_id,role,is_active) values
