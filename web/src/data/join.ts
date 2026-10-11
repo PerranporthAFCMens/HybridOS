@@ -61,6 +61,25 @@ export async function createAccount(email: string, password: string, slug: strin
   return { signedIn: !!data.session, existing: false };
 }
 
+/** Sends the person to Facebook and brings them back to this same sign-up link, signed in. Only name, email and photo come back. */
+export async function signInWithFacebook(slug: string): Promise<void> {
+  const back = new URL(siteUrl(`join/${encodeURIComponent(slug)}`), window.location.origin);
+  const { error } = await supabase.auth.signInWithOAuth({ provider: 'facebook', options: { redirectTo: back.toString() } });
+  if (error) throw new Error(error.message);
+}
+
+/** First and last name a sign-in provider (Facebook, Google) gave us, or empty strings for an email sign-up. */
+export async function providerNames(): Promise<{ first: string; last: string }> {
+  const { data } = await supabase.auth.getSession();
+  const m = (data.session?.user.user_metadata ?? {}) as Record<string, unknown>;
+  const text = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+  const first = text(m.given_name) || text(m.first_name);
+  const last = text(m.family_name) || text(m.last_name);
+  if (first || last) return { first, last };
+  const [head = '', ...rest] = (text(m.full_name) || text(m.name)).split(/\s+/);
+  return { first: head, last: rest.join(' ') };
+}
+
 export async function signInToJoin(email: string, password: string): Promise<void> {
   const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
   if (error) throw new Error(error.message);

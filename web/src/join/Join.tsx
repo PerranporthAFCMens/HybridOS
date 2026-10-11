@@ -2,7 +2,7 @@ import { siteUrl } from '../app/site';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { createAccount, currentUserId, getJoinGym, getSignupDocuments, joinWithPlan, myMembershipAt, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin } from '../data/join';
+import { createAccount, currentUserId, providerNames, getJoinGym, getSignupDocuments, joinWithPlan, myMembershipAt, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin, signInWithFacebook } from '../data/join';
 import { publicPdfUrl } from '../data/signup';
 import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -70,6 +70,18 @@ export function Join() {
       live = false;
     };
   }, []);
+
+  // Someone who signed in with Facebook already gave us their name; fill it in, but never over what they typed.
+  useEffect(() => {
+    if (!userId) return;
+    let live = true;
+    providerNames().then((n) => {
+      if (live && (n.first || n.last)) setD((cur) => (cur.firstName || cur.lastName ? cur : { ...cur, firstName: n.first, lastName: n.last }));
+    }, () => undefined);
+    return () => {
+      live = false;
+    };
+  }, [userId]);
 
   // Someone who already has a membership here is never shown the join steps or the plan list.
   const existingQ = useQuery({ queryKey: ['join-existing', gymQ.data?.gymId, userId], queryFn: () => myMembershipAt(gymQ.data?.gymId ?? '', userId ?? ''), enabled: !!userId && !!gymQ.data?.gymId, retry: false });
@@ -228,6 +240,8 @@ export function Join() {
             )}
             {alertBox}
             {nav(mode === 'signup' ? 'Create account' : 'Sign in', false)}
+            <p className="join-or muted small">or</p>
+            <Button type="button" className="join-facebook" disabled={busy} onClick={() => void run(null, () => signInWithFacebook(slug))}>Continue with Facebook</Button>
             <p><Button onClick={() => { setMsg(null); setMode(mode === 'signup' ? 'signin' : 'signup'); }}>{mode === 'signup' ? 'I already have an account' : 'Create a new account'}</Button></p>
             {mode === 'signin' && <p className="muted small">Prefer the sign-in page? <a href={siteUrl('login.html')}>Go to the sign-in page</a>.</p>}
           </form>
