@@ -223,13 +223,16 @@ async function handle(req: Request): Promise<Response> {
 
     stage = 'load_signature'
     const { data: sig } = (await admin.from('member_signatures').select('*').eq('id', sigId).maybeSingle()) as { data: Row | null }
-    if (!sig) return reply(404, { error: 'Not found' })
-    // The signer, or the gym's own owner, admin or staff, may act on a signature. Anyone else is told it does not exist.
+    if (!sig) return reply(404, { error: 'That signature could not be found.', stage })
+    // The signer, or the gym's own owner, admin or staff, may act on a signature. Anyone else is refused, and told which check failed.
     const byMember = sig.user_id === user.id
     if (!byMember) {
-      const { data: gm } = await admin.from('gym_members').select('role,is_active,access_status').eq('gym_id', str(sig.gym_id)).eq('user_id', user.id).maybeSingle()
-      const allowed = !!gm && gm.is_active === true && gm.access_status === 'active' && ['owner', 'admin', 'staff'].includes(String(gm.role))
-      if (!allowed) return reply(404, { error: 'Not found' })
+      stage = 'check_access'
+      const { data: gm, error: gmError } = await admin.from('gym_members').select('role,is_active,access_status').eq('gym_id', str(sig.gym_id)).eq('user_id', user.id).limit(1).maybeSingle()
+      if (gmError) return reply(500, { error: `Could not check your access: ${gmError.message}`, stage })
+      if (!gm) return reply(403, { error: 'You are not a member of this gym, so you cannot do that.', stage })
+      if (gm.is_active !== true || gm.access_status !== 'active') return reply(403, { error: `Your access to this gym is not active (${String(gm.access_status)}).`, stage })
+      if (!['owner', 'admin', 'staff'].includes(String(gm.role))) return reply(403, { error: `Only an owner, admin or staff member can do that (your role here is ${String(gm.role)}).`, stage })
     }
     const resend = body.resend === true
     // The member always gets their email unless they have it already. Staff only make the copies, unless they ask for the email.
