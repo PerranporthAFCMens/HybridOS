@@ -5,15 +5,22 @@ import './legal.css';
 
 const CONTACT = 'hello@hybridone.co.uk';
 
+/** Small, quiet links shown at the foot of public and app pages. */
+export function LegalLinks() {
+  return (
+    <p className="legal-links">
+      <Link to="/privacy">Privacy policy</Link> · <Link to="/data-deletion">Delete your data</Link>
+    </p>
+  );
+}
+
 function Page({ title, children }: { title: string; children: ReactNode }) {
   return (
     <main className="legal">
       <h1>{title}</h1>
       <p className="legal-updated">Last updated 11 October 2026</p>
       <Card>{children}</Card>
-      <p className="legal-updated">
-        <Link to="/privacy">Privacy policy</Link> · <Link to="/data-deletion">Delete your data</Link>
-      </p>
+      <LegalLinks />
     </main>
   );
 }
@@ -36,8 +43,10 @@ export function PrivacyPolicy() {
       <p>To set up and run your membership, let you book classes, keep a record of what you agreed to, and send you messages from your gym, such as your signed copy of the terms.</p>
       <h2>Who can see it</h2>
       <p>Other members can never see your details. Only the team at your gym (owners, admins and staff) can see them, and a gym owner can choose whether the team sees mobile numbers and addresses.</p>
+      <h2>Sharing with other companies</h2>
+      <p>We do not share your information with third parties, and we never sell it. The only time information goes to another company is when you choose it, by giving your consent inside the app. Examples are connecting a service such as Strava or paying through Stripe, and there may be others. You are always asked first, and you can disconnect at any time.</p>
       <h2>Who looks after it for us</h2>
-      <p>Your data is stored with Supabase, and our emails are sent through Resend. They only handle data to provide those services. We do not sell your data.</p>
+      <p>Your data is stored with Supabase, and our emails are sent through Resend. They only handle data to provide those services for us, and they may not use it for anything else.</p>
       <h2>How long we keep it</h2>
       <p>For as long as you are a member, and afterwards only as long as the gym or the law requires. You can ask us to delete your data at any time.</p>
       <h2>Your rights</h2>
