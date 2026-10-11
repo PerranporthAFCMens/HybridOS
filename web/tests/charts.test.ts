@@ -1,3 +1,4 @@
+import { tickX } from '../src/charts/LineChart';
 import { describe, expect, it } from 'vitest';
 import { arcPath, compact, labelStep, niceTicks, roundedTop, shares, sliceAngles } from '../src/charts/scale';
 import { SERIES_COLORS, seriesColor } from '../src/charts/palette';
@@ -186,5 +187,14 @@ describe('the rows behind a column', () => {
     const t = paymentRowsTable(ctx, data(), p, 'Paid');
     expect(t.rows.map((r) => [r[0], r[2]])).toEqual([['Amelia Hart', '£59.00'], ['Jack Pengelly', '£45.00']]);
     expect(paymentRowsTable(ctx, data(), p).rows).toHaveLength(2);
+  });
+});
+
+describe('line chart axis labels', () => {
+  it('keeps a label inside the chart when its point is near the right edge', () => {
+    expect(tickX(100, '12 Oct', 400)).toBe(100);
+    const x = tickX(386, '12 Oct', 400);
+    expect(x).toBeLessThan(386);
+    expect(x + '12 Oct'.length * 3.4).toBeLessThanOrEqual(399);
   });
 });
