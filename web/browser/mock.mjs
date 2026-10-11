@@ -38,6 +38,8 @@ export async function serveApp(ctx) {
 export async function signedInPage(browser, viewport) {
   const ctx = await browser.newContext({ viewport });
   await serveApp(ctx);
+  // FAKE_DAYS / FAKE_HOURS (see fake-date.mjs): the page's clock moves with the script's, and keeps running.
+  if (process.env.FAKE_DAYS || process.env.FAKE_HOURS) { await ctx.clock.install({ time: new Date() }); await ctx.clock.resume(); }
   await ctx.addInitScript(([key, value, gym]) => { localStorage.setItem(key, value); sessionStorage.setItem('hybrid-gym-id', gym); }, ['sb-mzgnhmeydhhpzgxlgudh-auth-token', JSON.stringify(session), GYM]);
   const page = await ctx.newPage();
   // Everything here is mocked and local, so 10 seconds is plenty. The default of 30 turned one mistaken
