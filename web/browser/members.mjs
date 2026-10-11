@@ -45,6 +45,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
       return true;
     }
     if (path.endsWith('/gym_members')) return reply(route, people);
+    if (path.endsWith('/functions/v1/finalise-signature')) { writes.push({ method, path, body }); return reply(route, { ok: true }); }
     if (path.endsWith('/gym_signup_documents')) return reply(route, [{ id: 'dw', kind: 'waiver', title: 'Waiver', version: 1, source: 'text', acceptance_text: 'I have read the waiver.' }]);
     if (path.endsWith('/gym_signup_questions')) return reply(route, [{ id: 'q1', document_id: 'dw', prompt: 'Do you have a heart condition?', answer_type: 'yes_no', position: 1 }]);
     if (path.endsWith('/member_signature_answers')) return reply(route, [{ signature_id: 'sig1', question_id: 'q1', answer_yes: false, answer_text: null }]);
@@ -126,6 +127,17 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('what they agreed to', dialog.getByText('I have read the waiver.'));
   await c.has('and their answer', dialog.getByText(/Do you have a heart condition\?/));
   await c.has('and their signature', dialog.getByRole('img', { name: 'Signature of Ada Zane' }));
+  const [pdf] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download PDF' }).click()]);
+  if (shots) await pdf.saveAs(`${shots}/member-file-${name}.pdf`);
+  c.ok('Download PDF saves a PDF named for the gym and the person', /^puffin-performance-ada-zane-member-file-\d{4}-\d{2}-\d{2}\.pdf$/.test(pdf.suggestedFilename()));
+  await page.getByRole('button', { name: 'Send to customer' }).click();
+  await c.has('Send to customer asks first', page.getByText(/Email the signed copy to Ada Zane/));
+  writes.length = 0;
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+  await c.has('and says it was sent', page.getByText('Sent the signed copy to Ada Zane.'));
+  const sentCopy = writes.find((w) => w.path.endsWith('/functions/v1/finalise-signature'));
+  c.ok('it asks the server to email that signing again, to the person', sentCopy && sentCopy.body.signature_id === 'sig1' && sentCopy.body.send_email === true && sentCopy.body.resend === true);
+  writes.length = 0;
   c.ok('no Make PDF or Resend buttons on the file', (await dialog.getByRole('button', { name: /Make PDF|Resend|Send email/ }).count()) === 0);
   if (shots) await page.screenshot({ path: `${shots}/member-file-${name}.png`, fullPage: true });
   c.ok('no horizontal overflow (details)', !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)));
