@@ -44,7 +44,7 @@ Today the Members tab lists every gym user (members and team) with a "Show" filt
 - Sorting: newest/oldest and A-Z/Z-A, in both lists.
 - Automatic anonymising: when someone has been inactive for 2 years, a scheduled job runs the SAME erasure as Part A (personal details erased; waiver, terms and billing kept in the owner-only archive until their retention date; anonymous counts kept). The member record then reads "Erased member <reference>".
 - Safeguards: a warning shown on the former-member record from about 60 days before; the owner can pause or exclude someone (for example during a dispute or claim); every automatic run is written to the same permanent erasure log, marked "automatic".
-- "Inactive for 2 years" is counted from the last day of their last active membership, or their last activity if that is later. Still to confirm: whether last activity (a class booking, check-in, a login) counts, or only membership dates.
+- "Inactive for 2 years" (owner confirmed): the clock runs from the LATER of the end of their last membership period and their last activity in the system (a class booking or a check-in). Signing in alone is not counted unless the owner says so.
 
 ## Proposed order (each its own PR, owner approves each)
 1. Do-not-market flag and member control, badge, report (database change + app).
@@ -58,5 +58,4 @@ Every database change comes with a rollback file, a verification script, a note 
 
 ## Still to confirm
 - Retention for anyone who signed while under 18 (insurer or solicitor).
-- What counts as "inactive" for the 2-year clock: membership end date only, or also last activity.
 - Whether members can also request erasure themselves from the app (owner approves) or only gym owners start it.
