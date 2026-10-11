@@ -7,6 +7,7 @@ import {
   updateMemberLifecycle,
 } from '../data/members';
 import { listPlans } from '../data/plans';
+import { getMemberDetails } from '../data/memberDetails';
 
 export function useMemberDirectory(gymId: string) {
   return useQuery({ queryKey: ['members', gymId], queryFn: () => listMemberDirectory(gymId) });
@@ -14,6 +15,10 @@ export function useMemberDirectory(gymId: string) {
 
 export function useMemberMemberships(gymId: string, userId: string) {
   return useQuery({ queryKey: ['member-memberships', gymId, userId], queryFn: () => listMemberMemberships(gymId, userId) });
+}
+
+export function useMemberDetails(gymId: string, userId: string) {
+  return useQuery({ queryKey: ['member-details', gymId, userId], queryFn: () => getMemberDetails(gymId, userId) });
 }
 
 export function usePlans(gymId: string) {

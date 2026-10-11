@@ -5,8 +5,9 @@ import { Empty, SectionTitle } from '../ui/Card';
 import { DateInput, Field, FieldRow, Select } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import { money } from '../today/calc';
-import { dateInputValue, isTeam, ROLE_LABEL, formatDate, formatRegistered, labelStatus, nameOf, nameParts, paymentHint, validateLifecycle } from './calc';
-import { useMemberMemberships, useMemberWrites, usePlans } from './useMembers';
+import { addressText, dateInputValue, dobText, emergencyText, isTeam, phoneText, ROLE_LABEL, formatDate, formatRegistered, labelStatus, nameOf, nameParts, paymentHint, validateLifecycle } from './calc';
+import { signedCopyUrl } from '../data/signup';
+import { useMemberDetails, useMemberMemberships, useMemberWrites, usePlans } from './useMembers';
 
 type Message = { text: string; tone: 'good' | 'error' } | null;
 
@@ -19,6 +20,8 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
   const team = isTeam(member);
   const parts = nameParts(member);
   const memberships = useMemberMemberships(gymId, member.userId);
+  const details = useMemberDetails(gymId, member.userId);
+  const [copyMsg, setCopyMsg] = useState<Message>(null);
   const plans = usePlans(gymId);
   const writes = useMemberWrites(gymId, member.userId);
   const activePlans = (plans.data ?? []).filter((p) => p.isActive);
@@ -61,6 +64,14 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
     );
   };
 
+  const openCopy = async (path: string) => {
+    try {
+      window.open(await signedCopyUrl(path), '_blank', 'noopener');
+    } catch (e) {
+      setCopyMsg({ text: e instanceof Error ? e.message : 'Could not open it.', tone: 'error' });
+    }
+  };
+
   const changeStatus = (membershipId: string, next: 'active' | 'paused' | 'cancelled') =>
     writes.setStatus.mutate(
       { membershipId, status: next },
@@ -85,6 +96,44 @@ export function MemberRecord({ member, gymId, onClose }: { member: MemberRow; gy
         <div><small>First name</small><b>{member.firstName || '—'}</b></div>
         <div><small>Surname</small><b>{member.lastName || parts.surname || '—'}</b></div>
       </div>
+
+      <section className="record-section" aria-label="Personal details">
+        <h3>Personal details</h3>
+        {details.isError ? (
+          <Empty>Could not load their details.</Empty>
+        ) : !details.data ? (
+          <Empty>Loading details…</Empty>
+        ) : (
+          <>
+            <div className="profile">
+              <div><small>Date of birth</small><b>{dobText(details.data.dateOfBirth, new Date())}</b></div>
+              <div><small>Mobile</small><b>{phoneText(details.data.phone)}</b></div>
+              <div><small>Address</small><b>{addressText(details.data.contact)}</b></div>
+              <div>
+                <small>Emergency contact</small>
+                <b>{emergencyText(details.data.contact && { name: details.data.contact.emergencyName, phone: details.data.contact.emergencyPhone, relationship: details.data.contact.emergencyRelationship })}</b>
+              </div>
+              {details.data.contact?.guardianName && (
+                <div><small>Parent or guardian</small><b>{details.data.contact.guardianName}, {phoneText(details.data.contact.guardianPhone)}</b></div>
+              )}
+            </div>
+            {!details.data.contact && !team && <div className="muted small">No address or emergency contact on file yet. They are asked for these when they join through the gym's sign-up link.</div>}
+            {details.data.signed.length > 0 && (
+              <div>
+                <small className="muted">Signed documents</small>
+                {details.data.signed.map((x) => (
+                  <div key={x.id} className="muted small">
+                    Signed {formatRegistered(x.signedAt)} by {x.signerName}{x.isGuardian ? ' (parent or guardian)' : ''}{' '}
+                    {x.termsPath && <Button onClick={() => void openCopy(x.termsPath ?? '')}>Terms (PDF)</Button>}{' '}
+                    {x.waiverPath && <Button onClick={() => void openCopy(x.waiverPath ?? '')}>Waiver (PDF)</Button>}
+                  </div>
+                ))}
+                <Msg m={copyMsg} />
+              </div>
+            )}
+          </>
+        )}
+      </section>
 
       {!team && <section className="record-section">
         <h3>Customer lifecycle</h3>

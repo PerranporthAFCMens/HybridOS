@@ -35,6 +35,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
       return true;
     }
     if (path.endsWith('/gym_members')) return reply(route, people);
+    if (path.endsWith('/profiles') && select.includes('date_of_birth')) return reply(route, [{ date_of_birth: '2001-03-14', phone: '+447700900123' }]);
+    if (path.endsWith('/member_details')) return reply(route, [{ user_id: ADA, address_line1: '12 High Street', address_line2: 'Flat 2', town: 'Truro', postcode: 'TR1 2AB', emergency_name: 'Jo Zane', emergency_phone: '+447700900456', emergency_relationship: 'Mother', guardian_name: null, guardian_phone: null }]);
+    if (path.endsWith('/member_signatures')) return reply(route, [{ id: 'sig1', gym_id: GYM, user_id: ADA, signed_at: '2026-10-06T09:00:00Z', signer_name: 'Ada Zane', signer_is_guardian: false, signed_terms_path: 'u/g/sig1-terms.pdf', signed_waiver_path: null, emailed_at: '2026-10-06T09:01:00Z' }]);
     if (path.endsWith('/profiles')) return reply(route, profiles);
     if (path.endsWith('/memberships') && select.includes('starts_on')) {
       return reply(route, [{ id: 'm1', status: 'active', starts_on: '2026-03-01', ends_on: null, payment_provider: 'manual', payment_status: 'confirmed', membership_plans: { name: 'Hybrid Monthly', price_pence: 4500, billing_interval: 'monthly' } }]);
@@ -98,6 +101,14 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const dialog = page.getByRole('dialog');
   await c.has('record opens', dialog.getByText('Customer lifecycle'));
   await c.has('existing membership', dialog.getByRole('heading', { name: 'Hybrid Monthly' }));
+  // What the gym holds on the member: date of birth, mobile, address, emergency contact, and the signed copies
+  await c.has('date of birth and age', dialog.getByText(/14 Mar 2001 \(\d+\)/));
+  await c.has('mobile', dialog.getByText('07700 900123'));
+  await c.has('address', dialog.getByText('12 High Street, Flat 2, Truro, TR1 2AB'));
+  await c.has('emergency contact and relationship', dialog.getByText('Jo Zane (Mother), 07700 900456'));
+  await c.has('signed document is listed', dialog.getByText(/Signed 6 Oct 2026 by Ada Zane/));
+  c.ok('terms copy can be opened, waiver is not offered when absent', (await dialog.getByRole('button', { name: 'Terms (PDF)' }).count()) === 1 && (await dialog.getByRole('button', { name: 'Waiver (PDF)' }).count()) === 0);
+  c.ok('no horizontal overflow (details)', !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)));
   c.ok('plan option', (await dialog.locator('option', { hasText: 'Hybrid Monthly — £45.00 / monthly' }).count()) === 1);
   if (shots) await page.screenshot({ path: `${shots}/member-record-${name}.png` });
 
@@ -105,7 +116,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   // stay inside the lifecycle card instead of spilling past its edge.
   await page.addStyleTag({ content: 'input[type=date]::-webkit-datetime-edit{display:inline-block;min-width:330px}' });
   const spill = await page.evaluate(() => {
-    const card = document.querySelector('.record-section').getBoundingClientRect();
+    const card = document.querySelector('.record-section:has(input[type=date])').getBoundingClientRect();
     const modal = document.querySelector('.modal-card');
     return { worst: Math.max(...[...document.querySelectorAll('.record-section input[type=date]')].map((i) => i.getBoundingClientRect().right - card.right)), scrolls: modal.scrollWidth > modal.clientWidth + 1 };
   });
