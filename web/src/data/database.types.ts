@@ -3444,6 +3444,14 @@ export type Database = {
         Args: { p_gym_id: string }
         Returns: { user_id: string; member_name: string; missing: string[] }[]
       }
+      get_my_private_profile: {
+        Args: Record<string, never>
+        Returns: Json
+      }
+      get_gym_member_demographics: {
+        Args: { p_gym_id: string }
+        Returns: { user_id: string; date_of_birth: string | null; gender: string | null }[]
+      }
       get_member_details: {
         Args: { p_gym_id: string; p_user_id: string }
         Returns: Json

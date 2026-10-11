@@ -17,6 +17,14 @@
 --      details stay visible to the team (they are needed in an emergency).
 --    * If anything is hidden from the team, only the owner can save a member's details (nobody edits what they cannot see).
 --
+-- 3. Members can read nothing about each other beyond what a community needs. Only the gym's owner, admin and staff read
+--    other people's details. Two more places where a member could read other members' details are closed:
+--    * profiles.date_of_birth and profiles.gender were readable by every active member of the same gym. They are now
+--      readable only by the person themselves, through get_my_private_profile, and by the team through get_member_details and
+--      get_gym_member_demographics. Names, photos and bios stay readable (the community and class lists need them).
+--    * the older "members" contact table (email and phone) was readable by every member of the gym; it is now readable by
+--      the gym's owner, admin and staff, and by the person themselves.
+--
 -- No existing member is changed other than the phone copy above. Rollback: supabase/rollback/20261011_drop_member_details_edit_and_privacy.sql.
 -- Check: supabase/verification/20261011_member_details_edit_and_privacy_check.sql. Test: supabase/tests/member_details_edit_and_privacy.sql.
 begin;
@@ -378,5 +386,48 @@ begin
 
   return gaps;
 end$$;
+
+-- ---------------------------------------------------------------------------------------------------------------
+-- Date of birth and gender: the person themselves, and the team, only
+-- ---------------------------------------------------------------------------------------------------------------
+-- A column privilege only restricts anything once the table-wide SELECT is taken away, so the columns every member may read
+-- are listed. A column added to profiles later needs adding to this list in the migration that adds it.
+revoke select on public.profiles from authenticated;
+grant select (id, display_name, first_name, last_name, avatar_url, bio, phone, created_at, updated_at) on public.profiles to authenticated;
+
+create function public.get_my_private_profile() returns jsonb
+language plpgsql stable security definer set search_path to 'public', 'private', 'pg_temp' as $$
+declare v_uid uuid := auth.uid(); p public.profiles%rowtype;
+begin
+  if v_uid is null then raise exception 'Not authenticated'; end if;
+  select * into p from public.profiles where id = v_uid;
+  return jsonb_build_object('date_of_birth', p.date_of_birth, 'gender', p.gender);
+end$$;
+revoke all on function public.get_my_private_profile() from public, anon;
+grant execute on function public.get_my_private_profile() to authenticated;
+
+create function public.get_gym_member_demographics(p_gym_id uuid) returns table(user_id uuid, date_of_birth date, gender text)
+language plpgsql stable security definer set search_path to 'public', 'private', 'pg_temp' as $$
+declare v_uid uuid := auth.uid();
+begin
+  if v_uid is null then raise exception 'Not authenticated'; end if;
+  if not exists (select 1 from public.gym_members m where m.gym_id = p_gym_id and m.user_id = v_uid and m.is_active = true and m.role in ('owner', 'admin', 'staff')) then
+    raise exception 'Only the gym''s owners, admins and staff can see this.';
+  end if;
+  return query
+    select p.id, p.date_of_birth, p.gender
+      from public.profiles p
+     where p.id in (select gm.user_id from public.gym_members gm where gm.gym_id = p_gym_id and gm.is_active = true);
+end$$;
+revoke all on function public.get_gym_member_demographics(uuid) from public, anon;
+grant execute on function public.get_gym_member_demographics(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------------------------------------------
+-- The older members contact table (email, phone)
+-- ---------------------------------------------------------------------------------------------------------------
+drop policy "gym users can read members" on public.members;
+create policy "the team and the person read member contact records" on public.members for select to authenticated
+  using (user_id = (select auth.uid())
+         or private.has_gym_role(gym_id, array['owner'::public.gym_member_role, 'admin'::public.gym_member_role, 'staff'::public.gym_member_role]));
 
 commit;

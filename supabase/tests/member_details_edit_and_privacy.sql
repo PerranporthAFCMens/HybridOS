@@ -114,3 +114,58 @@ update public.profiles set phone = '+447700900999' where id = '00000000-0000-000
 reset role;
 insert into v select 'profiles.phone after a member writes one', 'phone', coalesce(phone,'(empty)') from public.profiles where id = '00000000-0000-0000-0000-0000000000c1';
 select who, what, value from v order by 1, 2;
+
+-- ---------------------------------------------------------------------------------------------------------------
+-- Part 3: members cannot read each other's date of birth, gender, email or phone; the team can; people can read their own
+-- ---------------------------------------------------------------------------------------------------------------
+reset role;
+update public.profiles set date_of_birth = date '1990-03-14', gender = 'female' where id = '00000000-0000-0000-0000-0000000000c1';
+insert into public.members(gym_id, user_id, first_name, last_name, display_name, email, phone, status)
+  values ('00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000c1', 'Ada', 'Smith', 'Ada Smith', 'ada@example.test', '+447700900123', 'active') on conflict do nothing;
+create temp table w(who text, what text, value text);
+grant all on w to authenticated, anon;
+set role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-0000000000c6',false);
+do $$ begin begin perform date_of_birth from public.profiles; insert into w values ('a fellow member reads date of birth','read','BAD'); exception when others then insert into w values ('a fellow member reads date of birth','refused',sqlerrm); end; end $$;
+do $$ begin begin perform gender from public.profiles; insert into w values ('a fellow member reads gender','read','BAD'); exception when others then insert into w values ('a fellow member reads gender','refused',sqlerrm); end; end $$;
+do $$ begin begin perform * from public.profiles; insert into w values ('a fellow member reads select *','read','BAD'); exception when others then insert into w values ('a fellow member reads select *','refused',sqlerrm); end; end $$;
+insert into w select 'a fellow member reads a name', 'first names seen', count(first_name)::text from public.profiles where id = '00000000-0000-0000-0000-0000000000c1';
+insert into w select 'a fellow member reads the contact table', 'rows seen', count(*)::text from public.members where gym_id = '00000000-0000-0000-0000-0000000000d1' and user_id <> '00000000-0000-0000-0000-0000000000c6';
+do $$ begin begin perform * from public.get_gym_member_demographics('00000000-0000-0000-0000-0000000000d1'); insert into w values ('a fellow member asks for demographics','returned','BAD'); exception when others then insert into w values ('a fellow member asks for demographics','refused',sqlerrm); end; end $$;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-0000000000c1',false);
+insert into w select 'the person reads their own', 'dob / gender', (public.get_my_private_profile()->>'date_of_birth') || ' / ' || (public.get_my_private_profile()->>'gender');
+insert into w select 'the person reads their own contact record', 'rows seen', count(*)::text from public.members where user_id = '00000000-0000-0000-0000-0000000000c1';
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-0000000000c3',false);
+insert into w select 'staff reads demographics', 'rows with a date of birth', count(date_of_birth)::text from public.get_gym_member_demographics('00000000-0000-0000-0000-0000000000d1');
+insert into w select 'staff reads the contact table', 'rows seen', count(*)::text from public.members where gym_id = '00000000-0000-0000-0000-0000000000d1';
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-0000000000c5',false);
+do $$ begin begin perform * from public.get_gym_member_demographics('00000000-0000-0000-0000-0000000000d1'); insert into w values ('another gym''s owner asks for demographics','returned','BAD'); exception when others then insert into w values ('another gym''s owner asks for demographics','refused',sqlerrm); end; end $$;
+insert into w select 'another gym''s owner reads the contact table', 'rows seen', count(*)::text from public.members where gym_id = '00000000-0000-0000-0000-0000000000d1';
+reset role;
+select who, what, value from w order by 1;
+
+-- The results above are for reading; these are the ones that must hold. The test fails (non-zero exit) if any does not.
+do $$
+declare bad text := '';
+begin
+  if (select outcome from t where who = 'staff edits an owner') is null or (select what from t where who = 'staff edits an owner') <> 'refused' then bad := bad || ' staff-edits-owner'; end if;
+  if (select what from t where who = 'a plain member edits someone else') <> 'refused' then bad := bad || ' member-edits-other'; end if;
+  if (select what from t where who = 'anonymous') <> 'refused' then bad := bad || ' anonymous'; end if;
+  if (select what from t where who = 'another gym''s owner, this gym') <> 'refused' then bad := bad || ' other-gym-owner'; end if;
+  if (select value from v where who = 'staff, phone hidden' and what like 'phone / town%') not like '(none) / Truro / true,false' then bad := bad || ' hidden-phone'; end if;
+  if (select value from v where who = 'owner, phone hidden from team') = '(none)' then bad := bad || ' owner-sees-all'; end if;
+  if (select value from v where who = 'staff, both hidden' and what like 'phone / town%') not like '(none) / (none) / %' then bad := bad || ' both-hidden'; end if;
+  if (select what from v where who = 'staff edits while hidden') <> 'refused' then bad := bad || ' blind-edit'; end if;
+  if (select value from v where who = 'plain member reads the details table') <> '0' then bad := bad || ' member-reads-details'; end if;
+  if (select value from v where who = 'plain member reads profiles') <> '0' then bad := bad || ' member-reads-phones'; end if;
+  if (select value from v where who = 'staff reads the details table directly') <> '0' then bad := bad || ' staff-direct-read'; end if;
+  if (select value from w where who = 'a fellow member reads date of birth') not like 'permission denied%' then bad := bad || ' member-reads-dob'; end if;
+  if (select value from w where who = 'a fellow member reads gender') not like 'permission denied%' then bad := bad || ' member-reads-gender'; end if;
+  if (select value from w where who = 'a fellow member reads the contact table') <> '0' then bad := bad || ' member-reads-contact-table'; end if;
+  if (select what from w where who = 'a fellow member asks for demographics') <> 'refused' then bad := bad || ' member-demographics'; end if;
+  if (select what from w where who = 'another gym''s owner asks for demographics') <> 'refused' then bad := bad || ' other-gym-demographics'; end if;
+  if (select value from w where who = 'the person reads their own') not like '1990-03-14 / female' then bad := bad || ' own-profile'; end if;
+  if (select value from w where who = 'staff reads the contact table') <> '1' then bad := bad || ' team-contact-table'; end if;
+  if bad <> '' then raise exception 'Member details privacy test failed:%', bad; end if;
+  raise notice 'MEMBER DETAILS PRIVACY TESTS PASSED';
+end $$;

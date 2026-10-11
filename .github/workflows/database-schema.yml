@@ -45,7 +45,7 @@ jobs:
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
             if v_tables<>72 then raise exception 'Expected 72 app tables, got %',v_tables; end if;
-            if v_functions<>119 then raise exception 'Expected 119 committed app functions, got %',v_functions; end if;
+            if v_functions<>121 then raise exception 'Expected 121 committed app functions, got %',v_functions; end if;
             if v_policies<>184 then raise exception 'Expected 184 app/storage policies, got %',v_policies; end if;
             if v_triggers<>29 then raise exception 'Expected 29 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
@@ -75,6 +75,9 @@ jobs:
           if grep -E ' \| f$' /tmp/membership_status_check.txt; then echo 'A membership status verification check is false'; exit 1; fi
           # twelve personas x two gyms, run as the authenticated role with real JWT claims; rolls itself back
           psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/membership_status_personas.sql
+          # member details: edit, the owner's visibility choice, and members reading nothing about each other; then a guard that a plain member can run only member functions
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/member_details_edit_and_privacy.sql
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/member_cannot_use_admin_functions.sql
       - name: Membership rules verification, persona tests and rollback
         shell: bash
         run: |

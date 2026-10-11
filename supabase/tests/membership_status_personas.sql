@@ -333,6 +333,8 @@ insert into pt.fn_allow values
  ('get_member_details(uuid,uuid)','checks the caller is the gym''s owner, admin or staff and applies the owner''s privacy choice (tested in member_details_edit_and_privacy.sql)'),
  ('set_member_contact_visibility(uuid,boolean,boolean)','owner of the gym only, checked in the function (tested in member_details_edit_and_privacy.sql)'),
  ('get_member_contact_visibility(uuid)','the gym''s owner, admin and staff only, checked in the function (tested in member_details_edit_and_privacy.sql)'),
+ ('get_my_private_profile()','returns only the caller''s own date of birth and gender by auth.uid() (tested in member_details_edit_and_privacy.sql)'),
+ ('get_gym_member_demographics(uuid)','owner, admin and staff of the gym only, checked in the function (tested in member_details_edit_and_privacy.sql)'),
  ('save_my_join_details(text,text,date,text,text,text,text,text,text,text,text,text,text)','writes only the caller''s own profile and details by auth.uid() (tested in member_join_details_flow.sql)'),
  ('accept_gym_terms(text)','superseded by sign_gym_documents and no longer used; writes only the caller''s own row by auth.uid()'),
  ('get_public_gym_join_terms(text)','superseded and no longer used; returns a gym''s public wording to any signed-in person'),

@@ -103,11 +103,18 @@ export async function loadLibraryData(gymId: string, since: string | null): Prom
   const people = new Map<string, LibPerson>();
   const all = [...userIds];
   for (let i = 0; i < all.length; i += IDS_PER_REQUEST) {
-    const { data, error } = await supabase.from('profiles').select('id, display_name, first_name, last_name, date_of_birth, gender').in('id', all.slice(i, i + IDS_PER_REQUEST));
+    const { data, error } = await supabase.from('profiles').select('id, display_name, first_name, last_name').in('id', all.slice(i, i + IDS_PER_REQUEST));
     if (error) throw error;
     for (const p of data ?? []) {
-      people.set(p.id, { name: p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Member', dateOfBirth: p.date_of_birth ?? '', gender: p.gender ?? '' });
+      people.set(p.id, { name: p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Member', dateOfBirth: '', gender: '' });
     }
+  }
+  // Date of birth and gender are private; the team reads them for the gym's members through one function.
+  const demographics = await supabase.rpc('get_gym_member_demographics', { p_gym_id: gymId });
+  if (demographics.error) throw demographics.error;
+  for (const d of demographics.data ?? []) {
+    const person = people.get(d.user_id);
+    if (person) people.set(d.user_id, { ...person, dateOfBirth: d.date_of_birth ?? '', gender: d.gender ?? '' });
   }
 
   return {

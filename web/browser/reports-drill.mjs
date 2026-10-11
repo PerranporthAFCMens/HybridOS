@@ -64,6 +64,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/membership_plans')) return reply(route, plans);
     if (path.endsWith('/memberships')) return reply(route, [{ user_id: U1, plan_id: 'p1' }, { user_id: U2, plan_id: 'p1' }, { user_id: U3, plan_id: 'p2' }]);
     if (path.endsWith('/gym_members')) return reply(route, [{ user_id: U1, joined_at: daysAgo(5, 9).slice(0, 19), attrition_on: null }, { user_id: U3, joined_at: '2024-01-01T00:00:00', attrition_on: null }]);
+    if (path.endsWith('/rpc/get_gym_member_demographics')) return reply(route, people.map((p) => ({ user_id: p.id, date_of_birth: p.date_of_birth ?? null, gender: p.gender ?? null })));
     if (path.endsWith('/profiles')) return reply(route, people);
     return false;
   });

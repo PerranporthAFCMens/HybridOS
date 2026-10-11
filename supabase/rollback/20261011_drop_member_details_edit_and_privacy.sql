@@ -4,6 +4,13 @@
 -- The owner's visibility choices are lost (everything is visible to the team again, as before).
 begin;
 
+drop policy if exists "the team and the person read member contact records" on public.members;
+create policy "gym users can read members" on public.members for select to authenticated using (private.is_gym_member(gym_id));
+
+drop function if exists public.get_gym_member_demographics(uuid);
+drop function if exists public.get_my_private_profile();
+grant select on public.profiles to authenticated;
+
 drop trigger if exists profiles_keep_phone_out on public.profiles;
 drop function if exists private.keep_phone_off_profiles();
 

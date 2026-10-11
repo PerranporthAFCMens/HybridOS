@@ -34,7 +34,7 @@ export function Today() {
   const booking = useBooking();
   const [goal, setGoal] = useState(readGoal);
   const profile = useQuery({ queryKey: ['profile', userId], queryFn: () => getProfileNames(userId) });
-  const birthday = useQuery({ queryKey: ['birthday', userId], queryFn: () => getMyBirthday(userId) });
+  const birthday = useQuery({ queryKey: ['birthday', userId], queryFn: () => getMyBirthday() });
   const [wished, setWished] = useState(false);
   const year = Number(d.today.slice(0, 4));
   const wishedBefore = (() => { try { return localStorage.getItem(birthdayKey(userId, year)) === '1'; } catch { return false; } })();

@@ -19,7 +19,7 @@ export function Me() {
   const d = useOutletContext<MemberCtx>();
   const qc = useQueryClient();
   const profile = useQuery({ queryKey: ['profile', auth.userId], queryFn: () => getProfileNames(auth.userId) });
-  const birthday = useQuery({ queryKey: ['birthday', auth.userId], queryFn: () => getMyBirthday(auth.userId) });
+  const birthday = useQuery({ queryKey: ['birthday', auth.userId], queryFn: () => getMyBirthday() });
   const [dob, setDob] = useState('');
   const [open, setOpen] = useState<Section>(null);
   const [name, setName] = useState({ display: '', first: '', last: '' });
