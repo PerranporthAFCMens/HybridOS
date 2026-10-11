@@ -182,6 +182,16 @@ do $$ begin
   end if;
 end $$;
 reset role;
+update public.profiles set display_name = 'member' where id = '00000000-0000-0000-0000-0000000000c1';
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000c1', false);
+select public.save_my_join_details('Ada','Lovelace',date '1990-03-14','+447700900123','1 High St',null,'Truro','TR1 1AA','Jo Smith','+447700900456','Mother',null,null);
+do $$ begin
+  if (select display_name from public.profiles where id = '00000000-0000-0000-0000-0000000000c1') <> 'Ada Lovelace' then
+    raise exception 'Display name test failed: the automatic name made from the email was not replaced';
+  end if;
+end $$;
+reset role;
 update public.profiles set display_name = 'Ace' where id = '00000000-0000-0000-0000-0000000000c1';
 set role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000c1', false);
