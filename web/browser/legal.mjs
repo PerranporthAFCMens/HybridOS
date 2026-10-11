@@ -15,6 +15,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.goto(`${base}/privacy`);
   await c.has('privacy heading', page.getByRole('heading', { name: 'Privacy policy' }));
   await c.has('says other members never see details', page.getByText(/Other members can never see your details/));
+  await c.has('says nothing is shared without consent', page.getByText(/only time information goes to another company is when you choose it/));
   await page.goto(`${base}/data-deletion`);
   await c.has('deletion heading', page.getByRole('heading', { name: 'Delete your data' }));
   await c.has('says how to ask', page.getByText(/Delete my data/));

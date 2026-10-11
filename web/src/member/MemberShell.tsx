@@ -1,3 +1,4 @@
+import { LegalLinks } from '../legal/Legal';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { gymLogo } from '../shell/gymBrand';
@@ -29,6 +30,7 @@ export function MemberShell() {
       </header>
       <main className="mem-main">
         <Outlet context={data} />
+        <LegalLinks />
       </main>
       <nav className="mem-tabs" aria-label="Member">
         <NavLink to="/m/today">{icon('M3 11l9-8 9 8M5 10v10h14V10')}<span>Today</span></NavLink>
