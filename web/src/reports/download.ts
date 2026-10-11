@@ -41,7 +41,7 @@ export function fileBase(gymName: string, title: string, now: Date): string {
 
 export type Format = 'csv' | 'xlsx' | 'pdf';
 
-function save(blob: Blob, name: string): void {
+export function save(blob: Blob, name: string): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

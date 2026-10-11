@@ -88,3 +88,8 @@
 .agreement, .agreement-doc { overflow-wrap: anywhere; }
 /* Safari draws date boxes wider than their card; keep that inside the card (the old pop-up hid it by scrolling). */
 .file-cols .record-section { overflow-x: hidden; }
+.file-head { flex-wrap: wrap; }
+.file-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.file-ask { margin-bottom: 12px; }
+.file-msg { min-height: 0; margin-bottom: 8px; }
+@media (max-width: 760px) { .file-actions { margin-left: 0; width: 100%; } .file-actions .btn { flex: 1; } }

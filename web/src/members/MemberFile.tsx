@@ -1,7 +1,13 @@
 import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import type { MemberRow } from '../data/members';
+import { getMemberDetails } from '../data/memberDetails';
+import { getMemberAgreements, makeSignedCopies } from '../data/signup';
+import { listMemberMemberships } from '../data/members';
+import { fileBase, save } from '../reports/download';
+import { memberFilePdf } from './filePdf';
 import { Button } from '../ui/Button';
 import { Empty } from '../ui/Card';
 import { DateInput, Field, FieldRow, Select } from '../ui/Field';
@@ -38,6 +44,52 @@ function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string })
   const plans = usePlans(gymId);
   const writes = useMemberWrites(gymId, member.userId);
   const activePlans = (plans.data ?? []).filter((p) => p.isActive);
+
+  // The file as a PDF to download, and the signed copy emailed to the person on request.
+  const { gym } = useReadyAuth();
+  const qc = useQueryClient();
+  const agreements = useQuery({ queryKey: ['member-agreements', gymId, member.userId], queryFn: () => getMemberAgreements(gymId, member.userId) });
+  const [busy, setBusy] = useState<'pdf' | 'send' | null>(null);
+  const [asking, setAsking] = useState(false);
+  const [fileMsg, setFileMsg] = useState<Message>(null);
+  const download = async () => {
+    setBusy('pdf');
+    setFileMsg(null);
+    try {
+      const [details, mships, agreed] = await Promise.all([
+        qc.ensureQueryData({ queryKey: ['member-details', gymId, member.userId], queryFn: () => getMemberDetails(gymId, member.userId) }),
+        qc.ensureQueryData({ queryKey: ['member-memberships', gymId, member.userId], queryFn: () => listMemberMemberships(gymId, member.userId) }),
+        qc.ensureQueryData({ queryKey: ['member-agreements', gymId, member.userId], queryFn: () => getMemberAgreements(gymId, member.userId) }),
+      ]);
+      const now = new Date();
+      const blob = await memberFilePdf({
+        gymName: gym.gymName, generatedAt: now, name, role: ROLE_LABEL[member.role] ?? 'Member', status: member.latest ? labelStatus(member.latest.status) : 'No membership', joinedAt: member.joinedAt,
+        memberships: mships.map((m) => ({ plan: m.planName || 'Membership', price: m.planPricePence !== null ? `${money(m.planPricePence)} / ${m.planInterval ?? ''}` : 'No plan', status: labelStatus(m.status), startsOn: m.startsOn ?? '', endsOn: m.endsOn ?? '' })),
+        details, agreements: agreed,
+      });
+      save(blob, `${fileBase(gym.gymName, `${name} member file`, now)}.pdf`);
+    } catch (e) {
+      setFileMsg({ text: e instanceof Error ? e.message : 'Could not make the PDF. Try again.', tone: 'error' });
+    } finally {
+      setBusy(null);
+    }
+  };
+  const latestSigned = agreements.data?.[0];
+  const sendCopy = async () => {
+    if (!latestSigned) return;
+    setBusy('send');
+    setFileMsg(null);
+    try {
+      await makeSignedCopies(latestSigned.id, { email: true, resend: !!latestSigned.emailedAt });
+      setAsking(false);
+      setFileMsg({ text: `Sent the signed copy to ${name}.`, tone: 'good' });
+      await qc.invalidateQueries({ queryKey: ['member-agreements', gymId, member.userId] });
+    } catch (e) {
+      setFileMsg({ text: e instanceof Error ? e.message : 'Could not send it. Try again.', tone: 'error' });
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const [joined, setJoined] = useState(dateInputValue(member.joinedAt));
   const [attrition, setAttrition] = useState(member.attritionOn ?? '');
@@ -98,7 +150,19 @@ function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string })
             {latest && <span className={`chip ${latest.status === 'active' ? 'good' : latest.status === 'paused' ? 'warn' : ''}`}>{labelStatus(latest.status)}</span>}
           </div>
         </div>
+        <div className="file-actions">
+          <Button variant="primary" onClick={() => void download()} disabled={busy !== null}>{busy === 'pdf' ? 'Making PDF…' : 'Download PDF'}</Button>
+          <Button onClick={() => setAsking(true)} disabled={busy !== null || !latestSigned}>Send to customer</Button>
+        </div>
       </header>
+      {asking && latestSigned && (
+        <div className="notice file-ask" role="alertdialog" aria-label="Send to customer">
+          Email the signed copy to {name}, at the email address on their account?{' '}
+          <Button variant="primary" onClick={() => void sendCopy()} disabled={busy !== null}>{busy === 'send' ? 'Sending…' : 'Send'}</Button>{' '}
+          <Button onClick={() => setAsking(false)} disabled={busy !== null}>Cancel</Button>
+        </div>
+      )}
+      <div className="file-msg"><Msg m={fileMsg} /></div>
       {team && <div className="notice">This is a team login. Give them a membership below so they see the member app like any member (classes, workouts and so on).</div>}
 
       <div className="file-strip">
