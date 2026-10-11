@@ -1,6 +1,6 @@
 # Display names for people who join through the sign-up link (2026-10-11)
 
-Status: written and tested in CI; NOT yet applied to the live database. Needs the owner's go-ahead.
+Status: APPLIED to the live database by the owner on 11 October 2026 (evening). Check query: all four rows `ok`.
 
 ## The problem
 A new account's display name starts as its email address. `save_my_join_details` saved the first and last name but kept that display name, so everyone who joined through the sign-up link showed as an email address in lists, reports and Signed documents (seen on the second test sign-up).
