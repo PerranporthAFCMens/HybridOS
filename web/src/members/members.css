@@ -82,3 +82,7 @@
 @media (max-width: 760px) { .file-cols { grid-template-columns: minmax(0, 1fr); } .file-strip { grid-template-columns: minmax(0, 1fr); } }
 .file-cols .form-grid { grid-template-columns: minmax(0, 1fr); }
 .file-sub .chip, .file-strip b { text-transform: capitalize; }
+.file-head > div, .file-strip > div { min-width: 0; }
+.file-head h1, .file-strip b { overflow-wrap: anywhere; }
+.file-cols > div { min-width: 0; }
+.agreement, .agreement-doc { overflow-wrap: anywhere; }
