@@ -1230,6 +1230,25 @@ export type Database = {
         Update: Record<string, never>
         Relationships: []
       }
+      member_details: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          created_at: string
+          emergency_name: string
+          emergency_phone: string
+          emergency_relationship: string
+          guardian_name: string | null
+          guardian_phone: string | null
+          postcode: string
+          town: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
       member_signatures: {
         Row: {
           agreed_text: string | null

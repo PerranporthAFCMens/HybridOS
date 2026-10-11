@@ -9,6 +9,12 @@ const RIGHT = 14;
 const TOP = 14;
 const BOTTOM = 26;
 
+/** Where a centred label goes: its own spot, nudged left when it would run past the right edge of the chart (the last point sits near it). */
+export function tickX(x: number, label: string, width: number): number {
+  const over = x + label.length * 3.4 - (width - 1);
+  return over > 0 ? x - over : x;
+}
+
 /**
  * A trend over time. Lines are 2px; one series also gets a faint area wash; the latest point carries a
  * dot with a surface ring and its value (a direct label, kept to the end point only). A vertical hairline
@@ -56,7 +62,7 @@ export function LineChart({
               <text x={LEFT - 6} y={y(t) + 4} textAnchor="end" className="chart-tick">{compact(t)}</text>
             </g>
           ))}
-          {categories.map((c, i) => (i % step === 0 ? <text key={`${c}-${i}`} x={x(i)} y={height - 8} textAnchor="middle" className="chart-tick">{c}</text> : null))}
+          {categories.map((c, i) => (i % step === 0 ? <text key={`${c}-${i}`} x={tickX(x(i), c, width)} y={height - 8} textAnchor="middle" className="chart-tick">{c}</text> : null))}
           {series.map((s, si) => {
             const pts = s.values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
             const last = s.values.length - 1;
