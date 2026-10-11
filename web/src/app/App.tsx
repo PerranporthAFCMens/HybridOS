@@ -33,7 +33,6 @@ import { Requests } from '../membership/Requests';
 import { SignupProcess } from '../signup/SignupProcess';
 import { Privacy } from '../members/Privacy';
 import { Join } from '../join/Join';
-import { DataDeletion, PrivacyPolicy } from '../legal/Legal';
 import { BASENAME } from './site';
 
 function Leave({ to }: { to: string }) {
@@ -115,8 +114,6 @@ export function App() {
     <BrowserRouter basename={BASENAME}>
       <Routes>
         <Route path="/join/:slug" element={<Join />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/data-deletion" element={<DataDeletion />} />
         <Route path="*" element={<Main />} />
       </Routes>
     </BrowserRouter>
