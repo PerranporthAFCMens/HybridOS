@@ -86,3 +86,5 @@
 .file-head h1, .file-strip b { overflow-wrap: anywhere; }
 .file-cols > div { min-width: 0; }
 .agreement, .agreement-doc { overflow-wrap: anywhere; }
+/* Safari draws date boxes wider than their card; keep that inside the card (the old pop-up hid it by scrolling). */
+.file-cols .record-section { overflow-x: hidden; }

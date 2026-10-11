@@ -74,7 +74,10 @@ function audit() {
   const problems = [];
   const vw = window.innerWidth;
   const label = (e) => (e.tagName.toLowerCase() + (e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\s+/)[0] : '') + (e.textContent ? ` "${e.textContent.trim().slice(0, 24)}"` : ''));
-  if (document.documentElement.scrollWidth > vw + 1) problems.push('the page scrolls sideways');
+  if (document.documentElement.scrollWidth > vw + 1) {
+    const wide = [...document.querySelectorAll('#root *')].filter((e) => e.scrollWidth > vw + 1).slice(-3).map((e) => label(e));
+    problems.push(`the page scrolls sideways${wide.length ? ` (wide: ${wide.join('; ')})` : ''}`);
+  }
   const drawerClosed = vw < 900 && !document.querySelector('.shell.open');
   const root = document.querySelector('#root');
   for (const e of root.querySelectorAll('*')) {
