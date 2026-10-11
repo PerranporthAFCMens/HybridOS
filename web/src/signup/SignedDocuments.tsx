@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { getSignatureDetail, listSignatures, signedCopyUrl, type SignatureRow } from '../data/signup';
+import { getSignatureDetail, listSignatures, makeSignedCopies, signedCopyUrl, type SignatureRow } from '../data/signup';
 import { Button } from '../ui/Button';
 import { Card, Empty } from '../ui/Card';
 import { Input, Select } from '../ui/Field';
@@ -18,6 +18,7 @@ export function SignedDocuments() {
   const [sort, setSort] = useState<SigSort>('newest');
   const [openId, setOpenId] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
   const rows = filterSignatures(sigs.data ?? [], search, sort);
 
   return (
@@ -42,12 +43,13 @@ export function SignedDocuments() {
           </label>
         </div>
         {problem && <p className="join-msg bad" role="alert">{problem}</p>}
+        {done && <p className="join-msg good" role="status">{done}</p>}
         {sigs.isError && <Empty>Could not load signed documents. Refresh to try again.</Empty>}
         {sigs.data && sigs.data.length === 0 && <Empty>No one has signed yet.</Empty>}
         {sigs.data && sigs.data.length > 0 && rows.length === 0 && <Empty>No signed documents match your search.</Empty>}
         {rows.length > 0 && (
           <ul className="settings-list">
-            {rows.map((s) => <Item key={s.id} s={s} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} onProblem={setProblem} />)}
+            {rows.map((s) => <Item key={s.id} s={s} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} onProblem={setProblem} onDone={setDone} gymId={gym.gymId} />)}
           </ul>
         )}
       </Card>
@@ -55,7 +57,15 @@ export function SignedDocuments() {
   );
 }
 
-function Item({ s, open, onToggle, onProblem }: { s: SignatureRow; open: boolean; onToggle: () => void; onProblem: (text: string | null) => void }) {
+function Item({ s, gymId, open, onToggle, onProblem, onDone }: { s: SignatureRow; gymId: string; open: boolean; onToggle: () => void; onProblem: (text: string | null) => void; onDone: (text: string | null) => void }) {
+  const qc = useQueryClient();
+  const hasPdf = !!(s.termsPath || s.waiverPath);
+  const make = useMutation({
+    mutationFn: (opts: { email: boolean; resend?: boolean }) => makeSignedCopies(s.id, opts),
+    onMutate: () => { onProblem(null); onDone(null); },
+    onSuccess: (_d, opts) => { onDone(opts.email ? `Emailed the signed copies to ${s.name}.` : `Made the PDF for ${s.name}.`); return qc.invalidateQueries({ queryKey: ['signup-signatures', gymId] }); },
+    onError: (e) => onProblem(e instanceof Error ? e.message : 'Could not do that. Try again.'),
+  });
   const detail = useQuery({ queryKey: ['signature-detail', s.id], queryFn: () => getSignatureDetail(s.id), enabled: open });
   const copy = async (path: string) => {
     onProblem(null);
@@ -77,7 +87,9 @@ function Item({ s, open, onToggle, onProblem }: { s: SignatureRow; open: boolean
         <div className="signup-actions">
           {s.termsPath && <Button onClick={() => void copy(s.termsPath ?? '')}>Terms PDF</Button>}
           {s.waiverPath && <Button onClick={() => void copy(s.waiverPath ?? '')}>Waiver PDF</Button>}
-          {!s.termsPath && !s.waiverPath && <span className="muted small">No PDF made yet</span>}
+          {!hasPdf && <span className="muted small">No PDF made yet</span>}
+          {!hasPdf && <Button onClick={() => make.mutate({ email: false })} disabled={make.isPending}>{make.isPending ? 'Making…' : 'Make PDF'}</Button>}
+          {hasPdf && <Button onClick={() => make.mutate({ email: true, resend: !!s.emailedAt })} disabled={make.isPending}>{make.isPending ? 'Sending…' : s.emailedAt ? 'Resend email' : 'Send email'}</Button>}
           <Button onClick={onToggle} aria-expanded={open}>{open ? 'Hide signature' : 'View signature'}</Button>
         </div>
       </div>

@@ -1,8 +1,10 @@
 // finalise-signature: after a member signs the gym's terms and waiver (public.sign_gym_documents), this makes the signed copies,
 // keeps them in storage ('signed-documents'), and emails them to the member through Resend.
 //
-// The member's own sign-in (JWT) calls it with { signature_id }. It only acts on that member's own signature. A failed email never
-// undoes the signature: the reason is written to member_signatures.email_error and the copies stay saved.
+// The member's own sign-in (JWT) calls it with { signature_id } right after signing: it makes the copies and emails them.
+// An owner, admin or staff member of the same gym can call it too, to make a missing copy ({ signature_id }, no email) or to send
+// the copies again ({ signature_id, send_email: true, resend: true }). A failed email never undoes the signature: the reason is
+// written to member_signatures.email_error and the copies stay saved.
 //
 // One file on purpose, so it can be pasted into the Supabase dashboard's function editor as well as deployed with the CLI.
 // The PDF builder at the top has no Deno-only code and is unit tested (web/tests/signedpdf.test.ts).
@@ -215,14 +217,25 @@ async function handle(req: Request): Promise<Response> {
     const user = u.user as { id: string; email?: string }
 
     stage = 'read_request'
-    const body = (await req.json().catch(() => ({}))) as { signature_id?: unknown }
+    const body = (await req.json().catch(() => ({}))) as { signature_id?: unknown; send_email?: unknown; resend?: unknown }
     const sigId = str(body.signature_id)
     if (!sigId) return reply(400, { error: 'signature_id is required' })
 
     stage = 'load_signature'
     const { data: sig } = (await admin.from('member_signatures').select('*').eq('id', sigId).maybeSingle()) as { data: Row | null }
-    if (!sig || sig.user_id !== user.id) return reply(404, { error: 'Not found' })
-    if (sig.emailed_at) return reply(200, { ok: true, emailed: true, already: true })
+    if (!sig) return reply(404, { error: 'Not found' })
+    // The signer, or the gym's own owner, admin or staff, may act on a signature. Anyone else is told it does not exist.
+    const byMember = sig.user_id === user.id
+    if (!byMember) {
+      const { data: gm } = await admin.from('gym_members').select('role,is_active,access_status').eq('gym_id', str(sig.gym_id)).eq('user_id', user.id).maybeSingle()
+      const allowed = !!gm && gm.is_active === true && gm.access_status === 'active' && ['owner', 'admin', 'staff'].includes(String(gm.role))
+      if (!allowed) return reply(404, { error: 'Not found' })
+    }
+    const resend = body.resend === true
+    // The member always gets their email unless they have it already. Staff only make the copies, unless they ask for the email.
+    const wantEmail = byMember ? true : body.send_email === true
+    if (wantEmail && sig.emailed_at && !resend) return reply(200, { ok: true, emailed: true, already: true })
+    const owner = str(sig.user_id)
     recordFailure = async (message) => {
       await admin.from('member_signatures').update({ email_error: message.slice(0, 400) }).eq('id', sigId)
     }
@@ -233,7 +246,7 @@ async function handle(req: Request): Promise<Response> {
     const [gymQ, commsQ, profQ, docsQ, qsQ, ansQ] = await Promise.all([
       admin.from('gyms').select('id,name').eq('id', gymId).maybeSingle(),
       admin.from('gym_communication_settings').select('sender_name,sender_email,sender_domain_status,reply_to_email').eq('gym_id', gymId).maybeSingle(),
-      admin.from('profiles').select('first_name,last_name,display_name').eq('id', user.id).maybeSingle(),
+      admin.from('profiles').select('first_name,last_name,display_name').eq('id', owner).maybeSingle(),
       admin.from('gym_signup_documents').select('*').in('id', docIds),
       admin.from('gym_signup_questions').select('*').in('document_id', docIds).order('position'),
       admin.from('member_signature_answers').select('*').eq('signature_id', sigId),
@@ -268,7 +281,7 @@ async function handle(req: Request): Promise<Response> {
         { kind, title: str(d.title), version: Number(d.version) || 1, source: d.source === 'pdf' ? 'pdf' : 'text', body: typeof d.body_text === 'string' ? d.body_text : null, pdfBytes, acceptance: str(d.acceptance_text), qa },
         { signatureId: sigId, gymName, memberName, signerName: str(sig.signer_name), signerIsGuardian: sig.signer_is_guardian === true, signedAt: new Date(str(sig.signed_at) || Date.now()), signaturePng: png },
       )
-      const path = `${user.id}/${gymId}/${sigId}-${kind}.pdf`
+      const path = `${owner}/${gymId}/${sigId}-${kind}.pdf`
       const up = await admin.storage.from('signed-documents').upload(path, bytes, { contentType: 'application/pdf', upsert: true })
       if (up.error) throw new Error(`Could not save the signed ${kind}: ${up.error.message}`)
       made.push({ kind, title: str(d.title), path, bytes })
@@ -281,8 +294,15 @@ async function handle(req: Request): Promise<Response> {
     }).eq('id', sigId)
     if (upd.error) throw new Error(upd.error.message)
 
+    // Staff who only asked for the copies are done: nothing is sent and nothing about the email is changed.
+    if (!wantEmail) return reply(200, { ok: true, made: made.length, emailed: !!sig.emailed_at })
+
     stage = 'send_email'
-    const to = user.email ?? ''
+    let to = byMember ? user.email ?? '' : ''
+    if (!byMember) {
+      const target = await admin.auth.admin.getUserById(owner)
+      to = target.data?.user?.email ?? ''
+    }
     let emailed = false
     let emailError: string | null = null
     if (!to) emailError = 'The account has no email address'
@@ -303,7 +323,7 @@ async function handle(req: Request): Promise<Response> {
       if (rt) mail.reply_to = [rt]
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resendKey}`, 'Idempotency-Key': `signed-docs-${sigId}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resendKey}`, 'Idempotency-Key': resend ? `signed-docs-${sigId}-${Date.now()}` : `signed-docs-${sigId}` },
         body: JSON.stringify(mail),
       })
       if (res.ok) emailed = true
