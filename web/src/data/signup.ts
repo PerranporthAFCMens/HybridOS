@@ -32,6 +32,8 @@ export interface AgreementDoc { kind: DocKind; title: string; version: number; s
 /** One signing, in full: who signed, when, the documents with the answers given, and the signature itself. */
 export interface Agreement {
   id: string; signedAt: string; signerName: string; isGuardian: boolean; image: string; emailedAt: string | null; emailError: string | null; docs: AgreementDoc[];
+  /** The signed copies made when they signed (the original record), if they exist yet. */
+  termsPath: string | null; waiverPath: string | null;
 }
 
 /** Everything one person signed at this gym, newest first, for their file. Owners, admins and staff only (the database refuses anyone else). */
@@ -63,7 +65,7 @@ export async function getMemberAgreements(gymId: string, userId: string): Promis
     return { kind: asKind(doc.kind), title: doc.title, version: doc.version, source: doc.source === 'pdf' ? 'pdf' : 'text', acceptance: doc.acceptance_text, answers: given };
   };
   return sigs.map((r) => ({
-    id: r.id, signedAt: r.signed_at, signerName: r.signer_name, isGuardian: r.signer_is_guardian, image: r.signature_png, emailedAt: r.emailed_at, emailError: r.email_error,
+    id: r.id, signedAt: r.signed_at, signerName: r.signer_name, isGuardian: r.signer_is_guardian, image: r.signature_png, emailedAt: r.emailed_at, emailError: r.email_error, termsPath: r.signed_terms_path, waiverPath: r.signed_waiver_path,
     docs: [docFor(r.id, r.terms_document_id), docFor(r.id, r.waiver_document_id)].filter((x): x is AgreementDoc => !!x),
   }));
 }
