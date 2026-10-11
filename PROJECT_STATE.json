@@ -14,21 +14,21 @@
     "note": "Production release of 9 October 2026 completed at e7fe129c60169250204f61ad6ac6cdea3127c006 (Manual production release run 232). main is an ancestor of dev; dev is ahead only by the release-record pull request that restores the hold."
   },
   "release_gate": {
-    "production_hold": false,
-    "production_promotion_allowed": true,
-    "reason": "Owner authorised a production release on 11 October 2026 (the join and sign-up flow, member details and privacy, clean addresses, the privacy policy and data-deletion pages). The hold is cleared only for this release and is restored straight after it."
+    "production_hold": true,
+    "production_promotion_allowed": false,
+    "reason": "Production release 369a299d955a1e0e68aca8751b489f85d68c14f5 (11 October 2026) is complete and verified. Promotion is re-held until a future release is deliberately prepared and re-authorised."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
     "hybrid_hub_login": "https://www.hybridone.co.uk/hybrid-hub",
     "puffin_performance_login": "https://www.hybridone.co.uk/puffin-performance",
-    "deployed_source_sha": "e7fe129c60169250204f61ad6ac6cdea3127c006",
+    "deployed_source_sha": "369a299d955a1e0e68aca8751b489f85d68c14f5",
     "deployment_state": "READY",
     "auth_model": "universal login in production; / is the sign-in entry, with gym-specific /hybrid-hub and /puffin-performance redirect shims",
     "canonical_routes": {
       "trailing_slash": false,
       "routing_workflow": ".github/workflows/production-routing.yml",
-      "last_pass_run_id": 37107898456
+      "last_pass_run_id": 38164496761
     }
   },
   "development": {
