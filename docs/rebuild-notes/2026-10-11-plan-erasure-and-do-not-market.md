@@ -36,14 +36,27 @@ Out of our control (stated in the policy): emails already sent stay in Resend's 
 - Report: how many on the flag, and who set it and when. A report of service messages by sender, so mislabelling can be spotted.
 - NOTE: the app does not yet have bulk marketing messages (communications today only sets up the sender and the invite email). The flag, badge, member control and unsubscribe are built now; server enforcement attaches to the first bulk-send feature.
 
+## Part C: Active members by default, and automatic anonymising after 2 years
+Today the Members tab lists every gym user (members and team) with a "Show" filter of all / members / team and a name-only search. There is no active/inactive split.
+
+- The Members tab shows only people with a current (active) membership by default, plus the team.
+- A "Show" choice for former members (anyone whose membership has ended, expired, or been cancelled) and a search that reaches them, so details can be pulled when needed. Search covers name, and later email, phone and date range.
+- Sorting: newest/oldest and A-Z/Z-A, in both lists.
+- Automatic anonymising: when someone has been inactive for 2 years, a scheduled job runs the SAME erasure as Part A (personal details erased; waiver, terms and billing kept in the owner-only archive until their retention date; anonymous counts kept). The member record then reads "Erased member <reference>".
+- Safeguards: a warning shown on the former-member record from about 60 days before; the owner can pause or exclude someone (for example during a dispute or claim); every automatic run is written to the same permanent erasure log, marked "automatic".
+- "Inactive for 2 years" is counted from the last day of their last active membership, or their last activity if that is later. Still to confirm: whether last activity (a class booking, check-in, a login) counts, or only membership dates.
+
 ## Proposed order (each its own PR, owner approves each)
 1. Do-not-market flag and member control, badge, report (database change + app).
 2. Legal records archive: where waivers and billing are kept after erasure, with search (database change + app).
 3. Erasure function, owner screen, log, test, and the retention clean-up job (database change + Edge Function + app).
-4. Policy and deletion-page wording updated to match.
+4. Members tab: active by default, former-member search and sorting (app only, no database change expected).
+5. Automatic anonymising after 2 years inactive (database job; depends on step 3).
+6. Policy and deletion-page wording updated to match.
 
 Every database change comes with a rollback file, a verification script, a note recording it, and a stop for owner approval before it is applied. Expected size: each step touches more than five files, so each will be listed before it is built.
 
 ## Still to confirm
 - Retention for anyone who signed while under 18 (insurer or solicitor).
+- What counts as "inactive" for the 2-year clock: membership end date only, or also last activity.
 - Whether members can also request erasure themselves from the app (owner approves) or only gym owners start it.
