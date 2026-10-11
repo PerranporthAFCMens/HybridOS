@@ -1,3 +1,4 @@
+import { looksLikeExistingAccount } from '../src/join/calc';
 import { describe, expect, it } from 'vitest';
 import { EMPTY_DETAILS, answersPayload, checkAbout, checkAccount, checkAddress, checkEmergency, checkGuardian, checkSign, isUnder18, normalisePhone, normalisePostcode, planPrice, stepsFor, toRpcArgs, type JoinDocument } from '../src/join/calc';
 
@@ -120,5 +121,17 @@ describe('before signing', () => {
     expect(answersPayload([doc()], { q1: { yes: true, text: ' Controlled ' }, q2: { yes: null, text: '' } })).toEqual([{ question_id: 'q1', yes: true, text: 'Controlled' }]);
     expect(answersPayload([doc()], { q1: { yes: false, text: '' }, q2: { yes: null, text: 'Knee' } })).toEqual([{ question_id: 'q1', yes: false }, { question_id: 'q2', text: 'Knee' }]);
     expect(answersPayload([doc()], {})).toEqual([]);
+  });
+});
+
+describe('an email that already has an account', () => {
+  it('is recognised when the service answers a repeat sign-up with no identities', () => {
+    expect(looksLikeExistingAccount(null, { identities: [] })).toBe(true);
+    expect(looksLikeExistingAccount(null, { identities: [{}] })).toBe(false);
+    expect(looksLikeExistingAccount(null, null)).toBe(false);
+  });
+  it('is recognised from the service saying so, but not from other errors', () => {
+    expect(looksLikeExistingAccount({ message: 'User already registered' }, null)).toBe(true);
+    expect(looksLikeExistingAccount({ message: 'Password should be at least 6 characters' }, null)).toBe(false);
   });
 });

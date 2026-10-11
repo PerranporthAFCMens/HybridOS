@@ -182,3 +182,15 @@ export function answersPayload(docs: JoinDocument[], answers: Answers): { questi
   }
   return out;
 }
+
+/**
+ * Did the sign-up answer mean "this email already has an account"? With email confirmation on, the service answers a repeat
+ * sign-up with a user that has no identities (it will not email them again); with it off, it answers with an error.
+ */
+export function looksLikeExistingAccount(error: { message?: string } | null | undefined, user: { identities?: unknown[] | null } | null | undefined): boolean {
+  if (error) return /already (been )?registered|already exists/i.test(error.message ?? '');
+  return !!user && Array.isArray(user.identities) && user.identities.length === 0;
+}
+
+/** Memberships that mean "you are already a member here": they are not offered the plan list again. */
+export const BLOCKING_STATUSES = ['active', 'paused', 'pending'] as const;
