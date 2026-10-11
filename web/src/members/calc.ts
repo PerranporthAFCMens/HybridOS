@@ -111,3 +111,32 @@ export function missingSummary(n: number): string {
 export function missingList(missing: string[]): string {
   return missing.join(', ');
 }
+
+/** "12 High Street, Flat 2, Truro, TR1 2AB" on one line, or a dash when there is none. */
+export function addressText(a: { addressLine1: string; addressLine2: string | null; town: string; postcode: string } | null | undefined): string {
+  if (!a) return '—';
+  return [a.addressLine1, a.addressLine2, a.town, a.postcode].map((x) => (x ?? '').trim()).filter(Boolean).join(', ');
+}
+
+/** "+447700900123" as "07700 900123" (UK numbers); anything else is shown as stored. */
+export function phoneText(p: string | null | undefined): string {
+  if (!p) return '—';
+  const m = /^\+44(\d{4})(\d{6})$/.exec(p);
+  return m ? `0${m[1]} ${m[2]}` : p;
+}
+
+/** "Jo Smith (Mum), 07700 900123" for the emergency contact, or a dash. */
+export function emergencyText(e: { name: string; phone: string; relationship: string } | null | undefined): string {
+  if (!e || !e.name) return '—';
+  return `${e.name} (${e.relationship}), ${phoneText(e.phone)}`;
+}
+
+/** "14 Mar 2001 (25)" for a date of birth, or a dash. */
+export function dobText(dob: string | null | undefined, now: Date): string {
+  if (!dob) return '—';
+  const born = new Date(`${dob}T00:00:00Z`);
+  if (Number.isNaN(born.getTime())) return '—';
+  let age = now.getUTCFullYear() - born.getUTCFullYear();
+  if (now.getUTCMonth() < born.getUTCMonth() || (now.getUTCMonth() === born.getUTCMonth() && now.getUTCDate() < born.getUTCDate())) age--;
+  return `${formatDate(dob)} (${age})`;
+}

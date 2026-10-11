@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   availableLetters, dateInputValue, filterAndSort, initials, jumpLetter, labelStatus, nameOf, nameParts,
-  paymentHint, summaryText, validateLifecycle, isTeam, showOnly, missingList, missingSummary,
+  paymentHint, summaryText, validateLifecycle, isTeam, showOnly, missingList, missingSummary, addressText, phoneText, emergencyText, dobText,
 } from '../src/members/calc';
 import type { MemberRow } from '../src/data/members';
 
@@ -96,5 +96,27 @@ describe('missing details', () => {
   });
   it('lists what is missing', () => {
     expect(missingList(['address', 'emergency contact'])).toBe('address, emergency contact');
+  });
+});
+
+describe('member details', () => {
+  it('writes the address on one line and skips empty parts', () => {
+    expect(addressText({ addressLine1: '12 High Street', addressLine2: 'Flat 2', town: 'Truro', postcode: 'TR1 2AB' })).toBe('12 High Street, Flat 2, Truro, TR1 2AB');
+    expect(addressText({ addressLine1: '12 High Street', addressLine2: null, town: 'Truro', postcode: 'TR1 2AB' })).toBe('12 High Street, Truro, TR1 2AB');
+    expect(addressText(null)).toBe('—');
+  });
+  it('shows UK numbers the way people write them', () => {
+    expect(phoneText('+447700900123')).toBe('07700 900123');
+    expect(phoneText('+353851234567')).toBe('+353851234567');
+    expect(phoneText(null)).toBe('—');
+  });
+  it('names the emergency contact with the relationship', () => {
+    expect(emergencyText({ name: 'Jo Zane', phone: '+447700900456', relationship: 'Mother' })).toBe('Jo Zane (Mother), 07700 900456');
+    expect(emergencyText(null)).toBe('—');
+  });
+  it('gives the age with the date of birth, counting birthdays not yet reached', () => {
+    expect(dobText('2001-03-14', new Date('2026-10-11T12:00:00Z'))).toBe('14 Mar 2001 (25)');
+    expect(dobText('2001-12-25', new Date('2026-10-11T12:00:00Z'))).toBe('25 Dec 2001 (24)');
+    expect(dobText(null, new Date())).toBe('—');
   });
 });

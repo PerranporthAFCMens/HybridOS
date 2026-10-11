@@ -37,7 +37,7 @@ function layoutProblems() {
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;
     const r = e.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) continue;
-    const name = `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]}`;
+    const name = `${e.tagName.toLowerCase()}.${String(e.className.baseVal ?? e.className).split(" ")[0]}${e.tagName.toLowerCase() === "text" ? ` "${e.textContent.slice(0, 20)}"` : ""}`;
     if (cs.position !== 'fixed' && cs.position !== 'absolute' && (r.right > vw + 1 || r.left < -1)) problems.push(`${name} runs off the screen`);
     const p = e.parentElement;
     if (p && cs.position !== 'fixed' && cs.position !== 'absolute' && !e.closest('.menu-btn')) {
@@ -88,7 +88,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const mix = await page.getByRole('list', { name: 'Active memberships by plan' }).locator('.bar-row').allTextContents();
   c.ok('plan mix biggest first, unused plans included', mix.length === 3 && mix[0].includes('Hybrid Monthly') && mix[0].endsWith('2') && mix[1].startsWith('Annual'));
   c.ok('old detailed reports link', (await page.getByRole('link', { name: 'Open the detailed reports' }).getAttribute('href')).includes('reporting.html'));
-  c.ok('layout', (await page.evaluate(layoutProblems)).length === 0);
+  { const lp = await page.evaluate(layoutProblems); if (lp.length) console.log('  layout problems:', lp.slice(0, 5).join(' | ')); c.ok('layout', lp.length === 0); }
   if (shots) await page.screenshot({ path: `${shots}/reports-${name}.png`, fullPage: true });
 
   // Changing the range asks for a different start date; All time asks for no start date.
