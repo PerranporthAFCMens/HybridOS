@@ -1,6 +1,6 @@
 # Display names, second fix (2026-10-11)
 
-Status: written; NOT applied to the live database. Needs the owner's go-ahead.
+Status: APPLIED to the live database by the owner on 11 October 2026 (night). Check query: all four rows `ok`.
 
 ## What was missed
 The first fix (20261011200000) treated a display name as "automatic" only when it contained "@". The trigger that makes a profile for a new account (`public.handle_new_user`) actually starts the display name as the part of the email BEFORE the "@" (`a.j.turner+signuptest`). So the earlier check said "ok" (it only looked for "@") but the Signed documents row still showed the automatic name.
