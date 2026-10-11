@@ -259,8 +259,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   if (name === 'desktop') {
     await page.getByRole('button', { name: 'Week', exact: true }).click();
     c.ok('week view has seven day columns', (await page.locator('.cal-col').count()) === 7);
-    // The week runs Monday to Sunday, so on a Sunday tomorrow is next week: look for a class that is always in view instead.
-    await c.has('this week\'s class', page.getByRole('button', { name: today.getDay() === 0 ? /^Morning HIIT/ : /^Tomorrow Strength/ }).first());
+    // Today's class is always inside the week on screen, whatever day it is (tomorrow is next week on a Sunday).
+    await c.has('this week\'s class', page.getByRole('button', { name: /^Morning HIIT/ }).first());
     c.ok('layout (week view)', (await page.evaluate(layoutProblems)).length === 0);
     if (shots) await page.screenshot({ path: `${shots}/classes-calendar-week.png`, fullPage: true });
     const before = asked.length;
