@@ -22,12 +22,22 @@ const profiles = [
   { id: PAT, display_name: null, first_name: 'Pat', last_name: 'Boss' },
 ];
 
+let hide = false;
 const browser = await launch();
 let allOk = true;
 for (const [name, viewport] of Object.entries(sizes)) {
   const writes = [];
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, async ({ route, url, path, select, method, body }) => {
+    if (path.endsWith('/rpc/get_member_details')) {
+      return reply(route, hide
+        ? { date_of_birth: '2001-03-14', phone_hidden: true, address_hidden: true, phone: null, has_details: true, address_line1: null, address_line2: null, town: null, postcode: null, emergency_name: 'Jo Zane', emergency_phone: '+447700900456', emergency_relationship: 'Mother', guardian_name: null, guardian_phone: null }
+        : { date_of_birth: '2001-03-14', phone_hidden: false, address_hidden: false, phone: '+447700900123', has_details: true, address_line1: '12 High Street', address_line2: 'Flat 2', town: 'Truro', postcode: 'TR1 2AB', emergency_name: 'Jo Zane', emergency_phone: '+447700900456', emergency_relationship: 'Mother', guardian_name: null, guardian_phone: null }, 1);
+    }
+    if (path.endsWith('/rpc/staff_save_member_details')) {
+      writes.push({ method, path, query: {}, body });
+      return reply(route, { ok: true, under_18: false }, 1);
+    }
     if (path.endsWith('/rpc/get_members_missing_details')) return reply(route, [{ user_id: BOB, member_name: 'Bob Adams', missing: ['address', 'emergency contact'] }]);
     if (['PATCH', 'POST'].includes(method)) {
       writes.push({ method, path, query: Object.fromEntries(url.searchParams), body });
@@ -35,8 +45,6 @@ for (const [name, viewport] of Object.entries(sizes)) {
       return true;
     }
     if (path.endsWith('/gym_members')) return reply(route, people);
-    if (path.endsWith('/profiles') && select.includes('date_of_birth')) return reply(route, [{ date_of_birth: '2001-03-14', phone: '+447700900123' }]);
-    if (path.endsWith('/member_details')) return reply(route, [{ user_id: ADA, address_line1: '12 High Street', address_line2: 'Flat 2', town: 'Truro', postcode: 'TR1 2AB', emergency_name: 'Jo Zane', emergency_phone: '+447700900456', emergency_relationship: 'Mother', guardian_name: null, guardian_phone: null }]);
     if (path.endsWith('/member_signatures')) return reply(route, [{ id: 'sig1', gym_id: GYM, user_id: ADA, signed_at: '2026-10-06T09:00:00Z', signer_name: 'Ada Zane', signer_is_guardian: false, signed_terms_path: 'u/g/sig1-terms.pdf', signed_waiver_path: null, emailed_at: '2026-10-06T09:01:00Z' }]);
     if (path.endsWith('/profiles')) return reply(route, profiles);
     if (path.endsWith('/memberships') && select.includes('starts_on')) {
@@ -109,6 +117,23 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('signed document is listed', dialog.getByText(/Signed 6 Oct 2026 by Ada Zane/));
   c.ok('terms copy can be opened, waiver is not offered when absent', (await dialog.getByRole('button', { name: 'Terms (PDF)' }).count()) === 1 && (await dialog.getByRole('button', { name: 'Waiver (PDF)' }).count()) === 0);
   c.ok('no horizontal overflow (details)', !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)));
+
+  // Editing: the form starts from what is held, is checked, and saves through the checked database call
+  await dialog.getByRole('button', { name: 'Edit details' }).click();
+  c.ok('the form starts from what is held', (await dialog.getByLabel('Mobile number').inputValue()) === '07700 900123' && (await dialog.getByLabel('Postcode').inputValue()) === 'TR1 2AB' && (await dialog.getByLabel('Emergency contact is their…').inputValue()) === 'Mother');
+  await dialog.getByLabel('Mobile number').fill('123');
+  await dialog.getByRole('button', { name: 'Save details' }).click();
+  await c.has('a bad mobile number is refused on the screen', dialog.getByText(/valid mobile number/));
+  c.ok('and nothing was sent', !writes.some((w) => w.path.endsWith('/rpc/staff_save_member_details')));
+  await dialog.getByLabel('First name').fill('Adaline');
+  await dialog.getByLabel('Mobile number').fill('07700 900999');
+  await dialog.getByLabel('Postcode').fill('pl28 8ab');
+  await dialog.getByRole('button', { name: 'Save details' }).click();
+  await c.has('saved', dialog.getByText('Saved.'));
+  const sent = writes.find((w) => w.path.endsWith('/rpc/staff_save_member_details'));
+  c.ok('sent for this gym and this member, in the form the database wants', !!sent && sent.body.p_gym_id === GYM && sent.body.p_user_id === ADA && sent.body.p_first_name === 'Adaline' && sent.body.p_phone === '+447700900999' && sent.body.p_postcode === 'PL28 8AB' && sent.body.p_date_of_birth === '2001-03-14' && sent.body.p_emergency_phone === '+447700900456');
+  c.ok('the form closes after saving', (await dialog.getByRole('button', { name: 'Save details' }).count()) === 0);
+  writes.length = 0;
   c.ok('plan option', (await dialog.locator('option', { hasText: 'Hybrid Monthly — £45.00 / monthly' }).count()) === 1);
   if (shots) await page.screenshot({ path: `${shots}/member-record-${name}.png` });
 
@@ -159,6 +184,16 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('no horizontal overflow (record)', !overflowModal);
   await page.keyboard.press('Escape');
   c.ok('Escape closes the record', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
+
+  // When the owner has hidden mobile numbers and addresses from the team: they are not shown, and only the owner can edit
+  hide = true;
+  await page.locator('.member-row', { hasText: 'Cat Young' }).click();
+  await c.has('hidden things say so', dialog.getByText('Hidden by the owner').first());
+  c.ok('the mobile number and address are not on the screen', (await dialog.getByText('07700 900123').count()) === 0 && (await dialog.getByText('12 High Street').count()) === 0);
+  c.ok('the emergency contact is still shown', (await dialog.getByText('Jo Zane (Mother), 07700 900456').count()) === 1);
+  c.ok('no way to edit, and it says why', (await dialog.getByRole('button', { name: /Edit details|Add details/ }).count()) === 0 && (await dialog.getByText(/only the owner can edit/).count()) === 1);
+  await page.keyboard.press('Escape');
+  hide = false;
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;
   await ctx.close();

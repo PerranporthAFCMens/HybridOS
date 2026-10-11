@@ -7,7 +7,8 @@ import {
   updateMemberLifecycle,
 } from '../data/members';
 import { listPlans } from '../data/plans';
-import { getMemberDetails } from '../data/memberDetails';
+import { getContactVisibility, getMemberDetails, saveMemberDetails, setContactVisibility, type ContactVisibility } from '../data/memberDetails';
+import type { JoinDetails } from '../join/calc';
 
 export function useMemberDirectory(gymId: string) {
   return useQuery({ queryKey: ['members', gymId], queryFn: () => listMemberDirectory(gymId) });
@@ -19,6 +20,34 @@ export function useMemberMemberships(gymId: string, userId: string) {
 
 export function useMemberDetails(gymId: string, userId: string) {
   return useQuery({ queryKey: ['member-details', gymId, userId], queryFn: () => getMemberDetails(gymId, userId) });
+}
+
+/** Saving a member's details refreshes their details, the directory (names) and the "missing details" list. */
+export function useSaveMemberDetails(gymId: string, userId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (d: JoinDetails) => saveMemberDetails(gymId, userId, d, new Date()),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['member-details', gymId, userId] }),
+        qc.invalidateQueries({ queryKey: ['members', gymId] }),
+        qc.invalidateQueries({ queryKey: ['missing-details', gymId] }),
+      ]);
+    },
+  });
+}
+
+export function useContactVisibility(gymId: string) {
+  const qc = useQueryClient();
+  const query = useQuery({ queryKey: ['contact-visibility', gymId], queryFn: () => getContactVisibility(gymId) });
+  const save = useMutation({
+    mutationFn: (v: ContactVisibility) => setContactVisibility(gymId, v),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['contact-visibility', gymId] });
+      await qc.invalidateQueries({ queryKey: ['member-details', gymId] });
+    },
+  });
+  return { query, save };
 }
 
 export function usePlans(gymId: string) {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   availableLetters, dateInputValue, filterAndSort, initials, jumpLetter, labelStatus, nameOf, nameParts,
-  paymentHint, summaryText, validateLifecycle, isTeam, showOnly, missingList, missingSummary, addressText, phoneText, emergencyText, dobText,
+  paymentHint, summaryText, validateLifecycle, isTeam, showOnly, missingList, missingSummary, addressText, phoneText, emergencyText, dobText, checkDetailsDraft, draftFromDetails,
 } from '../src/members/calc';
 import type { MemberRow } from '../src/data/members';
 
@@ -101,8 +101,8 @@ describe('missing details', () => {
 
 describe('member details', () => {
   it('writes the address on one line and skips empty parts', () => {
-    expect(addressText({ addressLine1: '12 High Street', addressLine2: 'Flat 2', town: 'Truro', postcode: 'TR1 2AB' })).toBe('12 High Street, Flat 2, Truro, TR1 2AB');
-    expect(addressText({ addressLine1: '12 High Street', addressLine2: null, town: 'Truro', postcode: 'TR1 2AB' })).toBe('12 High Street, Truro, TR1 2AB');
+    expect(addressText({ line1: '12 High Street', line2: 'Flat 2', town: 'Truro', postcode: 'TR1 2AB' })).toBe('12 High Street, Flat 2, Truro, TR1 2AB');
+    expect(addressText({ line1: '12 High Street', line2: null, town: 'Truro', postcode: 'TR1 2AB' })).toBe('12 High Street, Truro, TR1 2AB');
     expect(addressText(null)).toBe('—');
   });
   it('shows UK numbers the way people write them', () => {
@@ -118,5 +118,29 @@ describe('member details', () => {
     expect(dobText('2001-03-14', new Date('2026-10-11T12:00:00Z'))).toBe('14 Mar 2001 (25)');
     expect(dobText('2001-12-25', new Date('2026-10-11T12:00:00Z'))).toBe('25 Dec 2001 (24)');
     expect(dobText(null, new Date())).toBe('—');
+  });
+});
+
+describe('editing the details of a member', () => {
+  const now = new Date('2026-10-11T12:00:00Z');
+  const good = { firstName: 'Ada', lastName: 'Zane', dob: '1990-03-14', phone: '07700 900123', line1: '12 High Street', line2: '', town: 'Truro', postcode: 'tr12ab', emergencyName: 'Jo Zane', emergencyPhone: '07700 900456', emergencyRelationship: 'Mother', guardianName: '', guardianPhone: '' };
+  it('accepts a complete form', () => expect(checkDetailsDraft(good, now)).toBeNull());
+  it('says what is wrong, in the voice of someone filling it in for another person', () => {
+    expect(checkDetailsDraft({ ...good, firstName: ' ' }, now)).toBe('Enter a first name.');
+    expect(checkDetailsDraft({ ...good, dob: '' }, now)).toBe('Choose a date of birth.');
+    expect(checkDetailsDraft({ ...good, dob: '2999-01-01' }, now)).toBe('Check the date of birth.');
+    expect(checkDetailsDraft({ ...good, phone: '123' }, now)).toMatch(/valid mobile/);
+    expect(checkDetailsDraft({ ...good, postcode: 'nope' }, now)).toMatch(/valid UK postcode/);
+    expect(checkDetailsDraft({ ...good, emergencyRelationship: 'x' }, now)).toMatch(/related to the member/);
+  });
+  it('asks for a parent or guardian only for under-18s', () => {
+    expect(checkDetailsDraft({ ...good, dob: '2015-01-01' }, now)).toBe("Enter the parent or guardian's name.");
+    expect(checkDetailsDraft({ ...good, dob: '2015-01-01', guardianName: 'P', guardianPhone: '07700 900789' }, now)).toBeNull();
+  });
+  it('starts the form from what is held, mobile shown the UK way', () => {
+    const d = draftFromDetails({ displayName: 'Ada Zane', firstName: 'Ada', lastName: 'Zane' }, { dateOfBirth: '1990-03-14', phoneHidden: false, addressHidden: false, phone: '+447700900123', hasDetails: true, address: { line1: '12 High Street', line2: null, town: 'Truro', postcode: 'TR1 2AB' }, emergency: { name: 'Jo', phone: '+447700900456', relationship: 'Mother' }, guardian: null, signed: [] });
+    expect(d.phone).toBe('07700 900123');
+    expect(d.line2).toBe('');
+    expect(d.emergencyPhone).toBe('07700 900456');
   });
 });

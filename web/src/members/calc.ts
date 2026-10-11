@@ -1,4 +1,6 @@
 import type { MemberRow } from '../data/members';
+import type { MemberDetails } from '../data/memberDetails';
+import { isUnder18, normalisePhone, normalisePostcode, type JoinDetails } from '../join/calc';
 
 // Pure rules behind the Members screen. Same behaviour as the legacy directory.
 
@@ -113,9 +115,9 @@ export function missingList(missing: string[]): string {
 }
 
 /** "12 High Street, Flat 2, Truro, TR1 2AB" on one line, or a dash when there is none. */
-export function addressText(a: { addressLine1: string; addressLine2: string | null; town: string; postcode: string } | null | undefined): string {
+export function addressText(a: { line1: string; line2: string | null; town: string; postcode: string } | null | undefined): string {
   if (!a) return '—';
-  return [a.addressLine1, a.addressLine2, a.town, a.postcode].map((x) => (x ?? '').trim()).filter(Boolean).join(', ');
+  return [a.line1, a.line2, a.town, a.postcode].map((x) => (x ?? '').trim()).filter(Boolean).join(', ');
 }
 
 /** "+447700900123" as "07700 900123" (UK numbers); anything else is shown as stored. */
@@ -139,4 +141,40 @@ export function dobText(dob: string | null | undefined, now: Date): string {
   let age = now.getUTCFullYear() - born.getUTCFullYear();
   if (now.getUTCMonth() < born.getUTCMonth() || (now.getUTCMonth() === born.getUTCMonth() && now.getUTCDate() < born.getUTCDate())) age--;
   return `${formatDate(dob)} (${age})`;
+}
+
+/** The form's starting values: what is held now. The mobile number is shown the way people write it (07…). */
+export function draftFromDetails(member: Pick<MemberRow, 'displayName' | 'firstName' | 'lastName'>, d: MemberDetails): JoinDetails {
+  const p = nameParts(member);
+  return {
+    firstName: p.first, lastName: p.surname, dob: d.dateOfBirth ?? '', phone: d.phone ? phoneText(d.phone) : '',
+    line1: d.address?.line1 ?? '', line2: d.address?.line2 ?? '', town: d.address?.town ?? '', postcode: d.address?.postcode ?? '',
+    emergencyName: d.emergency?.name ?? '', emergencyPhone: d.emergency?.phone ? phoneText(d.emergency.phone) : '', emergencyRelationship: d.emergency?.relationship ?? '',
+    guardianName: d.guardian?.name ?? '', guardianPhone: d.guardian?.phone ? phoneText(d.guardian.phone) : '',
+  };
+}
+
+/** What is wrong with the form, said to the person filling it in for someone else; null when it can be saved. The database checks all of it again. */
+export function checkDetailsDraft(d: JoinDetails, now: Date): string | null {
+  const short = (v: string, what: string): string | null => (!v.trim() ? `Enter ${what}.` : v.trim().length > 80 ? 'That is too long.' : null);
+  const dob = /^\d{4}-\d{2}-\d{2}$/.test(d.dob.trim()) ? new Date(`${d.dob.trim()}T00:00:00Z`) : null;
+  if (short(d.firstName, 'a first name')) return short(d.firstName, 'a first name');
+  if (short(d.lastName, 'a last name')) return short(d.lastName, 'a last name');
+  if (!dob || Number.isNaN(dob.getTime())) return 'Choose a date of birth.';
+  if (dob.getTime() > now.getTime() || dob.getUTCFullYear() < 1900) return 'Check the date of birth.';
+  if (!normalisePhone(d.phone)) return 'Enter a valid mobile number, for example 07700 900123.';
+  if (!d.line1.trim()) return 'Enter the first line of the address.';
+  if (d.line1.trim().length > 120 || d.line2.trim().length > 120) return 'That address line is too long.';
+  if (!d.town.trim()) return 'Enter a town or city.';
+  if (!normalisePostcode(d.postcode)) return 'Enter a valid UK postcode, for example PL28 8AB.';
+  if (short(d.emergencyName, "the emergency contact's name")) return short(d.emergencyName, "the emergency contact's name");
+  if (!normalisePhone(d.emergencyPhone)) return 'Enter a valid phone number for the emergency contact.';
+  const rel = d.emergencyRelationship.trim();
+  if (rel.length < 2) return 'Say how they are related to the member, for example partner, parent or friend.';
+  if (rel.length > 40) return 'That relationship is too long.';
+  if (isUnder18(d.dob, now)) {
+    if (short(d.guardianName, "the parent or guardian's name")) return short(d.guardianName, "the parent or guardian's name");
+    if (!normalisePhone(d.guardianPhone)) return 'Enter a valid phone number for the parent or guardian.';
+  }
+  return null;
 }

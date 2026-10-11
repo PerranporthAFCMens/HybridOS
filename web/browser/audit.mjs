@@ -11,6 +11,8 @@ const at = (h, m = 0, d = 0) => { const x = new Date(); x.setDate(x.getDate() + 
 const SIZES = { phone320: { width: 320, height: 640 }, phone390: { width: 390, height: 844 }, desktop: { width: 1280, height: 800 } };
 
 const handle = async ({ route, url, path, select }) => {
+  if (path.endsWith('/rpc/get_member_contact_visibility')) return reply(route, { team_sees_phone: true, team_sees_address: false }, 1);
+  if (path.endsWith('/rpc/get_member_details')) return reply(route, { date_of_birth: '1994-06-14', phone_hidden: false, address_hidden: false, phone: '+447700900123', has_details: true, address_line1: 'Flat 12, Extraordinarily Long Named Building Court', address_line2: 'Off the Rather Long Road Name', town: 'Perranporth', postcode: 'TR6 0AB', emergency_name: 'Bartholomew Featherstonehaugh-Montgomery', emergency_phone: '+447700900456', emergency_relationship: 'Partner or spouse', guardian_name: null, guardian_phone: null }, 1);
   if (path.endsWith('/gym_members')) return reply(route, [{ user_id: ADA, role: 'member', joined_at: '2026-03-01T00:00:00', attrition_on: null }, { user_id: 'b', role: 'member', joined_at: '2026-05-01T00:00:00', attrition_on: null }]);
   if (path.endsWith('/profiles')) {
     // Like the real database: a request for one person (id=eq.X) gets only that person.
@@ -49,6 +51,7 @@ const STATES = {
   'access form': async (page) => { await page.goto(`${base}/access`); await page.getByRole('button', { name: 'New access level' }).click(); await page.getByRole('dialog').getByLabel('Level name').waitFor(); },
   door: async (page) => { await page.goto(`${base}/door`); await page.getByRole('button', { name: 'Save door access' }).waitFor(); },
   'member view': async (page) => { await page.goto(`${base}/member-view`); await page.getByRole('button', { name: 'Save member view' }).waitFor(); },
+  'member privacy': async (page) => { await page.goto(`${base}/member-privacy`); await page.getByRole('button', { name: 'Save' }).waitFor(); },
   community: async (page) => { await page.goto(`${base}/community`); await page.getByText('No community posts yet.').waitFor(); },
   communications: async (page) => { await page.goto(`${base}/communications`); await page.getByRole('button', { name: 'Save template' }).waitFor(); },
   workouts: async (page) => { await page.goto(`${base}/workouts`); await page.getByText('No workouts yet. Build your first one.').waitFor(); },

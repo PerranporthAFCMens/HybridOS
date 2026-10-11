@@ -1,5 +1,5 @@
 -- Behaviour test for 20261011090000_member_join_details.sql. Run on a scratch database only (it inserts test users and a gym).
--- Expected: join refused until details + terms exist; under-18 needs a guardian; direct writes refused; a fellow member sees 0 rows, the owner sees 1, a plain member is refused the missing-details list.
+-- Expected: join refused until details + terms exist; under-18 needs a guardian; direct writes refused; a fellow member sees 0 rows, the owner reads them through get_member_details (and not the table), a plain member is refused the missing-details list.
 insert into auth.users(id,email) values ('00000000-0000-0000-0000-0000000000a1','m@x'),('00000000-0000-0000-0000-0000000000a2','k@x'),('00000000-0000-0000-0000-0000000000a3','o@x') on conflict do nothing;
 insert into public.profiles(id) values ('00000000-0000-0000-0000-0000000000a1'),('00000000-0000-0000-0000-0000000000a2'),('00000000-0000-0000-0000-0000000000a3') on conflict do nothing;
 insert into public.gyms(id,name,slug) values ('00000000-0000-0000-0000-0000000000f1','G','g') on conflict do nothing;
@@ -21,7 +21,9 @@ select 'other member sees', count(*) from public.member_details;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-0000000000a2',false);
 select 'fellow member sees', count(*) from public.member_details;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-0000000000a3',false);
-select 'owner sees', count(*) from public.member_details;
+-- the team reads a member's details through get_member_details (the table itself is the member's only)
+select 'owner sees the town through the function', public.get_member_details('00000000-0000-0000-0000-0000000000f1','00000000-0000-0000-0000-0000000000a1')->>'town';
+select 'owner reads the table directly', count(*) from public.member_details;
 select user_id, missing from public.get_members_missing_details('00000000-0000-0000-0000-0000000000f1');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-0000000000a2',false);
 do $$ begin begin perform * from public.get_members_missing_details('00000000-0000-0000-0000-0000000000f1'); exception when others then raise notice 'member refused: %', sqlerrm; end; end $$;

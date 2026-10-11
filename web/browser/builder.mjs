@@ -81,6 +81,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/membership_plans')) return reply(route, plans);
     if (path.endsWith('/memberships')) return reply(route, memberships);
     if (path.endsWith('/gym_members')) return reply(route, gymMembers);
+    if (path.endsWith('/rpc/get_gym_member_demographics')) return reply(route, people.map((p) => ({ user_id: p.id, date_of_birth: p.date_of_birth ?? null, gender: p.gender ?? null })));
     if (path.endsWith('/profiles')) return reply(route, people);
     if (path.endsWith('/payment_records')) {
       const hdr = (await route.request().headerValue('range')) ?? '0-999';

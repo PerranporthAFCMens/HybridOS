@@ -18,10 +18,12 @@ export async function getProfileNames(userId: string): Promise<ProfileNames> {
 }
 
 /** The member's own date of birth ("2000-03-14"), or null when they have not given one. */
-export async function getMyBirthday(userId: string): Promise<string | null> {
-  const { data, error } = await supabase.from('profiles').select('date_of_birth').eq('id', userId).maybeSingle();
+export async function getMyBirthday(): Promise<string | null> {
+  // Date of birth is private to the person and the team, so it is read through a function, not from the profiles table.
+  const { data, error } = await supabase.rpc('get_my_private_profile');
   if (error) throw error;
-  return data?.date_of_birth ?? null;
+  const v = data && typeof data === 'object' && !Array.isArray(data) ? data.date_of_birth : null;
+  return typeof v === 'string' && v !== '' ? v : null;
 }
 
 export async function saveMyBirthday(userId: string, dateOfBirth: string): Promise<void> {

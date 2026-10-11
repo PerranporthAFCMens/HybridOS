@@ -49,7 +49,8 @@ for (const role of ['member', 'owner']) {
       if (path.endsWith('/memberships')) return reply(route, select.includes('membership_plans')
         ? [{ status: 'active', membership_plans: { name: 'Classes Monthly', includes_classes: true, includes_open_gym: false, includes_pt: false } }]
         : [{ id: 'm1', status: 'active', ends_on: null, created_at: '2026-01-01T00:00:00Z' }]);
-      if (path.endsWith('/profiles')) return reply(route, [{ display_name: 'Jo Marsh', first_name: 'Jo', last_name: 'Marsh', date_of_birth: birthday.value }]);
+      if (path.endsWith('/rpc/get_my_private_profile')) return reply(route, { date_of_birth: birthday.value, gender: null }, 1);
+      if (path.endsWith('/profiles')) return reply(route, [{ display_name: 'Jo Marsh', first_name: 'Jo', last_name: 'Marsh' }]);
       if (path.endsWith('/pt_appointments')) return reply(route, []);
       return false;
     });
