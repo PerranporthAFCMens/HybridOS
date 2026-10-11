@@ -7,3 +7,11 @@
 .signup-footer { justify-content: flex-end; margin-top: 16px; }
 .signup-qs { margin: 6px 0 10px; padding-left: 20px; }
 .signup-q { padding: 10px 0; border-top: 1px solid var(--hybrid-line); }
+
+.signed-item { display: block; }
+.signed-main { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.signed-detail { margin-top: 12px; padding: 12px; border: 1px solid var(--hybrid-line); border-radius: var(--hybrid-control-radius); }
+.signed-image { display: block; max-width: 100%; width: 320px; background: #fff; border-radius: 8px; }
+.signed-facts { margin: 12px 0 0; font-size: 14px; }
+.signed-facts dt { color: var(--hybrid-muted); font-size: 12px; margin-top: 8px; }
+.signed-facts dd { margin: 2px 0 0; min-width: 0; overflow-wrap: anywhere; }

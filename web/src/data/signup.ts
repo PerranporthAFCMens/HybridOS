@@ -12,6 +12,12 @@ export interface SignatureRow {
   id: string; userId: string; name: string; signerName: string; isGuardian: boolean; signedAt: string;
   termsVersion: number | null; waiverVersion: number | null; termsPath: string | null; waiverPath: string | null; emailedAt: string | null; emailError: string | null;
 }
+/** What one signature looked like and said. Fetched when a row is opened, because the images are large. */
+export async function getSignatureDetail(signatureId: string): Promise<{ image: string; agreedText: string }> {
+  const r = await supabase.from('member_signatures').select('signature_png, agreed_text').eq('id', signatureId).maybeSingle();
+  if (r.error) throw new Error(r.error.message);
+  return { image: r.data?.signature_png ?? '', agreedText: r.data?.agreed_text ?? '' };
+}
 export interface FlaggedAnswer { signatureId: string; member: string; prompt: string; details: string; signedAt: string }
 
 const asKind = (v: string): DocKind => (v === 'waiver' ? 'waiver' : 'terms');
@@ -64,7 +70,7 @@ export async function removeDocument(gymId: string, kind: DocKind): Promise<void
 }
 
 /** Who has signed, newest first, with the version of each document they signed. */
-export async function listSignatures(gymId: string, limit = 100): Promise<SignatureRow[]> {
+export async function listSignatures(gymId: string, limit = 1000): Promise<SignatureRow[]> {
   const s = await supabase.from('member_signatures').select('*').eq('gym_id', gymId).order('signed_at', { ascending: false }).limit(limit);
   if (s.error) throw new Error(s.error.message);
   const rows = s.data ?? [];

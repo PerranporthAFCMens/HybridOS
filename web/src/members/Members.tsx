@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { useQuery } from '@tanstack/react-query';
@@ -39,7 +40,10 @@ export function Members() {
           <div className="eyebrow">People &amp; subscriptions</div>
           <h1>Members</h1>
         </div>
-        <span className="muted">{q.data ? summaryText(rows.length, all.length) : ''}</span>
+        <div className="page-actions">
+          <span className="muted">{q.data ? summaryText(rows.length, all.length) : ''}</span>
+          <Link className="btn secondary" to="/signed-documents">Signed documents</Link>
+        </div>
       </header>
 
       {gaps.length > 0 && (

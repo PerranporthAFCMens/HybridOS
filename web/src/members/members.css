@@ -64,3 +64,4 @@
   .modal-card { max-height: 94dvh; border-radius: 16px 16px 0 0; }
 }
 .missing-details summary { min-height: 44px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; cursor: pointer; }
+.page-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }

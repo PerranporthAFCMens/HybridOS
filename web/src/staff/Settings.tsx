@@ -29,7 +29,8 @@ const GROUPS: { title: string; items: { key: LinkKey; name: string; text: string
       { key: 'membership-rules', name: 'Membership rules', text: 'What members can do themselves: pause, cancel or change plan, and what needs your approval.', moved: true },
       { key: 'membership-requests', name: 'Membership requests', text: 'Approve or decline pause, cancel and plan change requests.', moved: true },
       { key: 'member-privacy', name: 'Who sees member details', text: 'Choose whether your team can see members\' mobile numbers and addresses.', moved: true },
-      { key: 'signup-process', name: 'Sign-up process', text: 'The terms and waiver new members sign, the questions they answer, your sign-up link, and who has signed.', moved: true },
+      { key: 'signup-process', name: 'Sign-up process', text: 'The terms and waiver new members sign, the questions they answer, and your sign-up link.', moved: true },
+      { key: 'signed-documents', name: 'Signed documents', text: 'Who has signed the terms and waiver, exactly when, and their signed copies.', moved: true },
     ],
   },
 ];

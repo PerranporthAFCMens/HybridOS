@@ -91,8 +91,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('a link to the PDF', page.getByRole('link', { name: /Open the PDF \(terms\.pdf\)/ }));
 
   await c.has('who has signed', page.getByText('Jo Penrose', { exact: true }).first());
-  await c.has('a parent signing is shown as such', page.getByText(/Sam Penrose \(parent or guardian of Jo Penrose\)/));
-  await c.has('the copy is not emailed yet', page.getByText('Signed copy not emailed yet.'));
+  await c.has('who has signed is a count with a link to Signed documents', page.getByText('1 person has signed.'));
+  await c.has('and the link opens them', page.getByRole('link', { name: 'Open signed documents' }));
   await c.has('a flagged yes answer is shown', page.getByText(/Do you have a heart condition\?: yes \(Mild, controlled\)/));
   c.ok('layout (full page)', (await page.evaluate(layoutProblems)).length === 0);
 
