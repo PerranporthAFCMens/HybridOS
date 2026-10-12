@@ -15,3 +15,4 @@
 .cm-replying { margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .cm-composer { display: flex; gap: 8px; margin-top: 10px; }
 .cm-composer > :first-child { flex: 1; min-width: 0; }
+.cm-broadcast { border-color: #31427a; background: linear-gradient(160deg, #1c2a52, var(--hybrid-panel)); }

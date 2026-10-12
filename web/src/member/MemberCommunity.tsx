@@ -11,36 +11,75 @@ const when = (iso: string) => new Intl.DateTimeFormat('en-GB', { day: 'numeric',
 
 type Target = { postId: string } | { commentId: string };
 
-/** The gym's feed: anyone can post, comment, reply and like. Members can delete their own; the team moderates from the admin. */
+type Stream = 'feed' | 'broadcasts';
+
+const snippet = (text: string, n = 140) => (text.length > n ? `${text.slice(0, n).trimEnd()}…` : text);
+
+/**
+ * Two streams. The feed is everyday chat: any member can post, comment, reply and like. Broadcasts are announcements
+ * from the gym's owners and admins: members can read, like and comment on them but cannot post one, and the feed can
+ * never push one out of view. Members delete only their own things; the team moderates from the admin.
+ */
 export function MemberCommunity() {
   const { gym, userId } = useReadyAuth();
   const q = useCommunity(gym.gymId);
   const w = useCommunityWrites(gym.gymId, userId);
+  const [stream, setStream] = useState<Stream>('feed');
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
   const d = q.data;
-  const feed = d ? buildFeed(d.posts, d.comments, d.reactions) : [];
+  const all = d ? buildFeed(d.posts, d.comments, d.reactions) : [];
+  const feed = all.filter((f) => f.post.kind === 'post');
+  const broadcasts = all.filter((f) => f.post.kind === 'broadcast');
+  const latest = broadcasts[0];
 
   const publish = () => {
     const c = validatePost(draft);
     if (!c.ok) return setError(c.message);
     setError('');
-    w.post.mutate(c.body, { onSuccess: () => setDraft(''), onError: (e) => setError(e.message) });
+    w.post.mutate({ body: c.body, kind: 'post' }, { onSuccess: () => setDraft(''), onError: (e) => setError(e.message) });
   };
+  const tab = (key: Stream, label: string) => (
+    <Button role="tab" aria-selected={stream === key} variant={stream === key ? 'primary' : 'secondary'} onClick={() => setStream(key)}>{label}</Button>
+  );
 
   return (
     <div className="mem-screen">
       <h1 className="mem-title">Community</h1>
-      <section className="mem-card" aria-label="Write a post">
-        <Textarea aria-label="Share something with the gym" maxLength={POST_MAX} placeholder="Share something with the gym…" value={draft} onChange={(e) => { setError(''); setDraft(e.target.value); }} />
-        <Button variant="primary" disabled={w.post.isPending} onClick={publish}>{w.post.isPending ? 'Posting…' : 'Post'}</Button>
-        {error && <div className="mem-error" role="alert">{error}</div>}
-      </section>
-      {q.isError && <div className="mem-error" role="alert">Could not load the feed. Refresh to try again.</div>}
-      {q.isPending && <div className="muted">Loading the feed…</div>}
-      {d && feed.length === 0 && <div className="mem-card muted">No posts yet. Be the first to say something.</div>}
-      {d && feed.map((f) => <Post key={f.post.id} f={f} d={d} />)}
-      {d && d.posts.length >= 100 && <p className="muted small">Showing the latest 100 posts.</p>}
+      <div className="mem-actions" role="tablist" aria-label="Community">
+        {tab('feed', 'Feed')}
+        {tab('broadcasts', broadcasts.length > 0 ? `Broadcasts · ${broadcasts.length}` : 'Broadcasts')}
+      </div>
+      {q.isError && <div className="mem-error" role="alert">Could not load the community. Refresh to try again.</div>}
+      {q.isPending && <div className="muted">Loading…</div>}
+
+      {stream === 'feed' && (
+        <>
+          {latest && d && (
+            <section className="mem-card cm-broadcast" aria-label="Latest broadcast">
+              <span className="mem-eyebrow">Latest broadcast</span>
+              <div>{snippet(latest.post.body)}</div>
+              <Button onClick={() => setStream('broadcasts')}>See all broadcasts</Button>
+            </section>
+          )}
+          <section className="mem-card" aria-label="Write a post">
+            <Textarea aria-label="Share something with the gym" maxLength={POST_MAX} placeholder="Share something with the gym…" value={draft} onChange={(e) => { setError(''); setDraft(e.target.value); }} />
+            <Button variant="primary" disabled={w.post.isPending} onClick={publish}>{w.post.isPending ? 'Posting…' : 'Post'}</Button>
+            {error && <div className="mem-error" role="alert">{error}</div>}
+          </section>
+          {d && feed.length === 0 && <div className="mem-card muted">No posts yet. Be the first to say something.</div>}
+          {d && feed.map((f) => <Post key={f.post.id} f={f} d={d} />)}
+          {d && feed.length >= 100 && <p className="muted small">Showing the latest 100 posts.</p>}
+        </>
+      )}
+
+      {stream === 'broadcasts' && (
+        <>
+          <p className="muted small">Announcements from {gym.gymName}. You can like and comment on them. Only the team can post here.</p>
+          {d && broadcasts.length === 0 && <div className="mem-card muted">No broadcasts yet.</div>}
+          {d && broadcasts.map((f) => <Post key={f.post.id} f={f} d={d} />)}
+        </>
+      )}
     </div>
   );
 }
@@ -103,10 +142,10 @@ function Post({ f, d }: { f: FeedPost; d: CommunityData }) {
   };
 
   return (
-    <article className="mem-card cm-post" aria-label={`Post by ${author}`}>
+    <article className={`mem-card cm-post${f.post.kind === 'broadcast' ? ' cm-broadcast' : ''}`} aria-label={`${f.post.kind === 'broadcast' ? 'Broadcast' : 'Post'} by ${author}`}>
       <div className="cm-head">
         <Avatar id={f.post.userId} d={d} />
-        <div className="cm-meta"><b>{author}</b><span className="muted small">{when(f.post.createdAt)}</span></div>
+        <div className="cm-meta"><b>{author}</b><span className="muted small">{f.post.kind === 'broadcast' ? 'Broadcast · ' : ''}{when(f.post.createdAt)}</span></div>
         {f.post.userId === userId && <Button aria-label="Delete your post" onClick={() => setConfirm({ kind: 'post', id: f.post.id })}>Delete</Button>}
       </div>
       <div className="cm-body">{f.post.body}</div>
