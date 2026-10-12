@@ -3,7 +3,7 @@
 
 export type Tracking = 'strength' | 'reps' | 'time' | 'distance' | 'calories' | 'intervals' | 'instruction';
 
-export interface PlannedActivity { key: string; name: string; tracking: Tracking; plan: string; note: string; block: string }
+export interface PlannedActivity { key: string; name: string; tracking: Tracking; plan: string; note: string; block: string; target: SetValues[] }
 
 const TRACKINGS: Tracking[] = ['strength', 'reps', 'time', 'distance', 'calories', 'intervals', 'instruction'];
 const asTracking = (v: unknown): Tracking => (TRACKINGS.includes(v as Tracking) ? (v as Tracking) : 'strength');
@@ -26,7 +26,9 @@ export function readSnapshot(raw: unknown): { title: string; activities: Planned
         const name = str(a.activity_name).trim();
         if (!name) return;
         const p = a.prescription && typeof a.prescription === 'object' && !Array.isArray(a.prescription) ? (a.prescription as Record<string, unknown>) : {};
-        activities.push({ key: `a${bi}-${ai}`, name, tracking: asTracking(a.tracking_type), plan: str(p.display), note: str(a.notes), block: str(b.title) });
+        const tracking = asTracking(a.tracking_type);
+        const target = readTarget(p.sets);
+        activities.push({ key: `a${bi}-${ai}`, name, tracking, plan: str(p.display) || describeTarget(tracking, target), note: str(a.notes), block: str(b.title), target });
       });
   });
   return { title: str(snap.title), activities };
@@ -54,6 +56,34 @@ export const SIDES: [Side, string][] = [['left', 'Left'], ['right', 'Right'], ['
 const asSide = (v: unknown): Side | null => (v === 'left' || v === 'right' || v === 'both' ? v : null);
 
 export type SetValues = Partial<Record<Field, string>> & { side?: string };
+
+const FIELD_IDS: Field[] = ['weight', 'reps', 'time', 'distance', 'calories'];
+
+/** The numbers a coach set, one row per set. Unreadable rows and empty boxes are dropped, never a crash. */
+export function readTarget(raw: unknown): SetValues[] {
+  if (!Array.isArray(raw)) return [];
+  const out: SetValues[] = [];
+  for (const r of raw as unknown[]) {
+    if (!r || typeof r !== 'object' || Array.isArray(r)) continue;
+    const row: SetValues = {};
+    for (const id of FIELD_IDS) {
+      const v = (r as Record<string, unknown>)[id];
+      const text = typeof v === 'number' ? String(v) : typeof v === 'string' ? v.trim() : '';
+      if (text) row[id] = text;
+    }
+    if (Object.keys(row).length) out.push(row);
+  }
+  return out;
+}
+
+/** Words for what a coach set, like "3 sets: 8 × 60 kg". Identical sets are grouped; different ones are listed. */
+export function describeTarget(tracking: Tracking, sets: SetValues[]): string {
+  const texts = sets.map((s) => setText(tracking, s)).filter(Boolean);
+  if (texts.length === 0) return '';
+  const first = texts[0] ?? '';
+  if (texts.length > 1 && texts.every((t) => t === first)) return `${texts.length} sets: ${first}`;
+  return texts.join(' / ');
+}
 
 export const blankSets = (tracking: Tracking, n = 3): SetValues[] => (tracking === 'instruction' ? [] : Array.from({ length: n }, () => ({})));
 
@@ -141,7 +171,6 @@ export interface PlayedActivity {
   /** The client's own word on it: done as set, or changed. Left empty when they do not say. */
   outcome?: Outcome;
   reason?: string;
-  reasonNote?: string;
 }
 
 export type Prepared =
@@ -238,17 +267,19 @@ export function buildResult(acts: (PlayedActivity & { entered: boolean })[]): Ex
     const name = (a.originalName || a.name).trim();
     if (!name) continue;
     const base = { name, plan: (a.plan ?? '').trim() };
-    const extra = { ...(a.reason ? { reason: a.reason } : {}), ...(a.reasonNote?.trim() ? { note: a.reasonNote.trim() } : {}) };
+    // The member's own words about the exercise ride along whatever happened; the chip only matters when it differed.
+    const words = a.note.trim() ? { note: a.note.trim() } : {};
+    const extra = { ...(a.reason ? { reason: a.reason } : {}), ...words };
     if (!a.originalName) {
-      if (a.entered) out.push({ ...base, status: 'added' });
+      if (a.entered) out.push({ ...base, status: 'added', ...words });
       continue;
     }
     if (a.skipped) { out.push({ ...base, status: 'not_this_time', ...extra }); continue; }
     if (a.name.trim() && a.name.trim() !== a.originalName.trim()) { out.push({ ...base, status: 'changed', swappedTo: a.name.trim(), ...extra }); continue; }
     if (!a.entered) { out.push({ ...base, status: 'not_this_time', ...extra }); continue; }
     if (a.outcome === 'changed') out.push({ ...base, status: 'changed', ...extra });
-    else if (a.outcome === 'as_set') out.push({ ...base, status: 'as_set' });
-    else out.push({ ...base, status: 'logged' });
+    else if (a.outcome === 'as_set') out.push({ ...base, status: 'as_set', ...words });
+    else out.push({ ...base, status: 'logged', ...words });
   }
   return out;
 }
