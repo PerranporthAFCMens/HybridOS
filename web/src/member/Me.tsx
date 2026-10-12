@@ -150,14 +150,22 @@ export function Me() {
         ) : <div className="muted">{auth.gym.role !== 'member' ? 'You are on the team, so you have no membership yet. An owner can give you one from Members.' : 'No membership found for this gym.'}</div>}
         {d.plan && <Link className="btn secondary" to="/m/membership">Pause, change or cancel</Link>}
       </section>
-      {latest && (
-        <section className="mem-card" aria-label="Your signed documents">
-          <h2>Your signed documents</h2>
-          <div className="muted small">You signed the terms and waiver for {auth.gym.gymName} on {fullStamp(latest.signedAt)}.</div>
-          <Button disabled={exporting} onClick={() => void exportCopy()}>{exporting ? 'Getting it…' : 'Download my signed copy'}</Button>
-          {exportMsg && <div className="mem-error" role="alert">{exportMsg}</div>}
-        </section>
-      )}
+      <section className="mem-card" aria-label="Your signed documents">
+        <h2>Your signed documents</h2>
+        {latest ? (
+          <>
+            <div className="muted small">You signed the terms and waiver for {auth.gym.gymName} on {fullStamp(latest.signedAt)}.</div>
+            <Button disabled={exporting} onClick={() => void exportCopy()}>{exporting ? 'Getting it…' : 'Download my signed copy'}</Button>
+            {exportMsg && <div className="mem-error" role="alert">{exportMsg}</div>}
+          </>
+        ) : mine.isError ? (
+          <div className="mem-error" role="alert">Could not load your signed documents. {mine.error instanceof Error ? mine.error.message : ''}</div>
+        ) : mine.isPending ? (
+          <div className="muted small">Loading…</div>
+        ) : (
+          <div className="muted small">There are no signed documents on this account for {auth.gym.gymName}. If you signed up with a different email, sign in with that one, or ask the gym.</div>
+        )}
+      </section>
       <section className="mem-card">
         <h2>More</h2>
         <p className="muted small">Community and billing are still in the classic app while they are rebuilt here.</p>
