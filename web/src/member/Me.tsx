@@ -12,6 +12,7 @@ import { fullName } from '../shell/account';
 import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { DateInput, Input } from '../ui/Field';
+import { LeaderboardChoice } from '../train/LeaderboardChoice';
 import { checkBirthday, checkEmail, checkName, checkPassword } from './account';
 import type { MemberCtx } from './useMember';
 
@@ -165,6 +166,11 @@ export function Me() {
         ) : (
           <div className="muted small">There are no signed documents on this account for {auth.gym.gymName}. If you signed up with a different email, sign in with that one, or ask the gym.</div>
         )}
+      </section>
+      <section className="mem-card" aria-label="Lift leaderboards">
+        <h2>Lift leaderboards</h2>
+        <div className="muted small">Where the gym has a leaderboard for a big lift, other members see your heaviest weight next to your name, shortened like Priya N.</div>
+        <LeaderboardChoice />
       </section>
       <section className="mem-card">
         <h2>More</h2>

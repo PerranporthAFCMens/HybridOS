@@ -81,6 +81,13 @@ export async function loadAssignableMembers(gymId: string): Promise<MemberOption
   return (data ?? []).flatMap((m) => (m.user_id ? [{ userId: m.user_id, name: m.display_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || 'Member' }] : []));
 }
 
+/** A saved workout copied as it is now (so later edits to the library never change what someone was given). */
+export async function snapshotForTemplate(t: TemplateRow, note: string | null = null) {
+  const { blocks, activities } = await loadParts(t.id);
+  const snapBlocks: SnapshotBlock[] = blocks.map((b) => ({ ...b, activities: activities.filter((a) => a.block_id === b.id).map((a) => ({ block_id: a.block_id, activity_name: a.activity_name, activity_type: a.activity_type, tracking_type: a.tracking_type, position: a.position, prescription: a.prescription, notes: a.notes })) }));
+  return { ...buildSnapshot(t, snapBlocks), ...(note ? { coach_note: note } : {}) };
+}
+
 /**
  * A coach gives one member one or several saved workouts. There are no days: they wait in the member's "From your coach"
  * list until the member does them. Each workout is copied as it is now, with the coach's note inside the copy. One request,
@@ -90,9 +97,7 @@ export async function assignWorkouts(gymId: string, userId: string, templates: T
   if (templates.length === 0) throw new Error('Choose at least one workout.');
   const rows = [];
   for (const t of templates) {
-    const { blocks, activities } = await loadParts(t.id);
-    const snapBlocks: SnapshotBlock[] = blocks.map((b) => ({ ...b, activities: activities.filter((a) => a.block_id === b.id).map((a) => ({ block_id: a.block_id, activity_name: a.activity_name, activity_type: a.activity_type, tracking_type: a.tracking_type, position: a.position, prescription: a.prescription, notes: a.notes })) }));
-    const snapshot = { ...buildSnapshot(t, snapBlocks), ...(note ? { coach_note: note } : {}) };
+    const snapshot = await snapshotForTemplate(t, note);
     rows.push({
       gym_id: gymId, template_id: t.id, member_user_id: memberUserId, assigned_by: userId, source: 'pt', title: t.title, workout_type: t.workoutType, focus_tags: t.focusTags,
       workout_snapshot: JSON.parse(JSON.stringify(snapshot)) as never, status: 'todo',

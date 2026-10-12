@@ -61,3 +61,13 @@
 .roster-row .roster-name { flex: 1 1 140px; }
 .roster-actions { display: flex; gap: 6px; flex-wrap: wrap; flex: 1 1 100%; }
 .add-to-class { margin-top: 8px; }
+
+.cw-panel { margin-top: 18px; }
+.cw-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.cw-pick { display: grid; gap: 10px; }
+.cw-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.block-form { display: grid; gap: 10px; margin: 12px 0; }
+.block-week { margin-top: 12px; display: grid; gap: 6px; }
+.block-class { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.block-end { margin-top: 16px; align-items: center; }

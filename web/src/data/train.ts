@@ -1,11 +1,11 @@
 import { supabase } from './client';
 import type { Json } from './database.types';
-import type { DbSet, StoredSet, Tracking } from '../train/calc';
+import { dbTracking, type DbSet, type StoredSet, type Tracking } from '../train/calc';
 import { candidatesFor, isBetter, pbKey, wonText, type PbCandidate, type StoredPb, type Won } from '../train/pb';
 
 export interface AssignmentRow { id: string; title: string; source: string; status: string; scheduledFor: string | null; dueAt: string | null; snapshot: Json; focusTags: string[] }
 export interface SessionRow { id: string; title: string; performedAt: string; assignmentId: string | null; feedbackCount: number; feedbackNew: boolean }
-export interface Notice { id: string; kind: 'workout_assigned' | 'workout_feedback'; title: string; body: string | null; assignmentId: string | null; createdAt: string }
+export interface Notice { id: string; kind: 'workout_assigned' | 'workout_feedback' | 'class_workout'; title: string; body: string | null; assignmentId: string | null; sessionId: string | null; createdAt: string }
 export interface FeedbackRow { id: string; body: string; createdAt: string; authorId: string }
 export interface DoneRow { id: string; title: string; completedAt: string | null; rpe: number | null; note: string | null; result: Json | null; feedbackSeenAt: string | null }
 export interface LastTime { name: string; sets: StoredSet[] }
@@ -71,15 +71,15 @@ export async function listRecentSessions(userId: string, gymId: string): Promise
 export async function listMyNotices(userId: string, gymId: string): Promise<Notice[]> {
   const { data, error } = await supabase
     .from('member_notifications')
-    .select('id, notification_type, title, body, related_assignment_id, created_at')
+    .select('id, notification_type, title, body, related_assignment_id, related_session_id, created_at')
     .eq('gym_id', gymId)
     .eq('user_id', userId)
-    .in('notification_type', ['workout_assigned', 'workout_feedback'])
+    .in('notification_type', ['workout_assigned', 'workout_feedback', 'class_workout'])
     .is('read_at', null)
     .order('created_at', { ascending: false })
     .limit(30);
   if (error) throw error;
-  return (data ?? []).map((r) => ({ id: r.id, kind: r.notification_type === 'workout_feedback' ? 'workout_feedback' : 'workout_assigned', title: r.title, body: r.body, assignmentId: r.related_assignment_id, createdAt: r.created_at }));
+  return (data ?? []).map((r) => ({ id: r.id, kind: r.notification_type === 'workout_feedback' ? 'workout_feedback' : r.notification_type === 'class_workout' ? 'class_workout' : 'workout_assigned', title: r.title, body: r.body, assignmentId: r.related_assignment_id, sessionId: r.related_session_id, createdAt: r.created_at }));
 }
 
 /** Mark notices as read. Best effort: a failure here never blocks anything. */
@@ -134,18 +134,18 @@ export interface ExerciseInput { name: string; tracking: Tracking; note: string 
  * be recorded does not fail the save; it is reported.
  */
 export async function saveExercise(
-  ctx: { gymId: string; userId: string; sessionId: string | null; title: string; position: number; assignmentId?: string | null },
+  ctx: { gymId: string; userId: string; sessionId: string | null; title: string; position: number; assignmentId?: string | null; classSessionId?: string | null },
   e: ExerciseInput,
 ): Promise<{ sessionId: string; entryId: string; won: Won[]; pbError: string | null }> {
   const fail = (err: unknown): never => { throw new Error(err instanceof Error ? err.message : (err as { message?: string }).message ?? 'Could not save the exercise.', { cause: err }); };
   let sessionId = ctx.sessionId;
   if (!sessionId) {
-    const s = await supabase.from('workout_sessions').insert({ gym_id: ctx.gymId, user_id: ctx.userId, title: ctx.title, performed_at: new Date().toISOString(), assignment_id: ctx.assignmentId ?? null }).select('id').single();
+    const s = await supabase.from('workout_sessions').insert({ gym_id: ctx.gymId, user_id: ctx.userId, title: ctx.title, performed_at: new Date().toISOString(), assignment_id: ctx.assignmentId ?? null, class_session_id: ctx.classSessionId ?? null }).select('id').single();
     if (s.error) fail(s.error);
     sessionId = s.data?.id ?? null;
   }
   if (!sessionId) return fail(new Error('Could not start the workout.'));
-  const r = await supabase.from('workout_entries').insert({ session_id: sessionId, gym_id: ctx.gymId, user_id: ctx.userId, exercise_name: e.name, tracking_type: e.tracking, notes: e.note, position: ctx.position }).select('id').single();
+  const r = await supabase.from('workout_entries').insert({ session_id: sessionId, gym_id: ctx.gymId, user_id: ctx.userId, exercise_name: e.name, tracking_type: dbTracking(e.tracking), notes: e.note, position: ctx.position }).select('id').single();
   if (r.error || !r.data) return fail(r.error ?? new Error('Could not save the exercise.'));
   const entryId = r.data.id;
   const ins = await supabase.from('workout_sets').insert(e.sets.map((st, j) => ({ entry_id: entryId, set_number: j + 1, ...st })));
