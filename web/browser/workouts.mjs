@@ -1,4 +1,5 @@
-// Browser gate: Workout builder (library, edit, save, assign to a member, publish as WOD, archive), signed in as an
+// Browser gate: Workout builder (a name and its exercises with their set boxes; save, assign to a member, publish as WOD,
+// archive), signed in as an
 // owner, at phone and desktop width. Supabase is mocked at the network layer. Checks the safe save order (new blocks
 // first, old ones removed last), that nothing is written when a form is refused, and the exact request of every action.
 import { GYM, USER, base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
@@ -70,19 +71,23 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const dialog = page.getByRole('dialog');
   await c.has('heading', page.getByRole('heading', { name: 'Workout builder', level: 1 }));
   await c.has('library lists workouts', page.getByText('Friday Hybrid'));
-  await c.has('visibility shown', page.getByText('Gym members').first());
+  c.ok('the library shows no type or visibility labels', (await page.getByText('Staff only').count()) === 0 && (await page.getByText('hybrid', { exact: true }).count()) === 0);
   c.ok('layout (library)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/workouts-${name}.png`, fullPage: true });
 
   // Open, edit, save
   await page.getByRole('button', { name: 'Open Leg Day' }).click();
   await c.has('editor loaded', page.getByLabel('Workout name'));
-  c.ok('prefilled', (await page.getByLabel('Workout name').inputValue()) === 'Leg Day' && (await page.getByLabel('Focus tags').inputValue()) === 'Legs' && (await page.getByLabel('Estimated minutes').inputValue()) === '50');
-  c.ok('blocks and activities shown', (await page.getByLabel('Exercise or activity').count()) === 2 && (await page.getByLabel('Prescription').first().inputValue()) === '4 x 6 @ 80kg' && (await page.getByLabel('Rounds (optional)').inputValue()) === '4');
+  c.ok('prefilled', (await page.getByLabel('Workout name').inputValue()) === 'Leg Day' && (await page.getByLabel('Note for the member (optional)').inputValue()) === 'Heavy legs');
+  c.ok('no type, tags, minutes, blocks or formats to fill in', (await page.getByLabel('Workout type').count()) === 0 && (await page.getByLabel('Focus tags').count()) === 0 && (await page.getByLabel('Estimated minutes').count()) === 0 && (await page.getByLabel('Visibility').count()) === 0 && (await page.getByLabel('Block name').count()) === 0 && (await page.getByLabel('Format').count()) === 0 && (await page.getByRole('button', { name: 'Add block' }).count()) === 0);
+  c.ok('the exercises are listed with set boxes, the earlier wording kept', (await page.getByRole('button', { name: 'Remove Back squat' }).count()) === 1 && (await page.getByRole('button', { name: 'Remove Walking lunge' }).count()) === 1 && (await page.getByText('Earlier wording: 4 x 6 @ 80kg').count()) === 1 && (await page.getByLabel('Back squat set 1 Reps').count()) === 1);
   c.ok('assign and WOD disabled until saved changes are clear? (clean now: enabled)', !(await page.getByRole('button', { name: 'Assign to member' }).isDisabled()));
   c.ok('editor layout', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/workouts-editor-${name}.png`, fullPage: true });
-  await page.getByLabel('Prescription').first().fill('5 x 5 @ 85kg');
+  await page.getByLabel('Back squat set 1 Reps').fill('5');
+  await page.getByLabel('Back squat set 1 Weight').fill('85');
+  await page.getByRole('button', { name: 'Add a set to Back squat' }).click();
+  c.ok('another set copies the last one', (await page.getByLabel('Back squat set 2 Reps').inputValue()) === '5' && (await page.getByLabel('Back squat set 2 Weight').inputValue()) === '85');
   c.ok('unsaved changes disable assign and publish', (await page.getByRole('button', { name: 'Assign to member' }).isDisabled()) && (await page.getByRole('button', { name: 'Publish as WOD' }).isDisabled()));
   await page.getByLabel('Workout name').fill(' ');
   await page.getByRole('button', { name: 'Save workout' }).click();
@@ -92,11 +97,11 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('button', { name: 'Save workout' }).click();
   await c.has('saved message', page.getByText('Workout saved.'));
   const tpl = writes.find((w) => w.table === 'workout_templates' && w.method === 'PATCH');
-  c.ok('template update scoped to this workout and gym', tpl && tpl.query.id === 'eq.t-leg' && tpl.query.gym_id === `eq.${GYM}` && tpl.body.title === 'Leg Day' && tpl.body.created_by === USER && tpl.body.is_active === true && tpl.body.visibility === 'private' && JSON.stringify(tpl.body.focus_tags) === '["Legs"]');
+  c.ok('template update scoped to this workout and gym', tpl && tpl.query.id === 'eq.t-leg' && tpl.query.gym_id === `eq.${GYM}` && tpl.body.title === 'Leg Day' && tpl.body.created_by === USER && tpl.body.is_active === true && tpl.body.visibility === 'private' && JSON.stringify(tpl.body.focus_tags) === '["Legs"]' && tpl.body.estimated_minutes === 50 && tpl.body.workout_type === 'strength');
   const nb = writes.filter((w) => w.table === 'workout_template_blocks' && w.method === 'POST');
   c.ok('the block is written again with its rounds', nb.length === 1 && nb[0].body.rounds === 4 && nb[0].body.position === 0 && nb[0].body.title === 'Main lift' && nb[0].body.template_id === 't-leg');
   const na = writes.find((w) => w.table === 'workout_template_activities' && w.method === 'POST');
-  c.ok('activities written with the new prescription and the kept extra key', na && na.body.length === 2 && na.body[0].prescription.display === '5 x 5 @ 85kg' && na.body[0].prescription.target === 'RPE 8' && na.body[0].block_id === 'blk-new-1' && na.body[1].position === 1);
+  c.ok('activities written with the set boxes, the kept extra key and the earlier wording where no sets were set', na && na.body.length === 2 && na.body[0].prescription.display === '2 sets: 5 × 85 kg' && JSON.stringify(na.body[0].prescription.sets) === '[{"reps":"5","weight":"85"},{"reps":"5","weight":"85"}]' && na.body[0].prescription.target === 'RPE 8' && na.body[0].block_id === 'blk-new-1' && na.body[1].position === 1 && na.body[1].prescription.display === '3 x 12' && !('sets' in na.body[1].prescription));
   const del = writes.filter((w) => w.method === 'DELETE');
   c.ok('old block removed, scoped, and it is the LAST write', del.length === 1 && del[0].table === 'workout_template_blocks' && del[0].query.template_id === 'eq.t-leg' && del[0].query.id === 'in.(blk-old)' && writes[writes.length - 1] === del[0]);
   c.ok('assign enabled again after saving', !(await page.getByRole('button', { name: 'Assign to member' }).isDisabled()));
@@ -156,12 +161,14 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const wod = writes.find((w) => w.table === 'workout_wods');
   c.ok('WOD upsert exact', wod && wod.query.on_conflict === 'gym_id,wod_date' && wod.body.gym_id === GYM && wod.body.template_id === 't-leg' && wod.body.wod_date === '2026-10-09' && wod.body.message === 'Bring a towel' && wod.body.is_active === true && wod.body.published_by === USER);
 
-  // Block moves
-  c.ok('first block cannot move up', await page.getByRole('button', { name: 'Move block 1 up' }).isDisabled());
-  await page.getByRole('button', { name: 'Add block' }).click();
-  c.ok('a second block appears and can move up', (await page.getByRole('button', { name: 'Move block 2 up' }).isEnabled()));
-  await page.getByRole('button', { name: 'Move block 2 up' }).click();
-  c.ok('blocks swap', (await page.getByLabel('Block name').first().inputValue()) === 'Strength' && (await page.getByLabel('Block name').nth(1).inputValue()) === 'Main lift');
+  // Exercise moves and adding one
+  c.ok('the first exercise cannot move up', await page.getByRole('button', { name: 'Move Back squat up' }).isDisabled());
+  await page.getByRole('button', { name: 'Move Walking lunge up' }).click();
+  c.ok('exercises swap', (await page.getByRole('button', { name: 'Move Walking lunge up' }).isDisabled()) && (await page.getByRole('button', { name: 'Move Back squat up' }).isEnabled()));
+  await page.getByLabel('Add an exercise', { exact: true }).fill('Plank');
+  await page.getByRole('button', { name: 'Add exercise' }).click();
+  c.ok('a typed exercise is added and set to record time', (await page.getByRole('button', { name: 'Remove Plank' }).count()) === 1 && (await page.getByLabel('Plank set 1 Time, like 12:30').count()) === 1);
+  c.ok('layout (more exercises)', (await page.evaluate(layoutProblems)).length === 0);
 
   // Archive asks first
   writes.length = 0;
@@ -183,21 +190,24 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('name needed', page.getByText('Enter a workout name.'));
   await page.getByLabel('Workout name').fill('Sled Day');
   await page.getByRole('button', { name: 'Save workout' }).click();
-  await c.has('a block is needed', page.getByText('Add at least one workout block.'));
-  await page.getByRole('button', { name: 'Add block' }).click();
-  await page.getByRole('button', { name: 'Save workout' }).click();
-  await c.has('an activity is needed', page.getByText('Every block needs at least one named activity.'));
+  await c.has('an exercise is needed', page.getByText('Add at least one exercise.'));
   c.ok('nothing written for refused forms', writes.length === 0);
-  await page.getByRole('button', { name: 'Add activity to block 1' }).click();
-  await page.getByLabel('Exercise or activity').fill('Sled push');
-  await page.getByLabel('Track by').selectOption('distance');
-  await page.getByLabel('Visibility').selectOption('gym');
+  await page.getByLabel('Add an exercise', { exact: true }).fill('Sled push');
+  await page.getByRole('button', { name: 'Add exercise' }).click();
+  await page.getByLabel('Record').selectOption('distance');
+  await page.getByLabel('Sled push set 1 Distance in km').fill('lots');
+  await page.getByRole('button', { name: 'Save workout' }).click();
+  await c.has('a box that is not a number is named', page.getByText('Sled push: "lots" is not a number.'));
+  c.ok('nothing written for that either', writes.length === 0);
+  await page.getByLabel('Sled push set 1 Distance in km').fill('0.05');
   await page.getByRole('button', { name: 'Save workout' }).click();
   await c.has('new workout saved', page.getByText('Workout saved.'));
   const nt = writes.find((w) => w.table === 'workout_templates' && w.method === 'POST');
-  c.ok('create exact', nt && nt.body.gym_id === GYM && nt.body.created_by === USER && nt.body.title === 'Sled Day' && nt.body.visibility === 'gym' && nt.body.estimated_minutes === 45 && nt.body.is_active === true);
+  c.ok('create exact, with the hidden things at their quiet defaults', nt && nt.body.gym_id === GYM && nt.body.created_by === USER && nt.body.title === 'Sled Day' && nt.body.visibility === 'private' && nt.body.workout_type === 'custom' && nt.body.estimated_minutes === null && JSON.stringify(nt.body.focus_tags) === '[]' && nt.body.is_active === true);
+  const nbk = writes.find((w) => w.table === 'workout_template_blocks' && w.method === 'POST');
+  c.ok('one plain block holds the exercises', nbk && writes.filter((w) => w.table === 'workout_template_blocks' && w.method === 'POST').length === 1 && nbk.body.title === 'Workout' && nbk.body.block_type === 'standard');
   const nn = writes.find((w) => w.table === 'workout_template_activities' && w.method === 'POST');
-  c.ok('new activity exact', nn && nn.body.length === 1 && nn.body[0].activity_name === 'Sled push' && nn.body[0].tracking_type === 'distance' && nn.body[0].prescription.display === '');
+  c.ok('new activity exact', nn && nn.body.length === 1 && nn.body[0].activity_name === 'Sled push' && nn.body[0].tracking_type === 'distance' && nn.body[0].prescription.display === '0.05 km' && JSON.stringify(nn.body[0].prescription.sets) === '[{"distance":"0.05"}]');
   c.ok('nothing is deleted for a brand new workout', !writes.some((w) => w.method === 'DELETE'));
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;

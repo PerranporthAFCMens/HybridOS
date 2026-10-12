@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ACTIVITIES, guessTracking, matchExercises } from '../src/train/activities';
-import { assignmentNote, blankSets, buildResult, comingUp, dueNow, formatDuration, fromDbSet, hasEntered, hasPainFlag, parseDuration, prepareFinish, readResult, readSnapshot, reasonLabel, resultJson, resultSummary, setText, toDbSet, type PlayedActivity } from '../src/train/calc';
+import { assignmentNote, blankSets, buildResult, comingUp, dueNow, formatDuration, fromDbSet, hasEntered, hasPainFlag, parseDuration, prepareFinish, readResult, readTarget, describeTarget, readSnapshot, reasonLabel, resultJson, resultSummary, setText, toDbSet, type PlayedActivity } from '../src/train/calc';
 
 const dayOf = (iso: string) => iso.slice(0, 10);
 
@@ -18,6 +18,28 @@ describe('reading what a coach sent', () => {
     expect(r.activities[2]?.plan).toBe('4 x 8');
     expect(readSnapshot(null).activities).toEqual([]);
     expect(readSnapshot('x').title).toBe('');
+  });
+});
+
+describe('what the coach set, as numbers', () => {
+  it('reads the set rows from the snapshot and describes them', () => {
+    const r = readSnapshot({ blocks: [{ position: 0, title: 'Workout', activities: [{ position: 0, activity_name: 'Squat', tracking_type: 'strength', prescription: { sets: [{ reps: '8', weight: '60' }, { reps: '8', weight: '60' }] } }] }] });
+    expect(r.activities[0]?.target).toEqual([{ reps: '8', weight: '60' }, { reps: '8', weight: '60' }]);
+    expect(r.activities[0]?.plan).toBe('2 sets: 8 × 60 kg');
+  });
+  it('keeps the words of an older workout that has no set rows', () => {
+    const r = readSnapshot({ blocks: [{ position: 0, title: 'W', activities: [{ position: 0, activity_name: 'Press', tracking_type: 'strength', prescription: { display: '4 x 8' } }] }] });
+    expect(r.activities[0]).toMatchObject({ plan: '4 x 8', target: [] });
+  });
+  it('drops rubbish and empty boxes', () => {
+    expect(readTarget(null)).toEqual([]);
+    expect(readTarget([{ reps: 5, weight: ' ', nonsense: 1 }, 'x', {}, [1]])).toEqual([{ reps: '5' }]);
+  });
+  it('groups identical sets and lists different ones', () => {
+    expect(describeTarget('strength', [{ reps: '5', weight: '100' }, { reps: '5', weight: '100' }, { reps: '5', weight: '100' }])).toBe('3 sets: 5 × 100 kg');
+    expect(describeTarget('strength', [{ reps: '8', weight: '60' }, { reps: '6', weight: '70' }])).toBe('8 × 60 kg / 6 × 70 kg');
+    expect(describeTarget('time', [{ time: '10:00' }])).toBe('10:00');
+    expect(describeTarget('reps', [])).toBe('');
   });
 });
 
@@ -143,7 +165,11 @@ describe('what changed and why', () => {
     expect(buildResult([act({ outcome: 'as_set' })])).toEqual([{ name: 'Back squat', plan: '4 x 6 @ 60kg', status: 'as_set' }]);
   });
   it('records a change with its reason and their words', () => {
-    expect(buildResult([act({ outcome: 'changed', reason: 'too_tired', reasonNote: ' legs felt heavy ' })])).toEqual([{ name: 'Back squat', plan: '4 x 6 @ 60kg', status: 'changed', reason: 'too_tired', note: 'legs felt heavy' }]);
+    expect(buildResult([act({ outcome: 'changed', reason: 'too_tired', note: ' legs felt heavy ' })])).toEqual([{ name: 'Back squat', plan: '4 x 6 @ 60kg', status: 'changed', reason: 'too_tired', note: 'legs felt heavy' }]);
+  });
+  it('keeps their own note on an exercise whatever happened', () => {
+    expect(buildResult([act({ outcome: 'as_set', note: ' slept badly ' })])).toEqual([{ name: 'Back squat', plan: '4 x 6 @ 60kg', status: 'as_set', note: 'slept badly' }]);
+    expect(buildResult([act({ note: 'felt easy' })])[0]).toMatchObject({ status: 'logged', note: 'felt easy' });
   });
   it('treats a swap as a change and keeps both names', () => {
     expect(buildResult([act({ name: 'Goblet squat', reason: 'no_equipment' })])).toEqual([{ name: 'Back squat', plan: '4 x 6 @ 60kg', status: 'changed', swappedTo: 'Goblet squat', reason: 'no_equipment' }]);

@@ -5,9 +5,12 @@ import { loadBlocks, type TemplateRow } from '../data/workouts';
 import { AssignWorkoutsDialog } from './AssignWorkouts';
 import { Button } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
-import { DateInput, Field, FieldRow, Input, Select, Textarea } from '../ui/Field';
+import { DateInput, Field, Input, Select, Textarea } from '../ui/Field';
+import { ExercisePicker } from '../train/ExercisePicker';
+import { SetGrid } from '../train/SetGrid';
+import type { Tracking } from '../train/calc';
 import { Modal } from '../ui/Modal';
-import { BLOCK_TYPES, TRACKING, WORKOUT_TYPES, blockLabel, emptyWorkout, hasChanged, moveItem, newActivity, newBlock, trackingLabel, validateWodDate, validateWorkout, type BlockForm, type WorkoutForm } from './calc';
+import { TRACKING, addExercise, emptyWorkout, hasChanged, moveItem, trackingLabel, validateWodDate, validateWorkout, type BlockForm, type WorkoutForm } from './calc';
 import { useTemplates, useWorkoutWrites } from './useWorkouts';
 import '../members/members.css';
 import './workouts.css';
@@ -25,7 +28,7 @@ export function Workouts() {
         <div>
           <div className="eyebrow">Classes and workouts</div>
           <h1>Workout builder</h1>
-          <div className="muted">Build reusable multi-activity sessions for personal training assignments and the gym workout of the day.</div>
+          <div className="muted">Give a workout a name, add the exercises, and send it to a member or publish it as the gym workout of the day.</div>
         </div>
         {!open && <Button variant="primary" onClick={() => { setNote(null); setOpen({ t: null }); }}>New workout</Button>}
       </header>
@@ -41,8 +44,7 @@ export function Workouts() {
               <li className="team-item" key={t.id}>
                 <div className="team-main">
                   <b>{t.title}</b>
-                  <div className="tags"><span className="tag">{t.workoutType}</span><span className={`tag ${t.visibility === 'gym' ? 'good' : ''}`}>{t.visibility === 'gym' ? 'Gym members' : 'Staff only'}</span></div>
-                  <div className="muted small">{[t.focusTags.join(' · '), t.estimatedMinutes ? `${t.estimatedMinutes} min` : ''].filter(Boolean).join(' · ') || 'No focus tags'}</div>
+                  {(t.focusTags.length > 0 || t.estimatedMinutes) && <div className="muted small">{[t.focusTags.join(' · '), t.estimatedMinutes ? `${t.estimatedMinutes} min` : ''].filter(Boolean).join(' · ')}</div>}
                 </div>
                 <div className="team-actions"><Button aria-label={`Open ${t.title}`} onClick={() => { setNote(null); setOpen({ t }); }}>Open</Button></div>
               </li>
@@ -76,6 +78,7 @@ function EditorForm({ template, initialBlocks, w, onClose }: { template: Templat
   const [note, setNote] = useState<Note>(null);
   const [dialog, setDialog] = useState<'assign' | 'wod' | null>(null);
   const [asking, setAsking] = useState(false);
+  const [adding, setAdding] = useState('');
   const dirty = hasChanged(saved, { form, blocks });
   const set = <K extends keyof WorkoutForm>(k: K, v: WorkoutForm[K]) => { setNote(null); setForm((f) => ({ ...f, [k]: v })); };
   const setBlock = (bi: number, patch: Partial<BlockForm>) => { setNote(null); setBlocks((l) => l.map((b, i) => (i === bi ? { ...b, ...patch } : b))); };
@@ -107,58 +110,48 @@ function EditorForm({ template, initialBlocks, w, onClose }: { template: Templat
   return (
     <>
       <Card>
-        <SectionTitle title={id ? 'Edit workout' : 'Create a workout'} action={<Button onClick={() => onClose()}>Back to the library</Button>} />
-        <FieldRow>
-          <Field label="Workout name" htmlFor="wk-title"><Input id="wk-title" maxLength={120} placeholder="Leg Day" value={form.title} onChange={(e) => set('title', e.target.value)} /></Field>
-          <Field label="Workout type" htmlFor="wk-type"><Select id="wk-type" value={form.type} onChange={(e) => set('type', e.target.value)}>{WORKOUT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</Select></Field>
-          <Field label="Focus tags" htmlFor="wk-tags" hint="Separate with commas."><Input id="wk-tags" placeholder="Legs, Strength" value={form.tags} onChange={(e) => set('tags', e.target.value)} /></Field>
-          <Field label="Estimated minutes" htmlFor="wk-min"><Input id="wk-min" type="number" inputMode="numeric" min="1" max="600" value={form.minutes} onChange={(e) => set('minutes', e.target.value)} /></Field>
-        </FieldRow>
-        <Field label="Coach description" htmlFor="wk-desc"><Textarea id="wk-desc" maxLength={2000} placeholder="Session intent, scaling guidance or overview" value={form.description} onChange={(e) => set('description', e.target.value)} /></Field>
-        <Field label="Visibility" htmlFor="wk-vis"><Select id="wk-vis" value={form.visibility} onChange={(e) => set('visibility', e.target.value === 'gym' ? 'gym' : 'private')}><option value="private">Staff only</option><option value="gym">Gym members</option></Select></Field>
+        <SectionTitle title={id ? 'Edit workout' : 'New workout'} action={<Button onClick={() => onClose()}>Back to the library</Button>} />
+        <Field label="Workout name" htmlFor="wk-title"><Input id="wk-title" maxLength={120} placeholder="Leg Day" value={form.title} onChange={(e) => set('title', e.target.value)} /></Field>
+        <Field label="Note for the member (optional)" htmlFor="wk-desc"><Textarea id="wk-desc" maxLength={2000} placeholder="What this session is for, or how to scale it" value={form.description} onChange={(e) => set('description', e.target.value)} /></Field>
       </Card>
 
       <Card>
-        <SectionTitle title="Workout blocks" action={<Button onClick={() => { setNote(null); setBlocks((l) => [...l, newBlock()]); }}>Add block</Button>} />
-        <p className="muted small">Warm-up, strength, conditioning, finisher and more.</p>
-        {blocks.length === 0 && <Empty>Add a block to start building the session.</Empty>}
+        <SectionTitle title="Exercises" />
+        {blocks.every((b) => b.activities.length === 0) && <Empty>Add the first exercise below.</Empty>}
         {blocks.map((b, bi) => (
-          <div className="wk-block" key={b.key}>
-            <div className="wk-block-head">
-              <b>Block {bi + 1}</b>
-              <div className="wk-move">
-                <Button aria-label={`Move block ${bi + 1} up`} disabled={bi === 0} onClick={() => setBlocks((l) => moveItem(l, bi, -1))}>Up</Button>
-                <Button aria-label={`Move block ${bi + 1} down`} disabled={bi === blocks.length - 1} onClick={() => setBlocks((l) => moveItem(l, bi, 1))}>Down</Button>
-                <Button aria-label={`Remove block ${bi + 1}`} onClick={() => setBlocks((l) => l.filter((_, i) => i !== bi))}>Remove</Button>
-              </div>
-            </div>
-            <FieldRow>
-              <Field label="Block name" htmlFor={`wk-b${b.key}-t`}><Input id={`wk-b${b.key}-t`} value={b.title} onChange={(e) => setBlock(bi, { title: e.target.value })} /></Field>
-              <Field label="Format" htmlFor={`wk-b${b.key}-f`}><Select id={`wk-b${b.key}-f`} value={b.blockType} onChange={(e) => setBlock(bi, { blockType: e.target.value })}>{BLOCK_TYPES.map((t) => <option key={t} value={t}>{blockLabel(t)}</option>)}</Select></Field>
-              <Field label="Rounds (optional)" htmlFor={`wk-b${b.key}-r`}><Input id={`wk-b${b.key}-r`} type="number" inputMode="numeric" min="1" value={b.rounds} onChange={(e) => setBlock(bi, { rounds: e.target.value })} /></Field>
-            </FieldRow>
-            <Field label="Block instructions" htmlFor={`wk-b${b.key}-i`}><Input id={`wk-b${b.key}-i`} placeholder="4 rounds, controlled tempo…" value={b.instructions} onChange={(e) => setBlock(bi, { instructions: e.target.value })} /></Field>
-            {b.activities.map((a, ai) => (
-              <div className="wk-activity" key={a.key}>
-                <div className="wk-block-head">
-                  <b>Activity {ai + 1}</b>
-                  <div className="wk-move">
-                    <Button aria-label={`Move activity ${ai + 1} of block ${bi + 1} up`} disabled={ai === 0} onClick={() => setBlock(bi, { activities: moveItem(b.activities, ai, -1) })}>Up</Button>
-                    <Button aria-label={`Move activity ${ai + 1} of block ${bi + 1} down`} disabled={ai === b.activities.length - 1} onClick={() => setBlock(bi, { activities: moveItem(b.activities, ai, 1) })}>Down</Button>
-                    <Button aria-label={`Remove activity ${ai + 1} of block ${bi + 1}`} onClick={() => setBlock(bi, { activities: b.activities.filter((_, j) => j !== ai) })}>Remove</Button>
+          <div key={b.key}>
+            {blocks.length > 1 && b.activities.length > 0 && <div className="eyebrow">{b.title}</div>}
+            {b.activities.map((a, ai) => {
+              const label = a.name.trim() || `Exercise ${ai + 1}`;
+              const tracking = (TRACKING as readonly string[]).includes(a.tracking) ? (a.tracking as Tracking) : 'strength';
+              return (
+                <div className="wk-activity" key={a.key}>
+                  <div className="wk-block-head">
+                    <b>{label}</b>
+                    <div className="wk-move">
+                      <Button aria-label={`Move ${label} up`} disabled={ai === 0} onClick={() => setBlock(bi, { activities: moveItem(b.activities, ai, -1) })}>Up</Button>
+                      <Button aria-label={`Move ${label} down`} disabled={ai === b.activities.length - 1} onClick={() => setBlock(bi, { activities: moveItem(b.activities, ai, 1) })}>Down</Button>
+                      <Button aria-label={`Remove ${label}`} onClick={() => setBlock(bi, { activities: b.activities.filter((_, j) => j !== ai) })}>Remove</Button>
+                    </div>
                   </div>
+                  <Field label="Record" htmlFor={`wk-a${a.key}-t`}><Select id={`wk-a${a.key}-t`} value={a.tracking} onChange={(e) => setAct(bi, ai, { tracking: e.target.value })}>{TRACKING.map((t) => <option key={t} value={t}>{trackingLabel(t)}</option>)}</Select></Field>
+                  {a.prescription && <div className="muted small">Earlier wording: {a.prescription}. Fill in the sets below to replace it.</div>}
+                  {tracking !== 'instruction' && (
+                    <>
+                      <SetGrid name={label} tracking={tracking} sets={a.sets} onChange={(i, f, v) => setAct(bi, ai, { sets: a.sets.map((x, j) => (j === i ? { ...x, [f]: v } : x)) })} onRemove={(i) => setAct(bi, ai, { sets: a.sets.filter((_, j) => j !== i) })} />
+                      <Button aria-label={`Add a set to ${label}`} onClick={() => setAct(bi, ai, { sets: [...a.sets, { ...(a.sets[a.sets.length - 1] ?? {}) }] })}>+ Set (same as the last)</Button>
+                    </>
+                  )}
+                  <Field label="Note for the member" htmlFor={`wk-a${a.key}-c`}><Input id={`wk-a${a.key}-c`} placeholder="A cue or how to scale it (optional)" value={a.notes} onChange={(e) => setAct(bi, ai, { notes: e.target.value })} /></Field>
                 </div>
-                <FieldRow>
-                  <Field label="Exercise or activity" htmlFor={`wk-a${a.key}-n`}><Input id={`wk-a${a.key}-n`} placeholder="Back squat" value={a.name} onChange={(e) => setAct(bi, ai, { name: e.target.value })} /></Field>
-                  <Field label="Track by" htmlFor={`wk-a${a.key}-t`}><Select id={`wk-a${a.key}-t`} value={a.tracking} onChange={(e) => setAct(bi, ai, { tracking: e.target.value })}>{TRACKING.map((t) => <option key={t} value={t}>{trackingLabel(t)}</option>)}</Select></Field>
-                  <Field label="Prescription" htmlFor={`wk-a${a.key}-p`}><Input id={`wk-a${a.key}-p`} placeholder="4 x 6 @ 80kg" value={a.prescription} onChange={(e) => setAct(bi, ai, { prescription: e.target.value })} /></Field>
-                </FieldRow>
-                <Field label="Coach notes" htmlFor={`wk-a${a.key}-c`}><Input id={`wk-a${a.key}-c`} placeholder="Optional cue or scaling note" value={a.notes} onChange={(e) => setAct(bi, ai, { notes: e.target.value })} /></Field>
-              </div>
-            ))}
-            <Button aria-label={`Add activity to block ${bi + 1}`} onClick={() => setBlock(bi, { activities: [...b.activities, newActivity()] })}>Add activity</Button>
+              );
+            })}
           </div>
         ))}
+        <div className="wk-add">
+          <ExercisePicker label="Add an exercise" placeholder="Start typing, like squat or row" value={adding} own={[]} onChange={setAdding} onPick={setAdding} />
+          <Button disabled={!adding.trim()} onClick={() => { setNote(null); setBlocks((l) => addExercise(l, adding.trim())); setAdding(''); }}>Add exercise</Button>
+        </div>
       </Card>
 
       {asking && (

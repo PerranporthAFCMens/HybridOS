@@ -1,3 +1,4 @@
+import './shared.css';
 import { useState } from 'react';
 import { Input } from '../ui/Field';
 import { matchExercises } from './activities';

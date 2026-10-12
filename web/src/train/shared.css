@@ -1,0 +1,16 @@
+/* The set boxes and the exercise name box, used by the member's logger and the coach's builder alike. */
+.tr-sets { display: grid; gap: 8px; }
+.tr-set { display: flex; gap: 8px; align-items: center; }
+.tr-n { width: 20px; text-align: center; flex: none; }
+.tr-set .tr-box { flex: 1; min-width: 0; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tr-set-wrap { display: grid; gap: 6px; }
+.tr-side { display: flex; gap: 6px; margin-left: 28px; }
+.tr-side-btn { flex: 1; min-height: 44px; border-radius: 10px; border: 1px solid var(--hybrid-line); background: var(--hybrid-panel); color: var(--hybrid-muted); font: inherit; font-weight: 700; cursor: pointer; }
+.tr-side-btn.on { background: var(--hybrid-volt, #c8ff3d); border-color: var(--hybrid-volt, #c8ff3d); color: #0b1020; }
+.tr-side-btn:focus-visible { outline: 2px solid var(--hybrid-pulse, #6b7cff); outline-offset: 2px; }
+.tr-pick { position: relative; }
+.tr-menu { position: absolute; z-index: 15; left: 0; right: 0; top: calc(100% + 4px); max-height: 280px; overflow: auto; background: var(--hybrid-panel); border: 1px solid var(--hybrid-line-strong); border-radius: 12px; padding: 4px; box-shadow: 0 10px 28px rgba(0, 0, 0, .45); }
+.tr-option { display: block; width: 100%; min-height: 44px; text-align: left; padding: 8px 12px; border: 0; border-radius: 9px; background: none; color: var(--hybrid-ink); font: inherit; cursor: pointer; }
+.tr-option:hover, .tr-option:focus-visible { background: var(--hybrid-raised); outline: none; }
+.tr-del { flex: none; width: 44px; height: 44px; border: 0; border-radius: 10px; background: var(--hybrid-raised); color: var(--hybrid-muted); font: inherit; cursor: pointer; }
+.tr-del:focus-visible { outline: 2px solid var(--hybrid-pulse, #6b7cff); outline-offset: 2px; }
