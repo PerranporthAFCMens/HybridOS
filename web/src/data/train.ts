@@ -1,6 +1,6 @@
 import { supabase } from './client';
 import type { Json } from './database.types';
-import type { DbSet, StoredSet, Tracking } from '../train/calc';
+import { dbTracking, type DbSet, type StoredSet, type Tracking } from '../train/calc';
 import { candidatesFor, isBetter, pbKey, wonText, type PbCandidate, type StoredPb, type Won } from '../train/pb';
 
 export interface AssignmentRow { id: string; title: string; source: string; status: string; scheduledFor: string | null; dueAt: string | null; snapshot: Json; focusTags: string[] }
@@ -145,7 +145,7 @@ export async function saveExercise(
     sessionId = s.data?.id ?? null;
   }
   if (!sessionId) return fail(new Error('Could not start the workout.'));
-  const r = await supabase.from('workout_entries').insert({ session_id: sessionId, gym_id: ctx.gymId, user_id: ctx.userId, exercise_name: e.name, tracking_type: e.tracking, notes: e.note, position: ctx.position }).select('id').single();
+  const r = await supabase.from('workout_entries').insert({ session_id: sessionId, gym_id: ctx.gymId, user_id: ctx.userId, exercise_name: e.name, tracking_type: dbTracking(e.tracking), notes: e.note, position: ctx.position }).select('id').single();
   if (r.error || !r.data) return fail(r.error ?? new Error('Could not save the exercise.'));
   const entryId = r.data.id;
   const ins = await supabase.from('workout_sets').insert(e.sets.map((st, j) => ({ entry_id: entryId, set_number: j + 1, ...st })));
@@ -172,9 +172,9 @@ export async function removeExercise(entryId: string): Promise<void> {
 }
 
 /** Finish: name and note the workout, and mark the coach's workout done. Returns whether that was marked. */
-export async function completeWorkout(input: { sessionId: string | null; title: string; notes: string | null; assignment: { id: string; rpe: number | null; note: string | null; result: unknown } | null }): Promise<{ marked: boolean }> {
+export async function completeWorkout(input: { sessionId: string | null; title: string; notes: string | null; shareScore?: boolean; assignment: { id: string; rpe: number | null; note: string | null; result: unknown } | null }): Promise<{ marked: boolean }> {
   if (input.sessionId) {
-    const u = await supabase.from('workout_sessions').update({ title: input.title, notes: input.notes, updated_at: new Date().toISOString() }).eq('id', input.sessionId);
+    const u = await supabase.from('workout_sessions').update({ title: input.title, notes: input.notes, updated_at: new Date().toISOString(), ...(input.shareScore === false ? { share_score: false } : {}) }).eq('id', input.sessionId);
     if (u.error) throw new Error(`Your exercises are saved, but the workout could not be finished: ${u.error.message}`);
   }
   let marked = false;

@@ -11,7 +11,8 @@ import { changeMyEmail, changeMyPassword, getMyBirthday, getProfileNames, saveMy
 import { fullName } from '../shell/account';
 import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
-import { DateInput, Input } from '../ui/Field';
+import { Checkbox, DateInput, Input } from '../ui/Field';
+import { getShareScores, setShareScores } from '../data/classWorkouts';
 import { checkBirthday, checkEmail, checkName, checkPassword } from './account';
 import type { MemberCtx } from './useMember';
 
@@ -31,6 +32,22 @@ export function Me() {
   const [pw, setPw] = useState({ a: '', b: '' });
   const [msg, setMsg] = useState<{ text: string; good: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  const share = useQuery({ queryKey: ['m-share-scores', auth.userId], queryFn: () => getShareScores(auth.userId) });
+  const [shareError, setShareError] = useState('');
+  // The switch moves at once; it goes back only if saving fails.
+  const [shareNow, setShareNow] = useState<boolean | null>(null);
+  const changeShare = async (on: boolean) => {
+    setShareError('');
+    setShareNow(on);
+    try {
+      await setShareScores(auth.userId, on);
+      await qc.invalidateQueries({ queryKey: ['m-share-scores'] });
+      await qc.invalidateQueries({ queryKey: ['m-leaderboard'] });
+    } catch (e) {
+      setShareNow(null);
+      setShareError(e instanceof Error ? e.message : 'Could not save that.');
+    }
+  };
   const mine = useQuery({ queryKey: ['my-signed-copies', auth.gym.gymId, auth.userId], queryFn: () => getMySignedCopies(auth.gym.gymId, auth.userId) });
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState<string | null>(null);
@@ -165,6 +182,12 @@ export function Me() {
         ) : (
           <div className="muted small">There are no signed documents on this account for {auth.gym.gymName}. If you signed up with a different email, sign in with that one, or ask the gym.</div>
         )}
+      </section>
+      <section className="mem-card" aria-label="Class leaderboards">
+        <h2>Class leaderboards</h2>
+        <div className="muted small">When a class has a leaderboard, the people in that class see each other's scores, with names shortened like Priya N. This is on unless you turn it off. You can also leave one workout off when you save it.</div>
+        {share.isPending ? <div className="muted small">Loading…</div> : <Checkbox label="Show my scores to others in my classes" checked={shareNow ?? share.data !== false} onChange={(on) => void changeShare(on)} />}
+        {shareError && <div className="mem-error" role="alert">{shareError}</div>}
       </section>
       <section className="mem-card">
         <h2>More</h2>

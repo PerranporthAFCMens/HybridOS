@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getClassWorkout, removeClassWorkout, setClassWorkout, setClassWorkoutAvailable } from '../data/classWorkouts';
+import { getClassWorkout, removeClassWorkout, setClassWorkout, setClassWorkoutAvailable, setClassWorkoutScore } from '../data/classWorkouts';
+import type { ScoreMetric } from '../train/calc';
 import type { TemplateRow } from '../data/workouts';
 
 export function useClassWorkout(sessionId: string) {
@@ -13,6 +14,7 @@ export function useClassWorkoutWrites(gymId: string, userId: string, sessionId: 
   return {
     attach: useMutation({ mutationFn: (t: TemplateRow) => setClassWorkout(gymId, userId, sessionId, t), onSettled: refresh }),
     available: useMutation({ mutationFn: (available: boolean) => setClassWorkoutAvailable(sessionId, userId, available), onSettled: refresh }),
+    score: useMutation({ mutationFn: (score: { exercise: string; metric: ScoreMetric } | null) => setClassWorkoutScore(sessionId, score), onSettled: refresh }),
     remove: useMutation({ mutationFn: () => removeClassWorkout(sessionId), onSettled: refresh }),
   };
 }

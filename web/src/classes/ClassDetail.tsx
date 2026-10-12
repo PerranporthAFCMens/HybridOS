@@ -54,7 +54,7 @@ export function ClassDetail({ session, onClose, onEdit }: { session: TimetableSe
         {session.description && <div><dt>About</dt><dd>{session.description}</dd></div>}
       </dl>
       </div>
-      <ClassWorkoutPanel sessionId={session.session_id} onBuilding={setBuilding} />
+      <ClassWorkoutPanel sessionId={session.session_id} startsAt={session.starts_at} onBuilding={setBuilding} />
       <div hidden={building}>
       <h4 className="detail-heading">Who has booked</h4>
       {roster.isPending && <p className="muted small">Loading…</p>}

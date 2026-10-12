@@ -5,6 +5,9 @@ import { Button } from '../ui/Button';
 import { Select } from '../ui/Field';
 import { useTemplates } from '../workouts/useWorkouts';
 import { Editor } from '../workouts/Workouts';
+import { scoreChoices, scoreMetricLabel } from '../train/calc';
+import { blockLabel, blockWeek, gymDay } from './blocks';
+import { useBlockOfClass } from './useBlocks';
 import { useClassWorkout, useClassWorkoutWrites } from './useClassWorkout';
 
 /**
@@ -12,11 +15,12 @@ import { useClassWorkout, useClassWorkoutWrites } from './useClassWorkout';
  * available. Until then it is a draft nobody else can see. Once available, the people booked into the class, or marked
  * attended, can open it in their app and record their own weights, reps and times.
  */
-export function ClassWorkoutPanel({ sessionId, onBuilding }: { sessionId: string; onBuilding: (building: boolean) => void }) {
+export function ClassWorkoutPanel({ sessionId, startsAt, onBuilding }: { sessionId: string; startsAt: string; onBuilding: (building: boolean) => void }) {
   const { gym, userId } = useReadyAuth();
   const q = useClassWorkout(sessionId);
   const library = useTemplates(gym.gymId);
   const w = useClassWorkoutWrites(gym.gymId, userId, sessionId);
+  const blockQ = useBlockOfClass(sessionId);
   const [picking, setPicking] = useState(false);
   const [building, setBuilding] = useState(false);
   const [chosen, setChosen] = useState('');
@@ -59,6 +63,7 @@ export function ClassWorkoutPanel({ sessionId, onBuilding }: { sessionId: string
   return (
     <section className="cw-panel" aria-label="Class workout">
       <h4 className="detail-heading">Workout for this class</h4>
+      {blockQ.data && <p className="muted small">{blockLabel(blockQ.data.name, blockWeek(blockQ.data.startsOn, blockQ.data.weeks, gymDay(startsAt)), blockQ.data.weeks)}</p>}
       {q.isPending && <p className="muted small">Loading…</p>}
       {q.isError && <p className="muted small">Could not load this class's workout. Close and open the class to try again.</p>}
       {q.data === null && !picking && (
@@ -78,6 +83,24 @@ export function ClassWorkoutPanel({ sessionId, onBuilding }: { sessionId: string
               ? 'People booked into this class, or marked attended, can open it in their app and record what they did.'
               : 'A draft: nobody else can see it yet. Make it available when the class is ready for it.'}
           </p>
+          {!picking && (() => {
+            const choices = scoreChoices(cw.snapshot);
+            const value = cw.scoreExercise && cw.scoreMetric ? `${cw.scoreExercise}|${cw.scoreMetric}` : '';
+            return (
+              <div className="cw-score">
+                <label htmlFor="cw-score" className="small">Leaderboard score</label>
+                <Select id="cw-score" value={value} disabled={w.score.isPending} onChange={(e) => {
+                  const [exercise, metric] = e.target.value.split('|');
+                  setError('');
+                  w.score.mutate(exercise && metric ? { exercise, metric: metric as 'weight' } : null, { onError: fail });
+                }}>
+                  <option value="">No leaderboard</option>
+                  {choices.map((c) => <option key={`${c.exercise}|${c.metric}`} value={`${c.exercise}|${c.metric}`}>{c.label}</option>)}
+                </Select>
+                <p className="muted small">{cw.scoreExercise && cw.scoreMetric ? `People in the class see a ranked list of ${cw.scoreExercise} (${scoreMetricLabel(cw.scoreMetric)}). Members can choose not to show their scores.` : 'Pick one exercise to rank people on, such as most push-ups or fastest row.'}</p>
+              </div>
+            );
+          })()}
           {!picking && (
             <div className="cw-actions">
               <Button variant={cw.availableAt ? 'secondary' : 'primary'} disabled={w.available.isPending} onClick={() => { setError(''); w.available.mutate(!cw.availableAt, { onError: fail }); }}>

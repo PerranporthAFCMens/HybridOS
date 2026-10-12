@@ -3,14 +3,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { completeWorkout, getMyAssignment, listLastTimes, markStarted, removeExercise, saveExercise, type LastTime } from '../data/train';
-import { getMyClassWorkout } from '../data/classWorkouts';
+import { getMyClassWorkout, getShareScores } from '../data/classWorkouts';
+import { Leaderboard } from './Leaderboard';
 import { Button } from '../ui/Button';
 import { wonMessage, type Won } from './pb';
 import { guessTracking } from './activities';
 import { ExercisePicker } from './ExercisePicker';
 import { Checkbox, Input, Select } from '../ui/Field';
 import { SetGrid } from './SetGrid';
-import { REASONS, assignmentNote, blankSets, buildResult, fromDbSet, hasEntered, prepareFinish, readSnapshot, resultJson, setText, type PlayedActivity, type SetValues, type Tracking } from './calc';
+import { REASONS, assignmentNote, scoreMetricLabel, type ScoreMetric, blankSets, buildResult, fromDbSet, hasEntered, prepareFinish, readSnapshot, resultJson, setText, type PlayedActivity, type SetValues, type Tracking } from './calc';
 
 interface Act extends PlayedActivity { key: string; plan: string; planNote: string; block: string; target: SetValues[]; entryId?: string; savedText?: string }
 interface Draft { acts: Act[]; rpe: string; notes: string; sessionId?: string | null }
@@ -59,11 +60,12 @@ export function Player() {
           <Link to="/m/train" className="mem-back">‹ Workouts</Link>
           <h1 className="mem-title">{cls.data.title}</h1>
           <div className="mem-card" role="status">You have already recorded this class. <div className="mem-actions"><Link className="btn primary" to="/m/train">Back to Workouts</Link><Button onClick={() => setAgain(true)}>Record it again</Button></div></div>
+          {cls.data.scoreExercise && cls.data.scoreMetric && <Leaderboard sessionId={cls.data.sessionId} exercise={cls.data.scoreExercise} metric={cls.data.scoreMetric} />}
         </div>
       );
     }
     if (last.isPending) return <div className="mem-screen"><div className="mem-card muted">Loading…</div></div>;
-    return <Logger key={`class-${sessionId}`} id={`class-${sessionId}`} classSessionId={sessionId} title={cls.data.title} snapshot={cls.data.snapshot} source="" last={last.data ?? new Map()} />;
+    return <Logger key={`class-${sessionId}`} id={`class-${sessionId}`} classSessionId={sessionId} score={cls.data.scoreExercise && cls.data.scoreMetric ? { exercise: cls.data.scoreExercise, metric: cls.data.scoreMetric } : null} title={cls.data.title} snapshot={cls.data.snapshot} source="" last={last.data ?? new Map()} />;
   }
   if (!isNew && plan.isPending) return <div className="mem-screen"><div className="mem-card muted">Loading…</div></div>;
   if (!isNew && (plan.isError || !plan.data)) return <div className="mem-screen"><h1 className="mem-title">Workout not found</h1><div className="mem-card muted">It may have been finished or removed. <Link to="/m/train">Back to Train</Link></div></div>;
@@ -71,7 +73,7 @@ export function Player() {
   return <Logger key={id} id={id} title={plan.data?.title ?? ''} snapshot={plan.data?.snapshot ?? null} source={plan.data?.source ?? ''} last={last.data ?? new Map()} />;
 }
 
-function Logger({ id, classSessionId, title, snapshot, source, last }: { id: string; classSessionId?: string; title: string; snapshot: unknown; source: string; last: Map<string, LastTime> }) {
+function Logger({ id, classSessionId, score = null, title, snapshot, source, last }: { id: string; classSessionId?: string; score?: { exercise: string; metric: ScoreMetric } | null; title: string; snapshot: unknown; source: string; last: Map<string, LastTime> }) {
   const { gym, userId } = useReadyAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -99,6 +101,8 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
   const [cardError, setCardError] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<string | null>(null);
   const [manualTracking, setManualTracking] = useState(false);
+  const sharing = useQuery({ queryKey: ['m-share-scores', userId], queryFn: () => getShareScores(userId), enabled: isClass && !!score });
+  const [hideThis, setHideThis] = useState(false);
   const own = useMemo(() => [...last.values()].map((l) => l.name), [last]);
 
   useEffect(() => { if (assigned) void markStarted(id); }, [id, assigned]);
@@ -213,7 +217,7 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
       setSessionId(session);
       if (!assigned && !anySaved) return setError('Add some numbers first, or go back.');
       const firstName = acts.find((a) => a.name.trim())?.name.trim() ?? '';
-      const result = await completeWorkout({ sessionId: session, title: titleFor(firstName), notes: notes.trim() || null, assignment: !assigned ? null : { id, rpe: rpe ? Number(rpe) : null, note: assignmentNote(notes, overview.skipped, overview.swapped), result: resultJson(buildResult(acts.map((a) => ({ ...a, entered: !!a.entryId || hasEntered(a) })))) } });
+      const result = await completeWorkout({ sessionId: session, title: titleFor(firstName), notes: notes.trim() || null, shareScore: isClass && score ? !hideThis && sharing.data !== false : undefined, assignment: !assigned ? null : { id, rpe: rpe ? Number(rpe) : null, note: assignmentNote(notes, overview.skipped, overview.swapped), result: resultJson(buildResult(acts.map((a) => ({ ...a, entered: !!a.entryId || hasEntered(a) })))) } });
       finished.current = true;
       try { localStorage.removeItem(key); } catch { /* nothing to clear */ }
       await refresh();
@@ -313,11 +317,18 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
           </Select>
         )}
         <Input aria-label="Notes" placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+        {isClass && score && (
+          <>
+            <Checkbox label={`Show my ${scoreMetricLabel(score.metric)} on the leaderboard`} checked={!hideThis && sharing.data !== false} disabled={sharing.data === false} onChange={(on) => setHideThis(!on)} />
+            {sharing.data === false && <div className="muted small">You have turned off showing your scores, so this one stays private. You can change that in Me.</div>}
+          </>
+        )}
         {error && <div className="mem-error" role="alert">{error}</div>}
         {pbIssue && <div className="mem-error" role="alert">A personal best could not be saved: {pbIssue}</div>}
         <Button variant="primary" disabled={busy} onClick={() => void finish()}>{busy ? 'Saving…' : 'Finish workout'}</Button>
         <Link to="/m/train" className="btn secondary">Leave for now</Link>
       </section>
+      {isClass && score && classSessionId && <Leaderboard sessionId={classSessionId} exercise={score.exercise} metric={score.metric} />}
     </div>
   );
 }

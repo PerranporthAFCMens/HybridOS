@@ -5,6 +5,16 @@ export type Tracking = 'strength' | 'reps' | 'time' | 'distance' | 'calories' | 
 
 export interface PlannedActivity { key: string; name: string; tracking: Tracking; plan: string; note: string; block: string; target: SetValues[] }
 
+/**
+ * What the database accepts for an exercise's type: strength, time, distance, calories or custom. A reps-only exercise is a
+ * strength exercise with no weight, and rounds with a time are custom. (Saving "reps" or "intervals" as they are was refused.)
+ */
+export function dbTracking(t: Tracking): 'strength' | 'time' | 'distance' | 'calories' | 'custom' {
+  if (t === 'reps') return 'strength';
+  if (t === 'time' || t === 'distance' || t === 'calories' || t === 'strength') return t;
+  return 'custom';
+}
+
 const TRACKINGS: Tracking[] = ['strength', 'reps', 'time', 'distance', 'calories', 'intervals', 'instruction'];
 const asTracking = (v: unknown): Tracking => (TRACKINGS.includes(v as Tracking) ? (v as Tracking) : 'strength');
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
@@ -319,3 +329,37 @@ export function resultSummary(rows: ExerciseResult[]): string {
 }
 
 export const hasPainFlag = (rows: ExerciseResult[]): boolean => rows.some((r) => r.reason === 'pain');
+
+/** What can count as the score of a class workout: one exercise and what is measured. Weight, reps, distance and calories: the most. Time: the fastest. */
+export type ScoreMetric = 'weight' | 'reps' | 'time' | 'distance' | 'calories';
+export interface ScoreChoice { exercise: string; metric: ScoreMetric; label: string }
+
+const SCORE_LABEL: Record<ScoreMetric, string> = { weight: 'heaviest weight', reps: 'most reps', time: 'fastest time', distance: 'furthest', calories: 'most calories' };
+export const scoreMetricLabel = (m: ScoreMetric): string => SCORE_LABEL[m];
+
+/** The score choices a coach is offered for a workout: each exercise with what makes sense for how it is recorded. */
+export function scoreChoices(raw: unknown): ScoreChoice[] {
+  const seen = new Set<string>();
+  const out: ScoreChoice[] = [];
+  for (const a of readSnapshot(raw).activities) {
+    const metrics: ScoreMetric[] = a.tracking === 'strength' ? ['weight', 'reps'] : a.tracking === 'reps' ? ['reps'] : a.tracking === 'time' ? ['time'] : a.tracking === 'distance' ? ['distance'] : a.tracking === 'calories' ? ['calories'] : [];
+    for (const metric of metrics) {
+      const key = `${a.name.toLowerCase()}|${metric}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ exercise: a.name, metric, label: `${a.name}: ${SCORE_LABEL[metric]}` });
+    }
+  }
+  return out;
+}
+
+export const isScoreMetric = (v: unknown): v is ScoreMetric => v === 'weight' || v === 'reps' || v === 'time' || v === 'distance' || v === 'calories';
+
+/** A score as words: "62.5 kg", "35 reps", "1:40", "1.2 km", "120 cal". Time is in seconds, distance in metres. */
+export function scoreText(metric: ScoreMetric, value: number): string {
+  if (metric === 'weight') return `${Math.round(value * 100) / 100} kg`;
+  if (metric === 'reps') return `${Math.round(value)} reps`;
+  if (metric === 'time') return formatDuration(value);
+  if (metric === 'distance') return value >= 1000 ? `${Math.round(value / 10) / 100} km` : `${Math.round(value)} m`;
+  return `${Math.round(value)} cal`;
+}

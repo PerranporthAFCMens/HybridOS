@@ -383,6 +383,62 @@ export type Database = {
           },
         ]
       }
+      class_blocks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          gym_id: string
+          id: string
+          name: string
+          starts_on: string
+          weeks: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          gym_id: string
+          id?: string
+          name: string
+          starts_on: string
+          weeks: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          gym_id?: string
+          id?: string
+          name?: string
+          starts_on?: string
+          weeks?: number
+        }
+        Relationships: []
+      }
+      class_block_sessions: {
+        Row: {
+          block_id: string
+          gym_id: string
+          session_id: string
+        }
+        Insert: {
+          block_id: string
+          gym_id: string
+          session_id: string
+        }
+        Update: {
+          block_id?: string
+          gym_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_block_sessions_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "class_blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_session_workouts: {
         Row: {
           created_at: string
@@ -390,6 +446,8 @@ export type Database = {
           gym_id: string
           published_at: string | null
           published_by: string | null
+          score_exercise: string | null
+          score_metric: string | null
           session_id: string
           template_id: string | null
           title: string
@@ -402,6 +460,8 @@ export type Database = {
           gym_id: string
           published_at?: string | null
           published_by?: string | null
+          score_exercise?: string | null
+          score_metric?: string | null
           session_id: string
           template_id?: string | null
           title: string
@@ -414,6 +474,8 @@ export type Database = {
           gym_id?: string
           published_at?: string | null
           published_by?: string | null
+          score_exercise?: string | null
+          score_metric?: string | null
           session_id?: string
           template_id?: string | null
           title?: string
@@ -1060,6 +1122,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      member_score_settings: {
+        Row: {
+          share_scores: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          share_scores?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          share_scores?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       member_training_preferences: {
         Row: {
@@ -2895,6 +2975,7 @@ export type Database = {
           user_id: string
           assignment_id: string | null
           class_session_id: string | null
+          share_score: boolean
         }
         Insert: {
           created_at?: string
@@ -2907,6 +2988,7 @@ export type Database = {
           user_id: string
           assignment_id?: string | null
           class_session_id?: string | null
+          share_score?: boolean
         }
         Update: {
           created_at?: string
@@ -2919,6 +3001,7 @@ export type Database = {
           user_id?: string
           assignment_id?: string | null
           class_session_id?: string | null
+          share_score?: boolean
         }
         Relationships: [
           {
@@ -3469,6 +3552,15 @@ export type Database = {
       get_class_booking_options: {
         Args: { p_session_id: string }
         Returns: Json
+      }
+      get_class_leaderboard: {
+        Args: { p_session_id: string }
+        Returns: {
+          display_name: string
+          is_me: boolean
+          rank: number
+          value: number
+        }[]
       }
       get_class_calendar: {
         Args: { p_from: string; p_gym_id: string; p_to: string }
