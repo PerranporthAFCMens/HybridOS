@@ -123,6 +123,7 @@ export function Notices({ notices }: { notices: Notice[] }) {
   if (notices.length === 0) return null;
   const assigned = notices.filter((n) => n.kind === 'workout_assigned');
   const replies = notices.filter((n) => n.kind === 'workout_feedback' && n.assignmentId);
+  const classes = notices.filter((n) => n.kind === 'class_workout' && n.sessionId);
   return (
     <section className="mem-card by-coach" aria-label="New from your coach">
       <div className="mem-row"><h2>New from your coach</h2><span className="mem-tag new">{notices.length} new</span></div>
@@ -132,6 +133,12 @@ export function Notices({ notices }: { notices: Notice[] }) {
           <Link className="btn primary" to="/m/train">See {assigned.length === 1 ? 'it' : 'them'}</Link>
         </div>
       )}
+      {classes.map((n) => (
+        <div className="mem-line" key={n.id}>
+          <div><b>Your class workout is ready</b><div className="muted small">{n.body}</div></div>
+          <Link className="btn primary" to={`/m/train/class/${n.sessionId}`}>Open</Link>
+        </div>
+      ))}
       {replies.map((n) => (
         <div className="mem-line" key={n.id}>
           <div><b>Feedback on {n.body ?? 'your workout'}</b></div>
