@@ -4,7 +4,10 @@ import type { DbSet, StoredSet, Tracking } from '../train/calc';
 import { candidatesFor, isBetter, pbKey, wonText, type PbCandidate, type StoredPb, type Won } from '../train/pb';
 
 export interface AssignmentRow { id: string; title: string; source: string; status: string; scheduledFor: string | null; dueAt: string | null; snapshot: Json; focusTags: string[] }
-export interface SessionRow { id: string; title: string; performedAt: string }
+export interface SessionRow { id: string; title: string; performedAt: string; assignmentId: string | null; feedbackCount: number; feedbackNew: boolean }
+export interface Notice { id: string; kind: 'workout_assigned' | 'workout_feedback'; title: string; body: string | null; assignmentId: string | null; createdAt: string }
+export interface FeedbackRow { id: string; body: string; createdAt: string; authorId: string }
+export interface DoneRow { id: string; title: string; completedAt: string | null; rpe: number | null; note: string | null; result: Json | null; feedbackSeenAt: string | null }
 export interface LastTime { name: string; sets: StoredSet[] }
 
 const OPEN = ['todo', 'in_progress'];
@@ -43,13 +46,64 @@ export async function markStarted(id: string): Promise<void> {
 export async function listRecentSessions(userId: string, gymId: string): Promise<SessionRow[]> {
   const { data, error } = await supabase
     .from('workout_sessions')
-    .select('id, title, performed_at')
+    .select('id, title, performed_at, assignment_id')
     .eq('gym_id', gymId)
     .eq('user_id', userId)
     .order('performed_at', { ascending: false })
     .limit(8);
   if (error) throw error;
-  return (data ?? []).map((r) => ({ id: r.id, title: r.title ?? 'Workout', performedAt: r.performed_at }));
+  const rows = data ?? [];
+  const ids = [...new Set(rows.flatMap((r) => (r.assignment_id ? [r.assignment_id] : [])))];
+  const fb = ids.length ? await supabase.from('workout_assignment_feedback').select('assignment_id, created_at').in('assignment_id', ids) : { data: [], error: null };
+  if (fb.error) throw fb.error;
+  const seen = ids.length ? await supabase.from('workout_assignments').select('id, feedback_seen_at').in('id', ids) : { data: [], error: null };
+  if (seen.error) throw seen.error;
+  const seenAt = new Map((seen.data ?? []).map((a) => [a.id, a.feedback_seen_at]));
+  return rows.map((r) => {
+    const mine = (fb.data ?? []).filter((f) => f.assignment_id === r.assignment_id);
+    const last = mine.map((f) => f.created_at).sort().pop();
+    const when = r.assignment_id ? seenAt.get(r.assignment_id) : null;
+    return { id: r.id, title: r.title ?? 'Workout', performedAt: r.performed_at, assignmentId: r.assignment_id, feedbackCount: mine.length, feedbackNew: !!last && (!when || last > when) };
+  });
+}
+
+/** What the coach has sent that the client has not yet looked at: new workouts and replies. */
+export async function listMyNotices(userId: string, gymId: string): Promise<Notice[]> {
+  const { data, error } = await supabase
+    .from('member_notifications')
+    .select('id, notification_type, title, body, related_assignment_id, created_at')
+    .eq('gym_id', gymId)
+    .eq('user_id', userId)
+    .in('notification_type', ['workout_assigned', 'workout_feedback'])
+    .is('read_at', null)
+    .order('created_at', { ascending: false })
+    .limit(30);
+  if (error) throw error;
+  return (data ?? []).map((r) => ({ id: r.id, kind: r.notification_type === 'workout_feedback' ? 'workout_feedback' : 'workout_assigned', title: r.title, body: r.body, assignmentId: r.related_assignment_id, createdAt: r.created_at }));
+}
+
+/** Mark notices as read. Best effort: a failure here never blocks anything. */
+export async function markNoticesRead(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  await supabase.from('member_notifications').update({ read_at: new Date().toISOString() }).in('id', ids);
+}
+
+/** One finished workout of the client's, with the coach's replies. Null when it is not theirs or not there. */
+export async function getMyDone(userId: string, gymId: string, assignmentId: string): Promise<{ done: DoneRow; feedback: FeedbackRow[] } | null> {
+  const a = await supabase.from('workout_assignments').select('id, title, completed_at, member_rpe, member_notes, result, feedback_seen_at').eq('id', assignmentId).eq('gym_id', gymId).eq('member_user_id', userId).maybeSingle();
+  if (a.error) throw a.error;
+  if (!a.data) return null;
+  const f = await supabase.from('workout_assignment_feedback').select('id, body, created_at, author_id').eq('assignment_id', assignmentId).order('created_at');
+  if (f.error) throw f.error;
+  return {
+    done: { id: a.data.id, title: a.data.title, completedAt: a.data.completed_at, rpe: a.data.member_rpe === null ? null : Number(a.data.member_rpe), note: a.data.member_notes, result: a.data.result, feedbackSeenAt: a.data.feedback_seen_at },
+    feedback: (f.data ?? []).map((r) => ({ id: r.id, body: r.body, createdAt: r.created_at, authorId: r.author_id })),
+  };
+}
+
+/** The client has read the coach's reply. Best effort. */
+export async function markFeedbackSeen(assignmentId: string): Promise<void> {
+  await supabase.from('workout_assignments').update({ feedback_seen_at: new Date().toISOString() }).eq('id', assignmentId);
 }
 
 /** The most recent numbers for each exercise name, from the member's last 60 logged exercises. */
@@ -80,13 +134,13 @@ export interface ExerciseInput { name: string; tracking: Tracking; note: string 
  * be recorded does not fail the save; it is reported.
  */
 export async function saveExercise(
-  ctx: { gymId: string; userId: string; sessionId: string | null; title: string; position: number },
+  ctx: { gymId: string; userId: string; sessionId: string | null; title: string; position: number; assignmentId?: string | null },
   e: ExerciseInput,
 ): Promise<{ sessionId: string; entryId: string; won: Won[]; pbError: string | null }> {
   const fail = (err: unknown): never => { throw new Error(err instanceof Error ? err.message : (err as { message?: string }).message ?? 'Could not save the exercise.', { cause: err }); };
   let sessionId = ctx.sessionId;
   if (!sessionId) {
-    const s = await supabase.from('workout_sessions').insert({ gym_id: ctx.gymId, user_id: ctx.userId, title: ctx.title, performed_at: new Date().toISOString() }).select('id').single();
+    const s = await supabase.from('workout_sessions').insert({ gym_id: ctx.gymId, user_id: ctx.userId, title: ctx.title, performed_at: new Date().toISOString(), assignment_id: ctx.assignmentId ?? null }).select('id').single();
     if (s.error) fail(s.error);
     sessionId = s.data?.id ?? null;
   }
@@ -118,14 +172,14 @@ export async function removeExercise(entryId: string): Promise<void> {
 }
 
 /** Finish: name and note the workout, and mark the coach's workout done. Returns whether that was marked. */
-export async function completeWorkout(input: { sessionId: string | null; title: string; notes: string | null; assignment: { id: string; rpe: number | null; note: string | null } | null }): Promise<{ marked: boolean }> {
+export async function completeWorkout(input: { sessionId: string | null; title: string; notes: string | null; assignment: { id: string; rpe: number | null; note: string | null; result: unknown } | null }): Promise<{ marked: boolean }> {
   if (input.sessionId) {
     const u = await supabase.from('workout_sessions').update({ title: input.title, notes: input.notes, updated_at: new Date().toISOString() }).eq('id', input.sessionId);
     if (u.error) throw new Error(`Your exercises are saved, but the workout could not be finished: ${u.error.message}`);
   }
   let marked = false;
   if (input.assignment) {
-    const u = await supabase.from('workout_assignments').update({ status: 'completed', completed_at: new Date().toISOString(), member_rpe: input.assignment.rpe, member_notes: input.assignment.note, updated_at: new Date().toISOString() }).eq('id', input.assignment.id);
+    const u = await supabase.from('workout_assignments').update({ status: 'completed', completed_at: new Date().toISOString(), member_rpe: input.assignment.rpe, member_notes: input.assignment.note, result: JSON.parse(JSON.stringify(input.assignment.result)) as Json, updated_at: new Date().toISOString() }).eq('id', input.assignment.id);
     if (u.error) throw new Error(`Your workout is saved, but it could not be marked as done: ${u.error.message}`);
     marked = true;
   }

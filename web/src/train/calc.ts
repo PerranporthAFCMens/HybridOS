@@ -32,6 +32,12 @@ export function readSnapshot(raw: unknown): { title: string; activities: Planned
   return { title: str(snap.title), activities };
 }
 
+/** The note a coach wrote when sending the workout, kept inside the copy the client received. */
+export function coachNote(raw: unknown): string {
+  const snap = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  return typeof snap.coach_note === 'string' ? snap.coach_note.trim() : '';
+}
+
 export type Field = 'weight' | 'reps' | 'time' | 'distance' | 'calories';
 export const FIELDS: Record<Tracking, { id: Field; label: string; hint: string }[]> = {
   strength: [{ id: 'reps', label: 'reps', hint: 'Reps' }, { id: 'weight', label: 'kg', hint: 'Weight' }],
@@ -127,7 +133,16 @@ export function setText(tracking: Tracking, v: SetValues): string {
   return parts.join(' · ') + tail;
 }
 
-export interface PlayedActivity { name: string; originalName: string; tracking: Tracking; sets: SetValues[]; done: boolean; skipped: boolean; note: string; sided?: boolean }
+export type Outcome = 'as_set' | 'changed';
+export interface PlayedActivity {
+  name: string; originalName: string; tracking: Tracking; sets: SetValues[]; done: boolean; skipped: boolean; note: string; sided?: boolean;
+  /** What the coach wrote for this exercise, kept so the coach can see it beside what was done. */
+  plan?: string;
+  /** The client's own word on it: done as set, or changed. Left empty when they do not say. */
+  outcome?: Outcome;
+  reason?: string;
+  reasonNote?: string;
+}
 
 export type Prepared =
   | { ok: true; entries: { name: string; tracking: Tracking; note: string | null; sets: DbSet[] }[]; ticked: string[]; skipped: string[]; swapped: string[] }
@@ -189,3 +204,87 @@ export function comingUp(plans: PlanRow[], today: string, dayOf: (iso: string) =
     .filter((p) => { const d = planDay(p, dayOf); return d !== null && d > today; })
     .sort((a, b) => (planDay(a, dayOf) ?? '').localeCompare(planDay(b, dayOf) ?? ''));
 }
+
+/** Did the client record anything for this exercise: a number in any box, or a tick? */
+export function hasEntered(a: PlayedActivity): boolean {
+  return a.done || a.sets.some((set) => Object.entries(set).some(([k, v]) => k !== 'side' && typeof v === 'string' && v.trim() !== ''));
+}
+
+/** Why something was different. Chips, then a few words if they want. Nothing here is a judgement. */
+export const REASONS: [string, string][] = [
+  ['too_heavy', 'Too heavy'],
+  ['too_tired', 'Too tired'],
+  ['pain', 'Pain or discomfort'],
+  ['out_of_time', 'Out of time'],
+  ['no_equipment', 'No equipment'],
+  ['other', 'Something else'],
+];
+export const reasonLabel = (key: string | undefined): string => REASONS.find(([k]) => k === key)?.[1] ?? '';
+
+export type ExerciseStatus = 'as_set' | 'changed' | 'not_this_time' | 'logged' | 'added';
+export interface ExerciseResult { name: string; plan: string; status: ExerciseStatus; reason?: string; note?: string; swappedTo?: string }
+
+const STATUS_LABEL: Record<ExerciseStatus, string> = { as_set: 'As set', changed: 'Changed', not_this_time: 'Not this time', logged: 'Logged', added: 'Added by them' };
+export const statusLabel = (s: ExerciseStatus): string => STATUS_LABEL[s];
+
+/**
+ * The client's report of a finished workout, one line per exercise: as the coach set it, changed (with a reason),
+ * not this time, or just logged when they made no claim either way. An exercise they never touched counts as
+ * "not this time". `entered` says whether any numbers or a tick were recorded for it.
+ */
+export function buildResult(acts: (PlayedActivity & { entered: boolean })[]): ExerciseResult[] {
+  const out: ExerciseResult[] = [];
+  for (const a of acts) {
+    const name = (a.originalName || a.name).trim();
+    if (!name) continue;
+    const base = { name, plan: (a.plan ?? '').trim() };
+    const extra = { ...(a.reason ? { reason: a.reason } : {}), ...(a.reasonNote?.trim() ? { note: a.reasonNote.trim() } : {}) };
+    if (!a.originalName) {
+      if (a.entered) out.push({ ...base, status: 'added' });
+      continue;
+    }
+    if (a.skipped) { out.push({ ...base, status: 'not_this_time', ...extra }); continue; }
+    if (a.name.trim() && a.name.trim() !== a.originalName.trim()) { out.push({ ...base, status: 'changed', swappedTo: a.name.trim(), ...extra }); continue; }
+    if (!a.entered) { out.push({ ...base, status: 'not_this_time', ...extra }); continue; }
+    if (a.outcome === 'changed') out.push({ ...base, status: 'changed', ...extra });
+    else if (a.outcome === 'as_set') out.push({ ...base, status: 'as_set' });
+    else out.push({ ...base, status: 'logged' });
+  }
+  return out;
+}
+
+/** A stored report back to rows. Anything unreadable is skipped, never a crash. */
+export function readResult(raw: unknown): ExerciseResult[] {
+  const obj = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  const list = Array.isArray(obj.exercises) ? obj.exercises : [];
+  const out: ExerciseResult[] = [];
+  for (const e of list) {
+    if (!e || typeof e !== 'object') continue;
+    const r = e as Record<string, unknown>;
+    const status = r.status;
+    if (typeof r.name !== 'string' || !(status === 'as_set' || status === 'changed' || status === 'not_this_time' || status === 'logged' || status === 'added')) continue;
+    out.push({
+      name: r.name, plan: typeof r.plan === 'string' ? r.plan : '', status,
+      ...(typeof r.reason === 'string' && r.reason ? { reason: r.reason } : {}),
+      ...(typeof r.note === 'string' && r.note ? { note: r.note } : {}),
+      ...(typeof r.swappedTo === 'string' && r.swappedTo ? { swappedTo: r.swappedTo } : {}),
+    });
+  }
+  return out;
+}
+
+/** The report as it is stored: an object with its exercises (so it can grow without a database change). */
+export const resultJson = (exercises: ExerciseResult[]): { version: 1; exercises: ExerciseResult[] } => ({ version: 1, exercises });
+
+/** One line for a list: how many went as set and how many differed. No score, no judgement. */
+export function resultSummary(rows: ExerciseResult[]): string {
+  const counted = rows.filter((r) => r.status !== 'added');
+  if (counted.length === 0) return '';
+  const asSet = counted.filter((r) => r.status === 'as_set' || r.status === 'logged').length;
+  const changed = counted.filter((r) => r.status === 'changed').length;
+  const not = counted.filter((r) => r.status === 'not_this_time').length;
+  const parts = [asSet ? `${asSet} as set` : '', changed ? `${changed} changed` : '', not ? `${not} not this time` : ''].filter(Boolean);
+  return parts.join(', ');
+}
+
+export const hasPainFlag = (rows: ExerciseResult[]): boolean => rows.some((r) => r.reason === 'pain');

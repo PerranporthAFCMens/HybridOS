@@ -13,6 +13,7 @@ import { money } from '../today/calc';
 import { dateInputValue, initials, isTeam, ROLE_LABEL, formatDate, formatRegistered, labelStatus, nameOf, paymentHint, validateLifecycle } from './calc';
 import { MemberAgreements } from './MemberAgreements';
 import { MemberDetailsCard } from './MemberDetailsCard';
+import { MemberTraining } from './MemberTraining';
 import { useMemberDirectory, useMemberMemberships, useMemberWrites, usePlans } from './useMembers';
 import '../staff/staff.css';
 import './members.css';
@@ -246,6 +247,7 @@ function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string })
         </div>
         <div>
           <MemberAgreements gymId={gymId} userId={member.userId} name={name} />
+          <MemberTraining userId={member.userId} name={name} />
 
       {!team && <section className="record-section">
         <h3>Customer lifecycle</h3>

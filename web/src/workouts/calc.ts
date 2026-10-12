@@ -1,6 +1,5 @@
 // Pure rules behind the Workout builder: what a workout is made of, what a valid one looks like, and the
 // snapshot that is copied to a member when a coach assigns it. Same fields and limits as the old page.
-import { londonInstant } from '../classes/calc';
 
 export const BLOCK_TYPES = ['warmup', 'standard', 'strength', 'circuit', 'amrap', 'emom', 'for_time', 'intervals', 'finisher', 'cooldown', 'custom'] as const;
 export const TRACKING = ['strength', 'reps', 'time', 'distance', 'calories', 'intervals', 'instruction'] as const;
@@ -84,36 +83,6 @@ export function validateWorkout(f: WorkoutForm, blocks: BlockForm[]): WorkoutChe
     });
   }
   return { ok: true, input: { title, description: f.description.trim() || null, workoutType: f.type, focusTags: tags, estimatedMinutes: minutes, visibility: f.visibility }, blocks: out };
-}
-
-/** End of the chosen day at the gym (UK time), or nothing. */
-export function dueAt(date: string): string | null {
-  if (!date.trim()) return null;
-  const d = londonInstant(date, '23:59');
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
-}
-
-export const WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
-export const MAX_PROGRAMME = 60;
-
-const isoDay = (t: number) => new Date(t).toISOString().slice(0, 10);
-
-/**
- * The dates of a weekly programme: from the start date, on the chosen days (0 = Monday), for a number of weeks.
- * Dates are plain gym days. Null when the start is not a real date; an empty list when no day is chosen.
- */
-export function programmeDates(from: string, weekdays: number[], weeks: number): string[] | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(from);
-  if (!m) return null;
-  const start = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  if (isoDay(start) !== from) return null;
-  const n = Math.max(1, Math.min(12, Math.round(weeks)));
-  const out: string[] = [];
-  for (let i = 0; i < n * 7; i++) {
-    const t = start + i * 86400000;
-    if (weekdays.includes((new Date(t).getUTCDay() + 6) % 7)) out.push(isoDay(t));
-  }
-  return out.slice(0, MAX_PROGRAMME);
 }
 
 export const hasChanged = (a: unknown, b: unknown) => JSON.stringify(a) !== JSON.stringify(b);

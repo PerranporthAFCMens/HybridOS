@@ -8,7 +8,7 @@ import { wonMessage, type Won } from './pb';
 import { guessTracking } from './activities';
 import { ExercisePicker } from './ExercisePicker';
 import { Checkbox, Input, Select } from '../ui/Field';
-import { FIELDS, SIDES, assignmentNote, blankSets, fromDbSet, prepareFinish, readSnapshot, setText, type PlayedActivity, type SetValues, type Tracking } from './calc';
+import { FIELDS, REASONS, SIDES, assignmentNote, blankSets, buildResult, fromDbSet, hasEntered, prepareFinish, readSnapshot, resultJson, setText, type PlayedActivity, type SetValues, type Tracking } from './calc';
 
 interface Act extends PlayedActivity { key: string; plan: string; planNote: string; block: string; entryId?: string; savedText?: string }
 interface Draft { acts: Act[]; rpe: string; notes: string; sessionId?: string | null }
@@ -23,6 +23,21 @@ const readDraft = (key: string): Draft | null => {
   }
 };
 const TRACK_CHOICES: [Tracking, string][] = [['strength', 'Weight and reps'], ['reps', 'Reps'], ['time', 'Time'], ['distance', 'Distance'], ['calories', 'Calories']];
+
+/** Why it was different: a chip, then a few words if they want. Optional, and never a judgement. */
+function Reasons({ act, onPatch }: { act: Act; onPatch: (p: Partial<Act>) => void }) {
+  return (
+    <div className="tr-reasons" role="group" aria-label={`Why ${act.name} was different`}>
+      <div className="muted small">What happened? (optional)</div>
+      <div className="tr-chips">
+        {REASONS.map(([k, label]) => (
+          <button key={k} type="button" role="radio" aria-checked={act.reason === k} className={`tr-chip${act.reason === k ? ' on' : ''}`} onClick={() => onPatch({ reason: act.reason === k ? undefined : k })}>{label}</button>
+        ))}
+      </div>
+      <Input aria-label={`A few words about ${act.name}`} placeholder="A few words, if you like" value={act.reasonNote ?? ''} onChange={(e) => onPatch({ reasonNote: e.target.value })} />
+    </div>
+  );
+}
 
 /** Open a coach's workout (or start a blank one), fill in the numbers, finish. */
 export function Player() {
@@ -101,7 +116,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
     if (!entry) { if (!quiet) setCardError((e) => ({ ...e, [a.key]: 'Add some numbers first.' })); return false; }
     setSaving(a.key);
     try {
-      const res = await saveExercise({ gymId: gym.gymId, userId, sessionId, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length }, entry);
+      const res = await saveExercise({ gymId: gym.gymId, userId, sessionId, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length, assignmentId: isNew ? null : id }, entry);
       setSessionId(res.sessionId);
       patch(a.key, { entryId: res.entryId, savedText: a.sets.map((s) => setText(a.tracking, s)).filter(Boolean).join(', ') });
       setWon((w) => [...w, ...res.won]);
@@ -157,7 +172,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
         if (!r.ok) return setError(r.message);
         const entry = r.entries[0];
         if (!entry) continue;
-        const res = await saveExercise({ gymId: gym.gymId, userId, sessionId: session, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length + (anySaved ? 1 : 0) }, entry);
+        const res = await saveExercise({ gymId: gym.gymId, userId, sessionId: session, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length + (anySaved ? 1 : 0), assignmentId: isNew ? null : id }, entry);
         session = res.sessionId;
         anySaved = true;
         newWins.push(...res.won);
@@ -167,7 +182,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
       setSessionId(session);
       if (isNew && !anySaved) return setError('Add some numbers first, or go back.');
       const firstName = acts.find((a) => a.name.trim())?.name.trim() ?? '';
-      const result = await completeWorkout({ sessionId: session, title: titleFor(firstName), notes: notes.trim() || null, assignment: isNew ? null : { id, rpe: rpe ? Number(rpe) : null, note: assignmentNote(notes, overview.skipped, overview.swapped) } });
+      const result = await completeWorkout({ sessionId: session, title: titleFor(firstName), notes: notes.trim() || null, assignment: isNew ? null : { id, rpe: rpe ? Number(rpe) : null, note: assignmentNote(notes, overview.skipped, overview.swapped), result: resultJson(buildResult(acts.map((a) => ({ ...a, entered: !!a.entryId || hasEntered(a) })))) } });
       try { localStorage.removeItem(key); } catch { /* nothing to clear */ }
       await refresh();
       const pb = wonMessage([...won, ...newWins]);
@@ -202,9 +217,16 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
                 {a.plan && <div className="muted small">Suggested: {a.plan}</div>}
                 {a.planNote && <div className="muted small">{a.planNote}</div>}
               </div>
-              {a.skipped && <Button onClick={() => patch(a.key, { skipped: false })} aria-label={`Undo skip ${a.name}`}>Undo</Button>}
+              {a.skipped && <Button onClick={() => patch(a.key, { skipped: false })} aria-label={`Undo not this time for ${a.name}`}>Undo</Button>}
             </div>
-            {a.skipped ? <div className="muted">Skipped. That is fine.</div> : a.entryId ? (
+            {!isOwn(a) && !a.skipped && (
+              <div className="tr-outcome" role="radiogroup" aria-label={`How ${a.name} went`}>
+                <Button role="radio" aria-checked={a.outcome === 'as_set'} variant={a.outcome === 'as_set' ? 'primary' : 'secondary'} onClick={() => patch(a.key, { outcome: a.outcome === 'as_set' ? undefined : 'as_set' })}>As set</Button>
+                <Button role="radio" aria-checked={a.outcome === 'changed'} variant={a.outcome === 'changed' ? 'primary' : 'secondary'} onClick={() => patch(a.key, { outcome: a.outcome === 'changed' ? undefined : 'changed' })}>I changed it</Button>
+              </div>
+            )}
+            {!isOwn(a) && (a.skipped || a.outcome === 'changed' || a.name.trim() !== a.originalName.trim()) && <Reasons act={a} onPatch={(p) => patch(a.key, p)} />}
+            {a.skipped ? <div className="muted">Not this time. That is fine.</div> : a.entryId ? (
               <div className="tr-saved">
                 <span className="tr-ok">Saved</span>
                 {a.savedText && <div className="muted">{a.savedText}</div>}
@@ -251,7 +273,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
                 <Button onClick={() => setSwapping(swapping === a.key ? null : a.key)} aria-expanded={swapping === a.key} aria-label={`Swap ${a.name}`}>Swap</Button>
                 {isOwn(a)
                   ? <Button onClick={() => void drop(a)} aria-label={`Remove ${a.name}`}>Remove</Button>
-                  : <Button onClick={() => patch(a.key, { skipped: true })} aria-label={`Skip ${a.name}`}>Skip</Button>}
+                  : <Button onClick={() => patch(a.key, { skipped: true })} aria-label={`Skip ${a.name}`}>Not this time</Button>}
               </div>
             )}
             {swapping === a.key && !a.skipped && !a.entryId && (

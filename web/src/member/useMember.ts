@@ -3,13 +3,15 @@ import { useQuery } from '@tanstack/react-query';
 import { londonParts } from '../classes/calc';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { countMyWorkouts, getMyPlan, listMyClasses, listMyPt, type ClassRow, type MyPlan, type PtRow } from '../data/member';
-import { listMyAssignments, type AssignmentRow } from '../data/train';
+import { listMyAssignments, listMyNotices, type AssignmentRow, type Notice } from '../data/train';
 import { flagsFor, weekStartInstant, type Flags } from './calc';
 
 export interface MemberCtx {
   classes: { data: ClassRow[]; isPending: boolean; isError: boolean };
   pt: PtRow[];
   plans: AssignmentRow[];
+  /** New workouts and replies from the coach that have not been opened yet. */
+  notices: Notice[];
   plan: MyPlan | null;
   flags: Flags;
   workoutsThisWeek: number;
@@ -27,11 +29,13 @@ export function useMemberData(): MemberCtx {
   const pt = useQuery({ queryKey: ['m-pt', gym.gymId, userId], queryFn: () => listMyPt(userId, gym.gymId, now) });
   const week = useQuery({ queryKey: ['m-week', gym.gymId, userId, today], queryFn: () => countMyWorkouts(userId, gym.gymId, weekStartInstant(today)) });
   const plans = useQuery({ queryKey: ['m-assignments', gym.gymId, userId], queryFn: () => listMyAssignments(userId, gym.gymId) });
+  const notices = useQuery({ queryKey: ['m-notices', gym.gymId, userId], queryFn: () => listMyNotices(userId, gym.gymId) });
   const ptRows = pt.data ?? [];
   return {
     classes: { data: classes.data ?? [], isPending: classes.isPending, isError: classes.isError },
     pt: ptRows,
     plans: plans.data ?? [],
+    notices: notices.data ?? [],
     plan: plan.data ?? null,
     flags: flagsFor(plan.data ?? null, ptRows.length > 0),
     workoutsThisWeek: week.data ?? 0,

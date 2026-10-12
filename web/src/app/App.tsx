@@ -17,6 +17,7 @@ import { Owners } from '../owners/Owners';
 import { Door } from '../door/Door';
 import { MemberView } from '../memberview/MemberView';
 import { Community } from '../community/Community';
+import { Review } from '../training/Review';
 import { Comms } from '../comms/Comms';
 import { Workouts } from '../workouts/Workouts';
 import { homeFor } from '../auth/access';
@@ -27,6 +28,7 @@ import { MemberClasses } from '../member/MemberClasses';
 import { Me } from '../member/Me';
 import { Train } from '../train/Train';
 import { Player } from '../train/Player';
+import { TrainDone } from '../train/TrainDone';
 import { Pbs } from '../train/Pbs';
 import { Pt } from '../member/Pt';
 import { Membership } from '../member/Membership';
@@ -78,6 +80,7 @@ function Main() {
             <Route path="/m/train" element={<Train />} />
             <Route path="/m/train/pbs" element={<Pbs />} />
             <Route path="/m/train/pt" element={<Pt />} />
+            <Route path="/m/train/done/:id" element={<TrainDone />} />
             <Route path="/m/train/:id" element={<Player />} />
             <Route path="/m/community" element={<MemberCommunity />} />
             <Route path="/m/me" element={<Me />} />
@@ -98,6 +101,7 @@ function Main() {
             <Route path="/door" element={<Door />} />
             <Route path="/member-view" element={<MemberView />} />
             <Route path="/community" element={<Community />} />
+            <Route path="/training" element={<Review />} />
             <Route path="/communications" element={<Comms />} />
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/membership-rules" element={<Rules />} />

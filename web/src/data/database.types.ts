@@ -949,6 +949,7 @@ export type Database = {
           scheduled_for: string
           title: string
           user_id: string
+          related_assignment_id: string | null
         }
         Insert: {
           body?: string | null
@@ -964,6 +965,7 @@ export type Database = {
           scheduled_for?: string
           title: string
           user_id: string
+          related_assignment_id?: string | null
         }
         Update: {
           body?: string | null
@@ -979,6 +981,7 @@ export type Database = {
           scheduled_for?: string
           title?: string
           user_id?: string
+          related_assignment_id?: string | null
         }
         Relationships: [
           {
@@ -2657,6 +2660,41 @@ export type Database = {
           },
         ]
       }
+      workout_assignment_feedback: {
+        Row: {
+          assignment_id: string
+          author_id: string
+          body: string
+          created_at: string
+          gym_id: string
+          id: string
+        }
+        Insert: {
+          assignment_id: string
+          author_id: string
+          body: string
+          created_at?: string
+          gym_id: string
+          id?: string
+        }
+        Update: {
+          assignment_id?: string
+          author_id?: string
+          body?: string
+          created_at?: string
+          gym_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_assignment_feedback_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "workout_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_assignments: {
         Row: {
           assigned_by: string | null
@@ -2678,6 +2716,8 @@ export type Database = {
           updated_at: string
           workout_snapshot: Json
           workout_type: string
+          result: Json | null
+          feedback_seen_at: string | null
         }
         Insert: {
           assigned_by?: string | null
@@ -2699,6 +2739,8 @@ export type Database = {
           updated_at?: string
           workout_snapshot?: Json
           workout_type?: string
+          result?: Json | null
+          feedback_seen_at?: string | null
         }
         Update: {
           assigned_by?: string | null
@@ -2720,6 +2762,8 @@ export type Database = {
           updated_at?: string
           workout_snapshot?: Json
           workout_type?: string
+          result?: Json | null
+          feedback_seen_at?: string | null
         }
         Relationships: [
           {
@@ -2802,6 +2846,7 @@ export type Database = {
           title: string | null
           updated_at: string
           user_id: string
+          assignment_id: string | null
         }
         Insert: {
           created_at?: string
@@ -2812,6 +2857,7 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id: string
+          assignment_id?: string | null
         }
         Update: {
           created_at?: string
@@ -2822,6 +2868,7 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id?: string
+          assignment_id?: string | null
         }
         Relationships: [
           {

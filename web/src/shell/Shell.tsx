@@ -10,7 +10,7 @@ import { gymLogo } from './gymBrand';
 import './shell.css';
 
 /** The pages in the sidebar. Every other page was opened from one of them, so it gets a Back link. */
-const TOP_PAGES = ['/today', '/members', '/plans', '/classes', '/workouts', '/reports', '/community', '/communications', '/settings'];
+const TOP_PAGES = ['/today', '/members', '/plans', '/classes', '/workouts', '/training', '/reports', '/community', '/communications', '/settings'];
 
 function BackLink() {
   const { pathname } = useLocation();
@@ -56,6 +56,7 @@ export function Shell() {
           <NavLink to="/plans" onClick={close}>Membership plans</NavLink>
           <NavLink to="/classes" onClick={close}>Classes and workouts</NavLink>
           <NavLink to="/workouts" onClick={close}>Workout builder</NavLink>
+          <NavLink to="/training" onClick={close}>Client training</NavLink>
           <NavLink to="/reports" onClick={close}>Reports</NavLink>
           <NavLink to="/community" onClick={close}>Community</NavLink>
           <NavLink to="/communications" onClick={close}>Communications</NavLink>

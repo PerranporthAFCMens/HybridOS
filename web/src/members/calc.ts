@@ -178,3 +178,11 @@ export function checkDetailsDraft(d: JoinDetails, now: Date): string | null {
   }
   return null;
 }
+
+/** "today", "yesterday" or "5 days ago": plain, never "late". Days are counted in UK time. */
+export function daysAgo(iso: string, now: Date): string {
+  const day = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(d);
+  const n = Math.round((Date.parse(day(now)) - Date.parse(day(new Date(iso)))) / 86400000);
+  if (!Number.isFinite(n) || n <= 0) return 'today';
+  return n === 1 ? 'yesterday' : `${n} days ago`;
+}

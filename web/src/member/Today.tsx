@@ -8,7 +8,7 @@ import { loadDoor } from '../data/door';
 import { loadMyHomeSettings } from '../data/memberView';
 import { listMyPbs, listRecentSessions } from '../data/train';
 import { DEFAULT_CTA, DEFAULT_LAYOUT } from '../memberview/calc';
-import { Activity, BookedClasses, DoorCard, MembershipTile, Promo, PtList, Snapshot, UpcomingCount } from './HomeTiles';
+import { Activity, BookedClasses, DoorCard, MembershipTile, Notices, Promo, PtList, Snapshot, UpcomingCount } from './HomeTiles';
 import type { ClassRow } from '../data/member';
 import { Button } from '../ui/Button';
 import { BirthdayHello } from './Birthday';
@@ -67,7 +67,7 @@ export function Today() {
   };
 
   const headline =
-    hero.kind === 'workout' ? 'Today\'s workout is ready'
+    hero.kind === 'workout' ? (d.plans.some((p) => p.id === hero.row.id && p.source === 'pt') ? 'Your coach has a workout for you' : 'Today\'s workout is ready')
     : hero.kind === 'class' ? `Your next class is ${whenWords(dayOf(hero.row.startsAt), d.today)}`
     : hero.kind === 'pt' ? `PT ${whenWords(dayOf(hero.row.startsAt), d.today)}`
     : hero.kind === 'book' ? 'Ready for your next class?'
@@ -111,6 +111,7 @@ export function Today() {
   return (
     <div className="mem-screen">
       {booking.layer}
+      <Notices notices={d.notices} />
       {showBirthday && <BirthdayHello first={first} gymName={gym.gymName} onClose={closeBirthday} />}
       {birthday.isSuccess && !birthday.data && (
         <section className="mem-card" aria-label="Your birthday">
