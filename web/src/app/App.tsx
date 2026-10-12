@@ -21,6 +21,7 @@ import { Comms } from '../comms/Comms';
 import { Workouts } from '../workouts/Workouts';
 import { homeFor } from '../auth/access';
 import { MemberShell } from '../member/MemberShell';
+import { MemberCommunity } from '../member/MemberCommunity';
 import { Today as MemberToday } from '../member/Today';
 import { MemberClasses } from '../member/MemberClasses';
 import { Me } from '../member/Me';
@@ -78,6 +79,7 @@ function Main() {
             <Route path="/m/train/pbs" element={<Pbs />} />
             <Route path="/m/train/pt" element={<Pt />} />
             <Route path="/m/train/:id" element={<Player />} />
+            <Route path="/m/community" element={<MemberCommunity />} />
             <Route path="/m/me" element={<Me />} />
             <Route path="/m/membership" element={<Membership />} />
             <Route path="/m/*" element={<Navigate to="/m/today" replace />} />

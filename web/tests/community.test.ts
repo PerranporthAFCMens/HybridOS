@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildFeed, initials, nameOf, plural, rootOf, safeAvatar, validateComment, validatePost, type Comment, type Post } from '../src/community/calc';
+import { buildFeed, initials, reactionState, nameOf, plural, rootOf, safeAvatar, validateComment, validatePost, type Comment, type Post } from '../src/community/calc';
 
 const post = (id: string, createdAt: string): Post => ({ id, userId: 'u', body: 'b', createdAt });
 const comment = (id: string, postId: string, parentId: string | null, createdAt: string): Comment => ({ id, postId, userId: 'u', parentId, body: id, createdAt });
@@ -25,6 +25,20 @@ describe('names', () => {
   });
 });
 
+describe('likes', () => {
+  const likes = [
+    { postId: 'p1', commentId: null, userId: 'a' },
+    { postId: 'p1', commentId: null, userId: 'b' },
+    { postId: null, commentId: 'c1', userId: 'a' },
+  ];
+  it('counts a post or a comment separately and knows whether it is yours', () => {
+    expect(reactionState(likes, { postId: 'p1' }, 'a')).toEqual({ count: 2, mine: true });
+    expect(reactionState(likes, { postId: 'p1' }, 'z')).toEqual({ count: 2, mine: false });
+    expect(reactionState(likes, { commentId: 'c1' }, 'a')).toEqual({ count: 1, mine: true });
+    expect(reactionState(likes, { commentId: 'c9' }, 'a')).toEqual({ count: 0, mine: false });
+  });
+});
+
 describe('threads', () => {
   const comments = [
     comment('c1', 'p1', null, '2026-10-01T10:00:00Z'),
@@ -43,7 +57,7 @@ describe('threads', () => {
     expect(typeof rootOf(loop, 'a')).toBe('string');
   });
   it('orders posts newest first and threads oldest first, keeping replies to replies in view', () => {
-    const feed = buildFeed([post('p1', '2026-10-01T08:00:00Z'), post('p2', '2026-10-02T08:00:00Z')], comments, [{ postId: 'p1', commentId: null }, { postId: 'p1', commentId: null }, { postId: 'p2', commentId: null }]);
+    const feed = buildFeed([post('p1', '2026-10-01T08:00:00Z'), post('p2', '2026-10-02T08:00:00Z')], comments, [{ postId: 'p1', commentId: null, userId: 'a' }, { postId: 'p1', commentId: null, userId: 'a' }, { postId: 'p2', commentId: null, userId: 'a' }]);
     expect(feed.map((f) => f.post.id)).toEqual(['p2', 'p1']);
     const p1 = feed[1];
     expect(p1?.threads.map((t) => t.comment.id)).toEqual(['c4', 'c1']);

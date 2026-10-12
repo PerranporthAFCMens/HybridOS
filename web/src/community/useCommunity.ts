@@ -11,6 +11,7 @@ export function useCommunityWrites(gymId: string, userId: string) {
   return {
     post: useMutation({ mutationFn: (body: string) => api.createPost(gymId, userId, body), onSuccess }),
     comment: useMutation({ mutationFn: (v: { postId: string; parentId: string | null; body: string }) => api.createComment(gymId, userId, v.postId, v.parentId, v.body), onSuccess }),
+    like: useMutation({ mutationFn: (v: { target: { postId: string } | { commentId: string }; liked: boolean }) => api.setLike(gymId, userId, v.target, v.liked), onSuccess }),
     removePost: useMutation({ mutationFn: (id: string) => api.deletePost(gymId, id), onSuccess }),
     removeComment: useMutation({ mutationFn: (id: string) => api.deleteComment(gymId, id), onSuccess }),
   };

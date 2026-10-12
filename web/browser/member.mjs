@@ -81,7 +81,7 @@ for (const role of ['member', 'owner']) {
     c.ok('and does not wish anyone happy birthday', (await page.getByRole('dialog', { name: 'Happy birthday' }).count()) === 0);
     await c.has('the first screen opens with the next class', page.getByRole('heading', { name: /^Your next class is / }));
     c.ok('the top card is the booked class', (await page.getByLabel('Next class').textContent()).includes('Strength and Conditioning'));
-    c.ok('four tabs for a classes member', (await page.getByRole('navigation', { name: 'Member' }).getByRole('link').allInnerTexts()).join('|') === 'Today|Classes|Workouts|Me');
+    c.ok('five tabs for a classes member', (await page.getByRole('navigation', { name: 'Member' }).getByRole('link').allInnerTexts()).join('|') === 'Today|Classes|Workouts|Community|Me');
     c.ok('no preview banner for a member', (await page.getByText(/Previewing/).count()) === 0);
     c.ok('greets by first name', (await page.getByText(/^Good (morning|afternoon|evening), Jo$/).count()) === 1);
     c.ok('layout (today)', (await page.evaluate(layoutProblems)).length === 0);

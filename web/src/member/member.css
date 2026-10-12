@@ -62,6 +62,7 @@
 .tr-set .tr-box { flex: 1; min-width: 0; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
 .tr-tools > * { flex: 1 1 120px; }
 .mem-tabs a { min-width: 0; }
+@media (max-width: 380px) { .mem-tabs { padding-left: 2px; padding-right: 2px; } .mem-tabs a { font-size: 11px; } }
 
 .tr-set-wrap { display: grid; gap: 6px; }
 .tr-side { display: flex; gap: 6px; margin-left: 28px; }
