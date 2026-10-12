@@ -69,6 +69,13 @@ export async function getMemberAgreements(gymId: string, userId: string): Promis
     docs: [docFor(r.id, r.terms_document_id), docFor(r.id, r.waiver_document_id)].filter((x): x is AgreementDoc => !!x),
   }));
 }
+/** The signed copies the signed-in person holds at this gym, newest first. They can read only their own. */
+export interface MySignedCopy { id: string; signedAt: string; termsPath: string | null; waiverPath: string | null }
+export async function getMySignedCopies(gymId: string, userId: string): Promise<MySignedCopy[]> {
+  const s = await supabase.from('member_signatures').select('id, signed_at, signed_terms_path, signed_waiver_path').eq('gym_id', gymId).eq('user_id', userId).order('signed_at', { ascending: false });
+  if (s.error) throw new Error(s.error.message);
+  return (s.data ?? []).map((r) => ({ id: r.id, signedAt: r.signed_at, termsPath: r.signed_terms_path, waiverPath: r.signed_waiver_path }));
+}
 export interface FlaggedAnswer { signatureId: string; member: string; prompt: string; details: string; signedAt: string }
 
 const asKind = (v: string): DocKind => (v === 'waiver' ? 'waiver' : 'terms');

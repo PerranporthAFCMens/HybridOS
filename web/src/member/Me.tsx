@@ -3,6 +3,10 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOutletContext } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
+import { getMySignedCopies } from '../data/signup';
+import { fileBase, save } from '../reports/download';
+import { fullStamp } from '../signup/calc';
+import { fetchSignedCopy } from '../members/signedCopy';
 import { changeMyEmail, changeMyPassword, getMyBirthday, getProfileNames, saveMyBirthday, updateMyName } from '../data/profile';
 import { fullName } from '../shell/account';
 import { Link } from 'react-router-dom';
@@ -27,6 +31,22 @@ export function Me() {
   const [pw, setPw] = useState({ a: '', b: '' });
   const [msg, setMsg] = useState<{ text: string; good: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  const mine = useQuery({ queryKey: ['my-signed-copies', auth.gym.gymId, auth.userId], queryFn: () => getMySignedCopies(auth.gym.gymId, auth.userId) });
+  const [exporting, setExporting] = useState(false);
+  const [exportMsg, setExportMsg] = useState<string | null>(null);
+  const latest = mine.data?.[0];
+  const exportCopy = async () => {
+    if (!latest) return;
+    setExporting(true);
+    setExportMsg(null);
+    try {
+      save(await fetchSignedCopy(latest), `${fileBase(auth.gym.gymName, 'my signed copy', new Date(latest.signedAt))}.pdf`);
+    } catch (e) {
+      setExportMsg(e instanceof Error && e.message.startsWith('No signed copy') ? `Your signed copy is not ready yet. Ask ${auth.gym.gymName} to send it to you.` : 'Could not get your signed copy. Try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const start = (s: Exclude<Section, null>) => {
     setMsg(null);
@@ -130,6 +150,14 @@ export function Me() {
         ) : <div className="muted">{auth.gym.role !== 'member' ? 'You are on the team, so you have no membership yet. An owner can give you one from Members.' : 'No membership found for this gym.'}</div>}
         {d.plan && <Link className="btn secondary" to="/m/membership">Pause, change or cancel</Link>}
       </section>
+      {latest && (
+        <section className="mem-card" aria-label="Your signed documents">
+          <h2>Your signed documents</h2>
+          <div className="muted small">You signed the terms and waiver for {auth.gym.gymName} on {fullStamp(latest.signedAt)}.</div>
+          <Button disabled={exporting} onClick={() => void exportCopy()}>{exporting ? 'Getting it…' : 'Download my signed copy'}</Button>
+          {exportMsg && <div className="mem-error" role="alert">{exportMsg}</div>}
+        </section>
+      )}
       <section className="mem-card">
         <h2>More</h2>
         <p className="muted small">Community and billing are still in the classic app while they are rebuilt here.</p>

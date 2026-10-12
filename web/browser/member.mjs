@@ -1,5 +1,6 @@
 // Browser gate: the new member app (/m/today, /m/classes, /m/me) as a member on a phone and a desktop, and the
 // "previewing" banner for an owner. Supabase is mocked at the network layer; booking and cancelling are recorded.
+import { PDFDocument } from 'pdf-lib';
 import { base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
 
 const hours = (h) => new Date(Date.now() + h * 3600000).toISOString();
@@ -30,6 +31,10 @@ function layoutProblems() {
   return problems;
 }
 
+const oneDoc = await PDFDocument.create();
+oneDoc.addPage();
+const STORED_PDF = Buffer.from(await oneDoc.save());
+
 const browser = await launch();
 let allOk = true;
 for (const role of ['member', 'owner']) {
@@ -49,6 +54,9 @@ for (const role of ['member', 'owner']) {
       if (path.endsWith('/memberships')) return reply(route, select.includes('membership_plans')
         ? [{ status: 'active', membership_plans: { name: 'Classes Monthly', includes_classes: true, includes_open_gym: false, includes_pt: false } }]
         : [{ id: 'm1', status: 'active', ends_on: null, created_at: '2026-01-01T00:00:00Z' }]);
+      if (path.endsWith('/member_signatures')) return reply(route, [{ id: 'sig1', signed_at: '2026-10-06T09:00:00Z', signed_terms_path: 'u/g/sig1-terms.pdf', signed_waiver_path: null }]);
+      if (path.includes('/storage/v1/object/sign/signed-documents/') && route.request().method() === 'POST') return reply(route, { signedURL: '/object/sign/signed-documents/stored.pdf?token=t' });
+      if (path.includes('/storage/v1/object/sign/signed-documents/') && route.request().method() === 'GET') { await route.fulfill({ status: 200, contentType: 'application/pdf', body: STORED_PDF }); return true; }
       if (path.endsWith('/rpc/get_my_private_profile')) return reply(route, { date_of_birth: birthday.value, gender: null }, 1);
       if (path.endsWith('/profiles')) return reply(route, [{ display_name: 'Jo Marsh', first_name: 'Jo', last_name: 'Marsh' }]);
       if (path.endsWith('/pt_appointments')) return reply(route, []);
@@ -122,6 +130,9 @@ for (const role of ['member', 'owner']) {
     await c.has('me page shows the plan', page.getByLabel('Membership').getByText('Classes Monthly'));
     c.ok('and the classic app link', (await page.getByRole('link', { name: 'Open the classic app' }).getAttribute('href')).includes('member.html?gym_id='));
     c.ok('layout (me)', (await page.evaluate(layoutProblems)).length === 0);
+    await c.has('the person\'s own signed documents are on their page', page.getByLabel('Your signed documents').getByText(/Tuesday 6 October 2026 at 10:00:00 BST/));
+    const [mine] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download my signed copy' }).click()]);
+    c.ok('they can download the stored signed copy', mine.suggestedFilename() === 'puffin-performance-my-signed-copy-2026-10-06.pdf' && (await import('node:fs')).readFileSync(await mine.path()).equals(STORED_PDF));
 
     // Add a birthday: asked for, checked, saved, and shown
     await page.getByRole('button', { name: 'Add birthday' }).click();
