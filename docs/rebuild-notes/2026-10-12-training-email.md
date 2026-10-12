@@ -18,3 +18,6 @@ The owner chose email over push (push on an iPhone only works for a web app inst
 
 ## Found by CI, fixed
 The database check failed with "can write nothing here". A fresh local database (what CI builds) gives the service role full access to any new table by default, while the live project does not (that is why `finalise-signature` needed its own grant). The migration now removes all of the service role's access to the feedback table first and then grants read only, so the result is the same in both places. Tested both ways on a scratch database: starting with full access (like CI) and starting with none (like live).
+
+## Second thing CI found, also fixed
+The #250 undo-and-re-apply test failed once the email migration existed: dropping and recreating the replies table loses what the later email migration did to it (limiting the service role to read only), so the before and after access lists differed. The test step now re-applies the later migration after re-applying the #250 one. Reproduced locally by building the scratch database the way CI does (new tables get full service role access by default), failing without the fix and passing with it. This was a flaw in the test, not in the app or the live database.

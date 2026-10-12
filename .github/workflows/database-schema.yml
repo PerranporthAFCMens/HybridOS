@@ -140,6 +140,8 @@ jobs:
           snap /tmp/tl_after_rollback.txt
           if diff -q /tmp/tl_after_migration.txt /tmp/tl_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          # Dropping and recreating the replies table loses what a LATER migration did to it (it limits the service role to reading), so put that back too.
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261012160000_training_notify_service_access.sql
           snap /tmp/tl_after_reapply.txt
           if diff -u /tmp/tl_after_migration.txt /tmp/tl_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Training email service access verification and rollback
