@@ -185,6 +185,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.getByLabel('Attrition date').fill('2026-09-01');
   await dialog.getByRole('button', { name: 'Save lifecycle dates' }).click();
   await c.has('lifecycle saved', dialog.getByText('Saved.'));
+  // "Saved." is also still on screen from the details save a moment ago, so wait for the lifecycle write itself (on a busy runner it can arrive after that text is seen).
+  for (let i = 0; i < 100 && !writes.some((w) => w.method === 'PATCH' && w.path.endsWith('/gym_members')); i++) await page.waitForTimeout(100);
   const life = writes.find((w) => w.method === 'PATCH' && w.path.endsWith('/gym_members'));
   c.ok('lifecycle write scoped to gym, user, member role', life && life.query.gym_id === `eq.${GYM}` && life.query.user_id === `eq.${ADA}` && life.query.role === 'eq.member');
   c.ok('lifecycle write body', life && life.body.joined_at === '2026-03-01T00:00:00' && life.body.attrition_on === '2026-09-01' && life.body.is_active === false && typeof life.body.updated_at === 'string');
