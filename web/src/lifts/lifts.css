@@ -1,0 +1,7 @@
+.lift-find { margin: 12px 0 6px; max-width: 420px; }
+.lift-list { list-style: none; margin: 0; padding: 0; max-height: 420px; overflow: auto; border: 1px solid var(--hybrid-line); border-radius: 12px; }
+.lift-list li { padding: 8px 12px; border-top: 1px solid var(--hybrid-line); }
+.lift-list li:first-child { border-top: 0; }
+.lift-list li.on { background: var(--hybrid-raised); }
+.lift-add { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+.lift-add > :first-child { flex: 1 1 240px; min-width: 0; }

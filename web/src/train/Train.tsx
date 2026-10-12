@@ -4,6 +4,7 @@ import { Link, useLocation, useOutletContext } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { listMyPbs, listRecentSessions, markNoticesRead } from '../data/train';
 import { listMyClassWorkouts } from '../data/classWorkouts';
+import { listTrackedLifts } from '../data/lifts';
 import { getBlocksOfClasses } from '../data/classBlocks';
 import { groupClassWorkouts } from './classwork';
 import { pbValueText } from './pb';
@@ -16,6 +17,7 @@ export function Train() {
   const { gym, userId } = useReadyAuth();
   const d = useOutletContext<MemberCtx>();
   const state = useLocation().state as { saved?: string; pb?: string; pbError?: string | null } | null;
+  const tracked = useQuery({ queryKey: ['m-tracked-lifts', gym.gymId], queryFn: () => listTrackedLifts(gym.gymId) });
   const pbs = useQuery({ queryKey: ['m-pbs', gym.gymId, userId], queryFn: () => listMyPbs(userId, gym.gymId) });
   const recent = useQuery({ queryKey: ['m-sessions', gym.gymId, userId], queryFn: () => listRecentSessions(userId, gym.gymId) });
   const classes = useQuery({ queryKey: ['m-class-workouts', gym.gymId, userId], queryFn: () => listMyClassWorkouts(userId, gym.gymId) });
@@ -122,6 +124,7 @@ export function Train() {
 
       <section className="mem-card" aria-label="Personal bests">
         <div className="mem-row"><h2>Personal bests</h2><Link to="/m/train/pbs">See all</Link></div>
+        {(tracked.data?.length ?? 0) > 0 && <div className="mem-row"><span className="muted small">Where you stand on the big lifts</span><Link to="/m/train/leaderboard">Leaderboards</Link></div>}
         {pbs.isPending && <div className="muted">Loading…</div>}
         {pbs.data?.length === 0 && <div className="muted">Log a workout and your bests appear here.</div>}
         {pbs.data?.slice(0, 3).map((p) => <div className="mem-line" key={p.id}><b>{p.name}</b><span>{pbValueText(p.metric, p.unit, p.value)}</span></div>)}
