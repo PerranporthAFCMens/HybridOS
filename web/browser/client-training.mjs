@@ -58,15 +58,18 @@ let allOk = true;
 for (const [name, viewport] of Object.entries(sizes)) {
   const writes = [];
   let replied = false;
+  const mails = [];
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, async ({ route, url, path, select, method, body }) => {
     const table = ['workout_assignment_feedback', 'workout_assignments'].find((t) => path.endsWith(`/${t}`));
     if (table && ['POST', 'DELETE', 'PATCH'].includes(method)) {
       writes.push({ table, method, query: Object.fromEntries(url.searchParams), body });
-      if (table === 'workout_assignment_feedback' && method === 'POST') replied = true;
+      if (table === 'workout_assignment_feedback' && method === 'POST') { replied = true; return reply(route, { id: 'f9' }); }
+      if (table === 'workout_assignments' && method === 'POST') return reply(route, body.map((_, i) => ({ id: `as-${i}` })));
       await route.fulfill({ status: 204, body: '' });
       return true;
     }
+    if (path.endsWith('/functions/v1/notify-training')) { mails.push(body); return reply(route, { ok: true, emailed: true }); }
     if (path.endsWith('/gym_members')) return reply(route, people);
     if (path.endsWith('/profiles')) return reply(route, profiles);
     if (path.endsWith('/workout_assignment_feedback')) return reply(route, replied ? [...feedback, { id: 'f2', assignment_id: 'a-done', author_id: USER, body: 'Thanks', created_at: new Date().toISOString() }] : feedback);
@@ -129,6 +132,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const fb = writes.find((w) => w.table === 'workout_assignment_feedback' && w.method === 'POST');
   c.ok('the reply is exact', fb && JSON.stringify(fb.body) === JSON.stringify({ gym_id: GYM, assignment_id: 'a-done', author_id: USER, body: 'Thanks' }));
   await c.has('it shows under feedback', dialog.getByText('Thanks').first());
+  await c.has('and says the client was emailed', dialog.getByText('Sent. Jamie Smith has been emailed too.'));
+  c.ok('the email was asked for, for that reply', mails.length === 1 && mails[0].kind === 'feedback' && mails[0].feedback_id === 'f9');
   writes.length = 0;
   await dialog.getByRole('button', { name: 'Looks good' }).click();
   await page.waitForTimeout(300);
@@ -164,7 +169,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.getByRole('group', { name: 'Workouts to assign' }).getByLabel(/^Leg Day/).check();
   c.ok('layout (assign from the file)', (await page.evaluate(layoutProblems)).length === 0);
   await dialog.getByRole('button', { name: 'Send workout' }).click();
-  await c.has('sent', training.getByText('Workout sent to Jamie Smith.'));
+  await c.has('sent', training.getByText('Workout sent to Jamie Smith. Jamie Smith has been emailed too.'));
   const asg = writes.find((w) => w.table === 'workout_assignments' && w.method === 'POST');
   c.ok('it went to Jamie, undated', asg && asg.body.length === 1 && asg.body[0].member_user_id === JAMIE && asg.body[0].source === 'pt' && !('due_at' in asg.body[0]));
 

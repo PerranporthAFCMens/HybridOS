@@ -42,15 +42,22 @@ const browser = await launch();
 let allOk = true;
 for (const [name, viewport] of Object.entries(sizes)) {
   const writes = [];
+  const mails = [];
+  let mailOk = true;
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, async ({ route, url, path, method, body }) => {
     const table = ['workout_templates', 'workout_template_blocks', 'workout_template_activities', 'workout_assignments', 'workout_wods'].find((t) => path.endsWith(`/${t}`));
     if (table && ['POST', 'PATCH', 'DELETE'].includes(method)) {
       writes.push({ table, method, query: Object.fromEntries(url.searchParams), body });
       if (method === 'POST' && table === 'workout_templates') return reply(route, [{ id: 't-new' }]);
+      if (method === 'POST' && table === 'workout_assignments') return reply(route, body.map((_, i) => ({ id: `as${writes.length}-${i}` })));
       if (method === 'POST' && table === 'workout_template_blocks') return reply(route, [{ id: `blk-new-${writes.filter((w) => w.table === 'workout_template_blocks' && w.method === 'POST').length}` }]);
       await route.fulfill({ status: 204, body: '' });
       return true;
+    }
+    if (path.endsWith('/functions/v1/notify-training')) {
+      mails.push(body);
+      return reply(route, mailOk ? { ok: true, emailed: true } : { ok: true, emailed: false, email_error: 'Email is not configured.' });
     }
     if (path.endsWith('/workout_templates')) return reply(route, templates);
     if (path.endsWith('/workout_template_blocks')) return reply(route, url.searchParams.get('select') === 'id' ? [{ id: 'blk-old' }] : blocks);
@@ -106,14 +113,17 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.getByLabel('Client').selectOption('u-ben');
   await dialog.getByLabel('Note (optional)').fill('Slow on the way down');
   await dialog.getByRole('button', { name: 'Send workout' }).click();
-  await c.has('sent message', page.getByText('Workout sent to Ben Lifter.'));
+  await c.has('sent message, and the client was emailed too', page.getByText('Workout sent to Ben Lifter. Ben Lifter has been emailed too.'));
   const as = writes.find((w) => w.table === 'workout_assignments');
   const one = as && Array.isArray(as.body) ? as.body[0] : null;
   c.ok('assignment exact, with no date', as && as.method === 'POST' && as.body.length === 1 && one.gym_id === GYM && one.member_user_id === 'u-ben' && one.assigned_by === USER && one.source === 'pt' && one.status === 'todo' && one.template_id === 't-leg' && one.title === 'Leg Day' && !('due_at' in one) && !('scheduled_for' in one));
+  c.ok('the email was asked for, for exactly those workouts', mails.length === 1 && mails[0].kind === 'assigned' && mails[0].assignment_ids.length === 1);
   c.ok('assignment carries a copy of the blocks and the coach\'s note', one && one.workout_snapshot.template_id === 't-leg' && one.workout_snapshot.blocks.length === 1 && one.workout_snapshot.blocks[0].activities.length === 2 && one.workout_snapshot.coach_note === 'Slow on the way down');
 
   // Several at once: one request
   writes.length = 0;
+  mails.length = 0;
+  mailOk = false;
   await page.getByRole('button', { name: 'Assign to member' }).click();
   await dialog.getByLabel('Client').selectOption('u-amy');
   await dialog.getByRole('group', { name: 'Workouts to assign' }).getByLabel(/^Friday Hybrid/).check();
@@ -127,7 +137,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.getByRole('group', { name: 'Workouts to assign' }).getByLabel(/^Friday Hybrid/).check();
   c.ok('layout (several)', (await page.evaluate(layoutProblems)).length === 0);
   await dialog.getByRole('button', { name: 'Send 2 workouts' }).click();
-  await c.has('several sent message', page.getByText('2 workouts sent to Amy Active.'));
+  await c.has('a failed email never undoes it, and says so', page.getByText('2 workouts sent to Amy Active. The email did not go (Email is not configured.), but Amy Active will see it in the app.'));
+  c.ok('one email request for the whole set', mails.length === 1 && mails[0].assignment_ids.length === 2);
   const several = writes.filter((w) => w.table === 'workout_assignments');
   c.ok('sent as one request with two assignments, neither dated', several.length === 1 && several[0].body.length === 2 && several[0].body.map((b) => b.template_id).sort().join() === 't-leg,t-wod' && several[0].body.every((b) => b.member_user_id === 'u-amy' && b.status === 'todo' && !('due_at' in b) && !('coach_note' in b.workout_snapshot)));
 

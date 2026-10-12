@@ -140,8 +140,27 @@ jobs:
           snap /tmp/tl_after_rollback.txt
           if diff -q /tmp/tl_after_migration.txt /tmp/tl_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          # Dropping and recreating the replies table loses what a LATER migration did to it (it limits the service role to reading), so put that back too.
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261012160000_training_notify_service_access.sql
           snap /tmp/tl_after_reapply.txt
           if diff -u /tmp/tl_after_migration.txt /tmp/tl_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: Training email service access verification and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261012160000_training_notify_service_access.sql
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261012_training_notify_service_access_check.sql > /tmp/notify_check.txt
+          cat /tmp/notify_check.txt
+          if grep -v ' | ok$' /tmp/notify_check.txt; then echo 'A training email service access check is not ok'; exit 1; fi
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/tn_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261012_revoke_training_notify_service_access.sql
+          snap /tmp/tn_after_rollback.txt
+          if diff -q /tmp/tn_after_migration.txt /tmp/tn_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/tn_after_reapply.txt
+          if diff -u /tmp/tn_after_migration.txt /tmp/tn_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Prove the rollback file restores the pre-migration state exactly
         shell: bash
         run: |

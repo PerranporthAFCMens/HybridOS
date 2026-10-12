@@ -86,7 +86,7 @@ export async function loadAssignableMembers(gymId: string): Promise<MemberOption
  * list until the member does them. Each workout is copied as it is now, with the coach's note inside the copy. One request,
  * so the set is given in full or not at all.
  */
-export async function assignWorkouts(gymId: string, userId: string, templates: TemplateRow[], memberUserId: string, note: string | null): Promise<void> {
+export async function assignWorkouts(gymId: string, userId: string, templates: TemplateRow[], memberUserId: string, note: string | null): Promise<string[]> {
   if (templates.length === 0) throw new Error('Choose at least one workout.');
   const rows = [];
   for (const t of templates) {
@@ -98,8 +98,9 @@ export async function assignWorkouts(gymId: string, userId: string, templates: T
       workout_snapshot: JSON.parse(JSON.stringify(snapshot)) as never, status: 'todo',
     });
   }
-  const { error } = await supabase.from('workout_assignments').insert(rows);
+  const { data, error } = await supabase.from('workout_assignments').insert(rows).select('id');
   if (error) throw error;
+  return (data ?? []).map((r) => r.id);
 }
 
 export async function publishWod(gymId: string, userId: string, templateId: string, date: string, message: string | null): Promise<void> {
