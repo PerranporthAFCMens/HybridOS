@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { assignWorkouts, loadAssignableMembers } from '../data/workouts';
 import { loadClientTraining } from '../data/clientTraining';
+import { emailNote, notifyTraining } from '../data/notify';
 import { Button } from '../ui/Button';
 import { Empty, SectionTitle } from '../ui/Card';
 import { Checkbox, Field, Select, Textarea } from '../ui/Field';
@@ -29,7 +30,11 @@ export function AssignWorkoutsDialog({ memberId, memberName, preselect, onClose 
   const who = memberName ?? people.data?.find((m) => m.userId === chosen)?.name ?? 'the client';
   const waiting = useQuery({ queryKey: ['client-training', gym.gymId, chosen], queryFn: () => loadClientTraining(gym.gymId, chosen), enabled: !!chosen });
   const send = useMutation({
-    mutationFn: () => assignWorkouts(gym.gymId, userId, (templates.data ?? []).filter((t) => picked.includes(t.id)), chosen, note.trim() || null),
+    mutationFn: async () => {
+      const ids = await assignWorkouts(gym.gymId, userId, (templates.data ?? []).filter((t) => picked.includes(t.id)), chosen, note.trim() || null);
+      // The workouts are saved and the client has an in-app notice either way; the email is a bonus and may fail on its own.
+      return ids.length > 0 ? await notifyTraining({ kind: 'assigned', assignment_ids: ids }) : null;
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['client-training', gym.gymId, chosen] }),
   });
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
@@ -38,7 +43,7 @@ export function AssignWorkoutsDialog({ memberId, memberName, preselect, onClose 
     if (picked.length === 0) return setError('Tick at least one workout.');
     setError('');
     send.mutate(undefined, {
-      onSuccess: () => onClose({ text: `${picked.length === 1 ? 'Workout' : `${picked.length} workouts`} sent to ${who}.`, good: true }),
+      onSuccess: (mail) => onClose({ text: `${picked.length === 1 ? 'Workout' : `${picked.length} workouts`} sent to ${who}.${mail ? emailNote(mail, who) : ''}`, good: true }),
       onError: (e) => setError(e.message),
     });
   };

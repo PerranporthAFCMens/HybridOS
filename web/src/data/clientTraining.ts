@@ -85,9 +85,10 @@ export async function loadLoggedExercises(sessionId: string): Promise<LoggedExer
   });
 }
 
-export async function addFeedback(gymId: string, userId: string, assignmentId: string, body: string): Promise<void> {
-  const { error } = await supabase.from('workout_assignment_feedback').insert({ gym_id: gymId, assignment_id: assignmentId, author_id: userId, body: body.trim() });
+export async function addFeedback(gymId: string, userId: string, assignmentId: string, body: string): Promise<string> {
+  const { data, error } = await supabase.from('workout_assignment_feedback').insert({ gym_id: gymId, assignment_id: assignmentId, author_id: userId, body: body.trim() }).select('id').single();
   if (error) throw error;
+  return data.id;
 }
 
 /** Take back a workout the client has not started. Anything started or finished stays. */

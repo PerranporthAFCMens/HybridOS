@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { addFeedback, loadLoggedExercises, type ClientWorkout } from '../data/clientTraining';
+import { emailNote, notifyTraining, type EmailResult } from '../data/notify';
 import { hasPainFlag, reasonLabel, statusLabel } from '../train/calc';
 import { Button } from '../ui/Button';
 import { SectionTitle } from '../ui/Card';
@@ -20,9 +21,15 @@ export function TrainingDetail({ workout: w, clientName, onClose }: { workout: C
   const logged = useQuery({ queryKey: ['logged', w.sessionId], queryFn: () => loadLoggedExercises(w.sessionId ?? ''), enabled: !!w.sessionId });
   const [reply, setReply] = useState('');
   const [error, setError] = useState('');
+  const [sent, setSent] = useState<EmailResult | null>(null);
   const send = useMutation({
-    mutationFn: (body: string) => addFeedback(gym.gymId, userId, w.assignmentId ?? '', body),
-    onSuccess: async () => {
+    mutationFn: async (body: string) => {
+      const id = await addFeedback(gym.gymId, userId, w.assignmentId ?? '', body);
+      // The reply is saved and the client has an in-app notice either way; the email is a bonus and may fail on its own.
+      return await notifyTraining({ kind: 'feedback', feedback_id: id });
+    },
+    onSuccess: async (mail) => {
+      setSent(mail);
       setReply('');
       await Promise.all([qc.invalidateQueries({ queryKey: ['client-training'] }), qc.invalidateQueries({ queryKey: ['needs-feedback'] })]);
     },
@@ -30,6 +37,7 @@ export function TrainingDetail({ workout: w, clientName, onClose }: { workout: C
   const submit = (body: string) => {
     if (!body.trim()) return setError('Write a line first, or tap Looks good.');
     setError('');
+    setSent(null);
     send.mutate(body.trim(), { onError: (e) => setError(e.message) });
   };
   const didFor = (name: string) => logged.data?.find((l) => l.name.trim().toLowerCase() === name.trim().toLowerCase());
@@ -67,7 +75,7 @@ export function TrainingDetail({ workout: w, clientName, onClose }: { workout: C
           {w.feedback.length === 0 && <div className="muted small">No reply yet.</div>}
           {w.feedback.map((f) => <div className="tr-reply" key={f.id}><b>{f.authorName}</b> <span className="muted small">{when(f.createdAt)}</span><div>{f.body}</div></div>)}
           <Textarea aria-label={`Feedback for ${clientName}`} maxLength={2000} placeholder={`A line for ${clientName}…`} value={reply} onChange={(e) => { setError(''); setReply(e.target.value); }} />
-          <div className="assign-msg">{error && <span className="msg error" role="alert">{error}</span>}</div>
+          <div className="assign-msg">{error && <span className="msg error" role="alert">{error}</span>}{sent && !error && <span className="msg good" role="status">Sent.{emailNote(sent, clientName)}</span>}</div>
           <div className="tr-actions">
             <Button variant="primary" disabled={send.isPending} onClick={() => submit(reply)}>{send.isPending ? 'Sending…' : 'Send feedback'}</Button>
             <Button disabled={send.isPending} onClick={() => submit('Looks good')}>Looks good</Button>
