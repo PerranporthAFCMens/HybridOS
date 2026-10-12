@@ -173,8 +173,19 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('exercises swap', (await page.getByRole('button', { name: 'Move Walking lunge up' }).isDisabled()) && (await page.getByRole('button', { name: 'Move Back squat up' }).isEnabled()));
   await page.getByLabel('Add an exercise', { exact: true }).fill('Plank');
   await page.getByRole('button', { name: 'Add exercise' }).click();
-  c.ok('a typed exercise is added and set to record time', (await page.getByRole('button', { name: 'Remove Plank' }).count()) === 1 && (await page.getByLabel('Plank set 1 Time, like 12:30').count()) === 1);
+  c.ok('a typed exercise is added and set to record time', (await page.getByRole('button', { name: 'Remove Plank' }).count()) === 1 && (await page.getByRole('group', { name: 'Plank set 1 Time' }).count()) === 1);
   c.ok('layout (more exercises)', (await page.evaluate(layoutProblems)).length === 0);
+  // A time is chosen as hours, minutes and seconds (nothing to misread as minutes or seconds)
+  const plankTime = page.getByRole('group', { name: 'Plank set 1 Time' });
+  c.ok('the time has hour, minute and second selectors, all at zero to start', (await plankTime.getByRole('combobox').count()) === 3 && (await page.getByLabel('Plank set 1 Time hours').inputValue()) === '0' && (await page.getByLabel('Plank set 1 Time minutes').inputValue()) === '0' && (await page.getByLabel('Plank set 1 Time seconds').inputValue()) === '0');
+  await page.getByLabel('Plank set 1 Time minutes').selectOption('1');
+  await page.getByLabel('Plank set 1 Time seconds').selectOption('30');
+  c.ok('choosing 1 minute 30 seconds keeps that', (await page.getByLabel('Plank set 1 Time minutes').inputValue()) === '1' && (await page.getByLabel('Plank set 1 Time seconds').inputValue()) === '30');
+  await page.getByLabel('Plank set 1 Time hours').selectOption('1');
+  c.ok('hours can be added', (await page.getByLabel('Plank set 1 Time hours').inputValue()) === '1' && (await page.getByLabel('Plank set 1 Time minutes').inputValue()) === '1');
+  await page.getByLabel('Plank set 1 Time hours').selectOption('0');
+  c.ok('layout (time selectors)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await plankTime.locator('xpath=ancestor::div[contains(@class,"wk-activity")]').screenshot({ path: `${shots}/workouts-time-${name}.png` });
 
   // Archive asks first
   writes.length = 0;
