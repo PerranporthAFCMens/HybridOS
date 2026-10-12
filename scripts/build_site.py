@@ -169,5 +169,18 @@ def build_next_app():
  if not(OUT/'next'/'index.html').exists():raise RuntimeError('web build did not produce _site/next/index.html')
  # Live (Vercel) hands app addresses to the app with rewrites in vercel.json. GitHub Pages cannot, so the dev preview answers an unknown address with the app's page instead.
  if site!='/':shutil.copy2(OUT/'next'/'index.html',OUT/'404.html')
-def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();add_brand_layer();build_next_app();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
+def hand_clean_addresses_to_app():
+ # Dev preview only. GitHub Pages answers /classes with the old classes.html (it adds ".html" itself), so a refresh or a bookmark of an app address that shares its name with an old page
+ # lands on the old page, which is not meant to open on its own. The old page, opened by its extension-less address, hands over to the app (a trailing slash has no file, so Pages answers with 404.html, the app).
+ # The old pages opened by their real name (classes.html, or inside the old frame) are untouched. Live (Vercel) rewrites the address before any file is looked for, so nothing changes there.
+ if site_root()=='/':return
+ hand='<script>/* dev preview: this address belongs to the app */if(!/\\.html$/.test(location.pathname)&&!/\\/$/.test(location.pathname))location.replace(location.pathname+"/"+location.search+location.hash)</script>'
+ for name in ('classes','community','staff','class-setup','communications'):
+  f=OUT/(name+'.html')
+  if not f.exists():continue
+  t=f.read_text(encoding='utf-8')
+  if 'dev preview: this address belongs to the app' in t:continue
+  if '<head>' not in t:raise RuntimeError(f'Cannot hand over {name}.html: missing <head>')
+  f.write_text(t.replace('<head>','<head>'+hand,1),encoding='utf-8')
+def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();add_brand_layer();build_next_app();hand_clean_addresses_to_app();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
 if __name__=='__main__':build()
