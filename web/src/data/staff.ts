@@ -58,6 +58,8 @@ export interface SaveStaffArgs {
   values: StaffValues;
   hoursToWrite: StaffValues['hours'];
   qualChanges: QualChanges;
+  /** An owner or admin: save only working hours and qualifications (no role, access level, job title or pay). */
+  hoursAndQualsOnly?: boolean;
 }
 
 /**
@@ -74,12 +76,14 @@ export async function saveStaff(a: SaveStaffArgs): Promise<void> {
   };
   if (a.roleChanged) await step('their role', () => supabase.from('gym_members').update({ role: a.role }).eq('gym_id', a.gymId).eq('user_id', a.userId));
   if (a.accessChanged) await step('their access level', () => supabase.rpc('assign_staff_access_level', { target_gym_id: a.gymId, target_user_id: a.userId, target_level_id: a.accessLevelId }));
-  await step('their details', () =>
-    supabase.from('staff_profiles').upsert(
-      { gym_id: a.gymId, user_id: a.userId, job_title: a.values.jobTitle, gross_hourly_rate_pence: a.values.payPence, employment_type: a.values.employment, is_active: true },
-      { onConflict: 'gym_id,user_id' },
-    ),
-  );
+  if (!a.hoursAndQualsOnly) {
+    await step('their details', () =>
+      supabase.from('staff_profiles').upsert(
+        { gym_id: a.gymId, user_id: a.userId, job_title: a.values.jobTitle, gross_hourly_rate_pence: a.values.payPence, employment_type: a.values.employment, is_active: true },
+        { onConflict: 'gym_id,user_id' },
+      ),
+    );
+  }
   if (a.hoursToWrite.length) {
     await step('their working hours', () =>
       supabase.from('staff_working_hours').upsert(
