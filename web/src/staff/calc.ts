@@ -108,15 +108,16 @@ export type StaffCheck = { ok: true; values: StaffValues } | { ok: false; messag
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-export function validateStaff(f: StaffForm, isNew: boolean): StaffCheck {
+/** `hoursAndQualsOnly` is for an owner or admin: only their working hours and qualifications are saved, so no access level, job title or pay is asked for. */
+export function validateStaff(f: StaffForm, isNew: boolean, hoursAndQualsOnly = false): StaffCheck {
   if (isNew) {
     if (!f.name.trim()) return { ok: false, message: 'Enter their name.' };
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) return { ok: false, message: 'Enter a valid email address.' };
   }
-  if (!f.accessLevelId) return { ok: false, message: 'Choose an access level for this person.' };
-  if (f.jobTitle.trim().length > 80) return { ok: false, message: 'The job title can be up to 80 characters.' };
+  if (!hoursAndQualsOnly && !f.accessLevelId) return { ok: false, message: 'Choose an access level for this person.' };
+  if (!hoursAndQualsOnly && f.jobTitle.trim().length > 80) return { ok: false, message: 'The job title can be up to 80 characters.' };
   let payPence: number | null = null;
-  if (f.pay.trim() !== '') {
+  if (!hoursAndQualsOnly && f.pay.trim() !== '') {
     const pay = Number(f.pay);
     if (!Number.isFinite(pay) || pay < 0 || pay > 10000) return { ok: false, message: 'Enter the hourly pay as an amount in pounds, for example 12.50.' };
     payPence = Math.round(pay * 100);

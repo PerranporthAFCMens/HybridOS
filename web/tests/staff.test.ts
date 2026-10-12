@@ -124,3 +124,33 @@ describe('what a save writes', () => {
     expect(changedHours(saved, [{ weekday: 1, isWorking: true, start: '09:00', end: '18:00' }]).map((h) => h.weekday)).toEqual([1]);
   });
 });
+
+describe('an owner or admin: working hours and qualifications only', () => {
+  const owner = (over: Partial<StaffForm> = {}): StaffForm => ({ ...emptyStaffForm(), name: 'Olly Owner', email: 'olly@example.com', ...over });
+
+  it('asks for no access level, job title or pay', () => {
+    expect(validateStaff(owner(), false, true)).toMatchObject({ ok: true });
+    expect(validateStaff(owner({ jobTitle: 'x'.repeat(200), pay: 'lots' }), false, true)).toMatchObject({ ok: true });
+  });
+
+  it('a person edited in the ordinary way still needs an access level and sensible details', () => {
+    expect(validateStaff(owner(), false)).toMatchObject({ ok: false });
+    expect(validateStaff(good({ pay: 'lots' }), false)).toMatchObject({ ok: false });
+  });
+
+  it('still checks the hours and the qualification dates', () => {
+    const hours = { ...emptyStaffForm().hours, 1: { on: true, start: '10:00', end: '09:00' } };
+    expect(validateStaff(owner({ hours }), false, true)).toMatchObject({ ok: false, message: 'Monday must finish after it starts.' });
+    expect(validateStaff(owner({ quals: { q1: { on: true, expires: 'soon' } } }), false, true)).toMatchObject({ ok: false });
+  });
+
+  it('keeps the hours and qualifications that were set', () => {
+    const hours = { ...emptyStaffForm().hours, 1: { on: true, start: '06:00', end: '21:00' } };
+    const r = validateStaff(owner({ hours, quals: { q1: { on: true, expires: '' } } }), false, true);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.values.hours.find((h) => h.weekday === 1)).toEqual({ weekday: 1, isWorking: true, start: '06:00', end: '21:00' });
+      expect(r.values.quals).toEqual([{ capabilityId: 'q1', expiresOn: null }]);
+    }
+  });
+});

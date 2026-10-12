@@ -77,8 +77,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('team member shown', page.getByText('Sam Coach').first());
   await c.has('hours summary and pay', page.getByText(/Head coach/));
   await c.has('qualification tag', page.getByText(/Spin instructor/).first());
-  c.ok('owner is not editable here', (await page.getByRole('button', { name: 'Edit Olly Owner' }).count()) === 0);
+  c.ok('an owner has no full Edit or Remove here (role, access and pay are managed elsewhere)', (await page.getByRole('button', { name: 'Edit Olly Owner' }).count()) === 0 && (await page.getByRole('button', { name: 'Remove Olly Owner' }).count()) === 0);
   c.ok('owner links to the owners and admins screen', (await page.getByRole('link', { name: 'Manage access' }).getAttribute('href')) === '/owners');
+  c.ok('an owner shows whether working hours are set', (await page.locator('.team-item', { hasText: 'Olly Owner' }).getByText('Working hours not set').count()) === 1);
   c.ok('layout (staff)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/staff-${name}.png`, fullPage: true });
 
@@ -103,6 +104,30 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const qual = writes.find((w) => w.what === 'staff_capabilities' && w.method === 'POST');
   c.ok('only the new qualification is written, with its date', qual && JSON.stringify(qual.body) === JSON.stringify([{ gym_id: GYM, user_id: USER_A, capability_id: 'cap-pt', qualified: true, expires_on: '2030-05-01' }]));
   c.ok('nothing removed, role and level untouched', !writes.some((w) => w.method === 'DELETE' || w.what === 'gym_members' || w.what === 'assign_staff_access_level'));
+
+  // An owner can set their own working hours and qualifications (so a class can be scheduled with them on it), and nothing else
+  writes.length = 0;
+  await page.getByRole('button', { name: 'Hours and qualifications for Olly Owner' }).click();
+  await c.has('the owner form opens', dialog.getByText('Hours and qualifications: Olly Owner').first());
+  c.ok('it asks only for hours and qualifications', (await dialog.getByLabel('Role').count()) === 0 && (await dialog.getByLabel('Access level').count()) === 0 && (await dialog.getByLabel('Job title').count()) === 0 && (await dialog.getByLabel('Gross hourly pay (£)').count()) === 0 && (await dialog.getByLabel('Monday start').count()) === 1 && (await dialog.getByLabel('Personal trainer').count()) === 1);
+  c.ok('and says why', (await dialog.getByText(/inside their working hours/).count()) === 1);
+  c.ok('layout (owner hours form)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/staff-owner-hours-${name}.png` });
+  await dialog.getByRole('checkbox', { name: 'Monday', exact: true }).check();
+  await dialog.getByLabel('Monday finish').fill('08:00');
+  await dialog.getByRole('button', { name: 'Save changes' }).click();
+  await c.has('a finish before the start is refused', dialog.getByText('Monday must finish after it starts.'));
+  c.ok('and nothing is written for it', writes.length === 0);
+  await dialog.getByLabel('Monday start').fill('06:00');
+  await dialog.getByLabel('Monday finish').fill('21:00');
+  await dialog.getByLabel('Personal trainer').check();
+  await dialog.getByRole('button', { name: 'Save changes' }).click();
+  c.ok('the form closes after saving', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
+  const ownerHours = writes.find((w) => w.what === 'staff_working_hours');
+  c.ok('hours are written for the owner, only for the days that changed', ownerHours && ownerHours.body.length === 1 && ownerHours.body[0].user_id === '44444444-4444-4444-8444-444444444444' && ownerHours.body[0].gym_id === GYM && ownerHours.body[0].weekday === 1 && ownerHours.body[0].is_working === true && ownerHours.body[0].start_time === '06:00' && ownerHours.body[0].end_time === '21:00');
+  const ownerQual = writes.find((w) => w.what === 'staff_capabilities' && w.method === 'POST');
+  c.ok('the qualification is written for the owner', ownerQual && JSON.stringify(ownerQual.body) === JSON.stringify([{ gym_id: GYM, user_id: '44444444-4444-4444-8444-444444444444', capability_id: 'cap-pt', qualified: true, expires_on: null }]));
+  c.ok('no role, access level, job title, pay or removal is written for an owner', !writes.some((w) => w.what === 'gym_members' || w.what === 'assign_staff_access_level' || w.what === 'staff_profiles' || w.method === 'DELETE'));
 
   // Add a login: temporary password shown
   await page.getByRole('button', { name: 'Add staff login' }).click();

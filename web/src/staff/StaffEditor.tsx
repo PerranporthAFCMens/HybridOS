@@ -6,10 +6,14 @@ import { Button } from '../ui/Button';
 import { SectionTitle } from '../ui/Card';
 import { Checkbox, DateInput, Field, FieldRow, Input, Select } from '../ui/Field';
 import { Modal } from '../ui/Modal';
-import { EMPLOYMENT, STAFF_ROLES, WEEK, changedHours, diffQuals, emptyStaffForm, formFromStaff, validateStaff, type StaffForm, type StaffRole, type TeamRow } from './calc';
+import { EMPLOYMENT, STAFF_ROLES, WEEK, isOperational, changedHours, diffQuals, emptyStaffForm, formFromStaff, validateStaff, type StaffForm, type StaffRole, type TeamRow } from './calc';
 import { useStaffWrites } from './useStaff';
 
-/** Add a staff login, or edit one person's role, access level, details, hours and qualifications. */
+/**
+ * Add a staff login, or edit one person's role, access level, details, hours and qualifications. For an owner or admin only the
+ * working hours and qualifications can be changed here (their access is managed under Owners and admins), so a class can be
+ * scheduled with them on it.
+ */
 export function StaffEditor({ data, person, onClose, onDone }: { data: StaffData; person: TeamRow | null; onClose: () => void; onDone: (message: string) => void }) {
   const { gym } = useReadyAuth();
   const writes = useStaffWrites(gym.gymId);
@@ -30,11 +34,12 @@ export function StaffEditor({ data, person, onClose, onDone }: { data: StaffData
   const set = <K extends keyof StaffForm>(k: K, v: StaffForm[K]) => setForm((f) => ({ ...f, [k]: v }));
   const setDay = (weekday: number, patch: Partial<StaffForm['hours'][number]>) => setForm((f) => ({ ...f, hours: { ...f.hours, [weekday]: { ...(f.hours[weekday] ?? { on: false, start: '09:00', end: '17:00' }), ...patch } } }));
   const setQual = (id: string, patch: Partial<{ on: boolean; expires: string }>) => setForm((f) => ({ ...f, quals: { ...f.quals, [id]: { on: false, expires: '', ...f.quals[id], ...patch } } }));
+  const hoursOnly = !!person && !isOperational(person.role);
   const busy = writes.save.isPending || writes.create.isPending;
 
   const save = async () => {
     setProblem('');
-    const check = validateStaff(form, !person);
+    const check = validateStaff(form, !person, hoursOnly);
     if (!check.ok) return setProblem(check.message);
     try {
       let userId = person?.userId ?? '';
@@ -48,9 +53,10 @@ export function StaffEditor({ data, person, onClose, onDone }: { data: StaffData
         gymId: gym.gymId,
         userId,
         role: form.role,
-        roleChanged: !!person && saved?.role !== form.role,
+        roleChanged: !hoursOnly && !!person && saved?.role !== form.role,
         accessLevelId: form.accessLevelId,
-        accessChanged: !!person && saved?.accessLevelId !== form.accessLevelId,
+        accessChanged: !hoursOnly && !!person && saved?.accessLevelId !== form.accessLevelId,
+        hoursAndQualsOnly: hoursOnly,
         values: check.values,
         hoursToWrite: changedHours(saved?.hours ?? [], check.values.hours),
         qualChanges: diffQuals(saved?.quals ?? [], check.values.quals),
@@ -77,15 +83,16 @@ export function StaffEditor({ data, person, onClose, onDone }: { data: StaffData
   }
 
   return (
-    <Modal title={person ? `Edit ${person.name}` : 'Add staff login'} onClose={onClose}>
-      <SectionTitle title={person ? `Edit ${person.name}` : 'Add staff login'} action={<Button onClick={onClose}>Close</Button>} />
+    <Modal title={hoursOnly ? `Hours and qualifications: ${person?.name ?? ''}` : person ? `Edit ${person.name}` : 'Add staff login'} onClose={onClose}>
+      <SectionTitle title={hoursOnly ? `Hours and qualifications: ${person?.name ?? ''}` : person ? `Edit ${person.name}` : 'Add staff login'} action={<Button onClick={onClose}>Close</Button>} />
+      {hoursOnly && <div className="muted small">Classes can only be given to someone inside their working hours, and only if they hold what the class needs. Their access is managed under Owners and admins.</div>}
       {!person && (
         <FieldRow>
           <Field label="Name" htmlFor="staff-name"><Input id="staff-name" value={form.name} onChange={(e) => set('name', e.target.value)} /></Field>
           <Field label="Email" htmlFor="staff-email"><Input id="staff-email" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} /></Field>
         </FieldRow>
       )}
-      <FieldRow>
+      {!hoursOnly && <FieldRow>
         <Field label="Role" htmlFor="staff-role">
           <Select id="staff-role" value={form.role} onChange={(e) => set('role', e.target.value as StaffRole)}>
             {STAFF_ROLES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -104,7 +111,7 @@ export function StaffEditor({ data, person, onClose, onDone }: { data: StaffData
             {EMPLOYMENT.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </Select>
         </Field>
-      </FieldRow>
+      </FieldRow>}
 
       <fieldset className="check-group">
         <legend>Normal working hours</legend>
