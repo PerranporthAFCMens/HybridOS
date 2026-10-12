@@ -9,6 +9,7 @@ const snapshot = {
     { position: 1, title: 'Strength', activities: [
       { position: 0, activity_name: 'Dumbbell row', tracking_type: 'strength', prescription: { display: '3 x 10' } },
       { position: 1, activity_name: 'Overhead press', tracking_type: 'strength', prescription: { display: '4 x 8' }, notes: 'Controlled' },
+      { position: 2, activity_name: 'Goblet squat', tracking_type: 'strength', prescription: { display: '2 sets: 10 × 16 kg', sets: [{ reps: '10', weight: '16' }, { reps: '10', weight: '16' }] } },
     ] },
   ],
 };
@@ -100,8 +101,12 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('link', { name: 'Open Upper body' }).click();
   await c.has('the workout opens', page.getByRole('heading', { name: 'Upper body' }));
   c.ok('says these are suggestions', (await page.getByText(/suggestions: change, swap or skip anything/).count()) === 1);
-  c.ok('the exercises are listed with their plan', (await page.getByRole('region', { name: 'Dumbbell row' }).textContent()).includes('Suggested: 3 x 10') && (await page.getByRole('region', { name: 'Overhead press' }).textContent()).includes('Controlled'));
+  c.ok('the exercises are listed with their plan', (await page.getByRole('region', { name: 'Dumbbell row' }).textContent()).includes('Suggested: 3 x 10') && (await page.getByRole('region', { name: 'Overhead press' }).textContent()).includes('Coach: Controlled'));
   c.ok('last time is shown', (await page.getByRole('region', { name: 'Dumbbell row' }).textContent()).includes('Last time: 10 × 24 kg, 10 × 24 kg'));
+  c.ok('a target the coach set is shown in words', (await page.getByRole('region', { name: 'Goblet squat' }).textContent()).includes('Suggested: 2 sets: 10 × 16 kg'));
+  await page.getByRole('region', { name: 'Goblet squat' }).getByRole('radio', { name: 'As set' }).click();
+  c.ok('"As set" puts the coach\'s numbers in the boxes', (await page.getByLabel('Goblet squat set 1 Weight').inputValue()) === '16' && (await page.getByLabel('Goblet squat set 2 Reps').inputValue()) === '10' && (await page.getByLabel('Goblet squat set 3 Reps').count()) === 0);
+  await page.getByRole('button', { name: 'Skip Goblet squat' }).click();
   await page.getByRole('button', { name: 'Copy last time for Dumbbell row' }).click();
   c.ok('copy last time fills the boxes', (await page.getByLabel('Dumbbell row set 1 Weight').inputValue()) === '24' && (await page.getByLabel('Dumbbell row set 2 Reps').inputValue()) === '10');
   await page.getByRole('button', { name: 'Add a set to Dumbbell row' }).click();
@@ -135,9 +140,10 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('"As set" is marked', (await page.getByRole('region', { name: 'Dumbbell row' }).getByRole('radio', { name: 'As set' }).getAttribute('aria-checked')) === 'true');
   await page.getByRole('group', { name: 'Why Landmine press was different' }).getByRole('radio', { name: 'No equipment' }).click();
   await page.getByRole('button', { name: 'Skip Stretch' }).click();
-  c.ok('a skipped exercise says that is fine', (await page.getByText('Not this time. That is fine.').count()) === 1);
+  c.ok('a skipped exercise says that is fine', (await page.getByText('Not this time. That is fine.').count()) === 2);
   await page.getByRole('group', { name: 'Why Stretch was different' }).getByRole('radio', { name: 'Out of time' }).click();
-  await page.getByLabel('A few words about Stretch').fill('ran out of time');
+  await page.getByLabel('Your note on Stretch').fill('ran out of time');
+  await page.getByLabel('Your note on Dumbbell row').fill('slept badly, felt heavy');
   c.ok('layout (what happened)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/train-reasons-${name}.png`, fullPage: true });
   await page.getByLabel('How hard was it').selectOption('7');
@@ -154,7 +160,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('the skipped one is not saved', !joined.includes('"exercise_name":"Stretch"'));
   c.ok('the coach workout is marked done with rpe and a note', joined.includes('"status":"completed"') && joined.includes('"member_rpe":7') && joined.includes('Skipped: Stretch'));
   c.ok('the finished workout is tied to the one the coach set', writes.filter((w) => w.startsWith('session ')).every((w) => w.includes('"assignment_id":"a1"')));
-  c.ok('the report says what changed and why', joined.includes('"status":"as_set"') && joined.includes('"status":"changed"') && joined.includes('"swappedTo":"Landmine press"') && joined.includes('"reason":"no_equipment"') && joined.includes('"status":"not_this_time"') && joined.includes('"reason":"out_of_time"') && joined.includes('"note":"ran out of time"') && joined.includes('"plan":"3 x 10"'));
+  c.ok('the report says what changed and why', joined.includes('"status":"as_set"') && joined.includes('"status":"changed"') && joined.includes('"swappedTo":"Landmine press"') && joined.includes('"reason":"no_equipment"') && joined.includes('"status":"not_this_time"') && joined.includes('"reason":"out_of_time"') && joined.includes('"note":"ran out of time"') && joined.includes('"plan":"3 x 10"') && joined.includes('"note":"slept badly, felt heavy"'));
   await c.has('the finished workout is gone from the coach list', page.getByLabel('Today').getByText('Start your own workout whenever you like.'));
   c.ok('From your coach is gone with nothing waiting', (await page.getByRole('region', { name: 'From your coach' }).count()) === 0);
   await c.has('recent workouts are listed, the coach\'s outlined with a new-feedback marker', page.getByRole('link', { name: 'Lower body, set by your coach' }).getByText('New feedback'));

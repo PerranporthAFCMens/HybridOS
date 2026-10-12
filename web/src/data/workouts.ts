@@ -28,7 +28,7 @@ export async function loadBlocks(templateId: string): Promise<BlockForm[]> {
     key: `b${b.id}`, id: b.id, title: b.title, blockType: b.block_type, rounds: b.rounds === null ? '' : String(b.rounds), instructions: b.instructions ?? '',
     activities: activities.filter((a) => a.block_id === b.id).map((a): ActivityForm => {
       const p = readPrescription(a.prescription);
-      return { key: `a${a.id}-${n++}`, id: a.id, name: a.activity_name, tracking: a.tracking_type, prescription: p.display, notes: a.notes ?? '', activityType: a.activity_type, extra: p.extra };
+      return { key: `a${a.id}-${n++}`, id: a.id, name: a.activity_name, tracking: a.tracking_type, prescription: p.sets.length ? '' : p.display, sets: p.sets.length ? p.sets : [{}], notes: a.notes ?? '', activityType: a.activity_type, extra: p.extra };
     }),
   }));
 }

@@ -7,3 +7,5 @@
 .wk-actions { margin-top: 14px; }
 
 .assign-days { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 4px 12px; }
+.wk-add { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; }
+.wk-add > .tr-pick { flex: 1; min-width: 0; }

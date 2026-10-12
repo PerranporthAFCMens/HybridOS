@@ -8,9 +8,10 @@ import { wonMessage, type Won } from './pb';
 import { guessTracking } from './activities';
 import { ExercisePicker } from './ExercisePicker';
 import { Checkbox, Input, Select } from '../ui/Field';
-import { FIELDS, REASONS, SIDES, assignmentNote, blankSets, buildResult, fromDbSet, hasEntered, prepareFinish, readSnapshot, resultJson, setText, type PlayedActivity, type SetValues, type Tracking } from './calc';
+import { SetGrid } from './SetGrid';
+import { REASONS, assignmentNote, blankSets, buildResult, fromDbSet, hasEntered, prepareFinish, readSnapshot, resultJson, setText, type PlayedActivity, type SetValues, type Tracking } from './calc';
 
-interface Act extends PlayedActivity { key: string; plan: string; planNote: string; block: string; entryId?: string; savedText?: string }
+interface Act extends PlayedActivity { key: string; plan: string; planNote: string; block: string; target: SetValues[]; entryId?: string; savedText?: string }
 interface Draft { acts: Act[]; rpe: string; notes: string; sessionId?: string | null }
 
 const draftKey = (gymId: string, id: string) => `hybrid-train-draft:${gymId}:${id}`;
@@ -24,7 +25,7 @@ const readDraft = (key: string): Draft | null => {
 };
 const TRACK_CHOICES: [Tracking, string][] = [['strength', 'Weight and reps'], ['reps', 'Reps'], ['time', 'Time'], ['distance', 'Distance'], ['calories', 'Calories']];
 
-/** Why it was different: a chip, then a few words if they want. Optional, and never a judgement. */
+/** Why it was different: a chip. Optional, and never a judgement. */
 function Reasons({ act, onPatch }: { act: Act; onPatch: (p: Partial<Act>) => void }) {
   return (
     <div className="tr-reasons" role="group" aria-label={`Why ${act.name} was different`}>
@@ -34,7 +35,6 @@ function Reasons({ act, onPatch }: { act: Act; onPatch: (p: Partial<Act>) => voi
           <button key={k} type="button" role="radio" aria-checked={act.reason === k} className={`tr-chip${act.reason === k ? ' on' : ''}`} onClick={() => onPatch({ reason: act.reason === k ? undefined : k })}>{label}</button>
         ))}
       </div>
-      <Input aria-label={`A few words about ${act.name}`} placeholder="A few words, if you like" value={act.reasonNote ?? ''} onChange={(e) => onPatch({ reasonNote: e.target.value })} />
     </div>
   );
 }
@@ -61,7 +61,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
   const initial = useMemo<Draft>(() => {
     const saved = readDraft(key);
     if (saved) return saved;
-    const acts: Act[] = readSnapshot(snapshot).activities.map((a) => ({ key: a.key, name: a.name, originalName: a.name, tracking: a.tracking, sets: blankSets(a.tracking), done: false, skipped: false, note: '', plan: a.plan, planNote: a.note, block: a.block }));
+    const acts: Act[] = readSnapshot(snapshot).activities.map((a) => ({ key: a.key, name: a.name, originalName: a.name, tracking: a.tracking, sets: blankSets(a.tracking), done: false, skipped: false, note: '', plan: a.plan, planNote: a.note, block: a.block, target: a.target }));
     return { acts, rpe: '', notes: '' };
   }, [key, snapshot]);
   const [acts, setActs] = useState<Act[]>(initial.acts);
@@ -95,10 +95,16 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
     const l = lastFor(a);
     if (l) patch(a.key, { sets: l.sets.map((s) => fromDbSet(a.tracking, s)), sided: l.sets.some((s) => s.side) || a.sided });
   };
+  /** "As set": say so, and put the coach's numbers in any empty boxes so one tap and Save is all it takes. */
+  const asSet = (a: Act) => {
+    if (a.outcome === 'as_set') return patch(a.key, { outcome: undefined });
+    const empty = !hasEntered(a);
+    patch(a.key, { outcome: 'as_set', ...(empty && a.target.length ? { sets: a.target.map((t) => ({ ...t })) } : {}) });
+  };
   const addExercise = () => {
     const name = adding.name.trim();
     if (!name) return;
-    setActs((list) => [...list, { key: `n${Date.now()}`, name, originalName: '', tracking: adding.tracking, sets: blankSets(adding.tracking), done: false, skipped: false, note: '', plan: '', planNote: '', block: '' }]);
+    setActs((list) => [...list, { key: `n${Date.now()}`, name, originalName: '', tracking: adding.tracking, sets: blankSets(adding.tracking), done: false, skipped: false, note: '', plan: '', planNote: '', block: '', target: [] }]);
     setAdding({ name: '', tracking: adding.tracking });
     setManualTracking(false);
   };
@@ -205,7 +211,6 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
       {acts.length === 0 && <div className="mem-card muted">No exercises yet. Add the first one below.</div>}
       {acts.map((a, idx) => {
         const l = lastFor(a);
-        const fields = FIELDS[a.tracking];
         const prev = idx > 0 ? acts[idx - 1] : undefined;
         return (
           <section key={a.key} className={`mem-card tr-act${a.skipped ? ' skipped' : ''}`} aria-label={a.name}>
@@ -215,13 +220,13 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
                 <b className="tr-name">{a.name}</b>
                 {a.originalName && a.originalName !== a.name && <div className="muted small">Swapped from {a.originalName}</div>}
                 {a.plan && <div className="muted small">Suggested: {a.plan}</div>}
-                {a.planNote && <div className="muted small">{a.planNote}</div>}
+                {a.planNote && <div className="muted small">Coach: {a.planNote}</div>}
               </div>
               {a.skipped && <Button onClick={() => patch(a.key, { skipped: false })} aria-label={`Undo not this time for ${a.name}`}>Undo</Button>}
             </div>
             {!isOwn(a) && !a.skipped && (
               <div className="tr-outcome" role="radiogroup" aria-label={`How ${a.name} went`}>
-                <Button role="radio" aria-checked={a.outcome === 'as_set'} variant={a.outcome === 'as_set' ? 'primary' : 'secondary'} onClick={() => patch(a.key, { outcome: a.outcome === 'as_set' ? undefined : 'as_set' })}>As set</Button>
+                <Button role="radio" aria-checked={a.outcome === 'as_set'} variant={a.outcome === 'as_set' ? 'primary' : 'secondary'} onClick={() => asSet(a)}>As set</Button>
                 <Button role="radio" aria-checked={a.outcome === 'changed'} variant={a.outcome === 'changed' ? 'primary' : 'secondary'} onClick={() => patch(a.key, { outcome: a.outcome === 'changed' ? undefined : 'changed' })}>I changed it</Button>
               </div>
             )}
@@ -238,27 +243,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
             ) : (
               <>
                 {l && l.sets.length > 0 && <div className="muted small">Last time: {l.sets.map((s) => setText(a.tracking, fromDbSet(a.tracking, s))).filter(Boolean).join(', ')}</div>}
-                <div className="tr-sets">
-                  {a.sets.map((s: SetValues, i) => (
-                    <div className="tr-set-wrap" key={i}>
-                      <div className="tr-set">
-                        <span className="muted tr-n">{i + 1}</span>
-                        {fields.map((f) => (
-                          <Input key={f.id} className="tr-box" inputMode={f.id === 'time' ? 'text' : 'decimal'} aria-label={`${a.name} set ${i + 1} ${f.hint}`} placeholder={f.label}
-                            value={s[f.id] ?? ''} onChange={(e) => setSet(a.key, i, f.id, e.target.value)} />
-                        ))}
-                        {a.sets.length > 1 && <button type="button" className="tr-del" aria-label={`Remove set ${i + 1} from ${a.name}`} onClick={() => removeSet(a.key, i)}>✕</button>}
-                      </div>
-                      {a.sided && (
-                        <div className="tr-side" role="radiogroup" aria-label={`${a.name} set ${i + 1} side`}>
-                          {SIDES.map(([v, label]) => (
-                            <button key={v} type="button" role="radio" aria-checked={s.side === v} className={`tr-side-btn${s.side === v ? ' on' : ''}`} onClick={() => setSet(a.key, i, 'side', s.side === v ? '' : v)}>{label}</button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <SetGrid name={a.name} tracking={a.tracking} sets={a.sets} sided={a.sided} onChange={(i, f, v) => setSet(a.key, i, f, v)} onRemove={(i) => removeSet(a.key, i)} onSide={(i, v) => setSet(a.key, i, 'side', v)} />
                 <div className="mem-actions tr-tools">
                   <Button onClick={() => patch(a.key, { sets: [...a.sets, {}] })} aria-label={`Add a set to ${a.name}`}>+ Set</Button>
                   <Button onClick={() => patch(a.key, { sided: !a.sided })} aria-pressed={!!a.sided} aria-label={`Left and right for ${a.name}`}>{a.sided ? 'Left / right: on' : 'Left / right'}</Button>
@@ -279,6 +264,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
             {swapping === a.key && !a.skipped && !a.entryId && (
               <ExercisePicker label={`Swap ${a.name} for`} placeholder="What did you do instead?" value={a.name} own={own} onChange={(v) => patch(a.key, { name: v })} onPick={(n) => patch(a.key, { name: n })} />
             )}
+            <Input aria-label={`Your note on ${a.name}`} placeholder="Your note, like how it felt (optional)" maxLength={300} value={a.note} onChange={(e) => patch(a.key, { note: e.target.value })} />
           </section>
         );
       })}
