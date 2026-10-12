@@ -1,11 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useOutletContext } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { listMyPbs, listRecentSessions } from '../data/train';
+import { listMyPbs, listRecentSessions, markNoticesRead } from '../data/train';
 import { pbValueText } from './pb';
 import { dayLabel, dayOf, timeOf } from '../member/calc';
 import type { MemberCtx } from '../member/useMember';
-import { comingUp, dueNow, planDay } from './calc';
+import { coachNote, comingUp, dueNow, planDay } from './calc';
 
 /** The Workouts tab (for every member): what is planned for today, what is coming, a way to start your own, and what you did lately. */
 export function Train() {
@@ -14,8 +15,18 @@ export function Train() {
   const state = useLocation().state as { saved?: string; pb?: string; pbError?: string | null } | null;
   const pbs = useQuery({ queryKey: ['m-pbs', gym.gymId, userId], queryFn: () => listMyPbs(userId, gym.gymId) });
   const recent = useQuery({ queryKey: ['m-sessions', gym.gymId, userId], queryFn: () => listRecentSessions(userId, gym.gymId) });
-  const now = dueNow(d.plans, d.today, dayOf);
-  const later = comingUp(d.plans, d.today, dayOf);
+  const qc = useQueryClient();
+  // The coach's workouts wait in their own list, with no days and no deadlines. Anything else keeps the Today and Coming up lists.
+  const fromCoach = d.plans.filter((p) => p.source === 'pt' && (p.status === 'todo' || p.status === 'in_progress'));
+  const mine = d.plans.filter((p) => p.source !== 'pt');
+  const now = dueNow(mine, d.today, dayOf);
+  const later = comingUp(mine, d.today, dayOf);
+  // Looking at the list is what "seen" means: clear the new-workout notices.
+  const unseen = d.notices.filter((n) => n.kind === 'workout_assigned').map((n) => n.id);
+  useEffect(() => {
+    if (unseen.length === 0) return;
+    void markNoticesRead(unseen).then(() => qc.invalidateQueries({ queryKey: ['m-notices'] }));
+  }, [unseen.join(','), qc]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="mem-screen">
       <h1 className="mem-title">Workouts</h1>
@@ -23,9 +34,29 @@ export function Train() {
       {state?.pb && <div className="mem-card mem-pbwin" role="status">{state.pb}</div>}
       {state?.pbError && <div className="mem-error" role="alert">Your workout is saved, but a personal best could not be saved: {state.pbError}</div>}
 
+      {fromCoach.length > 0 && (
+        <section className="mem-card by-coach" aria-label="From your coach">
+          <div className="mem-row"><h2>From your coach</h2><span className="mem-tag">{fromCoach.length} for you</span></div>
+          <div className="muted small">Do them whenever suits you. Change, swap or leave out anything.</div>
+          {fromCoach.map((p) => {
+            const note = coachNote(p.snapshot);
+            return (
+              <div className="mem-line" key={p.id}>
+                <div>
+                  <b>{p.title}</b>
+                  <div className="muted small">{p.status === 'in_progress' ? 'Started' : 'Waiting for you'}</div>
+                  {note && <div className="muted small">“{note}”</div>}
+                </div>
+                <Link className="btn primary" to={`/m/train/${p.id}`} aria-label={`${p.status === 'in_progress' ? 'Continue' : 'Open'} ${p.title}`}>{p.status === 'in_progress' ? 'Continue' : 'Open'}</Link>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
       <section className="mem-card" aria-label="Today">
         <h2>Today</h2>
-        {now.length === 0 && <div className="muted">Nothing planned. Start your own workout whenever you like.</div>}
+        {now.length === 0 && <div className="muted">Start your own workout whenever you like.</div>}
         {now.map((p) => {
           const day = planDay(p, dayOf);
           return (
@@ -71,7 +102,12 @@ export function Train() {
         <h2>Recent</h2>
         {recent.isPending && <div className="muted">Loading…</div>}
         {recent.data?.length === 0 && <div className="muted">Your workouts will appear here.</div>}
-        {recent.data?.map((s) => <div className="mem-line" key={s.id}><b>{s.title}</b><span className="muted small">{dayLabel(dayOf(s.performedAt))}</span></div>)}
+        {recent.data?.map((s) => s.assignmentId ? (
+          <Link key={s.id} to={`/m/train/done/${s.assignmentId}`} className="mem-card by-coach tr-recent" aria-label={`${s.title}, set by your coach`}>
+            <div className="mem-row"><b>{s.title}</b><span className="mem-tag">Set by your coach</span></div>
+            <div className="mem-row"><span className="muted small">{dayLabel(dayOf(s.performedAt))}</span>{s.feedbackNew ? <span className="mem-tag new">New feedback</span> : s.feedbackCount > 0 ? <span className="muted small">Feedback read</span> : null}</div>
+          </Link>
+        ) : <div className="mem-line" key={s.id}><b>{s.title}</b><span className="muted small">{dayLabel(dayOf(s.performedAt))}</span></div>)}
       </section>
     </div>
   );

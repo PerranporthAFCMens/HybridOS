@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { ClassRow, MyPlan, PtRow } from '../data/member';
-import type { SessionRow } from '../data/train';
+import type { Notice, SessionRow } from '../data/train';
 import type { Cta } from '../memberview/calc';
 import { ctaLink } from '../memberview/calc';
 import { pbValueText, type StoredPb } from '../train/pb';
@@ -113,6 +113,30 @@ export function PtList({ rows }: { rows: PtRow[] }) {
       <h2>PT appointments</h2>
       {rows.slice(0, 3).map((r) => (
         <div className="mem-line" key={r.id}><div><b>{dayLabel(dayOf(r.startsAt))}</b><div className="muted small">{timeOf(r.startsAt)}–{timeOf(r.endsAt)}</div></div></div>
+      ))}
+    </section>
+  );
+}
+
+/** New from the coach: workouts waiting and replies to read. Shown whatever the gym's tile settings are. */
+export function Notices({ notices }: { notices: Notice[] }) {
+  if (notices.length === 0) return null;
+  const assigned = notices.filter((n) => n.kind === 'workout_assigned');
+  const replies = notices.filter((n) => n.kind === 'workout_feedback' && n.assignmentId);
+  return (
+    <section className="mem-card by-coach" aria-label="New from your coach">
+      <div className="mem-row"><h2>New from your coach</h2><span className="mem-tag new">{notices.length} new</span></div>
+      {assigned.length > 0 && (
+        <div className="mem-line">
+          <div><b>{assigned.length === 1 ? 'A new workout' : `${assigned.length} new workouts`}</b><div className="muted small">{assigned.map((n) => n.body).filter(Boolean).join(', ')}</div></div>
+          <Link className="btn primary" to="/m/train">See {assigned.length === 1 ? 'it' : 'them'}</Link>
+        </div>
+      )}
+      {replies.map((n) => (
+        <div className="mem-line" key={n.id}>
+          <div><b>Feedback on {n.body ?? 'your workout'}</b></div>
+          <Link className="btn secondary" to={`/m/train/done/${n.assignmentId}`}>Read</Link>
+        </div>
       ))}
     </section>
   );

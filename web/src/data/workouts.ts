@@ -81,17 +81,24 @@ export async function loadAssignableMembers(gymId: string): Promise<MemberOption
   return (data ?? []).flatMap((m) => (m.user_id ? [{ userId: m.user_id, name: m.display_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || 'Member' }] : []));
 }
 
-/** A coach assigns a saved workout to one member, once or on several days: the workout is copied into each assignment as it is now. */
-export async function assignWorkout(gymId: string, userId: string, t: TemplateRow, memberUserId: string, dueAts: (string | null)[]): Promise<void> {
-  const { blocks, activities } = await loadParts(t.id);
-  const snapBlocks: SnapshotBlock[] = blocks.map((b) => ({ ...b, activities: activities.filter((a) => a.block_id === b.id).map((a) => ({ block_id: a.block_id, activity_name: a.activity_name, activity_type: a.activity_type, tracking_type: a.tracking_type, position: a.position, prescription: a.prescription, notes: a.notes })) }));
-  const snapshot = buildSnapshot(t, snapBlocks);
-  const rows = dueAts.map((dueAt) => ({
-    gym_id: gymId, template_id: t.id, member_user_id: memberUserId, assigned_by: userId, source: 'pt', title: t.title, workout_type: t.workoutType, focus_tags: t.focusTags,
-    workout_snapshot: JSON.parse(JSON.stringify(snapshot)) as never, due_at: dueAt, status: 'todo',
-  }));
-  // One request, so a programme is given in full or not at all.
-  const { error } = await supabase.from('workout_assignments').insert(rows.length === 1 ? (rows[0] as (typeof rows)[number]) : rows);
+/**
+ * A coach gives one member one or several saved workouts. There are no days: they wait in the member's "From your coach"
+ * list until the member does them. Each workout is copied as it is now, with the coach's note inside the copy. One request,
+ * so the set is given in full or not at all.
+ */
+export async function assignWorkouts(gymId: string, userId: string, templates: TemplateRow[], memberUserId: string, note: string | null): Promise<void> {
+  if (templates.length === 0) throw new Error('Choose at least one workout.');
+  const rows = [];
+  for (const t of templates) {
+    const { blocks, activities } = await loadParts(t.id);
+    const snapBlocks: SnapshotBlock[] = blocks.map((b) => ({ ...b, activities: activities.filter((a) => a.block_id === b.id).map((a) => ({ block_id: a.block_id, activity_name: a.activity_name, activity_type: a.activity_type, tracking_type: a.tracking_type, position: a.position, prescription: a.prescription, notes: a.notes })) }));
+    const snapshot = { ...buildSnapshot(t, snapBlocks), ...(note ? { coach_note: note } : {}) };
+    rows.push({
+      gym_id: gymId, template_id: t.id, member_user_id: memberUserId, assigned_by: userId, source: 'pt', title: t.title, workout_type: t.workoutType, focus_tags: t.focusTags,
+      workout_snapshot: JSON.parse(JSON.stringify(snapshot)) as never, status: 'todo',
+    });
+  }
+  const { error } = await supabase.from('workout_assignments').insert(rows);
   if (error) throw error;
 }
 

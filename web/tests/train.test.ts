@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ACTIVITIES, guessTracking, matchExercises } from '../src/train/activities';
-import { assignmentNote, blankSets, comingUp, dueNow, formatDuration, fromDbSet, parseDuration, prepareFinish, readSnapshot, setText, toDbSet, type PlayedActivity } from '../src/train/calc';
+import { assignmentNote, blankSets, buildResult, comingUp, dueNow, formatDuration, fromDbSet, hasEntered, hasPainFlag, parseDuration, prepareFinish, readResult, readSnapshot, reasonLabel, resultJson, resultSummary, setText, toDbSet, type PlayedActivity } from '../src/train/calc';
 
 const dayOf = (iso: string) => iso.slice(0, 10);
 
@@ -134,5 +134,56 @@ describe('the exercise list', () => {
     expect(guessTracking('Concept2 RowErg')).toBe('distance');
     expect(guessTracking('Back Squat')).toBe('strength');
     expect(guessTracking('Farmer carry')).toBe('time');
+  });
+});
+
+describe('what changed and why', () => {
+  const act = (o: Partial<PlayedActivity> & { entered?: boolean }): PlayedActivity & { entered: boolean } => ({ name: 'Back squat', originalName: 'Back squat', tracking: 'strength', sets: [], done: false, skipped: false, note: '', plan: '4 x 6 @ 60kg', entered: true, ...o });
+  it('records an exercise the client says went as set', () => {
+    expect(buildResult([act({ outcome: 'as_set' })])).toEqual([{ name: 'Back squat', plan: '4 x 6 @ 60kg', status: 'as_set' }]);
+  });
+  it('records a change with its reason and their words', () => {
+    expect(buildResult([act({ outcome: 'changed', reason: 'too_tired', reasonNote: ' legs felt heavy ' })])).toEqual([{ name: 'Back squat', plan: '4 x 6 @ 60kg', status: 'changed', reason: 'too_tired', note: 'legs felt heavy' }]);
+  });
+  it('treats a swap as a change and keeps both names', () => {
+    expect(buildResult([act({ name: 'Goblet squat', reason: 'no_equipment' })])).toEqual([{ name: 'Back squat', plan: '4 x 6 @ 60kg', status: 'changed', swappedTo: 'Goblet squat', reason: 'no_equipment' }]);
+  });
+  it('records a skip as not this time, with the reason if given', () => {
+    expect(buildResult([act({ skipped: true, reason: 'pain' })])).toEqual([{ name: 'Back squat', plan: '4 x 6 @ 60kg', status: 'not_this_time', reason: 'pain' }]);
+  });
+  it('makes no claim when the client said neither', () => {
+    expect(buildResult([act({})])).toEqual([{ name: 'Back squat', plan: '4 x 6 @ 60kg', status: 'logged' }]);
+  });
+  it('counts an exercise never touched as not this time', () => {
+    expect(buildResult([act({ entered: false })])[0]?.status).toBe('not_this_time');
+  });
+  it('lists an exercise they added themselves, and ignores an empty one', () => {
+    expect(buildResult([act({ name: 'Sled push', originalName: '', plan: '' }), act({ name: 'Rows', originalName: '', plan: '', entered: false })])).toEqual([{ name: 'Sled push', plan: '', status: 'added' }]);
+  });
+  it('reads a stored report safely', () => {
+    expect(readResult(null)).toEqual([]);
+    expect(readResult({ exercises: [{ name: 'A', status: 'changed', reason: 'pain' }, { name: 5 }, { name: 'B', status: 'nonsense' }, 'x'] })).toEqual([{ name: 'A', plan: '', status: 'changed', reason: 'pain' }]);
+    expect(readResult(resultJson([{ name: 'A', plan: 'p', status: 'as_set' }]))).toEqual([{ name: 'A', plan: 'p', status: 'as_set' }]);
+  });
+  it('summarises without judging', () => {
+    const rows = [{ name: 'a', plan: '', status: 'as_set' as const }, { name: 'b', plan: '', status: 'as_set' as const }, { name: 'c', plan: '', status: 'changed' as const }, { name: 'd', plan: '', status: 'not_this_time' as const }, { name: 'e', plan: '', status: 'added' as const }];
+    expect(resultSummary(rows)).toBe('2 as set, 1 changed, 1 not this time');
+    expect(resultSummary([])).toBe('');
+  });
+  it('spots a pain reason', () => {
+    expect(hasPainFlag([{ name: 'a', plan: '', status: 'changed', reason: 'pain' }])).toBe(true);
+    expect(hasPainFlag([{ name: 'a', plan: '', status: 'changed', reason: 'too_heavy' }])).toBe(false);
+    expect(reasonLabel('too_tired')).toBe('Too tired');
+    expect(reasonLabel('nope')).toBe('');
+  });
+});
+
+describe('did the client record anything', () => {
+  const base: PlayedActivity = { name: 'a', originalName: 'a', tracking: 'strength', sets: [{}, {}], done: false, skipped: false, note: '' };
+  it('says no for empty boxes and yes for a number or a tick', () => {
+    expect(hasEntered(base)).toBe(false);
+    expect(hasEntered({ ...base, sets: [{}, { reps: ' 6 ' }] })).toBe(true);
+    expect(hasEntered({ ...base, sets: [{ side: 'left' }] })).toBe(false);
+    expect(hasEntered({ ...base, done: true })).toBe(true);
   });
 });

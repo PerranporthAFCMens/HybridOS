@@ -38,6 +38,7 @@ process.env.MOCK_ROLE = 'member';
 for (const [name, viewport] of Object.entries(sizes)) {
   const writes = [];
   let open = true;
+  let unread = true;
   const { ctx, page, errors } = await signedInPage(browser, { ...viewport });
   await mockSupabase(page, async ({ route, path, select, method, body }) => {
     if (path.endsWith('/rpc/member_class_schedule')) return reply(route, []);
@@ -46,8 +47,16 @@ for (const [name, viewport] of Object.entries(sizes)) {
       : [{ id: 'm1', status: 'active', ends_on: null, created_at: '2026-01-01T00:00:00Z' }]);
     if (path.endsWith('/profiles')) return reply(route, [{ display_name: 'Priya Nair', first_name: 'Priya', last_name: 'Nair' }]);
     if (path.endsWith('/pt_appointments')) return reply(route, [{ id: 'pt1', starts_at: hrs(30), ends_at: hrs(31), status: 'booked' }, { id: 'pt0', starts_at: hrs(-48), ends_at: hrs(-47), status: 'completed' }, { id: 'pt9', starts_at: hrs(-200), ends_at: hrs(-199), status: 'no_show' }]);
+    if (path.endsWith('/member_notifications')) {
+      if (method === 'PATCH') { writes.push('PATCH notifications'); unread = false; return reply(route, []); }
+      return reply(route, unread ? [{ id: 'n1', notification_type: 'workout_assigned', title: 'New workout from your coach', body: 'Upper body', related_assignment_id: 'a1', created_at: hrs(-2) }] : []);
+    }
+    if (path.endsWith('/workout_assignment_feedback')) return reply(route, [{ id: 'f1', assignment_id: 'a1', created_at: '2026-10-13T09:00:00Z', body: 'Good effort. Try 57.5 next time.', author_id: 'c1' }]);
     if (path.endsWith('/workout_assignments')) {
       if (method === 'PATCH') { writes.push(`PATCH assignment ${JSON.stringify(body)}`); if (body?.status === 'completed') open = false; return reply(route, []); }
+      // The finished workout, as the done screen asks for it, and the "seen" lookup behind the recent list.
+      if (select.includes('member_notes')) return reply(route, { id: 'a1', title: 'Upper body', completed_at: '2026-10-13T08:00:00Z', member_rpe: 7, member_notes: 'Felt good', feedback_seen_at: null, result: { version: 1, exercises: [{ name: 'Dumbbell row', plan: '3 x 10', status: 'as_set' }, { name: 'Overhead press', plan: '4 x 8', status: 'changed', swappedTo: 'Landmine press', reason: 'no_equipment' }, { name: 'Stretch', plan: '5 minutes', status: 'not_this_time', reason: 'out_of_time', note: 'ran out of time' }] } });
+      if (select.includes('feedback_seen_at')) return reply(route, [{ id: 'a1', feedback_seen_at: null }]);
       return reply(route, open ? [assignment] : []);
     }
     if (path.endsWith('/workout_entries')) {
@@ -67,17 +76,28 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/workout_sets') && method === 'POST') { writes.push(`sets ${JSON.stringify(body)}`); return reply(route, []); }
     if (path.endsWith('/workout_sessions')) {
       if (method === 'POST') { writes.push(`session ${JSON.stringify(body)}`); return reply(route, [{ id: 's9' }]); }
-      if (method === 'GET') return reply(route, [{ id: 's0', title: 'Lower body', performed_at: '2026-10-06T10:00:00Z' }]);
+      if (method === 'GET') return reply(route, [{ id: 's0', title: 'Lower body', performed_at: '2026-10-06T10:00:00Z', assignment_id: 'a1' }]);
     }
     return false;
   });
   const c = runChecks();
   await page.goto(`${base}/m/today`);
-  await c.has("today's workout is on top", page.getByRole('heading', { name: "Today's workout is ready" }));
-  c.ok('tabs: Today, Workouts, Community, Me (no classes in this plan)', (await page.getByRole('navigation', { name: 'Member' }).getByRole('link').allInnerTexts()).join('|') === 'Today|Workouts|Community|Me');
+  await c.has('the coach\'s workout is on top, in the coach\'s words', page.getByRole('heading', { name: 'Your coach has a workout for you' }));
+  await c.has('a new-workout notice on Today', page.getByRole('region', { name: 'New from your coach' }).getByText('A new workout'));
+  c.ok('and a badge on the Workouts tab', (await page.getByRole('navigation', { name: 'Member' }).getByLabel('1 new from your coach').count()) === 1);
+  c.ok('tabs: Today, Workouts, Community, Me (no classes in this plan)', (await page.getByRole('navigation', { name: 'Member' }).getByRole('link').allInnerTexts()).map((t) => t.replace(/\d+$/, '')).join('|') === 'Today|Workouts|Community|Me');
   c.ok('layout (today)', (await page.evaluate(layoutProblems)).length === 0);
 
-  await page.getByRole('link', { name: 'Start workout' }).click();
+  // The coach's workouts wait in their own list on Workouts, with no days. Looking at it clears the notice.
+  await page.getByRole('navigation', { name: 'Member' }).getByRole('link', { name: /^Workouts/ }).click();
+  await c.has('From your coach lists it with no deadline', page.getByRole('region', { name: 'From your coach' }).getByText('Waiting for you'));
+  c.ok('it says to do them whenever', (await page.getByText('Do them whenever suits you.').count()) === 1);
+  await page.waitForTimeout(400);
+  c.ok('looking at the list cleared the notice', writes.includes('PATCH notifications') && (await page.getByRole('navigation', { name: 'Member' }).getByLabel('1 new from your coach').count()) === 0);
+  c.ok('layout (from your coach)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/train-from-coach-${name}.png`, fullPage: true });
+  writes.length = 0;
+  await page.getByRole('link', { name: 'Open Upper body' }).click();
   await c.has('the workout opens', page.getByRole('heading', { name: 'Upper body' }));
   c.ok('says these are suggestions', (await page.getByText(/suggestions: change, swap or skip anything/).count()) === 1);
   c.ok('the exercises are listed with their plan', (await page.getByRole('region', { name: 'Dumbbell row' }).textContent()).includes('Suggested: 3 x 10') && (await page.getByRole('region', { name: 'Overhead press' }).textContent()).includes('Controlled'));
@@ -111,8 +131,15 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('a set can be taken out, and the rest renumber', (await page.getByLabel('Landmine press set 3 Weight').count()) === 0 && (await page.getByLabel('Landmine press set 2 Weight').count()) === 1 && (await page.getByRole('radiogroup', { name: /^Landmine press set \d side$/ }).count()) === 2);
   await page.getByRole('button', { name: 'Remove set 2 from Landmine press' }).click();
   c.ok('the last set cannot be removed', (await page.getByRole('button', { name: /^Remove set \d from Landmine press$/ }).count()) === 0 && (await page.getByLabel('Landmine press set 1 Weight').inputValue()) === '30');
+  await page.getByRole('region', { name: 'Dumbbell row' }).getByRole('radio', { name: 'As set' }).click();
+  c.ok('"As set" is marked', (await page.getByRole('region', { name: 'Dumbbell row' }).getByRole('radio', { name: 'As set' }).getAttribute('aria-checked')) === 'true');
+  await page.getByRole('group', { name: 'Why Landmine press was different' }).getByRole('radio', { name: 'No equipment' }).click();
   await page.getByRole('button', { name: 'Skip Stretch' }).click();
-  c.ok('a skipped exercise says that is fine', (await page.getByText('Skipped. That is fine.').count()) === 1);
+  c.ok('a skipped exercise says that is fine', (await page.getByText('Not this time. That is fine.').count()) === 1);
+  await page.getByRole('group', { name: 'Why Stretch was different' }).getByRole('radio', { name: 'Out of time' }).click();
+  await page.getByLabel('A few words about Stretch').fill('ran out of time');
+  c.ok('layout (what happened)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/train-reasons-${name}.png`, fullPage: true });
   await page.getByLabel('How hard was it').selectOption('7');
   await page.getByLabel('Notes', { exact: true }).fill('Felt good');
   await page.getByRole('button', { name: 'Finish workout' }).click();
@@ -126,10 +153,24 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('the screen says so', (await page.getByText('New personal bests: Dumbbell row 26 kg, Landmine press 30 kg').count()) === 1);
   c.ok('the skipped one is not saved', !joined.includes('"exercise_name":"Stretch"'));
   c.ok('the coach workout is marked done with rpe and a note', joined.includes('"status":"completed"') && joined.includes('"member_rpe":7') && joined.includes('Skipped: Stretch'));
-  await c.has('the finished workout is gone from today', page.getByLabel('Today').getByText('Nothing planned.'));
-  await c.has('recent workouts are listed', page.getByLabel('Recent').getByText('Lower body'));
+  c.ok('the finished workout is tied to the one the coach set', writes.filter((w) => w.startsWith('session ')).every((w) => w.includes('"assignment_id":"a1"')));
+  c.ok('the report says what changed and why', joined.includes('"status":"as_set"') && joined.includes('"status":"changed"') && joined.includes('"swappedTo":"Landmine press"') && joined.includes('"reason":"no_equipment"') && joined.includes('"status":"not_this_time"') && joined.includes('"reason":"out_of_time"') && joined.includes('"note":"ran out of time"') && joined.includes('"plan":"3 x 10"'));
+  await c.has('the finished workout is gone from the coach list', page.getByLabel('Today').getByText('Start your own workout whenever you like.'));
+  c.ok('From your coach is gone with nothing waiting', (await page.getByRole('region', { name: 'From your coach' }).count()) === 0);
+  await c.has('recent workouts are listed, the coach\'s outlined with a new-feedback marker', page.getByRole('link', { name: 'Lower body, set by your coach' }).getByText('New feedback'));
   c.ok('layout (train)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/train-home-${name}.png` });
+  writes.length = 0;
+  await page.getByRole('link', { name: 'Lower body, set by your coach' }).click();
+  await c.has('a finished coach workout opens', page.getByRole('region', { name: 'What you recorded' }));
+  c.ok('it lists each exercise with its status', (await page.getByRole('region', { name: 'What you recorded' }).textContent()).includes('Dumbbell row') && (await page.getByRole('region', { name: 'What you recorded' }).textContent()).includes('As set') && (await page.getByRole('region', { name: 'What you recorded' }).textContent()).includes('Overhead press → Landmine press') && (await page.getByRole('region', { name: 'What you recorded' }).textContent()).includes('Not this time'));
+  c.ok('with the reason and their words', (await page.getByRole('region', { name: 'What you recorded' }).textContent()).includes('No equipment') && (await page.getByRole('region', { name: 'What you recorded' }).textContent()).includes('Out of time: ran out of time'));
+  await c.has('the coach\'s reply is there', page.getByRole('region', { name: 'From your coach' }).getByText('Good effort. Try 57.5 next time.'));
+  await page.waitForTimeout(400);
+  c.ok('reading it marks the feedback as seen', writes.some((w) => w.startsWith('PATCH assignment') && w.includes('feedback_seen_at')));
+  c.ok('layout (a finished coach workout)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/train-done-${name}.png`, fullPage: true });
+  await page.getByRole('link', { name: '‹ Workouts' }).click();
 
   c.ok('personal bests are listed on Workouts', (await page.getByLabel('Personal bests', { exact: true }).textContent()).includes('Deadlift') && (await page.getByLabel('Personal bests', { exact: true }).textContent()).includes('145 kg'));
   c.ok('a PT card with the next session', (await page.getByLabel('Personal training').textContent()).includes('Next session'));

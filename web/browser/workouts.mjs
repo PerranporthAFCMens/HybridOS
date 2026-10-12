@@ -94,38 +94,42 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('old block removed, scoped, and it is the LAST write', del.length === 1 && del[0].table === 'workout_template_blocks' && del[0].query.template_id === 'eq.t-leg' && del[0].query.id === 'in.(blk-old)' && writes[writes.length - 1] === del[0]);
   c.ok('assign enabled again after saving', !(await page.getByRole('button', { name: 'Assign to member' }).isDisabled()));
 
-  // Assign
+  // Assign: one or several workouts, no days
   writes.length = 0;
   await page.getByRole('button', { name: 'Assign to member' }).click();
-  await dialog.getByLabel('Member').waitFor();
-  c.ok('assign dialog lists the members', (await dialog.getByLabel('Member').locator('option').allInnerTexts()).join() === 'Amy Active,Ben Lifter');
+  await dialog.getByLabel('Client').waitFor();
+  c.ok('assign dialog lists the clients', (await dialog.getByLabel('Client').locator('option').allInnerTexts()).join() === 'Amy Active,Ben Lifter');
+  c.ok('the workout being viewed is already ticked', await dialog.getByRole('group', { name: 'Workouts to assign' }).getByLabel(/^Leg Day/).isChecked());
+  c.ok('there are no days or dates to choose', (await dialog.getByLabel('Due date (optional)').count()) === 0 && (await dialog.getByLabel('How often').count()) === 0 && (await dialog.getByLabel('Start date').count()) === 0);
   c.ok('assign dialog layout', (await page.evaluate(layoutProblems)).length === 0);
-  await dialog.getByLabel('Member').selectOption('u-ben');
-  await dialog.getByLabel('Due date (optional)').fill('2026-07-10');
-  await dialog.getByRole('button', { name: 'Assign workout' }).click();
-  await c.has('assigned message', page.getByText('Leg Day assigned to Ben Lifter.'));
+  if (shots) await page.screenshot({ path: `${shots}/workouts-assign-${name}.png` });
+  await dialog.getByLabel('Client').selectOption('u-ben');
+  await dialog.getByLabel('Note (optional)').fill('Slow on the way down');
+  await dialog.getByRole('button', { name: 'Send workout' }).click();
+  await c.has('sent message', page.getByText('Workout sent to Ben Lifter.'));
   const as = writes.find((w) => w.table === 'workout_assignments');
-  c.ok('assignment exact', as && as.method === 'POST' && as.body.gym_id === GYM && as.body.member_user_id === 'u-ben' && as.body.assigned_by === USER && as.body.source === 'pt' && as.body.status === 'todo' && as.body.template_id === 't-leg' && as.body.title === 'Leg Day' && as.body.due_at === '2026-07-10T22:59:00.000Z');
-  c.ok('assignment carries a copy of the blocks', as && as.body.workout_snapshot.template_id === 't-leg' && as.body.workout_snapshot.blocks.length === 1 && as.body.workout_snapshot.blocks[0].activities.length === 2);
+  const one = as && Array.isArray(as.body) ? as.body[0] : null;
+  c.ok('assignment exact, with no date', as && as.method === 'POST' && as.body.length === 1 && one.gym_id === GYM && one.member_user_id === 'u-ben' && one.assigned_by === USER && one.source === 'pt' && one.status === 'todo' && one.template_id === 't-leg' && one.title === 'Leg Day' && !('due_at' in one) && !('scheduled_for' in one));
+  c.ok('assignment carries a copy of the blocks and the coach\'s note', one && one.workout_snapshot.template_id === 't-leg' && one.workout_snapshot.blocks.length === 1 && one.workout_snapshot.blocks[0].activities.length === 2 && one.workout_snapshot.coach_note === 'Slow on the way down');
 
-  // A weekly programme: one request, one assignment per day
+  // Several at once: one request
   writes.length = 0;
   await page.getByRole('button', { name: 'Assign to member' }).click();
-  await dialog.getByLabel('Member').selectOption('u-amy');
-  await dialog.getByLabel('How often').selectOption('weekly');
-  await dialog.getByLabel('Start date').fill('2026-10-12');
-  await dialog.getByRole('button', { name: 'Assign workout' }).click();
-  await c.has('a programme needs a day', dialog.getByText('Choose at least one day of the week.'));
-  await dialog.getByRole('group', { name: 'Days of the week' }).getByLabel('Monday').check();
-  await dialog.getByRole('group', { name: 'Days of the week' }).getByLabel('Thursday').check();
-  await dialog.getByLabel('For how many weeks').selectOption('2');
-  await c.has('it says how many workouts', dialog.getByText('4 workouts, from 12 Oct 2026 to 22 Oct 2026.'));
-  c.ok('layout (programme)', (await page.evaluate(layoutProblems)).length === 0);
-  await dialog.getByRole('button', { name: 'Assign 4 workouts' }).click();
-  await c.has('programme assigned message', page.getByText('Leg Day assigned to Amy Active on 4 days.'));
-  const prog = writes.filter((w) => w.table === 'workout_assignments');
-  c.ok('sent as one request with four assignments on the right days', prog.length === 1 && Array.isArray(prog[0].body) && prog[0].body.length === 4
-    && prog[0].body.map((b) => b.due_at.slice(0, 10)).join() === '2026-10-12,2026-10-15,2026-10-19,2026-10-22' && prog[0].body.every((b) => b.member_user_id === 'u-amy' && b.status === 'todo' && b.workout_snapshot.template_id === 't-leg'));
+  await dialog.getByLabel('Client').selectOption('u-amy');
+  await dialog.getByRole('group', { name: 'Workouts to assign' }).getByLabel(/^Friday Hybrid/).check();
+  c.ok('the button counts them', (await dialog.getByRole('button', { name: 'Send 2 workouts' }).count()) === 1);
+  await dialog.getByRole('group', { name: 'Workouts to assign' }).getByLabel(/^Leg Day/).uncheck();
+  await dialog.getByRole('group', { name: 'Workouts to assign' }).getByLabel(/^Friday Hybrid/).uncheck();
+  await dialog.getByRole('button', { name: 'Send workout' }).click();
+  await c.has('at least one workout is needed', dialog.getByText('Tick at least one workout.'));
+  c.ok('nothing was sent for none', writes.filter((w) => w.table === 'workout_assignments').length === 0);
+  await dialog.getByRole('group', { name: 'Workouts to assign' }).getByLabel(/^Leg Day/).check();
+  await dialog.getByRole('group', { name: 'Workouts to assign' }).getByLabel(/^Friday Hybrid/).check();
+  c.ok('layout (several)', (await page.evaluate(layoutProblems)).length === 0);
+  await dialog.getByRole('button', { name: 'Send 2 workouts' }).click();
+  await c.has('several sent message', page.getByText('2 workouts sent to Amy Active.'));
+  const several = writes.filter((w) => w.table === 'workout_assignments');
+  c.ok('sent as one request with two assignments, neither dated', several.length === 1 && several[0].body.length === 2 && several[0].body.map((b) => b.template_id).sort().join() === 't-leg,t-wod' && several[0].body.every((b) => b.member_user_id === 'u-amy' && b.status === 'todo' && !('due_at' in b) && !('coach_note' in b.workout_snapshot)));
 
   // WOD
   writes.length = 0;

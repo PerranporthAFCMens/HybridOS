@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { loadAssignableMembers, loadBlocks, type TemplateRow } from '../data/workouts';
+import { loadBlocks, type TemplateRow } from '../data/workouts';
+import { AssignWorkoutsDialog } from './AssignWorkouts';
 import { Button } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
-import { Checkbox, DateInput, Field, FieldRow, Input, Select, Textarea } from '../ui/Field';
+import { DateInput, Field, FieldRow, Input, Select, Textarea } from '../ui/Field';
 import { Modal } from '../ui/Modal';
-import { BLOCK_TYPES, TRACKING, WEEK_DAYS, WORKOUT_TYPES, blockLabel, dueAt, emptyWorkout, hasChanged, moveItem, newActivity, newBlock, programmeDates, trackingLabel, validateWodDate, validateWorkout, type BlockForm, type WorkoutForm } from './calc';
-import { dayText as ukDay } from '../builder/period';
+import { BLOCK_TYPES, TRACKING, WORKOUT_TYPES, blockLabel, emptyWorkout, hasChanged, moveItem, newActivity, newBlock, trackingLabel, validateWodDate, validateWorkout, type BlockForm, type WorkoutForm } from './calc';
 import { useTemplates, useWorkoutWrites } from './useWorkouts';
 import '../members/members.css';
 import './workouts.css';
@@ -65,7 +65,6 @@ function Editor({ template, onClose }: { template: TemplateRow | null; onClose: 
 }
 
 function EditorForm({ template, initialBlocks, w, onClose }: { template: TemplateRow | null; initialBlocks: BlockForm[]; w: ReturnType<typeof useWorkoutWrites>; onClose: (n?: Note) => void }) {
-  const { gym } = useReadyAuth();
   const startForm: WorkoutForm = template
     ? { title: template.title, type: template.workoutType, tags: template.focusTags.join(', '), minutes: template.estimatedMinutes === null ? '' : String(template.estimatedMinutes), description: template.description ?? '', visibility: template.visibility }
     : emptyWorkout;
@@ -176,68 +175,9 @@ function EditorForm({ template, initialBlocks, w, onClose }: { template: Templat
         <Button disabled={!usable} onClick={() => setDialog('wod')}>Publish as WOD</Button>
         {id && <Button onClick={() => { setNote(null); setAsking(true); }}>Archive</Button>}
       </div>
-      {dialog === 'assign' && current && <AssignDialog t={current} w={w} gymId={gym.gymId} onClose={(n) => { setDialog(null); if (n) setNote(n); }} />}
+      {dialog === 'assign' && current && <AssignWorkoutsDialog preselect={current.id} onClose={(n) => { setDialog(null); if (n) setNote(n); }} />}
       {dialog === 'wod' && current && <WodDialog t={current} w={w} onClose={(n) => { setDialog(null); if (n) setNote(n); }} />}
     </>
-  );
-}
-
-function AssignDialog({ t, w, gymId, onClose }: { t: TemplateRow; w: ReturnType<typeof useWorkoutWrites>; gymId: string; onClose: (n?: Note) => void }) {
-  const q = useQuery({ queryKey: ['assignable-members', gymId], queryFn: () => loadAssignableMembers(gymId) });
-  const [member, setMember] = useState('');
-  const [mode, setMode] = useState<'once' | 'weekly'>('once');
-  const [due, setDue] = useState('');
-  const [from, setFrom] = useState('');
-  const [days, setDays] = useState<number[]>([]);
-  const [weeks, setWeeks] = useState('4');
-  const [error, setError] = useState('');
-  const chosen = member || q.data?.[0]?.userId || '';
-  const dates = mode === 'weekly' ? programmeDates(from, days, Number(weeks)) : null;
-  const who = q.data?.find((m) => m.userId === chosen)?.name ?? 'the member';
-  const go = () => {
-    if (!chosen) return setError('Choose a member.');
-    let dues: (string | null)[];
-    if (mode === 'once') dues = [dueAt(due)];
-    else {
-      if (!dates) return setError('Choose the date to start from.');
-      if (dates.length === 0) return setError('Choose at least one day of the week.');
-      dues = dates.map((d) => dueAt(d));
-    }
-    setError('');
-    w.assign.mutate({ t, member: chosen, dues }, {
-      onSuccess: () => onClose({ text: dues.length === 1 ? `${t.title} assigned to ${who}.` : `${t.title} assigned to ${who} on ${dues.length} days.`, good: true }),
-      onError: (e) => setError(e.message),
-    });
-  };
-  const toggle = (i: number) => setDays((d) => (d.includes(i) ? d.filter((x) => x !== i) : [...d, i].sort((a, b) => a - b)));
-  return (
-    <Modal title="Assign workout" onClose={() => onClose()}>
-      <SectionTitle title="Assign workout" action={<Button onClick={() => onClose()}>Close</Button>} />
-      <p className="muted small">Personal training assignment: <b>{t.title}</b>. The member gets a copy as it is now. It is a suggestion they can change, swap or skip.</p>
-      {q.isPending && <Empty>Loading members…</Empty>}
-      {q.isError && <Empty>Could not load members.</Empty>}
-      {q.data && q.data.length === 0 && <Empty>No active members with an app login yet.</Empty>}
-      {q.data && q.data.length > 0 && (
-        <>
-          <Field label="Member" htmlFor="as-member"><Select id="as-member" value={chosen} onChange={(e) => setMember(e.target.value)}>{q.data.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}</Select></Field>
-          <Field label="How often" htmlFor="as-mode"><Select id="as-mode" value={mode} onChange={(e) => setMode(e.target.value === 'weekly' ? 'weekly' : 'once')}><option value="once">Once</option><option value="weekly">Every week on chosen days</option></Select></Field>
-          {mode === 'once' ? (
-            <Field label="Due date (optional)" htmlFor="as-due"><DateInput id="as-due" value={due} onChange={(e) => setDue(e.target.value)} /></Field>
-          ) : (
-            <>
-              <Field label="Start date" htmlFor="as-from"><DateInput id="as-from" value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
-              <div role="group" aria-label="Days of the week" className="assign-days">
-                {WEEK_DAYS.map((d, i) => <Checkbox key={d} label={d} checked={days.includes(i)} onChange={() => toggle(i)} />)}
-              </div>
-              <Field label="For how many weeks" htmlFor="as-weeks"><Select id="as-weeks" value={weeks} onChange={(e) => setWeeks(e.target.value)}>{Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={String(i + 1)}>{i + 1}</option>)}</Select></Field>
-              <p className="muted small" role="status">{dates && dates.length > 0 ? `${dates.length} ${dates.length === 1 ? 'workout' : 'workouts'}, from ${ukDay(dates[0] ?? '')} to ${ukDay(dates[dates.length - 1] ?? '')}.` : 'Choose a start date and the days.'}</p>
-            </>
-          )}
-          <div className="assign-msg">{error && <span className="msg error" role="alert">{error}</span>}</div>
-          <Button variant="primary" className="wide-btn" disabled={w.assign.isPending} onClick={go}>{w.assign.isPending ? 'Assigning…' : mode === 'weekly' && dates && dates.length > 1 ? `Assign ${dates.length} workouts` : 'Assign workout'}</Button>
-        </>
-      )}
-    </Modal>
   );
 }
 

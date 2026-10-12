@@ -97,3 +97,19 @@
 .bday-card .btn { min-height: 48px; padding: 0 28px; }
 
 .mem-pin { letter-spacing: .2em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+/* Coach-set workouts: outlined so they stand out, in the app's calm accent. Never red. */
+.mem-card.by-coach { border-color: var(--hybrid-pulse, #6b7cff); box-shadow: inset 0 0 0 1px var(--hybrid-pulse, #6b7cff); }
+.mem-tag { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; background: #1f2b57; color: #a9b6ff; white-space: nowrap; }
+.mem-tag.new { background: #25310a; color: var(--hybrid-volt, #c8ff3d); }
+.mem-badge { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 99px; background: var(--hybrid-volt, #c8ff3d); color: #0b1020; font-size: 10px; font-weight: 800; display: inline-grid; place-items: center; margin-left: 4px; }
+.tr-outcome { display: flex; gap: 8px; }
+.tr-outcome > * { flex: 1; }
+.tr-reasons { display: grid; gap: 8px; }
+.tr-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tr-chip { min-height: 40px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--hybrid-line); background: var(--hybrid-bg); color: var(--hybrid-ink); font: inherit; font-size: 13px; cursor: pointer; }
+.tr-chip.on { border-color: var(--hybrid-volt, #c8ff3d); color: var(--hybrid-volt, #c8ff3d); }
+.tr-chip:focus-visible { outline: 2px solid var(--hybrid-pulse, #6b7cff); outline-offset: 2px; }
+.tr-res { display: grid; gap: 4px; padding-top: 8px; border-top: 1px solid var(--hybrid-line); }
+.tr-res:first-of-type { border-top: 0; padding-top: 0; }
+.tr-reply { background: #1f2b57; border-radius: 12px 12px 12px 4px; padding: 10px 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
