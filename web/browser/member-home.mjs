@@ -1,7 +1,7 @@
 // Browser gate: the member's Today screen obeys what the gym set under "What members see": which tiles show and in
 // what order, the promo panel (buttons, https-only external link, off switch) and the door PIN (hidden until tapped,
 // absent when switched off). Supabase is mocked at the network layer; phone and desktop width.
-import { GYM, base, launch, mockSupabase, reply, runChecks, signedInPage, sizes } from './mock.mjs';
+import { base, launch, mockSupabase, reply, runChecks, signedInPage, sizes } from './mock.mjs';
 
 process.env.MOCK_ROLE = 'member';
 const hours = (h) => new Date(Date.now() + h * 3600000).toISOString();
