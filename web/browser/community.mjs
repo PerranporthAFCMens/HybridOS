@@ -53,7 +53,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (table && ['POST', 'DELETE', 'PATCH'].includes(method)) { writes.push({ table, method, query: Object.fromEntries(url.searchParams), body }); await route.fulfill({ status: 204, body: '' }); return true; }
     if (path.endsWith('/social_posts')) return reply(route, posts);
     if (path.endsWith('/social_comments')) return reply(route, comments);
-    if (path.endsWith('/social_reactions')) return reply(route, [{ post_id: 'p-new', comment_id: null }, { post_id: 'p-new', comment_id: null }]);
+    if (path.endsWith('/social_reactions')) return reply(route, url.searchParams.get('post_id') ? [{ post_id: 'p-new', comment_id: null, user_id: 'u-ben' }, { post_id: 'p-new', comment_id: null, user_id: 'u-amy' }] : []);
     if (path.endsWith('/profiles')) return reply(route, profiles);
     return false;
   });

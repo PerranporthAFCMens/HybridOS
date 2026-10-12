@@ -3,7 +3,7 @@
 
 export interface Post { id: string; userId: string; body: string; createdAt: string }
 export interface Comment { id: string; postId: string; userId: string; parentId: string | null; body: string; createdAt: string }
-export interface Reaction { postId: string | null; commentId: string | null }
+export interface Reaction { postId: string | null; commentId: string | null; userId: string }
 export interface Profile { id: string; displayName: string | null; firstName: string | null; lastName: string | null; avatarUrl: string | null }
 
 export interface Thread { comment: Comment; replies: Comment[] }
@@ -49,6 +49,12 @@ export function buildFeed(posts: Post[], comments: Comment[], reactions: Reactio
       const threads = tops.map((comment) => ({ comment, replies: mine.filter((c) => c.id !== comment.id && rootOf(mine, c.id) === comment.id) }));
       return { post, threads, commentCount: mine.length, reactionCount: reactions.filter((r) => r.postId === post.id).length };
     });
+}
+
+/** How many people reacted to a post or comment, and whether `userId` is one of them. */
+export function reactionState(reactions: Reaction[], target: { postId: string } | { commentId: string }, userId: string): { count: number; mine: boolean } {
+  const hits = reactions.filter((r) => ('postId' in target ? r.postId === target.postId : r.commentId === target.commentId));
+  return { count: hits.length, mine: hits.some((r) => r.userId === userId) };
 }
 
 export type TextCheck = { ok: true; body: string } | { ok: false; message: string };

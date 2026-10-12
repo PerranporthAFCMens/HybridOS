@@ -74,7 +74,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const c = runChecks();
   await page.goto(`${base}/m/today`);
   await c.has("today's workout is on top", page.getByRole('heading', { name: "Today's workout is ready" }));
-  c.ok('tabs: Today, Workouts, Me (no classes in this plan)', (await page.getByRole('navigation', { name: 'Member' }).getByRole('link').allInnerTexts()).join('|') === 'Today|Workouts|Me');
+  c.ok('tabs: Today, Workouts, Community, Me (no classes in this plan)', (await page.getByRole('navigation', { name: 'Member' }).getByRole('link').allInnerTexts()).join('|') === 'Today|Workouts|Community|Me');
   c.ok('layout (today)', (await page.evaluate(layoutProblems)).length === 0);
 
   await page.getByRole('link', { name: 'Start workout' }).click();
