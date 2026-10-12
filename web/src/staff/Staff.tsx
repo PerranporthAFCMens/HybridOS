@@ -86,13 +86,15 @@ function TeamItem({ m, d, now, confirming, busy, onEdit, onAskRemove, onCancelRe
         <div className="muted">{m.email ? `${m.email} · ` : ''}{roleLabel(m.role)}{level && operational ? ` · ${level}` : ''}</div>
         <div className="tags">
           <span className={`tag ${active ? 'good' : 'warn'}`}>{statusLabel(m)}</span>
-          {operational && quals.map((x) => {
+          {quals.map((x) => {
             const st = qualState(x.expiresOn, now);
             return <span key={x.capabilityId} className={`tag ${st === 'valid' ? 'good' : 'warn'}`}>{x.name}{QUAL_TEXT[st] ? ` · ${QUAL_TEXT[st]}` : ''}</span>;
           })}
         </div>
-        {operational && (
+        {operational ? (
           <div className="muted small">{[profile?.jobTitle, payText(profile?.payPence ?? null), hoursSummary(hours)].filter(Boolean).join(' · ')}</div>
+        ) : (
+          <div className="muted small">{hoursSummary(hours)}</div>
         )}
       </div>
       <div className="team-actions">
@@ -109,6 +111,7 @@ function TeamItem({ m, d, now, confirming, busy, onEdit, onAskRemove, onCancelRe
             <Button onClick={onCancelRemove}>Keep</Button>
           </div>
         )}
+        {!operational && active && !confirming && <Button aria-label={`Hours and qualifications for ${m.name}`} onClick={onEdit}>Hours and qualifications</Button>}
         {!operational && <LinkButton href={links.owners}>Manage access</LinkButton>}
       </div>
     </li>
