@@ -5,7 +5,6 @@ import { Button } from '../ui/Button';
 import { Select } from '../ui/Field';
 import { useTemplates } from '../workouts/useWorkouts';
 import { Editor } from '../workouts/Workouts';
-import { scoreChoices, scoreMetricLabel } from '../train/calc';
 import { blockLabel, blockWeek, gymDay } from './blocks';
 import { useBlockOfClass } from './useBlocks';
 import { useClassWorkout, useClassWorkoutWrites } from './useClassWorkout';
@@ -83,24 +82,6 @@ export function ClassWorkoutPanel({ sessionId, startsAt, onBuilding }: { session
               ? 'People booked into this class, or marked attended, can open it in their app and record what they did.'
               : 'A draft: nobody else can see it yet. Make it available when the class is ready for it.'}
           </p>
-          {!picking && (() => {
-            const choices = scoreChoices(cw.snapshot);
-            const value = cw.scoreExercise && cw.scoreMetric ? `${cw.scoreExercise}|${cw.scoreMetric}` : '';
-            return (
-              <div className="cw-score">
-                <label htmlFor="cw-score" className="small">Leaderboard score</label>
-                <Select id="cw-score" value={value} disabled={w.score.isPending} onChange={(e) => {
-                  const [exercise, metric] = e.target.value.split('|');
-                  setError('');
-                  w.score.mutate(exercise && metric ? { exercise, metric: metric as 'weight' } : null, { onError: fail });
-                }}>
-                  <option value="">No leaderboard</option>
-                  {choices.map((c) => <option key={`${c.exercise}|${c.metric}`} value={`${c.exercise}|${c.metric}`}>{c.label}</option>)}
-                </Select>
-                <p className="muted small">{cw.scoreExercise && cw.scoreMetric ? `People in the class see a ranked list of ${cw.scoreExercise} (${scoreMetricLabel(cw.scoreMetric)}). Members can choose not to show their scores.` : 'Pick one exercise to rank people on, such as most push-ups or fastest row.'}</p>
-              </div>
-            );
-          })()}
           {!picking && (
             <div className="cw-actions">
               <Button variant={cw.availableAt ? 'secondary' : 'primary'} disabled={w.available.isPending} onClick={() => { setError(''); w.available.mutate(!cw.availableAt, { onError: fail }); }}>

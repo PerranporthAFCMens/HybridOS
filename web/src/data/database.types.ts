@@ -446,8 +446,6 @@ export type Database = {
           gym_id: string
           published_at: string | null
           published_by: string | null
-          score_exercise: string | null
-          score_metric: string | null
           session_id: string
           template_id: string | null
           title: string
@@ -460,8 +458,6 @@ export type Database = {
           gym_id: string
           published_at?: string | null
           published_by?: string | null
-          score_exercise?: string | null
-          score_metric?: string | null
           session_id: string
           template_id?: string | null
           title: string
@@ -474,8 +470,6 @@ export type Database = {
           gym_id?: string
           published_at?: string | null
           published_by?: string | null
-          score_exercise?: string | null
-          score_metric?: string | null
           session_id?: string
           template_id?: string | null
           title?: string
@@ -1122,24 +1116,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      member_score_settings: {
-        Row: {
-          share_scores: boolean
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          share_scores?: boolean
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          share_scores?: boolean
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       member_training_preferences: {
         Row: {
@@ -2975,7 +2951,6 @@ export type Database = {
           user_id: string
           assignment_id: string | null
           class_session_id: string | null
-          share_score: boolean
         }
         Insert: {
           created_at?: string
@@ -2988,7 +2963,6 @@ export type Database = {
           user_id: string
           assignment_id?: string | null
           class_session_id?: string | null
-          share_score?: boolean
         }
         Update: {
           created_at?: string
@@ -3001,7 +2975,6 @@ export type Database = {
           user_id?: string
           assignment_id?: string | null
           class_session_id?: string | null
-          share_score?: boolean
         }
         Relationships: [
           {
@@ -3552,15 +3525,6 @@ export type Database = {
       get_class_booking_options: {
         Args: { p_session_id: string }
         Returns: Json
-      }
-      get_class_leaderboard: {
-        Args: { p_session_id: string }
-        Returns: {
-          display_name: string
-          is_me: boolean
-          rank: number
-          value: number
-        }[]
       }
       get_class_calendar: {
         Args: { p_from: string; p_gym_id: string; p_to: string }

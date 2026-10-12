@@ -172,9 +172,9 @@ export async function removeExercise(entryId: string): Promise<void> {
 }
 
 /** Finish: name and note the workout, and mark the coach's workout done. Returns whether that was marked. */
-export async function completeWorkout(input: { sessionId: string | null; title: string; notes: string | null; shareScore?: boolean; assignment: { id: string; rpe: number | null; note: string | null; result: unknown } | null }): Promise<{ marked: boolean }> {
+export async function completeWorkout(input: { sessionId: string | null; title: string; notes: string | null; assignment: { id: string; rpe: number | null; note: string | null; result: unknown } | null }): Promise<{ marked: boolean }> {
   if (input.sessionId) {
-    const u = await supabase.from('workout_sessions').update({ title: input.title, notes: input.notes, updated_at: new Date().toISOString(), ...(input.shareScore === false ? { share_score: false } : {}) }).eq('id', input.sessionId);
+    const u = await supabase.from('workout_sessions').update({ title: input.title, notes: input.notes, updated_at: new Date().toISOString() }).eq('id', input.sessionId);
     if (u.error) throw new Error(`Your exercises are saved, but the workout could not be finished: ${u.error.message}`);
   }
   let marked = false;

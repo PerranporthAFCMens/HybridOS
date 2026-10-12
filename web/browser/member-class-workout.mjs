@@ -1,5 +1,5 @@
 // Browser gate: a member opens the workout their coach made available for a class they were in, fills in what they did
-// ("As set" puts the coach's numbers in the boxes), and keeps it. Phone and desktop. Supabase is mocked at the network layer.
+// ("As set" puts the coach's numbers in the boxes), and keeps it. Class workouts are listed under their block and week. Phone and desktop. Supabase is mocked at the network layer.
 // Checks what is listed (recent classes only), that the class workout is the member's own record (nothing is marked on an
 // assignment, no review questions), the exact writes, and that a second visit says it is already recorded.
 import { base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
@@ -14,13 +14,11 @@ const snapshot = {
   ] }],
 };
 const classWorkouts = [
-  { session_id: 'c1', title: 'Hybrid benchmark', workout_snapshot: snapshot, score_exercise: 'Push-ups', score_metric: 'reps', class_sessions: { name: 'Hybrid 6pm', starts_at: hrs(-3) } },
-  { session_id: 'c2', title: 'Old one', workout_snapshot: snapshot, score_exercise: null, score_metric: null, class_sessions: { name: 'Hybrid last month', starts_at: hrs(-24 * 30) } },
+  { session_id: 'c1', title: 'Hybrid benchmark', workout_snapshot: snapshot, class_sessions: { name: 'Hybrid 6pm', starts_at: hrs(-3) } },
+  { session_id: 'c2', title: 'Old one', workout_snapshot: snapshot, class_sessions: { name: 'Hybrid last month', starts_at: hrs(-24 * 30) } },
 ];
 const gymToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
 const block = { id: 'blk1', name: 'Hybrid Uppers', starts_on: gymToday, weeks: 6 };
-// the ranked list as the database returns it for this class (Luke opted out, so he is not here)
-const board = [{ rank: 1, display_name: 'Priya N.', value: 35, is_me: false }, { rank: 1, display_name: 'Sam T.', value: 35, is_me: false }, { rank: 3, display_name: 'Priya N.', value: 30, is_me: true }];
 
 function layoutProblems() {
   const problems = [];
@@ -45,7 +43,6 @@ process.env.MOCK_ROLE = 'member';
 for (const [name, viewport] of Object.entries(sizes)) {
   const writes = [];
   let recorded = false;
-  let shareScores = true;
   let unread = true;
   const { ctx, page, errors } = await signedInPage(browser, { ...viewport });
   await mockSupabase(page, async ({ route, path, select, method, body, url }) => {
@@ -60,11 +57,6 @@ for (const [name, viewport] of Object.entries(sizes)) {
       return reply(route, unread ? [{ id: 'n1', notification_type: 'class_workout', title: 'Your class workout is ready', body: 'Hybrid benchmark', related_assignment_id: null, related_session_id: 'c1', created_at: hrs(-1) }] : []);
     }
     if (path.endsWith('/class_block_sessions')) return reply(route, [{ session_id: 'c1', class_blocks: block }]);
-    if (path.endsWith('/rpc/get_class_leaderboard')) { writes.push('rpc leaderboard'); return reply(route, board); }
-    if (path.endsWith('/member_score_settings')) {
-      if (method === 'POST') { writes.push(`score setting ${JSON.stringify(body)} ${url.search}`); shareScores = body.share_scores; return reply(route, []); }
-      return reply(route, [{ share_scores: shareScores }]);
-    }
     if (path.endsWith('/class_session_workouts')) {
       const only = url.searchParams.get('session_id');
       const rows = classWorkouts.filter((w) => !only || only === `eq.${w.session_id}`);
@@ -131,13 +123,6 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByLabel('Your note on Back squat').fill('felt strong today');
   await page.getByRole('button', { name: 'Skip Row' }).click();
   await page.getByLabel('Push-ups set 1 Reps').fill('30');
-  const lb = page.getByRole('region', { name: 'Leaderboard' });
-  await c.has('the class leaderboard is on the screen', lb.getByText('Push-ups: most reps'));
-  c.ok('it is ranked: ties share a place, scores in words, your own row marked', (await lb.locator('li').allInnerTexts()).map((t) => t.replace(/\s+/g, ' ').trim()).join('|') === '1 Priya N. 35 reps|1 Sam T. 35 reps|3 Priya N. (you) 30 reps');
-  c.ok('and says people can choose not to show theirs', (await lb.getByText(/People can choose not to show their scores/).count()) === 1 && (await lb.getByRole('link', { name: 'Me' }).count()) === 1);
-  const showBox = page.getByRole('checkbox', { name: 'Show my most reps on the leaderboard' });
-  c.ok('showing this score is on unless they say otherwise', await showBox.isChecked());
-  await showBox.uncheck();
   c.ok('layout (recording)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/member-class-record-${name}.png`, fullPage: true });
   await page.getByRole('button', { name: 'Finish workout' }).click();
@@ -154,36 +139,15 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('a new personal best is recorded from it', joined.includes('pb ') && joined.includes('"value_numeric":62.5'));
   c.ok('nothing is marked on an assignment', !joined.includes('PATCH assignment'));
   c.ok('the workout is named and finished', joined.includes('PATCH session'));
-  c.ok('leaving this one off the leaderboard is saved on the workout', joined.includes('PATCH session') && joined.includes('"share_score":false'));
   await c.has('the list now says it is recorded', page.getByRole('region', { name: 'From your classes' }).getByText('Recorded', { exact: true }));
 
   // A second visit
   await page.getByRole('region', { name: 'From your classes' }).getByRole('link', { name: /^View Hybrid benchmark/ }).click();
   await c.has('opening it again says so', page.getByText('You have already recorded this class.'));
   c.ok('and offers to record it again or go back', (await page.getByRole('button', { name: 'Record it again' }).count()) === 1 && (await page.getByRole('link', { name: 'Back to Workouts' }).count()) === 1);
-  c.ok('the leaderboard is there too', (await page.getByRole('region', { name: 'Leaderboard' }).getByText('Priya N.').count()) >= 1);
   c.ok('layout (already recorded)', (await page.evaluate(layoutProblems)).length === 0);
   await page.getByRole('button', { name: 'Record it again' }).click();
   await c.has('recording again opens a fresh workout', page.getByRole('button', { name: 'Finish workout' }));
-
-  // The member's own choice, in Me
-  writes.length = 0;
-  await page.goto(`${base}/m/me`);
-  const meCard = page.getByRole('region', { name: 'Class leaderboards' });
-  await c.has('Me has a class leaderboards choice', meCard.getByText(/This is on unless you turn it off/));
-  const meBox = meCard.getByRole('checkbox', { name: 'Show my scores to others in my classes' });
-  c.ok('it is on by default', await meBox.isChecked());
-  await meBox.uncheck();
-  await page.waitForTimeout(500);
-  const setting = writes.find((w) => w.startsWith('score setting '));
-  c.ok('turning it off saves only that member\'s own row', !!setting && setting.includes('"share_scores":false') && setting.includes('on_conflict=user_id'));
-  c.ok('and it stays off', !(await meBox.isChecked()));
-  c.ok('layout (me)', (await page.evaluate(layoutProblems)).length === 0);
-  if (shots) await page.screenshot({ path: `${shots}/member-class-me-${name}.png`, fullPage: true });
-  await page.goto(`${base}/m/train/class/c1`);
-  await page.getByRole('button', { name: 'Record it again' }).click().catch(() => undefined);
-  await c.has('with sharing off the choice on the workout is locked off and explains', page.getByText(/You have turned off showing your scores, so this one stays private/));
-  await meBox.check().catch(() => undefined);
 
   // Not available to them
   await page.goto(`${base}/m/train/class/nope`);

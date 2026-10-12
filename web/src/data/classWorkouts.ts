@@ -1,30 +1,23 @@
 import { supabase } from './client';
 import { snapshotForTemplate, type TemplateRow } from './workouts';
 import type { Json } from './database.types';
-import { isScoreMetric, type ScoreMetric } from '../train/calc';
 
 /** The workout on one class. It stays a draft until the coach makes it available to the people in that class. */
-export interface ClassWorkout { sessionId: string; title: string; templateId: string | null; snapshot: Json; availableAt: string | null; scoreExercise: string | null; scoreMetric: ScoreMetric | null }
+export interface ClassWorkout { sessionId: string; title: string; templateId: string | null; snapshot: Json; availableAt: string | null }
 
 export async function getClassWorkout(sessionId: string): Promise<ClassWorkout | null> {
-  const { data, error } = await supabase.from('class_session_workouts').select('session_id, title, template_id, workout_snapshot, published_at, score_exercise, score_metric').eq('session_id', sessionId).maybeSingle();
+  const { data, error } = await supabase.from('class_session_workouts').select('session_id, title, template_id, workout_snapshot, published_at').eq('session_id', sessionId).maybeSingle();
   if (error) throw error;
-  return data ? { sessionId: data.session_id, title: data.title, templateId: data.template_id, snapshot: data.workout_snapshot, availableAt: data.published_at, scoreExercise: data.score_exercise, scoreMetric: isScoreMetric(data.score_metric) ? data.score_metric : null } : null;
+  return data ? { sessionId: data.session_id, title: data.title, templateId: data.template_id, snapshot: data.workout_snapshot, availableAt: data.published_at } : null;
 }
 
 /** Put a saved workout on a class (a copy, so later edits to the library never change the class). Replacing keeps it as available or draft as it was. */
 export async function setClassWorkout(gymId: string, userId: string, sessionId: string, t: TemplateRow): Promise<void> {
   const snapshot = await snapshotForTemplate(t);
   const { error } = await supabase.from('class_session_workouts').upsert(
-    { session_id: sessionId, gym_id: gymId, template_id: t.id, title: t.title, workout_snapshot: JSON.parse(JSON.stringify(snapshot)) as Json, created_by: userId, updated_at: new Date().toISOString(), score_exercise: null, score_metric: null },
+    { session_id: sessionId, gym_id: gymId, template_id: t.id, title: t.title, workout_snapshot: JSON.parse(JSON.stringify(snapshot)) as Json, created_by: userId, updated_at: new Date().toISOString() },
     { onConflict: 'session_id' },
   );
-  if (error) throw error;
-}
-
-/** Choose which exercise is the score (and what counts), or clear it for no leaderboard. */
-export async function setClassWorkoutScore(sessionId: string, score: { exercise: string; metric: ScoreMetric } | null): Promise<void> {
-  const { error } = await supabase.from('class_session_workouts').update({ score_exercise: score?.exercise ?? null, score_metric: score?.metric ?? null, updated_at: new Date().toISOString() }).eq('session_id', sessionId);
   if (error) throw error;
 }
 
@@ -40,7 +33,7 @@ export async function removeClassWorkout(sessionId: string): Promise<void> {
 }
 
 /** What a member sees: a workout from a class they are in, with the class's name and time, and whether they have recorded it. */
-export interface MyClassWorkout { sessionId: string; title: string; className: string; startsAt: string; snapshot: Json; done: boolean; scoreExercise: string | null; scoreMetric: ScoreMetric | null }
+export interface MyClassWorkout { sessionId: string; title: string; className: string; startsAt: string; snapshot: Json; done: boolean }
 
 const FORTNIGHT_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -48,7 +41,7 @@ const FORTNIGHT_MS = 14 * 24 * 60 * 60 * 1000;
 export async function listMyClassWorkouts(userId: string, gymId: string): Promise<MyClassWorkout[]> {
   const { data, error } = await supabase
     .from('class_session_workouts')
-    .select('session_id, title, workout_snapshot, score_exercise, score_metric, class_sessions(name, starts_at)')
+    .select('session_id, title, workout_snapshot, class_sessions(name, starts_at)')
     .eq('gym_id', gymId)
     .not('published_at', 'is', null);
   if (error) throw error;
@@ -57,7 +50,7 @@ export async function listMyClassWorkouts(userId: string, gymId: string): Promis
     const c = Array.isArray(r.class_sessions) ? r.class_sessions[0] : r.class_sessions;
     if (!c) return [];
     const t = new Date(c.starts_at).getTime();
-    return Math.abs(t - now) <= FORTNIGHT_MS ? [{ sessionId: r.session_id, title: r.title, className: c.name, startsAt: c.starts_at, snapshot: r.workout_snapshot, scoreExercise: r.score_exercise, scoreMetric: isScoreMetric(r.score_metric) ? r.score_metric : null }] : [];
+    return Math.abs(t - now) <= FORTNIGHT_MS ? [{ sessionId: r.session_id, title: r.title, className: c.name, startsAt: c.starts_at, snapshot: r.workout_snapshot }] : [];
   });
   if (rows.length === 0) return [];
   const { data: logged, error: lErr } = await supabase.from('workout_sessions').select('class_session_id').eq('user_id', userId).in('class_session_id', rows.map((r) => r.sessionId));
@@ -69,7 +62,7 @@ export async function listMyClassWorkouts(userId: string, gymId: string): Promis
 export async function getMyClassWorkout(userId: string, gymId: string, sessionId: string): Promise<MyClassWorkout | null> {
   const { data, error } = await supabase
     .from('class_session_workouts')
-    .select('session_id, title, workout_snapshot, score_exercise, score_metric, class_sessions(name, starts_at)')
+    .select('session_id, title, workout_snapshot, class_sessions(name, starts_at)')
     .eq('gym_id', gymId)
     .eq('session_id', sessionId)
     .not('published_at', 'is', null)
@@ -79,26 +72,5 @@ export async function getMyClassWorkout(userId: string, gymId: string, sessionId
   const c = Array.isArray(data.class_sessions) ? data.class_sessions[0] : data.class_sessions;
   const { data: logged, error: lErr } = await supabase.from('workout_sessions').select('id').eq('user_id', userId).eq('class_session_id', sessionId).limit(1);
   if (lErr) throw lErr;
-  return { sessionId: data.session_id, title: data.title, className: c?.name ?? data.title, startsAt: c?.starts_at ?? '', snapshot: data.workout_snapshot, done: (logged ?? []).length > 0, scoreExercise: data.score_exercise, scoreMetric: isScoreMetric(data.score_metric) ? data.score_metric : null };
-}
-
-export interface LeaderRow { rank: number; name: string; value: number; isMe: boolean }
-
-/** The ranked scores for a class the member is in. People who opted out are left out, except your own row. */
-export async function getLeaderboard(sessionId: string): Promise<LeaderRow[]> {
-  const { data, error } = await supabase.rpc('get_class_leaderboard', { p_session_id: sessionId });
-  if (error) throw error;
-  return (data ?? []).map((r) => ({ rank: r.rank, name: r.display_name, value: Number(r.value), isMe: r.is_me }));
-}
-
-/** Whether the member shows their scores to others. On unless they turned it off. */
-export async function getShareScores(userId: string): Promise<boolean> {
-  const { data, error } = await supabase.from('member_score_settings').select('share_scores').eq('user_id', userId).maybeSingle();
-  if (error) throw error;
-  return data ? data.share_scores : true;
-}
-
-export async function setShareScores(userId: string, share: boolean): Promise<void> {
-  const { error } = await supabase.from('member_score_settings').upsert({ user_id: userId, share_scores: share, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
-  if (error) throw error;
+  return { sessionId: data.session_id, title: data.title, className: c?.name ?? data.title, startsAt: c?.starts_at ?? '', snapshot: data.workout_snapshot, done: (logged ?? []).length > 0 };
 }

@@ -71,4 +71,3 @@
 .block-week { margin-top: 12px; display: grid; gap: 6px; }
 .block-class { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .block-end { margin-top: 16px; align-items: center; }
-.cw-score { display: grid; gap: 6px; margin: 10px 0; }

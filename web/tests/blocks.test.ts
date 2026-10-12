@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { addDaysTo, blockLabel, blockLastDay, blockRange, blockState, blockWeek, daysBetween, groupByWeek, validateBlock } from '../src/classes/blocks';
-import { isScoreMetric, scoreChoices, scoreMetricLabel, scoreText } from '../src/train/calc';
 
 describe('block weeks', () => {
   it('numbers weeks from the first day, and says null outside the block', () => {
@@ -53,34 +52,5 @@ describe('checking a block', () => {
     expect(validateBlock({ ...ok, weeks: '53' })).toMatchObject({ ok: false });
     expect(validateBlock({ ...ok, weeks: '2.5' })).toMatchObject({ ok: false });
     expect(validateBlock({ ...ok, weeks: '52' })).toMatchObject({ ok: true });
-  });
-});
-
-describe('the score of a class workout', () => {
-  const snap = { blocks: [{ position: 0, title: 'W', activities: [
-    { position: 0, activity_name: 'Back squat', tracking_type: 'strength' },
-    { position: 1, activity_name: 'Push-ups', tracking_type: 'reps' },
-    { position: 2, activity_name: 'Row 500 m', tracking_type: 'time' },
-    { position: 3, activity_name: 'Bike', tracking_type: 'distance' },
-    { position: 4, activity_name: 'Ski', tracking_type: 'calories' },
-    { position: 5, activity_name: 'Stretch', tracking_type: 'instruction' },
-    { position: 6, activity_name: 'back squat', tracking_type: 'strength' },
-  ] }] };
-  it('offers what makes sense for how each exercise is recorded, with no repeats', () => {
-    expect(scoreChoices(snap).map((c) => `${c.exercise}/${c.metric}`)).toEqual(['Back squat/weight', 'Back squat/reps', 'Push-ups/reps', 'Row 500 m/time', 'Bike/distance', 'Ski/calories']);
-    expect(scoreChoices(null)).toEqual([]);
-  });
-  it('writes a score as words', () => {
-    expect(scoreText('weight', 62.5)).toBe('62.5 kg');
-    expect(scoreText('reps', 35)).toBe('35 reps');
-    expect(scoreText('time', 100)).toBe('1:40');
-    expect(scoreText('distance', 500)).toBe('500 m');
-    expect(scoreText('distance', 1250)).toBe('1.25 km');
-    expect(scoreText('calories', 120)).toBe('120 cal');
-    expect(scoreMetricLabel('time')).toBe('fastest time');
-  });
-  it('knows the kinds of score', () => {
-    expect(isScoreMetric('reps')).toBe(true);
-    expect(isScoreMetric('vibes')).toBe(false);
   });
 });

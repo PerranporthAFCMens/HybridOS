@@ -1,5 +1,5 @@
 // Browser gate: class blocks. The coach makes a block (a named run of weeks), chooses which classes are in it (one class, or
-// several a week), changes or deletes it, and sets the leaderboard score on a class's workout. Signed in as an owner, at phone
+// several a week), and changes or deletes it. A class's workout shows which block and week it is in. Signed in as an owner, at phone
 // and desktop width. Supabase is mocked at the network layer. Checks the exact request of every action.
 import { GYM, USER, base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
 
@@ -32,11 +32,7 @@ const sessions = [
   row('s5', 'Hybrid Tuesday', gymTime(dayKey(9), '18:00'), gymTime(dayKey(9), '19:00')),
   row('s6', 'Far away class', gymTime(dayKey(60), '18:00'), gymTime(dayKey(60), '19:00')),
 ];
-const snapshot = { blocks: [{ position: 0, title: 'Workout', activities: [
-  { position: 0, activity_name: 'Back squat', tracking_type: 'strength', prescription: { display: '3 sets: 8 × 60 kg' } },
-  { position: 1, activity_name: 'Push-ups', tracking_type: 'reps', prescription: { display: 'Max reps' } },
-  { position: 2, activity_name: 'Row 500 m', tracking_type: 'time', prescription: { display: '500 m' } },
-] }] };
+const snapshot = { blocks: [{ position: 0, title: 'Workout', activities: [{ position: 0, activity_name: 'Back squat', tracking_type: 'strength', prescription: { display: '3 sets: 8 × 60 kg' } }] }] };
 
 function layoutProblems() {
   const problems = [];
@@ -62,7 +58,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const writes = [];
   let blocks = [{ id: 'blk1', name: 'Hybrid Uppers', starts_on: gymToday, weeks: 6 }];
   let inBlock = ['s1', 's2'];
-  let workout = { session_id: 's1', title: 'Push day', template_id: null, workout_snapshot: snapshot, published_at: '2026-10-12T09:00:00Z', score_exercise: null, score_metric: null };
+  let workout = { session_id: 's1', title: 'Push day', template_id: null, workout_snapshot: snapshot, published_at: '2026-10-12T09:00:00Z' };
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, async ({ route, url, path, method, body, select }) => {
     if (path.endsWith('/rpc/get_class_calendar')) {
@@ -78,7 +74,6 @@ for (const [name, viewport] of Object.entries(sizes)) {
       if (table === 'class_blocks' && method === 'DELETE') blocks = blocks.filter((b) => `eq.${b.id}` !== url.searchParams.get('id'));
       if (table === 'class_block_sessions' && method === 'POST') inBlock = [...inBlock, ...body.map((b) => b.session_id)];
       if (table === 'class_block_sessions' && method === 'DELETE') { const out = (url.searchParams.get('session_id') ?? '').replace(/^in\.\(|\)$/g, '').split(','); inBlock = inBlock.filter((s) => !out.includes(s)); }
-      if (table === 'class_session_workouts' && method === 'PATCH') workout = { ...workout, score_exercise: body.score_exercise, score_metric: body.score_metric };
       await route.fulfill({ status: 204, body: '' });
       return true;
     }
@@ -170,7 +165,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('the delete is exact: this block only', gone && gone.query.id === 'eq.blk1' && writes.length === 1);
   await dialog.getByRole('button', { name: 'Close' }).click();
 
-  // A class's workout: the block label and the leaderboard score
+  // A class's workout: the block and week it is in
   writes.length = 0;
   inBlock = ['s1'];
   blocks = [{ id: 'blk1', name: 'Hybrid Uppers', starts_on: gymToday, weeks: 6 }];
@@ -182,22 +177,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('button', { name: /^Morning HIIT/ }).click();
   const panel = dialog.getByRole('region', { name: 'Class workout' });
   await c.has('the class says which block and week it is in', panel.getByText('Hybrid Uppers · week 1 of 6'));
-  const score = panel.getByLabel('Leaderboard score');
-  c.ok('the leaderboard score is offered per exercise, for how each is recorded', (await score.locator('option').allInnerTexts()).join('|') === 'No leaderboard|Back squat: heaviest weight|Back squat: most reps|Push-ups: most reps|Row 500 m: fastest time');
-  await score.selectOption('Push-ups|reps');
-  await c.has('it explains what people will see', panel.getByText(/ranked list of Push-ups \(most reps\)/));
-  const set = writes.find((w) => w.table === 'class_session_workouts' && w.method === 'PATCH');
-  c.ok('the score update is exact: this class only', set && set.query.session_id === 'eq.s1' && set.body.score_exercise === 'Push-ups' && set.body.score_metric === 'reps');
-  writes.length = 0;
-  await score.selectOption('Row 500 m|time');
-  await c.has('a time score says fastest', panel.getByText(/Row 500 m \(fastest time\)/));
-  writes.length = 0;
-  await score.selectOption('');
-  await page.waitForTimeout(400);
-  const none = writes.find((w) => w.method === 'PATCH');
-  c.ok('no leaderboard clears both', none && none.body.score_exercise === null && none.body.score_metric === null);
-  c.ok('layout (score)', (await page.evaluate(layoutProblems)).length === 0);
-  if (shots) await page.screenshot({ path: `${shots}/class-blocks-score-${name}.png`, fullPage: true });
+  c.ok('layout (class workout with its block)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/class-blocks-class-${name}.png`, fullPage: true });
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;
   await ctx.close();
