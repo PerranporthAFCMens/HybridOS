@@ -22,6 +22,9 @@ on:
       - 'scripts/**'
       - 'PROJECT_STATE.json'
       - '.github/workflows/**'
+      # The new web app (web/) has its own checks (web-checks, web-days). These older checks test the original pages, so a
+      # change that only touches web/ no longer starts them. A change to any other listed file still does.
+      - '!web/**'
 
 permissions:
   contents: read
@@ -55,7 +58,13 @@ jobs:
       - name: Install Playwright Chromium
         run: |
           npm install --no-save --package-lock=false playwright@1.55.0
-          npx playwright install --with-deps chromium
+          # The system-package part of this step is sometimes very slow on GitHub's servers (22 seconds to 6 minutes
+          # on 12 October 2026). Cap each try and try again, as the web app checks do.
+          for attempt in 1 2 3; do
+            if timeout 180 npx playwright install --with-deps chromium; then exit 0; fi
+            echo "Browser install attempt $attempt stalled or failed; trying again."
+          done
+          exit 1
 
       - name: Create disposable two-gym Auth account
         shell: bash
