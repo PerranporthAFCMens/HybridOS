@@ -50,11 +50,12 @@ create policy "class staff manage class workouts" on public.class_session_workou
   );
 
 -- A member reads it once it is available, and only if they are in that class (booked in or attended) and their
--- membership is active (the same status rule every other member-facing rule uses).
+-- membership is active (private.is_gym_member is the status-aware check the other member-facing rules use, such as the
+-- community ones; it also exists in the original schema, so this rule does not depend on the membership status migration).
 create policy "class members read available class workouts" on public.class_session_workouts for select to authenticated
   using (
     published_at is not null
-    and private.member_status_allows(gym_id, array['active'])
+    and private.is_gym_member(gym_id)
     and exists (
       select 1 from public.class_bookings b
       where b.session_id = class_session_workouts.session_id and b.user_id = auth.uid() and b.gym_id = class_session_workouts.gym_id and b.status in ('booked', 'attended')

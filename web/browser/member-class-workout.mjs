@@ -120,6 +120,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   if (shots) await page.screenshot({ path: `${shots}/member-class-record-${name}.png`, fullPage: true });
   await page.getByRole('button', { name: 'Finish workout' }).click();
   await c.has('back on Workouts with a message', page.getByText('Class workout saved.'));
+  await page.waitForTimeout(500);
+  c.ok('no half-finished draft is left behind once it is finished', (await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('hybrid-train-draft:')).length)) === 0);
   const joined = writes.join('\n');
   const sess = writes.find((w) => w.startsWith('session '));
   c.ok('one session, tied to the class and not to any assignment', writes.filter((w) => w.startsWith('session ')).length === 1 && sess.includes('"class_session_id":"c1"') && sess.includes('"assignment_id":null') && sess.includes('"title":"Hybrid benchmark"'));

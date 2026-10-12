@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
@@ -102,7 +102,10 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
   const own = useMemo(() => [...last.values()].map((l) => l.name), [last]);
 
   useEffect(() => { if (assigned) void markStarted(id); }, [id, assigned]);
+  // Once the workout is finished the draft is cleared for good: a later render must never write it back.
+  const finished = useRef(false);
   useEffect(() => {
+    if (finished.current) return;
     try { localStorage.setItem(key, JSON.stringify({ acts, rpe, notes, sessionId } satisfies Draft)); } catch { /* the draft is a convenience */ }
   }, [key, acts, rpe, notes, sessionId]);
 
@@ -211,6 +214,7 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
       if (!assigned && !anySaved) return setError('Add some numbers first, or go back.');
       const firstName = acts.find((a) => a.name.trim())?.name.trim() ?? '';
       const result = await completeWorkout({ sessionId: session, title: titleFor(firstName), notes: notes.trim() || null, assignment: !assigned ? null : { id, rpe: rpe ? Number(rpe) : null, note: assignmentNote(notes, overview.skipped, overview.swapped), result: resultJson(buildResult(acts.map((a) => ({ ...a, entered: !!a.entryId || hasEntered(a) })))) } });
+      finished.current = true;
       try { localStorage.removeItem(key); } catch { /* nothing to clear */ }
       await refresh();
       const pb = wonMessage([...won, ...newWins]);
