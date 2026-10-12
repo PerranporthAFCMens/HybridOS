@@ -24,3 +24,11 @@ export async function saveMemberView(gymId: string, userId: string, v: MemberVie
     /* preview copy is optional */
   }
 }
+
+/** What a member sees: the gym's tile order and promo panel, through the function members are allowed to call. Falls back to the defaults if the gym has set nothing. */
+export async function loadMyHomeSettings(gymId: string): Promise<MemberViewSaved> {
+  const { data, error } = await supabase.rpc('get_member_home_settings', { p_gym_id: gymId });
+  if (error) throw error;
+  const d = data && typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : {};
+  return { layout: normaliseLayout(d.home_layout), cta: normaliseCta(d.cta_config) };
+}

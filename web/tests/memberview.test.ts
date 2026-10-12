@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CTA, DEFAULT_LAYOUT, moveTile, normaliseCta, normaliseLayout, setVisible, tileTitle, validateCta } from '../src/memberview/calc';
+import { ctaLink, DEFAULT_CTA, DEFAULT_LAYOUT, moveTile, normaliseCta, normaliseLayout, setVisible, tileTitle, validateCta } from '../src/memberview/calc';
 
 describe('layout', () => {
   it('defaults to nine visible tiles', () => {
@@ -63,5 +63,24 @@ describe('promo panel', () => {
     expect(tileTitle('hero', { ...DEFAULT_CTA, title: ' Join now ' })).toBe('Join now');
     expect(tileTitle('hero', { ...DEFAULT_CTA, title: ' ' })).toBe('Training hub');
     expect(tileTitle('pt', DEFAULT_CTA)).toBe('PT appointments');
+  });
+});
+
+describe('promo button links in the member app', () => {
+  it('sends each target to its member screen', () => {
+    expect(ctaLink('classes', '')).toEqual({ to: '/m/classes' });
+    expect(ctaLink('workouts', '')).toEqual({ to: '/m/train' });
+    expect(ctaLink('pbs', '')).toEqual({ to: '/m/train/pbs' });
+    expect(ctaLink('membership', '')).toEqual({ to: '/m/membership' });
+    expect(ctaLink('community', '')).toEqual({ to: '/m/community' });
+  });
+  it('only lets an external link through when it is https', () => {
+    expect(ctaLink('external', ' https://example.test/a ')).toEqual({ href: 'https://example.test/a' });
+    expect(ctaLink('external', 'http://example.test')).toBeNull();
+    expect(ctaLink('external', 'javascript:alert(1)')).toBeNull();
+    expect(ctaLink('external', '')).toBeNull();
+  });
+  it('gives no link for an unknown target', () => {
+    expect(ctaLink('somewhere', 'https://example.test')).toBeNull();
   });
 });
