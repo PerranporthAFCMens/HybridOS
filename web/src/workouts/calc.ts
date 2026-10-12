@@ -3,6 +3,7 @@
 // set boxes; the blocks, type, tags and minutes underneath are kept for workouts that already have them.
 import { FIELDS, blankSets, describeTarget, readTarget, toDbSet, type SetValues, type Tracking } from '../train/calc';
 import { guessTracking } from '../train/activities';
+import { isPercent, percentError } from '../train/percent';
 
 export const BLOCK_TYPES = ['warmup', 'standard', 'strength', 'circuit', 'amrap', 'emom', 'for_time', 'intervals', 'finisher', 'cooldown', 'custom'] as const;
 export const TRACKING = ['strength', 'reps', 'time', 'distance', 'calories', 'intervals', 'instruction'] as const;
@@ -97,7 +98,13 @@ export function validateWorkout(f: WorkoutForm, blocks: BlockForm[]): WorkoutChe
       const name = a.name.trim();
       const kept = cleanSets(a.tracking, a.sets);
       for (const row of kept) {
-        const r = toDbSet(asTracking(a.tracking), row);
+        // A weight typed as a percentage is checked as one; the rest of the row is checked as numbers as usual.
+        const { weight, ...rest } = row;
+        if (isPercent(weight)) {
+          const bad = percentError(weight ?? '');
+          if (bad) return { ok: false, message: `${name}: ${bad}` };
+        }
+        const r = toDbSet(asTracking(a.tracking), isPercent(weight) ? rest : row);
         if (r.error) return { ok: false, message: `${name}: ${r.error}` };
       }
       const display = kept.length ? describeTarget(asTracking(a.tracking), kept) : a.prescription.trim();

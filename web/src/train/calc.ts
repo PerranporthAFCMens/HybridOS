@@ -165,7 +165,8 @@ export function setText(tracking: Tracking, v: SetValues): string {
   const parts: string[] = [];
   const side = asSide(v.side);
   const tail = side ? ` (${side})` : '';
-  if (tracking === 'strength') return [v.reps ? `${v.reps}` : '', v.weight ? `${v.weight} kg` : ''].filter(Boolean).join(' × ') + tail;
+  // A weight typed as a percentage ("80%") or already worded ("80% (80 kg)") is shown as it is; a plain number is kilos.
+  if (tracking === 'strength') return [v.reps ? `${v.reps}` : '', v.weight ? (v.weight.includes('%') ? v.weight : `${v.weight} kg`) : ''].filter(Boolean).join(' × ') + tail;
   if (v.reps) parts.push(`${v.reps} ${tracking === 'intervals' ? 'rounds' : 'reps'}`);
   if (v.time) parts.push(v.time);
   if (v.distance) parts.push(`${v.distance} km`);

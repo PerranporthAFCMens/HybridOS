@@ -6,7 +6,7 @@ import { FIELDS, SIDES, type SetValues, type Tracking } from './calc';
  * The boxes for one exercise's sets: one row per set, the boxes that kind of exercise needs. The member's logger and the
  * coach's builder both use it, so a target the coach sets lands in exactly the boxes the member fills in.
  */
-export function SetGrid({ name, tracking, sets, onChange, onRemove, sided, onSide }: {
+export function SetGrid({ name, tracking, sets, onChange, onRemove, sided, onSide, percent }: {
   name: string;
   tracking: Tracking;
   sets: SetValues[];
@@ -15,6 +15,8 @@ export function SetGrid({ name, tracking, sets, onChange, onRemove, sided, onSid
   /** Left / right buttons under each set, for the member's logger. */
   sided?: boolean;
   onSide?: (index: number, side: string) => void;
+  /** The coach's builder: the weight box also takes a percentage of the member's best, like 80%. */
+  percent?: boolean;
 }) {
   const fields = FIELDS[tracking];
   return (
@@ -23,10 +25,13 @@ export function SetGrid({ name, tracking, sets, onChange, onRemove, sided, onSid
         <div className="tr-set-wrap" key={i}>
           <div className="tr-set">
             <span className="muted tr-n">{i + 1}</span>
-            {fields.map((f) => (
-              <Input key={f.id} className="tr-box" inputMode={f.id === 'time' ? 'text' : 'decimal'} aria-label={`${name} set ${i + 1} ${f.hint}`} placeholder={f.label}
+            {fields.map((f) => {
+              const pct = percent && f.id === 'weight';
+              return (
+              <Input key={f.id} className="tr-box" inputMode={f.id === 'time' || pct ? 'text' : 'decimal'} aria-label={`${name} set ${i + 1} ${f.hint}`} placeholder={pct ? 'kg or %' : f.label}
                 value={s[f.id] ?? ''} onChange={(e) => onChange(i, f.id, e.target.value)} />
-            ))}
+              );
+            })}
             {sets.length > 1 && <button type="button" className="tr-del" aria-label={`Remove set ${i + 1} from ${name}`} onClick={() => onRemove(i)}>✕</button>}
           </div>
           {sided && onSide && (
