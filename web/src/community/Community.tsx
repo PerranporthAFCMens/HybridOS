@@ -4,7 +4,7 @@ import type { CommunityData } from '../data/community';
 import { Button } from '../ui/Button';
 import { Card, Empty } from '../ui/Card';
 import { Input, Textarea } from '../ui/Field';
-import { COMMENT_MAX, POST_MAX, buildFeed, initials, nameOf, plural, rootOf, safeAvatar, validateComment, validatePost, type Comment, type FeedPost } from './calc';
+import { COMMENT_MAX, POST_MAX, buildFeed, initials, nameOf, plural, rootOf, safeAvatar, validateComment, validatePost, type Comment, type FeedPost, type PostKind } from './calc';
 import { useCommunity, useCommunityWrites } from './useCommunity';
 import '../members/members.css';
 import './community.css';
@@ -25,11 +25,11 @@ export function Community() {
   const feed = d ? buildFeed(d.posts, d.comments, d.reactions) : [];
   const fail = (e: Error) => setNote({ text: e.message, good: false });
 
-  const publish = () => {
+  const publish = (kind: PostKind) => {
     const c = validatePost(draft);
     if (!c.ok) return setNote({ text: c.message, good: false });
     setNote(null);
-    w.post.mutate(c.body, { onSuccess: () => setDraft(''), onError: fail });
+    w.post.mutate({ body: c.body, kind }, { onSuccess: () => { setDraft(''); setNote({ text: kind === 'broadcast' ? 'Broadcast sent. Members see it in Broadcasts.' : 'Posted to the feed.', good: true }); }, onError: fail });
   };
   const remove = () => {
     const c = confirming;
@@ -50,8 +50,12 @@ export function Community() {
       </header>
 
       <Card>
-        <Textarea aria-label="Post to your members" maxLength={POST_MAX} placeholder="Post an update to your members…" value={draft} onChange={(e) => { setNote(null); setDraft(e.target.value); }} />
-        <div className="membership-actions"><Button variant="primary" disabled={w.post.isPending} onClick={publish}>{w.post.isPending ? 'Posting…' : 'Post to community'}</Button></div>
+        <Textarea aria-label="Post to your members" maxLength={POST_MAX} placeholder="Write an update for your members…" value={draft} onChange={(e) => { setNote(null); setDraft(e.target.value); }} />
+        <div className="muted small">A broadcast is an announcement members can read, like and comment on but not replace. A feed post sits in the everyday feed with everyone else's.</div>
+        <div className="membership-actions">
+          <Button variant="primary" disabled={w.post.isPending} onClick={() => publish('broadcast')}>{w.post.isPending ? 'Sending…' : 'Send as broadcast'}</Button>
+          <Button disabled={w.post.isPending} onClick={() => publish('post')}>Post to the feed</Button>
+        </div>
       </Card>
 
       {note && <div className={`msg ${note.good ? '' : 'error'}`} role={note.good ? 'status' : 'alert'}>{note.text}</div>}
@@ -66,7 +70,7 @@ export function Community() {
       {q.isPending && <Card><Empty>Loading the feed…</Empty></Card>}
       {d && feed.length === 0 && <Card><Empty>No community posts yet.</Empty></Card>}
       {d && feed.map((f) => <PostCard key={f.post.id} f={f} d={d} ask={(c) => { setNote(null); setConfirming(c); }} />)}
-      {d && d.posts.length >= 100 && <p className="muted small">Showing the latest 100 posts.</p>}
+      {d && d.posts.filter((x) => x.kind === 'post').length >= 100 && <p className="muted small">Showing the latest 100 feed posts.</p>}
     </>
   );
 }
@@ -110,7 +114,7 @@ function PostCard({ f, d, ask }: { f: FeedPost; d: CommunityData; ask: (c: Confi
       <article>
         <div className="cm-head">
           <Avatar id={f.post.userId} d={d} />
-          <div className="cm-meta"><b>{nameOf(d.profiles.get(f.post.userId))}</b><span className="muted small">{when(f.post.createdAt)}</span></div>
+          <div className="cm-meta"><b>{nameOf(d.profiles.get(f.post.userId))}</b><span className="muted small">{f.post.kind === 'broadcast' ? 'Broadcast · ' : ''}{when(f.post.createdAt)}</span></div>
           <Button aria-label={`Delete post by ${nameOf(d.profiles.get(f.post.userId))}`} onClick={() => ask({ kind: 'post', id: f.post.id })}>Delete</Button>
         </div>
         <div className="cm-body">{f.post.body}</div>

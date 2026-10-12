@@ -1,15 +1,22 @@
 import { supabase } from './client';
-import type { Comment, Post, Profile, Reaction } from '../community/calc';
+import { asKind, type Comment, type Post, type PostKind, type Profile, type Reaction } from '../community/calc';
 
 export interface CommunityData { posts: Post[]; comments: Comment[]; reactions: Reaction[]; profiles: Map<string, Profile> }
 
 export const FEED_LIMIT = 100;
+/** Broadcasts are loaded on their own, so a busy feed can never push an announcement out of view. */
+export const BROADCAST_LIMIT = 50;
 
 /** The latest posts of a gym with their comments and reactions, and the names/pictures of the people involved. */
 export async function loadCommunity(gymId: string): Promise<CommunityData> {
-  const p = await supabase.from('social_posts').select('id, user_id, body, created_at').eq('gym_id', gymId).order('created_at', { ascending: false }).limit(FEED_LIMIT);
+  const cols = 'id, user_id, body, created_at, kind';
+  const [p, bc] = await Promise.all([
+    supabase.from('social_posts').select(cols).eq('gym_id', gymId).eq('kind', 'post').order('created_at', { ascending: false }).limit(FEED_LIMIT),
+    supabase.from('social_posts').select(cols).eq('gym_id', gymId).eq('kind', 'broadcast').order('created_at', { ascending: false }).limit(BROADCAST_LIMIT),
+  ]);
   if (p.error) throw p.error;
-  const posts = (p.data ?? []).map((r): Post => ({ id: r.id, userId: r.user_id, body: r.body, createdAt: r.created_at }));
+  if (bc.error) throw bc.error;
+  const posts = [...(p.data ?? []), ...(bc.data ?? [])].map((r): Post => ({ id: r.id, userId: r.user_id, body: r.body, createdAt: r.created_at, kind: asKind(r.kind) }));
   const ids = posts.map((x) => x.id);
   const c = ids.length
     ? await supabase.from('social_comments').select('id, post_id, user_id, parent_comment_id, body, created_at').eq('gym_id', gymId).in('post_id', ids).order('created_at')
@@ -34,8 +41,9 @@ export async function loadCommunity(gymId: string): Promise<CommunityData> {
   return { posts, comments, reactions: likes.map((x): Reaction => ({ postId: x.post_id, commentId: x.comment_id, userId: x.user_id })), profiles };
 }
 
-export async function createPost(gymId: string, userId: string, body: string): Promise<void> {
-  const { error } = await supabase.from('social_posts').insert({ gym_id: gymId, user_id: userId, body });
+export async function createPost(gymId: string, userId: string, body: string, kind: PostKind = 'post'): Promise<void> {
+  // Only owners and admins may send a broadcast; the database refuses anyone else.
+  const { error } = await supabase.from('social_posts').insert({ gym_id: gymId, user_id: userId, body, kind });
   if (error) throw error;
 }
 

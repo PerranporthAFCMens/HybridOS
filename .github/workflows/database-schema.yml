@@ -100,6 +100,27 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           snap /tmp/rules_after_reapply.txt
           if diff -u /tmp/rules_after_migration.txt /tmp/rules_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: Community broadcasts verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261012120000_community_broadcasts.sql
+          # read-only verification query: every row must say ok
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261012_community_broadcasts_check.sql > /tmp/broadcasts_check.txt
+          cat /tmp/broadcasts_check.txt
+          if grep -v ' | ok$' /tmp/broadcasts_check.txt; then echo 'A community broadcasts verification check is not ok'; exit 1; fi
+          # owner, admin, staff, members and another gym's admin, run as the authenticated role; rolls itself back
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/community_broadcasts.sql
+          # the rollback removes everything it added, and applying the migration again restores the same catalog
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/bc_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261012_drop_community_broadcasts.sql
+          snap /tmp/bc_after_rollback.txt
+          if diff -q /tmp/bc_after_migration.txt /tmp/bc_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/bc_after_reapply.txt
+          if diff -u /tmp/bc_after_migration.txt /tmp/bc_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Prove the rollback file restores the pre-migration state exactly
         shell: bash
         run: |

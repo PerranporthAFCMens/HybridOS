@@ -4,8 +4,9 @@
 import { GYM, USER, base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
 
 const posts = [
-  { id: 'p-new', user_id: 'u-amy', body: 'Summer challenge starts Monday', created_at: '2026-10-07T09:00:00Z' },
-  { id: 'p-old', user_id: USER, body: 'Welcome to the new app', created_at: '2026-10-01T09:00:00Z' },
+  { id: 'p-new', user_id: 'u-amy', body: 'Summer challenge starts Monday', created_at: '2026-10-07T09:00:00Z', kind: 'post' },
+  { id: 'p-old', user_id: USER, body: 'Welcome to the new app', created_at: '2026-10-01T09:00:00Z', kind: 'post' },
+  { id: 'b1', user_id: 'u-ben', body: 'Closed on bank holiday Monday', created_at: '2026-10-08T09:00:00Z', kind: 'broadcast' },
 ];
 const comments = [
   { id: 'c1', post_id: 'p-new', user_id: 'u-ben', parent_comment_id: null, body: 'Count me in', created_at: '2026-10-07T10:00:00Z' },
@@ -51,7 +52,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await mockSupabase(page, async ({ route, url, path, method, body }) => {
     const table = ['social_posts', 'social_comments'].find((t) => path.endsWith(`/${t}`));
     if (table && ['POST', 'DELETE', 'PATCH'].includes(method)) { writes.push({ table, method, query: Object.fromEntries(url.searchParams), body }); await route.fulfill({ status: 204, body: '' }); return true; }
-    if (path.endsWith('/social_posts')) return reply(route, posts);
+    if (path.endsWith('/social_posts')) return reply(route, posts.filter((x) => url.searchParams.get('kind') === `eq.${x.kind}`));
     if (path.endsWith('/social_comments')) return reply(route, comments);
     if (path.endsWith('/social_reactions')) return reply(route, url.searchParams.get('post_id') ? [{ post_id: 'p-new', comment_id: null, user_id: 'u-ben' }, { post_id: 'p-new', comment_id: null, user_id: 'u-amy' }] : []);
     if (path.endsWith('/profiles')) return reply(route, profiles);
@@ -60,7 +61,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.goto(`${base}/community`);
   const c = runChecks();
   await c.has('heading', page.getByRole('heading', { name: 'Community', level: 1 }));
-  await c.has('newest post first', page.locator('article').first().getByText('Summer challenge starts Monday'));
+  await c.has('newest first, with the broadcast labelled', page.locator('article').first().getByText('Closed on bank holiday Monday'));
+  await c.has('a broadcast says so', page.locator('article').first().getByText(/Broadcast ·/));
   await c.has('counts', page.getByText('2 reactions · 3 comments'));
   await c.has('author names', page.getByText('Ben Lifter').first());
   c.ok('the reply to a reply is shown', (await page.getByText('Bringing a friend').count()) === 1);
@@ -69,14 +71,21 @@ for (const [name, viewport] of Object.entries(sizes)) {
   if (shots) await page.screenshot({ path: `${shots}/community-${name}.png`, fullPage: true });
 
   // Post
-  await page.getByRole('button', { name: 'Post to community' }).click();
+  await page.getByRole('button', { name: 'Send as broadcast' }).click();
   await c.has('empty post refused', page.getByText('Write something to post.'));
   c.ok('nothing written for an empty post', writes.length === 0);
   await page.getByLabel('Post to your members').fill('  Fresh news  ');
-  await page.getByRole('button', { name: 'Post to community' }).click();
+  await page.getByRole('button', { name: 'Post to the feed' }).click();
   await page.waitForTimeout(300);
   const wp = writes.find((x) => x.table === 'social_posts' && x.method === 'POST');
-  c.ok('post exact', wp && JSON.stringify(wp.body) === JSON.stringify({ gym_id: GYM, user_id: USER, body: 'Fresh news' }));
+  c.ok('feed post exact', wp && JSON.stringify(wp.body) === JSON.stringify({ gym_id: GYM, user_id: USER, body: 'Fresh news', kind: 'post' }));
+  writes.length = 0;
+  await page.getByLabel('Post to your members').fill('Gym closed Monday');
+  await page.getByRole('button', { name: 'Send as broadcast' }).click();
+  await page.waitForTimeout(300);
+  const wb = writes.find((x) => x.table === 'social_posts' && x.method === 'POST');
+  c.ok('broadcast exact', wb && JSON.stringify(wb.body) === JSON.stringify({ gym_id: GYM, user_id: USER, body: 'Gym closed Monday', kind: 'broadcast' }));
+  await c.has('the owner is told where it went', page.getByText('Broadcast sent. Members see it in Broadcasts.'));
 
   // Comment, and reply to a reply (stays in the same thread)
   writes.length = 0;

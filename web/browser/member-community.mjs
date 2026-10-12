@@ -6,10 +6,12 @@ import { GYM, USER, base, launch, mockSupabase, reply, runChecks, shots, signedI
 
 process.env.MOCK_ROLE = 'member';
 const posts = [
-  { id: 'p-new', user_id: 'u-amy', body: 'Broadcast-style news from Amy', created_at: '2026-10-07T09:00:00Z' },
-  { id: 'p-mine', user_id: USER, body: 'My first week done', created_at: '2026-10-01T09:00:00Z' },
+  { id: 'p-new', user_id: 'u-amy', body: 'Anyone for a run on Saturday?', created_at: '2026-10-07T09:00:00Z', kind: 'post' },
+  { id: 'p-mine', user_id: USER, body: 'My first week done', created_at: '2026-10-01T09:00:00Z', kind: 'post' },
+  { id: 'b1', user_id: 'u-amy', body: 'The gym is closed on Monday for the bank holiday', created_at: '2026-10-08T09:00:00Z', kind: 'broadcast' },
 ];
 const comments = [
+  { id: 'cb1', post_id: 'b1', user_id: 'u-ben', parent_comment_id: null, body: 'Thanks for the notice', created_at: '2026-10-08T10:00:00Z' },
   { id: 'c1', post_id: 'p-new', user_id: 'u-ben', parent_comment_id: null, body: 'Count me in', created_at: '2026-10-07T10:00:00Z' },
   { id: 'c2', post_id: 'p-new', user_id: USER, parent_comment_id: 'c1', body: 'Me too', created_at: '2026-10-07T11:00:00Z' },
   { id: 'c3', post_id: 'p-new', user_id: 'u-ben', parent_comment_id: 'c2', body: 'Bringing a friend', created_at: '2026-10-07T12:00:00Z' },
@@ -46,7 +48,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await mockSupabase(page, async ({ route, url, path, method, body }) => {
     const table = ['social_posts', 'social_comments', 'social_reactions'].find((t) => path.endsWith(`/${t}`));
     if (table && ['POST', 'DELETE', 'PATCH'].includes(method)) { writes.push({ table, method, query: Object.fromEntries(url.searchParams), body }); await route.fulfill({ status: 204, body: '' }); return true; }
-    if (path.endsWith('/social_posts')) return reply(route, posts);
+    if (path.endsWith('/social_posts')) return reply(route, posts.filter((x) => url.searchParams.get('kind') === `eq.${x.kind}`));
     if (path.endsWith('/social_comments')) return reply(route, comments);
     if (path.endsWith('/social_reactions')) return reply(route, url.searchParams.get('post_id') ? likes.filter((l) => l.post_id) : likes.filter((l) => l.comment_id));
     if (path.endsWith('/profiles')) return reply(route, profiles);
@@ -55,7 +57,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.goto(`${base}/m/community`);
   const c = runChecks();
   await c.has('heading', page.getByRole('heading', { name: 'Community', level: 1 }));
-  await c.has('newest post first', page.locator('article').first().getByText('Broadcast-style news from Amy'));
+  await c.has('newest post first', page.locator('article').first().getByText('Anyone for a run on Saturday?'));
+  c.ok('the feed holds no broadcast', (await page.getByText('The gym is closed on Monday').count()) === 1 && (await page.locator('article').getByText('The gym is closed on Monday').count()) === 0);
+  await c.has('the latest broadcast is teased above the feed', page.getByRole('region', { name: 'Latest broadcast' }).getByText('The gym is closed on Monday'));
   await c.has('the tab is in the bar', page.getByRole('navigation', { name: 'Member' }).getByRole('link', { name: 'Community' }));
   await c.has('comment count on the post', page.getByRole('button', { name: '3 comments' }));
   await c.has('like count on the post', page.getByRole('button', { name: 'Like the post by Amy Coach' }).filter({ hasText: '· 1' }));
@@ -78,7 +82,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('button', { name: 'Post', exact: true }).first().click();
   await page.waitForTimeout(300);
   const wp = writes.find((x) => x.table === 'social_posts' && x.method === 'POST');
-  c.ok('post exact', wp && JSON.stringify(wp.body) === JSON.stringify({ gym_id: GYM, user_id: USER, body: 'Hello gym' }));
+  c.ok('post exact (an ordinary post)', wp && JSON.stringify(wp.body) === JSON.stringify({ gym_id: GYM, user_id: USER, body: 'Hello gym', kind: 'post' }));
 
   // Like and unlike a post
   writes.length = 0;
@@ -121,6 +125,25 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.waitForTimeout(300);
   const dc = writes.find((x) => x.table === 'social_comments' && x.method === 'DELETE');
   c.ok('delete comment scoped', dc && dc.query.id === 'eq.c2' && dc.query.gym_id === `eq.${GYM}`);
+  // Broadcasts: read, like and comment, but no composer and no delete
+  await page.getByRole('tab', { name: /^Broadcasts/ }).click();
+  await c.has('the broadcast is shown', page.getByRole('article', { name: 'Broadcast by Amy Coach' }));
+  c.ok('the feed posts are not mixed in', (await page.getByText('Anyone for a run on Saturday?').count()) === 0);
+  c.ok('there is no way to post a broadcast', (await page.getByLabel('Share something with the gym').count()) === 0);
+  c.ok('a member sees no delete on a broadcast', (await page.getByRole('button', { name: /^Delete/ }).count()) === 0);
+  writes.length = 0;
+  await page.getByRole('button', { name: 'Like the post by Amy Coach' }).click();
+  await page.waitForTimeout(300);
+  const lb = writes.find((x) => x.table === 'social_reactions' && x.method === 'POST');
+  c.ok('a member can like a broadcast', lb && lb.body.post_id === 'b1');
+  await page.getByRole('button', { name: '1 comment' }).click();
+  await page.getByLabel('Add a comment to the post by Amy Coach').fill('Noted, thanks');
+  await page.getByRole('button', { name: 'Post comment on the post by Amy Coach' }).click();
+  await page.waitForTimeout(300);
+  const cb = writes.find((x) => x.table === 'social_comments' && x.method === 'POST');
+  c.ok('a member can comment on a broadcast', cb && cb.body.post_id === 'b1' && cb.body.body === 'Noted, thanks');
+  c.ok('layout (broadcasts)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/member-broadcasts-${name}.png`, fullPage: true });
   c.ok('no page errors', errors.length === 0);
   if (!c.report(`member community ${name}`)) allOk = false;
   await ctx.close();

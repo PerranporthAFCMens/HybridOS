@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { buildFeed, initials, reactionState, nameOf, plural, rootOf, safeAvatar, validateComment, validatePost, type Comment, type Post } from '../src/community/calc';
+import { asKind, buildFeed, initials, reactionState, nameOf, plural, rootOf, safeAvatar, validateComment, validatePost, type Comment, type Post } from '../src/community/calc';
 
-const post = (id: string, createdAt: string): Post => ({ id, userId: 'u', body: 'b', createdAt });
+const post = (id: string, createdAt: string): Post => ({ id, userId: 'u', body: 'b', createdAt, kind: 'post' });
 const comment = (id: string, postId: string, parentId: string | null, createdAt: string): Comment => ({ id, postId, userId: 'u', parentId, body: id, createdAt });
 
 describe('names', () => {
@@ -86,5 +86,15 @@ describe('validation', () => {
   it('pluralises', () => {
     expect(plural(1, 'comment')).toBe('1 comment');
     expect(plural(0, 'reaction')).toBe('0 reactions');
+  });
+});
+
+describe('post kinds', () => {
+  it('treats only the word broadcast as a broadcast', () => {
+    expect(asKind('broadcast')).toBe('broadcast');
+    expect(asKind('post')).toBe('post');
+    expect(asKind('pinned')).toBe('post');
+    expect(asKind(null)).toBe('post');
+    expect(asKind(undefined)).toBe('post');
   });
 });

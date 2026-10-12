@@ -1,13 +1,17 @@
 // Pure rules behind the Community feed: building threads from flat rows, who a name belongs to, and what a
 // valid post or comment looks like.
 
-export interface Post { id: string; userId: string; body: string; createdAt: string }
+export type PostKind = 'post' | 'broadcast';
+export interface Post { id: string; userId: string; body: string; createdAt: string; kind: PostKind }
 export interface Comment { id: string; postId: string; userId: string; parentId: string | null; body: string; createdAt: string }
 export interface Reaction { postId: string | null; commentId: string | null; userId: string }
 export interface Profile { id: string; displayName: string | null; firstName: string | null; lastName: string | null; avatarUrl: string | null }
 
 export interface Thread { comment: Comment; replies: Comment[] }
 export interface FeedPost { post: Post; threads: Thread[]; commentCount: number; reactionCount: number }
+
+/** A broadcast is an announcement from the gym's owners and admins; anything else is an ordinary post. */
+export const asKind = (v: string | null | undefined): PostKind => (v === 'broadcast' ? 'broadcast' : 'post');
 
 export const POST_MAX = 2000;
 export const COMMENT_MAX = 1000;
