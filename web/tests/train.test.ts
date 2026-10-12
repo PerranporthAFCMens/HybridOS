@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ACTIVITIES, guessTracking, matchExercises } from '../src/train/activities';
-import { assignmentNote, blankSets, dbTracking, buildResult, comingUp, dueNow, formatDuration, fromDbSet, hasEntered, hasPainFlag, parseDuration, prepareFinish, readResult, readTarget, describeTarget, readSnapshot, reasonLabel, resultJson, resultSummary, setText, toDbSet, type PlayedActivity } from '../src/train/calc';
+import { assignmentNote, blankSets, dbTracking, buildResult, comingUp, dueNow, formatDuration, fromDbSet, hasEntered, hasPainFlag, joinDuration, parseDuration, splitDuration, prepareFinish, readResult, readTarget, describeTarget, readSnapshot, reasonLabel, resultJson, resultSummary, setText, toDbSet, type PlayedActivity } from '../src/train/calc';
 
 const dayOf = (iso: string) => iso.slice(0, 10);
 
@@ -60,6 +60,12 @@ describe('numbers', () => {
     expect(parseDuration('')).toBeNull();
     expect(formatDuration(750)).toBe('12:30');
     expect(formatDuration(65)).toBe('1:05');
+    expect(parseDuration('1:05:00')).toBe(3900);
+    expect(parseDuration('0:45')).toBe(45);
+    expect(parseDuration('1:75:00')).toBeNull();
+    expect(formatDuration(3900)).toBe('1:05:00');
+    expect(formatDuration(3599)).toBe('59:59');
+    expect(formatDuration(3600)).toBe('1:00:00');
   });
   it('a set becomes columns, or says what is wrong', () => {
     expect(toDbSet('strength', { weight: '24', reps: '10' }).row).toEqual({ weight_kg: 24, reps: 10, duration_seconds: null, distance_m: null, calories: null, side: null });
@@ -220,5 +226,33 @@ describe('did the client record anything', () => {
     expect(hasEntered({ ...base, sets: [{}, { reps: ' 6 ' }] })).toBe(true);
     expect(hasEntered({ ...base, sets: [{ side: 'left' }] })).toBe(false);
     expect(hasEntered({ ...base, done: true })).toBe(true);
+  });
+});
+
+describe('the hours, minutes and seconds selectors', () => {
+  it('split a stored time into the three parts, older and newer ways of writing it', () => {
+    expect(splitDuration('')).toEqual({ h: 0, m: 0, s: 0 });
+    expect(splitDuration('90')).toEqual({ h: 0, m: 1, s: 30 });
+    expect(splitDuration('12:30')).toEqual({ h: 0, m: 12, s: 30 });
+    expect(splitDuration('1:05:09')).toEqual({ h: 1, m: 5, s: 9 });
+    expect(splitDuration('soon')).toEqual({ h: 0, m: 0, s: 0 });
+  });
+
+  it('join the three parts back to the text that is kept', () => {
+    expect(joinDuration(0, 0, 0)).toBe('');
+    expect(joinDuration(0, 0, 45)).toBe('0:45');
+    expect(joinDuration(0, 1, 30)).toBe('1:30');
+    expect(joinDuration(1, 5, 9)).toBe('1:05:09');
+    expect(joinDuration(2, 0, 0)).toBe('2:00:00');
+  });
+
+  it('what is joined reads back as the same number of seconds', () => {
+    for (const [h, m, s] of [[0, 0, 1], [0, 59, 59], [1, 0, 0], [3, 30, 15], [12, 59, 59]] as const) {
+      expect(parseDuration(joinDuration(h, m, s))).toBe(h * 3600 + m * 60 + s);
+    }
+  });
+
+  it('a time with hours goes to the database as seconds', () => {
+    expect(toDbSet('time', { time: '1:05:00' }).row?.duration_seconds).toBe(3900);
   });
 });

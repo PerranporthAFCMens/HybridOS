@@ -97,19 +97,40 @@ export function describeTarget(tracking: Tracking, sets: SetValues[]): string {
 
 export const blankSets = (tracking: Tracking, n = 3): SetValues[] => (tracking === 'instruction' ? [] : Array.from({ length: n }, () => ({})));
 
-/** "12:30" or "90" (seconds) to seconds. Null when it is not a time. */
+/**
+ * A time as typed, to seconds: "12:30" (minutes and seconds), "1:05:00" (hours, minutes and seconds), or a bare "90" which is
+ * seconds (as older workouts were saved). Null when it is not a time.
+ */
 export function parseDuration(text: string): number | null {
   const t = text.trim();
   if (!t) return null;
   if (/^\d+$/.test(t)) return Number(t);
+  const hms = /^(\d{1,2}):([0-5]?\d):([0-5]?\d)$/.exec(t);
+  if (hms) return Number(hms[1]) * 3600 + Number(hms[2]) * 60 + Number(hms[3]);
   const m = /^(\d{1,3}):([0-5]?\d)$/.exec(t);
   return m ? Number(m[1]) * 60 + Number(m[2]) : null;
 }
 
+/** Seconds as "12:30", or "1:05:00" once it reaches an hour. */
 export function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return `${m}:${String(s).padStart(2, '0')}`;
+  const total = Math.round(seconds);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const ss = String(s).padStart(2, '0');
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+}
+
+/** A time split for the hours, minutes and seconds selectors. Nothing (or something that is not a time) is all zeros. */
+export function splitDuration(text: string): { h: number; m: number; s: number } {
+  const total = parseDuration(text) ?? 0;
+  return { h: Math.floor(total / 3600), m: Math.floor((total % 3600) / 60), s: total % 60 };
+}
+
+/** The text to keep for the three selectors: empty when all are zero, otherwise "12:30" or "1:05:00". */
+export function joinDuration(h: number, m: number, s: number): string {
+  const total = h * 3600 + m * 60 + s;
+  return total === 0 ? '' : formatDuration(total);
 }
 
 const num = (text: string | undefined): number | null => {
