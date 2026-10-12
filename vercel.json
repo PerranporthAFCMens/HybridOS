@@ -5,7 +5,8 @@
   "trailingSlash": false,
   "git": {
     "deploymentEnabled": {
-      "dev": false
+      "dev": false,
+      "work-*": false
     }
   },
   "rewrites": [

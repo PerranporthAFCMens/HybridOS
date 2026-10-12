@@ -11,6 +11,7 @@
 - state: READY
 
 Development remains on `dev`; Vercel Git deployment for dev is disabled.
+Branches named `work-*` (the builder's working branches) are also not deployed by Vercel (`git.deploymentEnabled` in `vercel.json`, 12 October 2026), so a busy day of pull requests does not flood Vercel and GitHub with preview builds. `main` and `preview/*` branches are unaffected, so the release preview step still works.
 
 ## Build contract
 
