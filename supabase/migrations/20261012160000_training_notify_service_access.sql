@@ -9,4 +9,7 @@
 -- (it already reads gym_members, profiles, gym_communication_settings and the id and name of gyms)
 -- Undo: supabase/rollback/20261012_revoke_training_notify_service_access.sql
 grant select (id, gym_id, member_user_id, title, assigned_by, source, created_at, workout_snapshot) on table public.workout_assignments to service_role;
+-- A new table can come with full access for the service role (a fresh local database does), which this project does not want:
+-- take it all away, then give back read only.
+revoke all on table public.workout_assignment_feedback from service_role;
 grant select on table public.workout_assignment_feedback to service_role;

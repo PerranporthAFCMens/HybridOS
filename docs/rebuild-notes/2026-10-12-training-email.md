@@ -15,3 +15,6 @@ The owner chose email over push (push on an iPhone only works for a web app inst
 
 ## Checks
 `web/tests/trainingemail.test.ts` (wording, plural, note, escaping, one-line subject), the Workout builder and client file browser checks (the email is asked for with exactly the right ids, one request for a whole set, a failure is reported and never undoes the send), and the database CI step for the grants (verification, rollback, re-apply).
+
+## Found by CI, fixed
+The database check failed with "can write nothing here". A fresh local database (what CI builds) gives the service role full access to any new table by default, while the live project does not (that is why `finalise-signature` needed its own grant). The migration now removes all of the service role's access to the feedback table first and then grants read only, so the result is the same in both places. Tested both ways on a scratch database: starting with full access (like CI) and starting with none (like live).
