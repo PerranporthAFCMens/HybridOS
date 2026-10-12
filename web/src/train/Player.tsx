@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { completeWorkout, getMyAssignment, listLastTimes, markStarted, removeExercise, saveExercise, type LastTime } from '../data/train';
+import { completeWorkout, getMyAssignment, listLastTimes, listMyPbs, markStarted, removeExercise, saveExercise, type LastTime } from '../data/train';
 import { getMyClassWorkout } from '../data/classWorkouts';
 import { Button } from '../ui/Button';
-import { wonMessage, type Won } from './pb';
+import { pbKey, wonMessage, type Won } from './pb';
+import { bestWeights, hasPercent, planFor, resolveTarget } from './percent';
 import { guessTracking } from './activities';
 import { ExercisePicker } from './ExercisePicker';
 import { Checkbox, Input, Select } from '../ui/Field';
@@ -100,6 +101,10 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
   const [saving, setSaving] = useState<string | null>(null);
   const [manualTracking, setManualTracking] = useState(false);
   const own = useMemo(() => [...last.values()].map((l) => l.name), [last]);
+  // The member's heaviest recorded lift per exercise: what a percentage in the coach's plan is a percentage of.
+  const pbs = useQuery({ queryKey: ['m-pbs', gym.gymId, userId], queryFn: () => listMyPbs(userId, gym.gymId) });
+  const bests = useMemo(() => bestWeights(pbs.data ?? []), [pbs.data]);
+  const bestFor = (a: Act) => bests.get(pbKey(a.name)) ?? null;
 
   useEffect(() => { if (assigned) void markStarted(id); }, [id, assigned]);
   // Once the workout is finished the draft is cleared for good: a later render must never write it back.
@@ -124,7 +129,7 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
   const asSet = (a: Act) => {
     if (a.outcome === 'as_set') return patch(a.key, { outcome: undefined });
     const empty = !hasEntered(a);
-    patch(a.key, { outcome: 'as_set', ...(empty && a.target.length ? { sets: a.target.map((t) => ({ ...t })) } : {}) });
+    patch(a.key, { outcome: 'as_set', ...(empty && a.target.length ? { sets: resolveTarget(a.target, bestFor(a)) } : {}) });
   };
   const addExercise = () => {
     const name = adding.name.trim();
@@ -246,7 +251,8 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
               <div>
                 <b className="tr-name">{a.name}</b>
                 {a.originalName && a.originalName !== a.name && <div className="muted small">Swapped from {a.originalName}</div>}
-                {a.plan && <div className="muted small">Suggested: {a.plan}</div>}
+                {a.plan && <div className="muted small">Suggested: {planFor(a.tracking, a.target, bestFor(a), a.plan)}</div>}
+                {hasPercent(a.target) && bestFor(a) === null && <div className="muted small">You have no best recorded for {a.name} yet, so fill in the weight you use.</div>}
                 {a.planNote && <div className="muted small">Coach: {a.planNote}</div>}
               </div>
               {a.skipped && <Button onClick={() => patch(a.key, { skipped: false })} aria-label={`Undo not this time for ${a.name}`}>Undo</Button>}

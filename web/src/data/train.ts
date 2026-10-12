@@ -1,6 +1,6 @@
 import { supabase } from './client';
 import type { Json } from './database.types';
-import type { DbSet, StoredSet, Tracking } from '../train/calc';
+import { dbTracking, type DbSet, type StoredSet, type Tracking } from '../train/calc';
 import { candidatesFor, isBetter, pbKey, wonText, type PbCandidate, type StoredPb, type Won } from '../train/pb';
 
 export interface AssignmentRow { id: string; title: string; source: string; status: string; scheduledFor: string | null; dueAt: string | null; snapshot: Json; focusTags: string[] }
@@ -145,7 +145,7 @@ export async function saveExercise(
     sessionId = s.data?.id ?? null;
   }
   if (!sessionId) return fail(new Error('Could not start the workout.'));
-  const r = await supabase.from('workout_entries').insert({ session_id: sessionId, gym_id: ctx.gymId, user_id: ctx.userId, exercise_name: e.name, tracking_type: e.tracking, notes: e.note, position: ctx.position }).select('id').single();
+  const r = await supabase.from('workout_entries').insert({ session_id: sessionId, gym_id: ctx.gymId, user_id: ctx.userId, exercise_name: e.name, tracking_type: dbTracking(e.tracking), notes: e.note, position: ctx.position }).select('id').single();
   if (r.error || !r.data) return fail(r.error ?? new Error('Could not save the exercise.'));
   const entryId = r.data.id;
   const ins = await supabase.from('workout_sets').insert(e.sets.map((st, j) => ({ entry_id: entryId, set_number: j + 1, ...st })));

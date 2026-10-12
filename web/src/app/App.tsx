@@ -9,6 +9,7 @@ import { Plans } from '../plans/Plans';
 import { Classes } from '../classes/Classes';
 import { Reports } from '../reports/Reports';
 import { ClassSetup } from '../classsetup/ClassSetup';
+import { Lifts } from '../lifts/Lifts';
 import { Staff } from '../staff/Staff';
 import { Settings } from '../staff/Settings';
 import { Rooms } from '../rooms/Rooms';
@@ -29,6 +30,7 @@ import { Me } from '../member/Me';
 import { Train } from '../train/Train';
 import { Player } from '../train/Player';
 import { TrainDone } from '../train/TrainDone';
+import { Leaderboard } from '../train/Leaderboard';
 import { Pbs } from '../train/Pbs';
 import { Pt } from '../member/Pt';
 import { Membership } from '../member/Membership';
@@ -79,6 +81,7 @@ function Main() {
             <Route path="/m/classes" element={<MemberClasses />} />
             <Route path="/m/train" element={<Train />} />
             <Route path="/m/train/pbs" element={<Pbs />} />
+            <Route path="/m/train/leaderboard" element={<Leaderboard />} />
             <Route path="/m/train/pt" element={<Pt />} />
             <Route path="/m/train/done/:id" element={<TrainDone />} />
             <Route path="/m/train/class/:sessionId" element={<Player />} />
@@ -111,6 +114,7 @@ function Main() {
             <Route path="/member-privacy" element={<Privacy />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/class-setup" element={<ClassSetup />} />
+            <Route path="/lifts" element={<Lifts />} />
             <Route path="*" element={<Navigate to="/today" replace />} />
           </Route>
         </Routes>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ACTIVITIES, guessTracking, matchExercises } from '../src/train/activities';
-import { assignmentNote, blankSets, buildResult, comingUp, dueNow, formatDuration, fromDbSet, hasEntered, hasPainFlag, parseDuration, prepareFinish, readResult, readTarget, describeTarget, readSnapshot, reasonLabel, resultJson, resultSummary, setText, toDbSet, type PlayedActivity } from '../src/train/calc';
+import { assignmentNote, blankSets, dbTracking, buildResult, comingUp, dueNow, formatDuration, fromDbSet, hasEntered, hasPainFlag, parseDuration, prepareFinish, readResult, readTarget, describeTarget, readSnapshot, reasonLabel, resultJson, resultSummary, setText, toDbSet, type PlayedActivity } from '../src/train/calc';
 
 const dayOf = (iso: string) => iso.slice(0, 10);
 
@@ -18,6 +18,15 @@ describe('reading what a coach sent', () => {
     expect(r.activities[2]?.plan).toBe('4 x 8');
     expect(readSnapshot(null).activities).toEqual([]);
     expect(readSnapshot('x').title).toBe('');
+  });
+});
+
+describe('what the database accepts for an exercise type', () => {
+  it('turns reps and rounds into types the database allows', () => {
+    expect(dbTracking('reps')).toBe('strength');
+    expect(dbTracking('intervals')).toBe('custom');
+    expect(dbTracking('instruction')).toBe('custom');
+    for (const t of ['strength', 'time', 'distance', 'calories'] as const) expect(dbTracking(t)).toBe(t);
   });
 });
 

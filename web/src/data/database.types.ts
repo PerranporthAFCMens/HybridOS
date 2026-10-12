@@ -383,6 +383,125 @@ export type Database = {
           },
         ]
       }
+      tracked_lifts: {
+        Row: {
+          created_at: string
+          exercise_key: string
+          exercise_name: string
+          gym_id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_key: string
+          exercise_name: string
+          gym_id: string
+        }
+        Update: {
+          created_at?: string
+          exercise_key?: string
+          exercise_name?: string
+          gym_id?: string
+        }
+        Relationships: []
+      }
+      gym_lift_settings: {
+        Row: {
+          gym_id: string
+          show_by_default: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          gym_id: string
+          show_by_default?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          gym_id?: string
+          show_by_default?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      member_lift_choice: {
+        Row: {
+          gym_id: string
+          show: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          gym_id: string
+          show: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          gym_id?: string
+          show?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      class_blocks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          gym_id: string
+          id: string
+          name: string
+          starts_on: string
+          weeks: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          gym_id: string
+          id?: string
+          name: string
+          starts_on: string
+          weeks: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          gym_id?: string
+          id?: string
+          name?: string
+          starts_on?: string
+          weeks?: number
+        }
+        Relationships: []
+      }
+      class_block_sessions: {
+        Row: {
+          block_id: string
+          gym_id: string
+          session_id: string
+        }
+        Insert: {
+          block_id: string
+          gym_id: string
+          session_id: string
+        }
+        Update: {
+          block_id?: string
+          gym_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_block_sessions_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "class_blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_session_workouts: {
         Row: {
           created_at: string
@@ -3469,6 +3588,15 @@ export type Database = {
       get_class_booking_options: {
         Args: { p_session_id: string }
         Returns: Json
+      }
+      get_lift_leaderboard: {
+        Args: { p_exercise_key: string; p_gym_id: string }
+        Returns: {
+          display_name: string
+          is_me: boolean
+          rank: number
+          value: number
+        }[]
       }
       get_class_calendar: {
         Args: { p_from: string; p_gym_id: string; p_to: string }

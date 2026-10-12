@@ -1,5 +1,5 @@
 // Browser gate: a member opens the workout their coach made available for a class they were in, fills in what they did
-// ("As set" puts the coach's numbers in the boxes), and keeps it. Phone and desktop. Supabase is mocked at the network layer.
+// ("As set" puts the coach's numbers in the boxes), and keeps it. Class workouts are listed under their block and week. Phone and desktop. Supabase is mocked at the network layer.
 // Checks what is listed (recent classes only), that the class workout is the member's own record (nothing is marked on an
 // assignment, no review questions), the exact writes, and that a second visit says it is already recorded.
 import { base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
@@ -10,12 +10,15 @@ const snapshot = {
   blocks: [{ position: 0, title: 'Workout', activities: [
     { position: 0, activity_name: 'Back squat', tracking_type: 'strength', prescription: { display: '3 sets: 8 × 60 kg', sets: [{ reps: '8', weight: '60' }, { reps: '8', weight: '60' }, { reps: '8', weight: '60' }] }, notes: 'Brace' },
     { position: 1, activity_name: 'Row', tracking_type: 'distance', prescription: { display: '500 m' } },
+    { position: 2, activity_name: 'Push-ups', tracking_type: 'reps', prescription: { display: 'Max reps' } },
   ] }],
 };
 const classWorkouts = [
   { session_id: 'c1', title: 'Hybrid benchmark', workout_snapshot: snapshot, class_sessions: { name: 'Hybrid 6pm', starts_at: hrs(-3) } },
   { session_id: 'c2', title: 'Old one', workout_snapshot: snapshot, class_sessions: { name: 'Hybrid last month', starts_at: hrs(-24 * 30) } },
 ];
+const gymToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
+const block = { id: 'blk1', name: 'Hybrid Uppers', starts_on: gymToday, weeks: 6 };
 
 function layoutProblems() {
   const problems = [];
@@ -53,6 +56,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
       if (method === 'PATCH') { writes.push('PATCH notifications'); unread = false; return reply(route, []); }
       return reply(route, unread ? [{ id: 'n1', notification_type: 'class_workout', title: 'Your class workout is ready', body: 'Hybrid benchmark', related_assignment_id: null, related_session_id: 'c1', created_at: hrs(-1) }] : []);
     }
+    if (path.endsWith('/class_block_sessions')) return reply(route, [{ session_id: 'c1', class_blocks: block }]);
     if (path.endsWith('/class_session_workouts')) {
       const only = url.searchParams.get('session_id');
       const rows = classWorkouts.filter((w) => !only || only === `eq.${w.session_id}`);
@@ -99,6 +103,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('Workouts lists the class workout', list.getByText('Hybrid benchmark'));
   c.ok('with its class', (await list.getByText(/Hybrid 6pm/).count()) === 1);
   c.ok('a class from last month is not listed', (await list.getByText('Old one').count()) === 0);
+  const group = list.getByRole('group', { name: 'Hybrid Uppers · week 1 of 6' });
+  c.ok('it is listed under its block and week, with how many are recorded', (await group.count()) === 1 && (await group.getByText('Recorded 0 of 1').count()) === 1 && (await group.getByText(/^Week 1 · Hybrid 6pm/).count()) === 1);
   c.ok('looking at the list cleared the notice', writes.includes('PATCH notifications'));
   c.ok('layout (workouts)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/member-class-list-${name}.png`, fullPage: true });
@@ -116,6 +122,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByLabel('Back squat set 1 Weight').fill('62.5');
   await page.getByLabel('Your note on Back squat').fill('felt strong today');
   await page.getByRole('button', { name: 'Skip Row' }).click();
+  await page.getByLabel('Push-ups set 1 Reps').fill('30');
   c.ok('layout (recording)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/member-class-record-${name}.png`, fullPage: true });
   await page.getByRole('button', { name: 'Finish workout' }).click();
@@ -125,7 +132,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const joined = writes.join('\n');
   const sess = writes.find((w) => w.startsWith('session '));
   c.ok('one session, tied to the class and not to any assignment', writes.filter((w) => w.startsWith('session ')).length === 1 && sess.includes('"class_session_id":"c1"') && sess.includes('"assignment_id":null') && sess.includes('"title":"Hybrid benchmark"'));
-  c.ok('one exercise saved, with their note and their numbers', writes.filter((w) => w.startsWith('entry ')).length === 1 && joined.includes('"exercise_name":"Back squat"') && joined.includes('felt strong today') && joined.includes('"weight_kg":62.5') && joined.includes('"reps":8'));
+  c.ok('two exercises saved, with their note and their numbers', writes.filter((w) => w.startsWith('entry ')).length === 2 && joined.includes('"exercise_name":"Back squat"') && joined.includes('felt strong today') && joined.includes('"weight_kg":62.5') && joined.includes('"reps":8'));
+  const types = writes.filter((w) => w.startsWith('entry ')).map((w) => JSON.parse(w.slice(6)).tracking_type);
+  c.ok('every exercise is saved as a type the database accepts (a reps exercise is saved as strength)', types.length === 2 && types.every((t) => ['strength', 'time', 'distance', 'calories', 'custom'].includes(t)) && types.includes('strength'));
   c.ok('the skipped exercise is not saved', !joined.includes('"exercise_name":"Row"'));
   c.ok('a new personal best is recorded from it', joined.includes('pb ') && joined.includes('"value_numeric":62.5'));
   c.ok('nothing is marked on an assignment', !joined.includes('PATCH assignment'));

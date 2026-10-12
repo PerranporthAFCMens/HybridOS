@@ -5,6 +5,8 @@ import { Button } from '../ui/Button';
 import { Select } from '../ui/Field';
 import { useTemplates } from '../workouts/useWorkouts';
 import { Editor } from '../workouts/Workouts';
+import { blockLabel, blockWeek, gymDay } from './blocks';
+import { useBlockOfClass } from './useBlocks';
 import { useClassWorkout, useClassWorkoutWrites } from './useClassWorkout';
 
 /**
@@ -12,11 +14,12 @@ import { useClassWorkout, useClassWorkoutWrites } from './useClassWorkout';
  * available. Until then it is a draft nobody else can see. Once available, the people booked into the class, or marked
  * attended, can open it in their app and record their own weights, reps and times.
  */
-export function ClassWorkoutPanel({ sessionId, onBuilding }: { sessionId: string; onBuilding: (building: boolean) => void }) {
+export function ClassWorkoutPanel({ sessionId, startsAt, onBuilding }: { sessionId: string; startsAt: string; onBuilding: (building: boolean) => void }) {
   const { gym, userId } = useReadyAuth();
   const q = useClassWorkout(sessionId);
   const library = useTemplates(gym.gymId);
   const w = useClassWorkoutWrites(gym.gymId, userId, sessionId);
+  const blockQ = useBlockOfClass(sessionId);
   const [picking, setPicking] = useState(false);
   const [building, setBuilding] = useState(false);
   const [chosen, setChosen] = useState('');
@@ -59,6 +62,7 @@ export function ClassWorkoutPanel({ sessionId, onBuilding }: { sessionId: string
   return (
     <section className="cw-panel" aria-label="Class workout">
       <h4 className="detail-heading">Workout for this class</h4>
+      {blockQ.data && <p className="muted small">{blockLabel(blockQ.data.name, blockWeek(blockQ.data.startsOn, blockQ.data.weeks, gymDay(startsAt)), blockQ.data.weeks)}</p>}
       {q.isPending && <p className="muted small">Loading…</p>}
       {q.isError && <p className="muted small">Could not load this class's workout. Close and open the class to try again.</p>}
       {q.data === null && !picking && (

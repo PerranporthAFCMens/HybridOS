@@ -5,6 +5,16 @@ export type Tracking = 'strength' | 'reps' | 'time' | 'distance' | 'calories' | 
 
 export interface PlannedActivity { key: string; name: string; tracking: Tracking; plan: string; note: string; block: string; target: SetValues[] }
 
+/**
+ * What the database accepts for an exercise's type: strength, time, distance, calories or custom. A reps-only exercise is a
+ * strength exercise with no weight, and rounds with a time are custom. (Saving "reps" or "intervals" as they are was refused.)
+ */
+export function dbTracking(t: Tracking): 'strength' | 'time' | 'distance' | 'calories' | 'custom' {
+  if (t === 'reps') return 'strength';
+  if (t === 'time' || t === 'distance' || t === 'calories' || t === 'strength') return t;
+  return 'custom';
+}
+
 const TRACKINGS: Tracking[] = ['strength', 'reps', 'time', 'distance', 'calories', 'intervals', 'instruction'];
 const asTracking = (v: unknown): Tracking => (TRACKINGS.includes(v as Tracking) ? (v as Tracking) : 'strength');
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
@@ -155,7 +165,8 @@ export function setText(tracking: Tracking, v: SetValues): string {
   const parts: string[] = [];
   const side = asSide(v.side);
   const tail = side ? ` (${side})` : '';
-  if (tracking === 'strength') return [v.reps ? `${v.reps}` : '', v.weight ? `${v.weight} kg` : ''].filter(Boolean).join(' × ') + tail;
+  // A weight typed as a percentage ("80%") or already worded ("80% (80 kg)") is shown as it is; a plain number is kilos.
+  if (tracking === 'strength') return [v.reps ? `${v.reps}` : '', v.weight ? (v.weight.includes('%') ? v.weight : `${v.weight} kg`) : ''].filter(Boolean).join(' × ') + tail;
   if (v.reps) parts.push(`${v.reps} ${tracking === 'intervals' ? 'rounds' : 'reps'}`);
   if (v.time) parts.push(v.time);
   if (v.distance) parts.push(`${v.distance} km`);
