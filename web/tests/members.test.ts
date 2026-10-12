@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  availableLetters, dateInputValue, filterAndSort, initials, jumpLetter, labelStatus, nameOf, nameParts,
+  daysAgo, availableLetters, dateInputValue, filterAndSort, initials, jumpLetter, labelStatus, nameOf, nameParts,
   paymentHint, summaryText, validateLifecycle, isTeam, showOnly, missingList, missingSummary, addressText, phoneText, emergencyText, dobText, checkDetailsDraft, draftFromDetails,
 } from '../src/members/calc';
 import type { MemberRow } from '../src/data/members';
@@ -142,5 +142,20 @@ describe('editing the details of a member', () => {
     expect(d.phone).toBe('07700 900123');
     expect(d.line2).toBe('');
     expect(d.emergencyPhone).toBe('07700 900456');
+  });
+});
+
+describe('how long ago, in plain words', () => {
+  const now = new Date('2026-10-12T12:00:00Z');
+  it('says today, yesterday, then days, never late', () => {
+    expect(daysAgo('2026-10-12T08:00:00Z', now)).toBe('today');
+    expect(daysAgo('2026-10-11T22:30:00Z', now)).toBe('yesterday');
+    expect(daysAgo('2026-10-11T23:30:00Z', now)).toBe('today');
+    expect(daysAgo('2026-10-07T10:00:00Z', now)).toBe('5 days ago');
+    expect(daysAgo('2026-10-13T10:00:00Z', now)).toBe('today');
+    expect(daysAgo('nonsense', now)).toBe('today');
+  });
+  it('counts days in UK time across the clocks changing', () => {
+    expect(daysAgo('2026-10-24T22:30:00Z', new Date('2026-10-26T12:00:00Z'))).toBe('2 days ago');
   });
 });
