@@ -50,7 +50,7 @@ export function Today() {
   const sessions = useQuery({ queryKey: ['m-sessions', gym.gymId, userId], queryFn: () => listRecentSessions(userId, gym.gymId) });
   const year = Number(d.today.slice(0, 4));
   const wishedBefore = (() => { try { return localStorage.getItem(birthdayKey(userId, year)) === '1'; } catch { return false; } })();
-  const showBirthday = birthday.isSuccess && !wished && !wishedBefore && isBirthdayToday(birthday.data, d.now);
+  const showBirthday = birthday.isSuccess && !profile.isPending && !wished && !wishedBefore && isBirthdayToday(birthday.data, d.now);
   const closeBirthday = () => {
     setWished(true);
     try { localStorage.setItem(birthdayKey(userId, year), '1'); } catch { /* it may show again on this device, which is harmless */ }

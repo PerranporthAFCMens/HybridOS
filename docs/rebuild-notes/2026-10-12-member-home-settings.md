@@ -12,3 +12,6 @@ What stays outside the tiles, always shown: the greeting and the one thing that 
 No database change. Members read the settings through `get_member_home_settings` (as the old page does) and the door row through the existing "gym members can view access settings" rule. The Community button target needs the Community tab (#247).
 
 Checks: `web/browser/member-home.mjs` (custom order, hidden tiles, promo, external link, unsafe link refused, PIN hidden and revealed, switched off, nothing set; phone and desktop), unit tests for the link rules, the existing member and train checks, and the 320px layout audit.
+
+## Birthday dialog waits for the member's name
+The "Happy birthday" dialog could open before the member's name had loaded and so lose the "Jo" in "Happy birthday, Jo!". This was a timing flaw that was already there; the extra requests on this screen made it show up in the day-of-the-week CI run (+5 days, desktop). The dialog now waits for the name.
