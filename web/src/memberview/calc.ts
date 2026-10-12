@@ -72,7 +72,7 @@ export function normaliseCta(raw: unknown): Cta {
   return out;
 }
 
-const isSecureUrl = (s: string) => {
+export const isSecureUrl = (s: string) => {
   try { return new URL(s).protocol === 'https:'; } catch { return false; }
 };
 
@@ -95,3 +95,18 @@ export function validateCta(c: Cta): CtaCheck {
 
 /** The tile title shown in the preview: the hub tile shows the gym's headline. */
 export const tileTitle = (key: string, cta: Cta) => (key === 'hero' ? cta.title.trim() || TILES[key]?.label || key : TILES[key]?.label ?? key);
+
+export type CtaLink = { to: string } | { href: string };
+
+/** Where a promo button goes in the member app. An external link must be https; anything else leaves the button out. */
+export function ctaLink(target: string, url: string): CtaLink | null {
+  switch (target) {
+    case 'classes': return { to: '/m/classes' };
+    case 'workouts': return { to: '/m/train' };
+    case 'pbs': return { to: '/m/train/pbs' };
+    case 'membership': return { to: '/m/membership' };
+    case 'community': return { to: '/m/community' };
+    case 'external': return isSecureUrl(url.trim()) ? { href: url.trim() } : null;
+    default: return null;
+  }
+}

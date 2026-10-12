@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useOutletContext } from 'react-router-dom';
 import { londonParts } from '../classes/calc';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { getMyBirthday, getProfileNames } from '../data/profile';
+import { loadDoor } from '../data/door';
+import { loadMyHomeSettings } from '../data/memberView';
+import { listMyPbs, listRecentSessions } from '../data/train';
+import { DEFAULT_CTA, DEFAULT_LAYOUT } from '../memberview/calc';
+import { Activity, BookedClasses, DoorCard, MembershipTile, Promo, PtList, Snapshot, UpcomingCount } from './HomeTiles';
 import type { ClassRow } from '../data/member';
 import { Button } from '../ui/Button';
 import { BirthdayHello } from './Birthday';
@@ -36,9 +41,16 @@ export function Today() {
   const profile = useQuery({ queryKey: ['profile', userId], queryFn: () => getProfileNames(userId) });
   const birthday = useQuery({ queryKey: ['birthday', userId], queryFn: () => getMyBirthday() });
   const [wished, setWished] = useState(false);
+  // The gym's choices from "What members see". If they cannot be read, the defaults apply (the old member app did the same).
+  const settings = useQuery({ queryKey: ['m-home', gym.gymId], queryFn: () => loadMyHomeSettings(gym.gymId) });
+  const home = settings.data ?? { layout: DEFAULT_LAYOUT, cta: DEFAULT_CTA };
+  const tiles = settings.isPending ? [] : home.layout.filter((t) => t.visible);
+  const door = useQuery({ queryKey: ['m-door', gym.gymId], queryFn: () => loadDoor(gym.gymId), select: (v) => (v && v.enabled && v.code ? v : null) });
+  const pbs = useQuery({ queryKey: ['m-pbs', gym.gymId, userId], queryFn: () => listMyPbs(userId, gym.gymId) });
+  const sessions = useQuery({ queryKey: ['m-sessions', gym.gymId, userId], queryFn: () => listRecentSessions(userId, gym.gymId) });
   const year = Number(d.today.slice(0, 4));
   const wishedBefore = (() => { try { return localStorage.getItem(birthdayKey(userId, year)) === '1'; } catch { return false; } })();
-  const showBirthday = birthday.isSuccess && !wished && !wishedBefore && isBirthdayToday(birthday.data, d.now);
+  const showBirthday = birthday.isSuccess && !profile.isPending && !wished && !wishedBefore && isBirthdayToday(birthday.data, d.now);
   const closeBirthday = () => {
     setWished(true);
     try { localStorage.setItem(birthdayKey(userId, year), '1'); } catch { /* it may show again on this device, which is harmless */ }
@@ -47,7 +59,6 @@ export function Today() {
   const hero = chooseHero(d.now, d.classes.data, d.pt, d.flags, due ? { id: due.id, title: due.title, status: due.status } : null);
   const first = profile.data?.firstName ?? profile.data?.displayName?.split(' ')[0] ?? '';
   const sugg = d.flags.classes ? suggestions(d.now, d.classes.data, 3) : [];
-  const nextPt = d.pt[0];
 
   const setGoalTo = (n: number) => {
     const v = Math.max(1, Math.min(14, n));
@@ -61,6 +72,41 @@ export function Today() {
     : hero.kind === 'pt' ? `PT ${whenWords(dayOf(hero.row.startsAt), d.today)}`
     : hero.kind === 'book' ? 'Ready for your next class?'
     : 'Welcome back';
+
+  const tile = (key: string): ReactNode => {
+    switch (key) {
+      case 'hero': return <Promo cta={home.cta} />;
+      case 'next_classes': return sugg.length > 0 && (
+        <section className="mem-card" aria-label="Book another">
+          <div className="mem-row"><h2>{hero.kind === 'class' ? 'Book another' : 'Coming up'}</h2><Link to="/m/classes">See all</Link></div>
+          {sugg.map((c) => <SuggestionRow key={c.sessionId} c={c} busy={booking.busy === c.sessionId} onBook={() => void booking.book(c)} />)}
+        </section>
+      );
+      case 'goal': return (d.flags.gym || d.workoutsThisWeek > 0) && (
+        <section className="mem-card" aria-label="This week">
+          <div className="mem-row">
+            <div>
+              <h2>This week</h2>
+              <div className="muted">{goalMessage(d.workoutsThisWeek, goal)}</div>
+            </div>
+            <div className="mem-ring" style={{ ['--p' as string]: `${Math.min(100, Math.round((d.workoutsThisWeek / goal) * 100)) * 3.6}deg` }}><i>{d.workoutsThisWeek}/{goal}</i></div>
+          </div>
+          <div className="mem-stepper" role="group" aria-label="Weekly goal">
+            <span className="muted">Goal: {goal} a week</span>
+            <Button aria-label="Lower the weekly goal" onClick={() => setGoalTo(goal - 1)}>−</Button>
+            <Button aria-label="Raise the weekly goal" onClick={() => setGoalTo(goal + 1)}>+</Button>
+          </div>
+        </section>
+      );
+      case 'progress': return <Snapshot workoutsThisWeek={d.workoutsThisWeek} pbs={pbs.data ?? []} />;
+      case 'activity': return <Activity sessions={sessions.data ?? []} pbs={pbs.data ?? []} />;
+      case 'upcoming_count': return d.flags.classes && <UpcomingCount classes={d.classes.data} />;
+      case 'membership': return <MembershipTile plan={d.plan} />;
+      case 'booked_classes': return d.flags.classes && <BookedClasses classes={d.classes.data} />;
+      case 'pt': return d.flags.pt && <PtList rows={hero.kind === 'pt' ? d.pt.filter((r) => r.id !== hero.row.id) : d.pt} />;
+      default: return null;
+    }
+  };
 
   return (
     <div className="mem-screen">
@@ -112,41 +158,14 @@ export function Today() {
         <section className="mem-card mem-hero"><div className="mem-big">Glad you are here</div><div className="muted">Your classes, training and PT will show here as they are set up.</div></section>
       )}
 
-      {sugg.length > 0 && (
-        <section className="mem-card" aria-label="Book another">
-          <div className="mem-row"><h2>{hero.kind === 'class' ? 'Book another' : 'Coming up'}</h2><Link to="/m/classes">See all</Link></div>
-          {sugg.map((c) => <SuggestionRow key={c.sessionId} c={c} busy={booking.busy === c.sessionId} onBook={() => void booking.book(c)} />)}
-        </section>
-      )}
-
+      {door.data && <DoorCard label={door.data.label ?? ''} code={door.data.code ?? ''} note={door.data.note ?? ''} />}
       {hero.kind !== 'workout' && due && (
         <section className="mem-card" aria-label="Today's workout">
           <div className="mem-line"><div><h2>Today's workout</h2><div className="muted">{due.title}</div></div><Link className="btn secondary" to={`/m/train/${due.id}`}>{due.status === 'in_progress' ? 'Continue' : 'Start'}</Link></div>
         </section>
       )}
 
-      {hero.kind !== 'pt' && nextPt && d.flags.pt && (
-        <section className="mem-card" aria-label="Next PT session">
-          <div className="mem-row"><div><h2>Next PT session</h2><div className="muted">{dayLabel(dayOf(nextPt.startsAt))} · {timeOf(nextPt.startsAt)}</div></div></div>
-        </section>
-      )}
-
-      {(d.flags.gym || d.workoutsThisWeek > 0) && (
-        <section className="mem-card" aria-label="This week">
-          <div className="mem-row">
-            <div>
-              <h2>This week</h2>
-              <div className="muted">{goalMessage(d.workoutsThisWeek, goal)}</div>
-            </div>
-            <div className="mem-ring" style={{ ['--p' as string]: `${Math.min(100, Math.round((d.workoutsThisWeek / goal) * 100)) * 3.6}deg` }}><i>{d.workoutsThisWeek}/{goal}</i></div>
-          </div>
-          <div className="mem-stepper" role="group" aria-label="Weekly goal">
-            <span className="muted">Goal: {goal} a week</span>
-            <Button aria-label="Lower the weekly goal" onClick={() => setGoalTo(goal - 1)}>−</Button>
-            <Button aria-label="Raise the weekly goal" onClick={() => setGoalTo(goal + 1)}>+</Button>
-          </div>
-        </section>
-      )}
+      {tiles.map((t) => <Fragment key={t.key}>{tile(t.key)}</Fragment>)}
     </div>
   );
 }

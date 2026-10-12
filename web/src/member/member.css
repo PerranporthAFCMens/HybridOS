@@ -95,3 +95,5 @@
 @keyframes bday-bounce { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-10px) rotate(4deg); } }
 @media (prefers-reduced-motion: reduce) { .bday-card, .bday-cake { animation: none; } }
 .bday-card .btn { min-height: 48px; padding: 0 28px; }
+
+.mem-pin { letter-spacing: .2em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
