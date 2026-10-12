@@ -11,14 +11,18 @@ export async function loadCommunity(gymId: string): Promise<CommunityData> {
   if (p.error) throw p.error;
   const posts = (p.data ?? []).map((r): Post => ({ id: r.id, userId: r.user_id, body: r.body, createdAt: r.created_at }));
   const ids = posts.map((x) => x.id);
-  const [c, r] = ids.length
-    ? await Promise.all([
-        supabase.from('social_comments').select('id, post_id, user_id, parent_comment_id, body, created_at').eq('gym_id', gymId).in('post_id', ids).order('created_at'),
-        supabase.from('social_reactions').select('post_id, comment_id').eq('gym_id', gymId).in('post_id', ids),
-      ])
-    : [{ data: [], error: null }, { data: [], error: null }];
+  const c = ids.length
+    ? await supabase.from('social_comments').select('id, post_id, user_id, parent_comment_id, body, created_at').eq('gym_id', gymId).in('post_id', ids).order('created_at')
+    : { data: [], error: null };
   if (c.error) throw c.error;
-  if (r.error) throw r.error;
+  const commentIds = (c.data ?? []).map((x) => x.id);
+  const [postLikes, commentLikes] = await Promise.all([
+    ids.length ? supabase.from('social_reactions').select('post_id, comment_id, user_id').eq('gym_id', gymId).in('post_id', ids) : { data: [], error: null },
+    commentIds.length ? supabase.from('social_reactions').select('post_id, comment_id, user_id').eq('gym_id', gymId).in('comment_id', commentIds) : { data: [], error: null },
+  ]);
+  if (postLikes.error) throw postLikes.error;
+  if (commentLikes.error) throw commentLikes.error;
+  const likes = [...(postLikes.data ?? []), ...(commentLikes.data ?? [])];
   const comments = (c.data ?? []).map((x): Comment => ({ id: x.id, postId: x.post_id, userId: x.user_id, parentId: x.parent_comment_id, body: x.body, createdAt: x.created_at }));
   const people = [...new Set([...posts.map((x) => x.userId), ...comments.map((x) => x.userId)])];
   const profiles = new Map<string, Profile>();
@@ -27,7 +31,7 @@ export async function loadCommunity(gymId: string): Promise<CommunityData> {
     if (pr.error) throw pr.error;
     for (const x of pr.data ?? []) profiles.set(x.id, { id: x.id, displayName: x.display_name, firstName: x.first_name, lastName: x.last_name, avatarUrl: x.avatar_url });
   }
-  return { posts, comments, reactions: (r.data ?? []).map((x): Reaction => ({ postId: x.post_id, commentId: x.comment_id })), profiles };
+  return { posts, comments, reactions: likes.map((x): Reaction => ({ postId: x.post_id, commentId: x.comment_id, userId: x.user_id })), profiles };
 }
 
 export async function createPost(gymId: string, userId: string, body: string): Promise<void> {
@@ -47,5 +51,15 @@ export async function deletePost(gymId: string, id: string): Promise<void> {
 
 export async function deleteComment(gymId: string, id: string): Promise<void> {
   const { error } = await supabase.from('social_comments').delete().eq('id', id).eq('gym_id', gymId);
+  if (error) throw error;
+}
+
+/** Like or unlike a post or a comment. One like per person per target (the database enforces it). */
+export async function setLike(gymId: string, userId: string, target: { postId: string } | { commentId: string }, liked: boolean): Promise<void> {
+  const post = 'postId' in target;
+  const id = post ? target.postId : target.commentId;
+  const { error } = liked
+    ? await supabase.from('social_reactions').insert(post ? { gym_id: gymId, user_id: userId, reaction: 'like', post_id: id } : { gym_id: gymId, user_id: userId, reaction: 'like', comment_id: id })
+    : await supabase.from('social_reactions').delete().eq('user_id', userId).eq(post ? 'post_id' : 'comment_id', id);
   if (error) throw error;
 }

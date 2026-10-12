@@ -34,6 +34,7 @@ export function MemberShell() {
         <NavLink to="/m/today">{icon('M3 11l9-8 9 8M5 10v10h14V10')}<span>Today</span></NavLink>
         {data.flags.classes && <NavLink to="/m/classes">{icon('M4 5h16v15H4zM4 10h16M9 3v4M15 3v4')}<span>Classes</span></NavLink>}
         <NavLink to="/m/train">{icon('M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12')}<span>Workouts</span></NavLink>
+        <NavLink to="/m/community">{icon('M21 12a8 8 0 01-11.6 7.1L3 21l1.9-5.4A8 8 0 1121 12z')}<span>Community</span></NavLink>
         <NavLink to="/m/me">{icon('M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6')}<span>Me</span></NavLink>
       </nav>
     </div>
