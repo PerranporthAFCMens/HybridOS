@@ -81,6 +81,7 @@ function Main() {
             <Route path="/m/train/pbs" element={<Pbs />} />
             <Route path="/m/train/pt" element={<Pt />} />
             <Route path="/m/train/done/:id" element={<TrainDone />} />
+            <Route path="/m/train/class/:sessionId" element={<Player />} />
             <Route path="/m/train/:id" element={<Player />} />
             <Route path="/m/community" element={<MemberCommunity />} />
             <Route path="/m/me" element={<Me />} />

@@ -57,16 +57,17 @@ export function Workouts() {
   );
 }
 
-function Editor({ template, onClose }: { template: TemplateRow | null; onClose: (n?: Note) => void }) {
+/** Build or edit a workout. `onSaved` lets another screen (a class) use the workout the moment it is saved. */
+export function Editor({ template, onClose, onSaved }: { template: TemplateRow | null; onClose: (n?: Note) => void; onSaved?: (t: TemplateRow) => void }) {
   const { gym, userId } = useReadyAuth();
   const w = useWorkoutWrites(gym.gymId, userId);
   const loaded = useQuery({ queryKey: ['workout-blocks', template?.id], queryFn: () => loadBlocks(template?.id ?? ''), enabled: !!template, gcTime: 0 });
   if (template && loaded.isPending) return <Card><Empty>Loading the workout…</Empty></Card>;
   if (template && loaded.isError) return <Card><Empty>Could not load this workout. Go back and try again.</Empty><Button onClick={() => onClose()}>Back to the library</Button></Card>;
-  return <EditorForm template={template} initialBlocks={loaded.data ?? []} w={w} onClose={onClose} />;
+  return <EditorForm template={template} initialBlocks={loaded.data ?? []} w={w} onClose={onClose} onSaved={onSaved} />;
 }
 
-function EditorForm({ template, initialBlocks, w, onClose }: { template: TemplateRow | null; initialBlocks: BlockForm[]; w: ReturnType<typeof useWorkoutWrites>; onClose: (n?: Note) => void }) {
+function EditorForm({ template, initialBlocks, w, onClose, onSaved }: { template: TemplateRow | null; initialBlocks: BlockForm[]; w: ReturnType<typeof useWorkoutWrites>; onClose: (n?: Note) => void; onSaved?: (t: TemplateRow) => void }) {
   const startForm: WorkoutForm = template
     ? { title: template.title, type: template.workoutType, tags: template.focusTags.join(', '), minutes: template.estimatedMinutes === null ? '' : String(template.estimatedMinutes), description: template.description ?? '', visibility: template.visibility }
     : emptyWorkout;
@@ -94,7 +95,9 @@ function EditorForm({ template, initialBlocks, w, onClose }: { template: Templat
         setId(newId);
         setBlocks(fresh);
         setSaved({ form, blocks: fresh });
-        setCurrent({ id: newId, title: c.input.title, description: c.input.description, workoutType: c.input.workoutType, focusTags: c.input.focusTags, estimatedMinutes: c.input.estimatedMinutes, visibility: c.input.visibility === 'gym' ? 'gym' : 'private' });
+        const savedRow: TemplateRow = { id: newId, title: c.input.title, description: c.input.description, workoutType: c.input.workoutType, focusTags: c.input.focusTags, estimatedMinutes: c.input.estimatedMinutes, visibility: c.input.visibility === 'gym' ? 'gym' : 'private' };
+        setCurrent(savedRow);
+        onSaved?.(savedRow);
         setNote({ text: 'Workout saved.', good: true });
       },
       onError: (e) => setNote({ text: `${e.message} Your changes are still here; press Save workout to try again.`, good: false }),

@@ -383,6 +383,53 @@ export type Database = {
           },
         ]
       }
+      class_session_workouts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          gym_id: string
+          published_at: string | null
+          published_by: string | null
+          session_id: string
+          template_id: string | null
+          title: string
+          updated_at: string
+          workout_snapshot: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          gym_id: string
+          published_at?: string | null
+          published_by?: string | null
+          session_id: string
+          template_id?: string | null
+          title: string
+          updated_at?: string
+          workout_snapshot?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          gym_id?: string
+          published_at?: string | null
+          published_by?: string | null
+          session_id?: string
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+          workout_snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_session_workouts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "class_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_sessions: {
         Row: {
           capacity: number
@@ -2847,6 +2894,7 @@ export type Database = {
           updated_at: string
           user_id: string
           assignment_id: string | null
+          class_session_id: string | null
         }
         Insert: {
           created_at?: string
@@ -2858,6 +2906,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           assignment_id?: string | null
+          class_session_id?: string | null
         }
         Update: {
           created_at?: string
@@ -2869,6 +2918,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           assignment_id?: string | null
+          class_session_id?: string | null
         }
         Relationships: [
           {

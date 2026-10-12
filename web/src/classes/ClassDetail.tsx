@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { SectionTitle } from '../ui/Card';
 import { Modal } from '../ui/Modal';
 import { AddToClass } from './AddToClass';
+import { ClassWorkoutPanel } from './ClassWorkoutPanel';
 import { BOOKING_STATUS_TEXT, bookedText, dayTitle, rosterActions, rosterSummary, sessionStatus, timeRange } from './calc';
 import { useManageBooking, useRoster, useSetCancelled } from './useClasses';
 
@@ -18,6 +19,7 @@ export function ClassDetail({ session, onClose, onEdit }: { session: TimetableSe
   const [rosterMessage, setRosterMessage] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [message, setMessage] = useState('');
+  const [building, setBuilding] = useState(false);
   const status = sessionStatus(session);
 
   const act = (userId: string, action: BookingAction) => {
@@ -39,6 +41,7 @@ export function ClassDetail({ session, onClose, onEdit }: { session: TimetableSe
 
   return (
     <Modal title={session.name} onClose={onClose}>
+      <div hidden={building}>
       <SectionTitle title={session.name} action={<Button onClick={onClose}>Close</Button>} />
       <p className="muted">{dayTitle(new Date(session.starts_at))} · {timeRange(session)}</p>
       <dl className="detail-list">
@@ -50,6 +53,9 @@ export function ClassDetail({ session, onClose, onEdit }: { session: TimetableSe
         )}
         {session.description && <div><dt>About</dt><dd>{session.description}</dd></div>}
       </dl>
+      </div>
+      <ClassWorkoutPanel sessionId={session.session_id} onBuilding={setBuilding} />
+      <div hidden={building}>
       <h4 className="detail-heading">Who has booked</h4>
       {roster.isPending && <p className="muted small">Loading…</p>}
       {roster.isError && <p className="muted small">Could not load the list of people. Close and open the class to try again.</p>}
@@ -97,6 +103,7 @@ export function ClassDetail({ session, onClose, onEdit }: { session: TimetableSe
       ) : (
         <Button className="wide-btn" onClick={() => setConfirming(true)}>Cancel class</Button>
       )}
+      </div>
     </Modal>
   );
 }

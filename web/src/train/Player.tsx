@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { completeWorkout, getMyAssignment, listLastTimes, markStarted, removeExercise, saveExercise, type LastTime } from '../data/train';
+import { getMyClassWorkout } from '../data/classWorkouts';
 import { Button } from '../ui/Button';
 import { wonMessage, type Won } from './pb';
 import { guessTracking } from './activities';
@@ -39,24 +40,45 @@ function Reasons({ act, onPatch }: { act: Act; onPatch: (p: Partial<Act>) => voi
   );
 }
 
-/** Open a coach's workout (or start a blank one), fill in the numbers, finish. */
+/** Open a coach's workout, a class workout (start your own blank one), fill in the numbers, finish. */
 export function Player() {
-  const { id = 'new' } = useParams();
+  const { id = 'new', sessionId } = useParams();
   const { gym, userId } = useReadyAuth();
-  const isNew = id === 'new';
-  const plan = useQuery({ queryKey: ['m-assignment', gym.gymId, id], queryFn: () => getMyAssignment(userId, gym.gymId, id), enabled: !isNew });
+  const isClass = !!sessionId;
+  const isNew = id === 'new' && !isClass;
+  const plan = useQuery({ queryKey: ['m-assignment', gym.gymId, id], queryFn: () => getMyAssignment(userId, gym.gymId, id), enabled: !isNew && !isClass });
+  const cls = useQuery({ queryKey: ['m-class-workout', gym.gymId, userId, sessionId], queryFn: () => getMyClassWorkout(userId, gym.gymId, sessionId ?? ''), enabled: isClass });
   const last = useQuery({ queryKey: ['m-last', gym.gymId, userId], queryFn: () => listLastTimes(userId, gym.gymId) });
+  const [again, setAgain] = useState(false);
+  if (isClass) {
+    if (cls.isPending) return <div className="mem-screen"><div className="mem-card muted">Loading…</div></div>;
+    if (cls.isError || !cls.data) return <div className="mem-screen"><h1 className="mem-title">Workout not found</h1><div className="mem-card muted">It may not be available yet, or you were not in that class. <Link to="/m/train">Back to Workouts</Link></div></div>;
+    if (cls.data.done && !again && !readDraft(draftKey(gym.gymId, `class-${sessionId}`))) {
+      return (
+        <div className="mem-screen">
+          <Link to="/m/train" className="mem-back">‹ Workouts</Link>
+          <h1 className="mem-title">{cls.data.title}</h1>
+          <div className="mem-card" role="status">You have already recorded this class. <div className="mem-actions"><Link className="btn primary" to="/m/train">Back to Workouts</Link><Button onClick={() => setAgain(true)}>Record it again</Button></div></div>
+        </div>
+      );
+    }
+    if (last.isPending) return <div className="mem-screen"><div className="mem-card muted">Loading…</div></div>;
+    return <Logger key={`class-${sessionId}`} id={`class-${sessionId}`} classSessionId={sessionId} title={cls.data.title} snapshot={cls.data.snapshot} source="" last={last.data ?? new Map()} />;
+  }
   if (!isNew && plan.isPending) return <div className="mem-screen"><div className="mem-card muted">Loading…</div></div>;
   if (!isNew && (plan.isError || !plan.data)) return <div className="mem-screen"><h1 className="mem-title">Workout not found</h1><div className="mem-card muted">It may have been finished or removed. <Link to="/m/train">Back to Train</Link></div></div>;
   if (last.isPending) return <div className="mem-screen"><div className="mem-card muted">Loading…</div></div>;
   return <Logger key={id} id={id} title={plan.data?.title ?? ''} snapshot={plan.data?.snapshot ?? null} source={plan.data?.source ?? ''} last={last.data ?? new Map()} />;
 }
 
-function Logger({ id, title, snapshot, source, last }: { id: string; title: string; snapshot: unknown; source: string; last: Map<string, LastTime> }) {
+function Logger({ id, classSessionId, title, snapshot, source, last }: { id: string; classSessionId?: string; title: string; snapshot: unknown; source: string; last: Map<string, LastTime> }) {
   const { gym, userId } = useReadyAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const isClass = !!classSessionId;
   const isNew = id === 'new';
+  // Only a workout a coach assigned has an assignment to mark started and finished; a class workout is the member's own record.
+  const assigned = !isNew && !isClass;
   const key = draftKey(gym.gymId, id);
   const initial = useMemo<Draft>(() => {
     const saved = readDraft(key);
@@ -79,7 +101,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
   const [manualTracking, setManualTracking] = useState(false);
   const own = useMemo(() => [...last.values()].map((l) => l.name), [last]);
 
-  useEffect(() => { if (!isNew) void markStarted(id); }, [id, isNew]);
+  useEffect(() => { if (assigned) void markStarted(id); }, [id, assigned]);
   useEffect(() => {
     try { localStorage.setItem(key, JSON.stringify({ acts, rpe, notes, sessionId } satisfies Draft)); } catch { /* the draft is a convenience */ }
   }, [key, acts, rpe, notes, sessionId]);
@@ -110,7 +132,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
   };
   const typeName = (name: string) => setAdding((x) => ({ name, tracking: manualTracking ? x.tracking : guessTracking(name) }));
 
-  const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: ['m-assignments'] }), qc.invalidateQueries({ queryKey: ['m-week'] }), qc.invalidateQueries({ queryKey: ['m-sessions'] }), qc.invalidateQueries({ queryKey: ['m-last'] }), qc.invalidateQueries({ queryKey: ['m-pbs'] })]);
+  const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: ['m-assignments'] }), qc.invalidateQueries({ queryKey: ['m-week'] }), qc.invalidateQueries({ queryKey: ['m-sessions'] }), qc.invalidateQueries({ queryKey: ['m-last'] }), qc.invalidateQueries({ queryKey: ['m-pbs'] }), qc.invalidateQueries({ queryKey: ['m-class-workouts'] }), qc.invalidateQueries({ queryKey: ['m-class-workout'] })]);
   const titleFor = (first: string) => title || first || 'Workout';
 
   /** Save one exercise now. */
@@ -122,7 +144,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
     if (!entry) { if (!quiet) setCardError((e) => ({ ...e, [a.key]: 'Add some numbers first.' })); return false; }
     setSaving(a.key);
     try {
-      const res = await saveExercise({ gymId: gym.gymId, userId, sessionId, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length, assignmentId: isNew ? null : id }, entry);
+      const res = await saveExercise({ gymId: gym.gymId, userId, sessionId, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length, assignmentId: assigned ? id : null, classSessionId: classSessionId ?? null }, entry);
       setSessionId(res.sessionId);
       patch(a.key, { entryId: res.entryId, savedText: a.sets.map((s) => setText(a.tracking, s)).filter(Boolean).join(', ') });
       setWon((w) => [...w, ...res.won]);
@@ -178,7 +200,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
         if (!r.ok) return setError(r.message);
         const entry = r.entries[0];
         if (!entry) continue;
-        const res = await saveExercise({ gymId: gym.gymId, userId, sessionId: session, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length + (anySaved ? 1 : 0), assignmentId: isNew ? null : id }, entry);
+        const res = await saveExercise({ gymId: gym.gymId, userId, sessionId: session, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length + (anySaved ? 1 : 0), assignmentId: assigned ? id : null, classSessionId: classSessionId ?? null }, entry);
         session = res.sessionId;
         anySaved = true;
         newWins.push(...res.won);
@@ -186,13 +208,13 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
         patch(a.key, { entryId: res.entryId });
       }
       setSessionId(session);
-      if (isNew && !anySaved) return setError('Add some numbers first, or go back.');
+      if (!assigned && !anySaved) return setError('Add some numbers first, or go back.');
       const firstName = acts.find((a) => a.name.trim())?.name.trim() ?? '';
-      const result = await completeWorkout({ sessionId: session, title: titleFor(firstName), notes: notes.trim() || null, assignment: isNew ? null : { id, rpe: rpe ? Number(rpe) : null, note: assignmentNote(notes, overview.skipped, overview.swapped), result: resultJson(buildResult(acts.map((a) => ({ ...a, entered: !!a.entryId || hasEntered(a) })))) } });
+      const result = await completeWorkout({ sessionId: session, title: titleFor(firstName), notes: notes.trim() || null, assignment: !assigned ? null : { id, rpe: rpe ? Number(rpe) : null, note: assignmentNote(notes, overview.skipped, overview.swapped), result: resultJson(buildResult(acts.map((a) => ({ ...a, entered: !!a.entryId || hasEntered(a) })))) } });
       try { localStorage.removeItem(key); } catch { /* nothing to clear */ }
       await refresh();
       const pb = wonMessage([...won, ...newWins]);
-      navigate('/m/train', { state: { saved: result.marked ? 'Workout saved and marked as done.' : 'Workout saved.', pb, pbError: pbIssue } });
+      navigate('/m/train', { state: { saved: result.marked ? 'Workout saved and marked as done.' : isClass ? 'Class workout saved.' : 'Workout saved.', pb, pbError: pbIssue } });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save the workout.');
     } finally {
@@ -205,7 +227,8 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
       <div>
         <Link to="/m/train" className="mem-back">‹ Workouts</Link>
         <h1 className="mem-title">{title || 'My workout'}</h1>
-        {source && !isNew && <div className="mem-hi">From your coach. These are suggestions: change, swap or skip anything.</div>}
+        {source && !isNew && !isClass && <div className="mem-hi">From your coach. These are suggestions: change, swap or skip anything.</div>}
+        {isClass && <div className="mem-hi">From your class. Fill in what you did: change, swap or leave out anything. It is saved to your own history.</div>}
       </div>
 
       {acts.length === 0 && <div className="mem-card muted">No exercises yet. Add the first one below.</div>}
@@ -227,10 +250,10 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
             {!isOwn(a) && !a.skipped && (
               <div className="tr-outcome" role="radiogroup" aria-label={`How ${a.name} went`}>
                 <Button role="radio" aria-checked={a.outcome === 'as_set'} variant={a.outcome === 'as_set' ? 'primary' : 'secondary'} onClick={() => asSet(a)}>As set</Button>
-                <Button role="radio" aria-checked={a.outcome === 'changed'} variant={a.outcome === 'changed' ? 'primary' : 'secondary'} onClick={() => patch(a.key, { outcome: a.outcome === 'changed' ? undefined : 'changed' })}>I changed it</Button>
+                {!isClass && <Button role="radio" aria-checked={a.outcome === 'changed'} variant={a.outcome === 'changed' ? 'primary' : 'secondary'} onClick={() => patch(a.key, { outcome: a.outcome === 'changed' ? undefined : 'changed' })}>I changed it</Button>}
               </div>
             )}
-            {!isOwn(a) && (a.skipped || a.outcome === 'changed' || a.name.trim() !== a.originalName.trim()) && <Reasons act={a} onPatch={(p) => patch(a.key, p)} />}
+            {!isClass && !isOwn(a) && (a.skipped || a.outcome === 'changed' || a.name.trim() !== a.originalName.trim()) && <Reasons act={a} onPatch={(p) => patch(a.key, p)} />}
             {a.skipped ? <div className="muted">Not this time. That is fine.</div> : a.entryId ? (
               <div className="tr-saved">
                 <span className="tr-ok">Saved</span>
@@ -279,7 +302,7 @@ function Logger({ id, title, snapshot, source, last }: { id: string; title: stri
       </section>
 
       <section className="mem-card" aria-label="Finish">
-        {!isNew && (
+        {assigned && (
           <Select aria-label="How hard was it" value={rpe} onChange={(e) => setRpe(e.target.value)}>
             <option value="">How hard was it? (optional)</option>
             {Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={String(i + 1)}>{i + 1}{i === 0 ? ' · very easy' : i === 9 ? ' · all out' : ''}</option>)}
