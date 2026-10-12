@@ -1,12 +1,14 @@
-# Member file PDF: Download PDF and Send to customer (2026-10-12)
+# Member file: Download PDF and Send to customer (2026-10-12)
 
 Two buttons at the top of a member's file.
 
-- **Download PDF** builds a PDF in the browser from what is on screen (details, membership, signed agreements with exact times, answers and signature, gym name, when it was made) and saves it as `<gym>-<name>-member-file-<date>.pdf`. It never goes to a server. It shows only what that person is allowed to see: a mobile number or address the owner hid from the team stays hidden. It says it is a copy.
-- **Send to customer** asks first, then asks `finalise-signature` to email the most recent signing's signed copies to the address on the person's account (`send_email` and `resend`). Nothing is built in the browser for this. Disabled when they have signed nothing.
+- **Download PDF** hands over the signed copy that was made when they signed: the original record, never rebuilt. If a signing has two documents (terms and waiver) their stored copies are put together in one PDF, page for page as they were made; one copy is handed over untouched. If, unusually, the copy was never made, it is made then (one click, no separate step) and then handed over. It is named `<gym>-<name>-signed-copy-<signing date>.pdf`.
+- **Send to customer** asks first, then asks `finalise-signature` to email the most recent signing's signed copies to the address on the person's account. Disabled when they have signed nothing.
 
-Legal position agreed with the owner (not legal advice; see the chat for sources): the evidence is the complete signing record plus the signed copy made at the moment of signing, which stays with the record. Anything else is generated fresh on request and labelled as a copy.
+Owner decision (12 October 2026): since the signed copy is already made and kept at signing, Download must not generate anything new. The first version built a fresh PDF of the whole file in the browser; that was removed.
 
-Not here: the member's own Export in the member app (next), a log of who sent what.
+Legal position agreed with the owner (not legal advice): the evidence is the complete signing record plus the signed copy made at the moment of signing, kept with the record on the same keep-and-delete schedule.
 
-Files: `web/src/members/filePdf.ts` (new), `MemberFile.tsx`, `members.css`, `web/src/reports/download.ts` (`save` exported), `web/tests/memberfilepdf.test.ts` (new), `web/browser/members.mjs`. No database change and no Edge Function change. Roll back by reverting the PR.
+Not here: the member's own Export in the member app (next), and a log of who sent what. Details such as phone and address are on the file itself; they are not part of the signed copy.
+
+Files: `web/src/members/signedCopy.ts` (new), `MemberFile.tsx`, `members.css`, `web/src/data/signup.ts` (the signing carries its stored paths), `web/src/reports/download.ts` (`save` exported), `web/package.json` and lock (`pdf-lib` is now a normal dependency, loaded only when two copies are joined), `web/tests/signedcopy.test.ts` (new), `web/browser/members.mjs`. No database change and no Edge Function change. Roll back by reverting the PR.

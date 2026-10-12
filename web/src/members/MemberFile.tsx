@@ -3,11 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import type { MemberRow } from '../data/members';
-import { getMemberDetails } from '../data/memberDetails';
 import { getMemberAgreements, makeSignedCopies } from '../data/signup';
-import { listMemberMemberships } from '../data/members';
 import { fileBase, save } from '../reports/download';
-import { memberFilePdf } from './filePdf';
+import { fetchSignedCopy, signedPaths } from './signedCopy';
 import { Button } from '../ui/Button';
 import { Empty } from '../ui/Card';
 import { DateInput, Field, FieldRow, Select } from '../ui/Field';
@@ -52,24 +50,21 @@ function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string })
   const [busy, setBusy] = useState<'pdf' | 'send' | null>(null);
   const [asking, setAsking] = useState(false);
   const [fileMsg, setFileMsg] = useState<Message>(null);
+  // Download PDF hands over the signed copy made when they signed (the original record). If that was never made, it is made now, then handed over.
   const download = async () => {
     setBusy('pdf');
     setFileMsg(null);
     try {
-      const [details, mships, agreed] = await Promise.all([
-        qc.ensureQueryData({ queryKey: ['member-details', gymId, member.userId], queryFn: () => getMemberDetails(gymId, member.userId) }),
-        qc.ensureQueryData({ queryKey: ['member-memberships', gymId, member.userId], queryFn: () => listMemberMemberships(gymId, member.userId) }),
-        qc.ensureQueryData({ queryKey: ['member-agreements', gymId, member.userId], queryFn: () => getMemberAgreements(gymId, member.userId) }),
-      ]);
-      const now = new Date();
-      const blob = await memberFilePdf({
-        gymName: gym.gymName, generatedAt: now, name, role: ROLE_LABEL[member.role] ?? 'Member', status: member.latest ? labelStatus(member.latest.status) : 'No membership', joinedAt: member.joinedAt,
-        memberships: mships.map((m) => ({ plan: m.planName || 'Membership', price: m.planPricePence !== null ? `${money(m.planPricePence)} / ${m.planInterval ?? ''}` : 'No plan', status: labelStatus(m.status), startsOn: m.startsOn ?? '', endsOn: m.endsOn ?? '' })),
-        details, agreements: agreed,
-      });
-      save(blob, `${fileBase(gym.gymName, `${name} member file`, now)}.pdf`);
+      let latest = (await qc.ensureQueryData({ queryKey: ['member-agreements', gymId, member.userId], queryFn: () => getMemberAgreements(gymId, member.userId) }))[0];
+      if (!latest) throw new Error(`${name} has not signed anything yet.`);
+      if (!signedPaths(latest).length) {
+        await makeSignedCopies(latest.id, { email: false });
+        latest = (await qc.fetchQuery({ queryKey: ['member-agreements', gymId, member.userId], queryFn: () => getMemberAgreements(gymId, member.userId), staleTime: 0 }))[0];
+      }
+      if (!latest) throw new Error('Could not find the signed copy.');
+      save(await fetchSignedCopy(latest), `${fileBase(gym.gymName, `${name} signed copy`, new Date(latest.signedAt))}.pdf`);
     } catch (e) {
-      setFileMsg({ text: e instanceof Error ? e.message : 'Could not make the PDF. Try again.', tone: 'error' });
+      setFileMsg({ text: e instanceof Error ? e.message : 'Could not get the signed copy. Try again.', tone: 'error' });
     } finally {
       setBusy(null);
     }
@@ -151,7 +146,7 @@ function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string })
           </div>
         </div>
         <div className="file-actions">
-          <Button variant="primary" onClick={() => void download()} disabled={busy !== null}>{busy === 'pdf' ? 'Making PDF…' : 'Download PDF'}</Button>
+          <Button variant="primary" onClick={() => void download()} disabled={busy !== null}>{busy === 'pdf' ? 'Getting it…' : 'Download PDF'}</Button>
           <Button onClick={() => setAsking(true)} disabled={busy !== null || !latestSigned}>Send to customer</Button>
         </div>
       </header>

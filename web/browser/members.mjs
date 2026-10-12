@@ -1,6 +1,7 @@
 // Browser gate: the Members screen, signed in as an owner, at phone and desktop width.
 // Supabase is mocked at the network layer. Besides what is on screen, this captures every write
 // (lifecycle dates, membership status changes, assign membership) and checks its exact request.
+import { PDFDocument } from 'pdf-lib';
 import { GYM, USER, base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
 
 const today = new Date().toISOString().slice(0, 10);
@@ -23,6 +24,10 @@ const profiles = [
 ];
 
 let hide = false;
+const onePageDoc = await PDFDocument.create();
+onePageDoc.addPage();
+const STORED_PDF = Buffer.from(await onePageDoc.save());
+
 const browser = await launch();
 let allOk = true;
 for (const [name, viewport] of Object.entries(sizes)) {
@@ -39,6 +44,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
       return reply(route, { ok: true, under_18: false }, 1);
     }
     if (path.endsWith('/rpc/get_members_missing_details')) return reply(route, [{ user_id: BOB, member_name: 'Bob Adams', missing: ['address', 'emergency contact'] }]);
+    if (path.includes('/storage/v1/object/sign/signed-documents/') && method === 'POST') return reply(route, { signedURL: '/object/sign/signed-documents/stored.pdf?token=t' });
+    if (path.includes('/storage/v1/object/sign/signed-documents/') && method === 'GET') { await route.fulfill({ status: 200, contentType: 'application/pdf', body: STORED_PDF }); return true; }
     if (['PATCH', 'POST'].includes(method)) {
       writes.push({ method, path, query: Object.fromEntries(url.searchParams), body });
       await route.fulfill({ status: 204, body: '' });
@@ -129,7 +136,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('and their signature', dialog.getByRole('img', { name: 'Signature of Ada Zane' }));
   const [pdf] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download PDF' }).click()]);
   if (shots) await pdf.saveAs(`${shots}/member-file-${name}.pdf`);
-  c.ok('Download PDF saves a PDF named for the gym and the person', /^puffin-performance-ada-zane-member-file-\d{4}-\d{2}-\d{2}\.pdf$/.test(pdf.suggestedFilename()));
+  c.ok('Download PDF saves the stored signed copy, named for the gym, the person and the signing date', pdf.suggestedFilename() === 'puffin-performance-ada-zane-signed-copy-2026-10-06.pdf');
+  c.ok('and it is the stored file, not a new one', (await import('node:fs')).readFileSync(await pdf.path()).equals(STORED_PDF));
   await page.getByRole('button', { name: 'Send to customer' }).click();
   await c.has('Send to customer asks first', page.getByText(/Email the signed copy to Ada Zane/));
   writes.length = 0;
