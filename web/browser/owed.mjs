@@ -70,8 +70,18 @@ for (const [name, viewport] of Object.entries(sizes)) {
     return false;
   });
 
-  await page.goto(`${base}/reports`);
   const c = runChecks();
+  // The front dashboard shows who is not financial, with a way straight to the list.
+  await page.goto(`${base}/today`);
+  const alertBox = page.getByRole('region', { name: 'Money owed' });
+  await c.has('the front dashboard says who owes and how much', alertBox.getByText('Not financial: 2 people owe £120.00 across 3 missed payments'));
+  c.ok('and names the biggest debts', (await alertBox.innerText()).includes('Priya Nair £70.00 · Sam Lee £50.00'));
+  c.ok('layout (dashboard)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/owed-dashboard-${name}.png`, fullPage: true });
+  await alertBox.getByRole('link', { name: 'See who owes' }).click();
+  await c.has('the link opens Reports on Money owed', page.getByRole('button', { name: /^Priya Nair, owes £70\.00/ }));
+  c.ok('with that tab selected', (await page.getByRole('tab', { name: 'Money owed' }).getAttribute('aria-selected')) === 'true');
+  await page.goto(`${base}/reports`);
   await page.getByRole('tab', { name: 'Money owed' }).click();
   await c.has('the list opens with the biggest debt first', page.getByRole('button', { name: /^Priya Nair, owes £70\.00, 2 missed payments/ }));
   c.ok('the total, the people and the missed payments add up', (await page.getByTestId('owed-total').innerText()) === '£120.00' && (await page.getByText('People not financial').locator('..').innerText()).includes('2') && (await page.getByText('Missed payments', { exact: true }).locator('..').innerText()).includes('3'));
