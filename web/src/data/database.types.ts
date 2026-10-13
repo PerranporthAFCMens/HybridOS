@@ -1525,19 +1525,35 @@ export type Database = {
         Update: Record<string, never>
         Relationships: []
       }
+      gym_join_settings: {
+        Row: {
+          ask_address: string
+          ask_documents: string
+          ask_emergency: string
+          gym_id: string
+          hold_door_code: boolean
+          join_style: string
+          quick_since: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
       member_details: {
         Row: {
-          address_line1: string
+          address_line1: string | null
           address_line2: string | null
           created_at: string
-          emergency_name: string
-          emergency_phone: string
-          emergency_relationship: string
+          emergency_name: string | null
+          emergency_phone: string | null
+          emergency_relationship: string | null
           guardian_name: string | null
           guardian_phone: string | null
           phone: string | null
-          postcode: string
-          town: string
+          postcode: string | null
+          town: string | null
           updated_at: string
           user_id: string
         }
@@ -3869,6 +3885,48 @@ export type Database = {
           p_guardian_name: string
           p_guardian_phone: string
         }
+        Returns: Json
+      }
+      save_my_basics: {
+        Args: {
+          p_first_name: string
+          p_last_name: string
+          p_date_of_birth: string
+          p_phone: string
+          p_guardian_name: string
+          p_guardian_phone: string
+        }
+        Returns: Json
+      }
+      save_my_emergency: {
+        Args: { p_name: string; p_phone: string; p_relationship: string }
+        Returns: Json
+      }
+      save_my_address: {
+        Args: { p_line1: string; p_line2: string; p_town: string; p_postcode: string }
+        Returns: Json
+      }
+      get_my_ready_status: {
+        Args: { p_gym_id: string }
+        Returns: Json
+      }
+      save_join_settings: {
+        Args: {
+          p_gym_id: string
+          p_join_style: string
+          p_ask_address: string
+          p_ask_emergency: string
+          p_ask_documents: string
+          p_hold_door_code: boolean
+        }
+        Returns: Json
+      }
+      get_unfinished_members: {
+        Args: { p_gym_id: string }
+        Returns: { user_id: string; member_name: string; joined_at: string; missing: string[]; door_code_held: boolean }[]
+      }
+      get_public_gym_join_style: {
+        Args: { p_gym_slug: string }
         Returns: Json
       }
       save_my_join_details: {

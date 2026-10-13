@@ -44,9 +44,9 @@ jobs:
             select count(*) into v_triggers from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace tn on tn.oid=c.relnamespace join pg_proc p on p.oid=t.tgfoid join pg_namespace fn on fn.oid=p.pronamespace where not t.tgisinternal and (tn.nspname in ('public','private') or fn.nspname in ('public','private'));
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
-            if v_tables<>87 then raise exception 'Expected 87 app tables, got %',v_tables; end if;
-            if v_functions<>146 then raise exception 'Expected 146 committed app functions, got %',v_functions; end if;
-            if v_policies<>207 then raise exception 'Expected 207 app/storage policies, got %',v_policies; end if;
+            if v_tables<>88 then raise exception 'Expected 88 app tables, got %',v_tables; end if;
+            if v_functions<>157 then raise exception 'Expected 157 committed app functions, got %',v_functions; end if;
+            if v_policies<>208 then raise exception 'Expected 208 app/storage policies, got %',v_policies; end if;
             if v_triggers<>37 then raise exception 'Expected 37 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
@@ -311,6 +311,24 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG2"
           snap /tmp/pt_after_reapply.txt
           if diff -u /tmp/pt_after_migration.txt /tmp/pt_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: Quick join verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261016090000_quick_join.sql
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261016_quick_join_check.sql > /tmp/qj_check.txt
+          cat /tmp/qj_check.txt
+          if grep -v ' | ok$' /tmp/qj_check.txt; then echo 'A quick join check is not ok'; exit 1; fi
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/quick_join.sql
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/qj_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_quick_join.sql
+          snap /tmp/qj_after_rollback.txt
+          if diff -q /tmp/qj_after_migration.txt /tmp/qj_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/qj_after_reapply.txt
+          if diff -u /tmp/qj_after_migration.txt /tmp/qj_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Admin invite signed-in only verification and rollback
         shell: bash
         run: |

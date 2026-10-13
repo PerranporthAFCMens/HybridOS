@@ -341,7 +341,12 @@ insert into pt.fn_allow values
  ('get_public_gym_signup_documents(text)','returns a gym''s current terms and waiver (public by design: a joiner must read them before they are a member)'),
  ('get_gym_payment_mode(text)','returns only "stripe" or "off" for a gym slug, to a signed-in person who is joining: whether the gym takes payment at sign-up (not secret; the page needs it before the person is a member)'),
  ('sign_gym_documents(text,text,text,jsonb)','scoped to the caller''s own signature by auth.uid(); signs only the gym''s current documents; tested on a scratch database (see the PR that added it)'),
- ('private.can_view_member_details(uuid)','row-security helper: true only for the caller''s gym owner, admin or staff; private schema not exposed');
+ ('private.can_view_member_details(uuid)','row-security helper: true only for the caller''s gym owner, admin or staff; private schema not exposed'),
+ ('save_my_basics(text,text,date,text,text,text)','writes only the caller''s own profile and details by auth.uid() (tested in quick_join.sql)'),
+ ('save_my_emergency(text,text,text)','writes only the caller''s own emergency contact by auth.uid() (tested in quick_join.sql)'),
+ ('save_my_address(text,text,text,text)','writes only the caller''s own address by auth.uid() (tested in quick_join.sql)'),
+ ('get_my_ready_status(uuid)','returns only what the caller themselves still has to do at a gym they belong to, by auth.uid() (tested in quick_join.sql)'),
+ ('get_public_gym_join_style(text)','public join page: returns only which questions a gym asks, by gym slug (anon callable)');
 create table pt.fn_audit as
 select p.oid::regprocedure::text as fn,
        case when p.prorettype = 'trigger'::regtype then 'trigger function'
