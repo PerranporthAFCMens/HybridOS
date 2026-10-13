@@ -222,6 +222,50 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('the email is kept', (await again.getByLabel('Email', { exact: true }).inputValue()) === 'ada@example.test');
   await freshCtx.close();
 
+  // A new account is confirmed with the 6-digit code from the email, typed on this page (no link, no other page)
+  const codeCtx = await browser.newContext({ viewport });
+  await serveApp(codeCtx);
+  const coded = await codeCtx.newPage();
+  coded.setDefaultTimeout(10000);
+  const codeState = { verified: [], resent: 0, accept: false };
+  await mockSupabase(coded, async ({ route, path }) => {
+    if (path.endsWith('/rpc/get_public_gym_join_options')) return reply(route, { gym_id: GYM, gym_name: 'Puffin Performance', logo_url: null, plans: PLANS });
+    if (path.endsWith('/rpc/get_public_gym_signup_documents')) return reply(route, []);
+    return false;
+  });
+  await coded.route(/\/auth\/v1\/signup/, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'u-new', aud: 'authenticated', email: 'ada@example.test', identities: [{ identity_id: 'i-1' }], user_metadata: {} }) }));
+  await coded.route(/\/auth\/v1\/resend/, (route) => { codeState.resent += 1; return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }); });
+  await coded.route(/\/auth\/v1\/verify/, (route) => {
+    codeState.verified.push(JSON.parse(route.request().postData() || '{}'));
+    if (!codeState.accept) return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ code: 403, error_code: 'otp_expired', msg: 'Email link is invalid or has expired' }) });
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(session) });
+  });
+  await coded.goto(`${base}/join/puffin`);
+  await coded.getByLabel('Email', { exact: true }).fill('ada@example.test');
+  await coded.getByLabel('Password', { exact: true }).fill('a-long-password');
+  await coded.getByLabel('Confirm password', { exact: true }).fill('a-long-password');
+  await coded.getByRole('button', { name: 'Create account', exact: true }).click();
+  await c.has('a new account is asked for the 6-digit code', coded.getByRole('heading', { name: 'Check your email' }));
+  await c.has('it says where the code was sent', coded.getByText('ada@example.test'));
+  await coded.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await c.has('an empty code is refused', coded.getByRole('alert').filter({ hasText: '6-digit code' }));
+  await coded.getByLabel('6-digit code', { exact: true }).fill('12 34');
+  await coded.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await c.has('a short code is refused', coded.getByRole('alert').filter({ hasText: '6-digit code' }));
+  c.ok('and nothing was sent to be checked', codeState.verified.length === 0);
+  await coded.getByLabel('6-digit code', { exact: true }).fill('123 456');
+  await coded.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await c.has('a wrong or old code says so in plain words', coded.getByRole('alert').filter({ hasText: 'wrong or has run out' }));
+  c.ok('the digits were sent tidied, for this email', JSON.stringify([codeState.verified[0]?.email, codeState.verified[0]?.token, codeState.verified[0]?.type]) === JSON.stringify(['ada@example.test', '123456', 'email']));
+  await coded.getByRole('button', { name: 'Send me a new code', exact: true }).click();
+  await c.has('a new code can be asked for', coded.getByRole('status').filter({ hasText: 'new code is on its way' }));
+  c.ok('and one was asked for once', codeState.resent === 1);
+  codeState.accept = true;
+  await coded.getByLabel('6-digit code', { exact: true }).fill('654321');
+  await coded.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await c.has('the right code carries on to the next step, signed in', coded.getByRole('heading', { name: 'About you' }));
+  await codeCtx.close();
+
   // Someone signed in who already has a membership here never sees the steps or the plans
   const member = await signedInPage(browser, viewport);
   await mockSupabase(member.page, async ({ route, path }) => {

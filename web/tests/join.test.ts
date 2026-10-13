@@ -1,6 +1,6 @@
 import { looksLikeExistingAccount } from '../src/join/calc';
 import { describe, expect, it } from 'vitest';
-import { EMPTY_DETAILS, answersPayload, canPayOnline, checkAgreed, checkPayer, isFreePlan, moneyText, payTermsText, checkAbout, checkAccount, checkAddress, checkEmergency, checkGuardian, checkSign, isUnder18, normalisePhone, normalisePostcode, planPrice, stepsFor, toRpcArgs, type JoinDocument } from '../src/join/calc';
+import { EMPTY_DETAILS, answersPayload, canPayOnline, checkAgreed, checkPayer, isFreePlan, moneyText, payTermsText, checkAbout, checkAccount, checkAddress, checkCode, cleanCode, checkEmergency, checkGuardian, checkSign, isUnder18, normalisePhone, normalisePostcode, planPrice, stepsFor, toRpcArgs, type JoinDocument } from '../src/join/calc';
 
 const NOW = new Date('2026-10-10T12:00:00Z');
 const good = { ...EMPTY_DETAILS, firstName: 'Sam', lastName: 'Penrose', dob: '1990-04-12', phone: '07700 900123', line1: '1 Cliff Road', town: 'Perranporth', postcode: 'pl28 8ab', emergencyName: 'Alex', emergencyPhone: '+44 7700 900124', emergencyRelationship: 'Partner' };
@@ -163,5 +163,22 @@ describe('paying to join', () => {
   it('they must tick the agreement before paying', () => {
     expect(checkAgreed(false)).toMatch(/Tick/);
     expect(checkAgreed(true)).toBeNull();
+  });
+});
+
+describe('the 6-digit email code', () => {
+  it('keeps the digits, however it was typed or pasted', () => {
+    expect(cleanCode('123456')).toBe('123456');
+    expect(cleanCode(' 123 456 ')).toBe('123456');
+    expect(cleanCode('123-456')).toBe('123456');
+    expect(cleanCode('code: 654321.')).toBe('654321');
+    expect(cleanCode('1234567890')).toBe('123456');
+  });
+  it('needs six digits', () => {
+    expect(checkCode('123456')).toBeNull();
+    expect(checkCode('12 34 56')).toBeNull();
+    expect(checkCode('')).toMatch(/6-digit code/);
+    expect(checkCode('12345')).toMatch(/6-digit code/);
+    expect(checkCode('abcdef')).toMatch(/6-digit code/);
   });
 });

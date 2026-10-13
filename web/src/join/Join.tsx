@@ -2,13 +2,13 @@ import { siteUrl } from '../app/site';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { createAccount, currentUserId, getJoinGym, getPaymentMode, getSignupDocuments, joinWithPlan, myMembershipAt, preparePayment, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin, type PaymentSession } from '../data/join';
+import { confirmWithCode, createAccount, resendCode, currentUserId, getJoinGym, getPaymentMode, getSignupDocuments, joinWithPlan, myMembershipAt, preparePayment, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin, type PaymentSession } from '../data/join';
 import { publicPdfUrl } from '../data/signup';
 import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Checkbox, DateInput, Field, FieldRow, Input, Select } from '../ui/Field';
 import {
-  EMPTY_DETAILS, STEP_TITLES, answersPayload, canPayOnline, checkAbout, checkAccount, checkAddress, checkEmergency, checkGuardian, checkPayer, checkSign, isFreePlan, isUnder18, payTermsText, planPrice, stepsFor, toRpcArgs,
+  EMPTY_DETAILS, STEP_TITLES, answersPayload, canPayOnline, checkAbout, checkAccount, checkAddress, checkCode, cleanCode, checkEmergency, checkGuardian, checkPayer, checkSign, isFreePlan, isUnder18, payTermsText, planPrice, stepsFor, toRpcArgs,
   type Answers, type JoinDetails, type JoinPlan, type StepId,
 } from './calc';
 import { termsSentence } from '../plans/terms';
@@ -56,6 +56,7 @@ export function Join() {
   const [msg, setMsg] = useState<{ text: string; good: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
+  const [code, setCode] = useState('');
   const [joined, setJoined] = useState<{ planName: string; gymId: string; confirming?: boolean } | null>(null);
   const [chosen, setChosen] = useState<JoinPlan | null>(null);
   const [payer, setPayer] = useState({ email: '' });
@@ -132,6 +133,29 @@ export function Join() {
       setUserId(await currentUserId());
       setStep('about');
     });
+  };
+
+  // The 6-digit code from the confirmation email: confirms the account and signs the person in, right here on this page.
+  const submitCode = (e: FormEvent) => {
+    e.preventDefault();
+    void run(checkCode(code), async () => {
+      await confirmWithCode(acct.email, cleanCode(code));
+      setCheckEmail(false);
+      setCode('');
+      setUserId(await currentUserId());
+      setStep('about');
+    });
+  };
+  const sendAnotherCode = () => {
+    void run(null, async () => {
+      await resendCode(acct.email, slug);
+      setMsg({ text: 'A new code is on its way. Use the newest email.', good: true });
+    });
+  };
+  const useAnotherEmail = () => {
+    setMsg(null);
+    setCode('');
+    setCheckEmail(false);
   };
 
   const submitAbout = (e: FormEvent) => {
@@ -233,10 +257,20 @@ export function Join() {
 
       <Card>
         {step === 'account' && checkEmail && (
-          <div>
+          <form onSubmit={submitCode} noValidate>
             <h2>Check your email</h2>
-            <p>We sent a link to <b>{acct.email}</b>. Open it on this device to carry on where you left off.</p>
-          </div>
+            <p>We sent a 6-digit code to <b>{acct.email}</b>. Type it in here to confirm your email address and carry on.</p>
+            <Field label="6-digit code" htmlFor="join-code">
+              <Input id="join-code" inputMode="numeric" autoComplete="one-time-code" maxLength={12} value={code} onChange={(e) => setCode(e.target.value)} />
+            </Field>
+            {alertBox}
+            <div className="join-nav">
+              <Button onClick={useAnotherEmail} disabled={busy}>Use a different email</Button>
+              <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Checking…' : 'Confirm'}</Button>
+            </div>
+            <p><Button onClick={sendAnotherCode} disabled={busy}>Send me a new code</Button></p>
+            <p className="muted small">It can take a minute. Check your spam folder too.</p>
+          </form>
         )}
 
         {step === 'account' && !checkEmail && (

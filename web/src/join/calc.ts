@@ -78,6 +78,13 @@ export function checkAccount(email: string, password: string, confirm: string): 
   return null;
 }
 
+/** The six digits from what someone typed or pasted (spaces, dashes and other characters are ignored). */
+export const cleanCode = (text: string): string => text.replace(/\D/g, '').slice(0, 6);
+
+export function checkCode(text: string): string | null {
+  return cleanCode(text).length === 6 ? null : 'Enter the 6-digit code from the email.';
+}
+
 const name = (v: string, what: string): string | null => (!v.trim() ? `Enter ${what}.` : v.trim().length > 80 ? 'That is too long.' : null);
 
 export function checkAbout(d: JoinDetails, now: Date): string | null {
