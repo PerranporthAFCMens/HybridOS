@@ -107,7 +107,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const dataset = page.getByLabel('Look at');
   const dialog = page.getByRole('dialog');
   await c.has('builder opens', dataset);
-  c.ok('eight tabs', (await page.getByRole('tab').count()) === 8);
+  c.ok('nine tabs, Money owed among them', (await page.getByRole('tab').count()) === 9 && (await page.getByRole('tab', { name: 'Money owed' }).count()) === 1);
   c.ok('eight datasets, staff included', (await dataset.locator('option').allInnerTexts()).join('|') === 'Members|Memberships|Payments|Classes|Bookings and attendance|Staff|Classes delivered|Clients seen');
   await page.getByRole('button', { name: /Start from a ready-made report/ }).click();
   c.ok('twelve ready-made reports', (await page.locator('.bld-starter').count()) === 12);

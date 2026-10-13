@@ -28,6 +28,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const writes = [];
   const calls = [];
   let settings = [];
+  let arrears = [];
+  const overdueWrites = [];
   let link = [];
   let stripeReply = null; // what the function answers next, when not the usual
   const { ctx, page, errors } = await signedInPage(browser, viewport);
@@ -42,6 +44,10 @@ for (const [name, viewport] of Object.entries(sizes)) {
       return reply(route, { ok: true, status: { linked: true } });
     }
     if (path.endsWith('/gym_stripe_accounts')) return reply(route, link);
+    if (path.endsWith('/gym_arrears_settings')) {
+      if (method === 'POST') { overdueWrites.push({ query: Object.fromEntries(url.searchParams), body }); arrears = [{ overdue_grace_days: body.overdue_grace_days }]; await route.fulfill({ status: 204, body: '' }); return true; }
+      return reply(route, arrears);
+    }
     if (path.endsWith('/gym_payment_settings')) {
       if (method === 'POST') { writes.push({ query: Object.fromEntries(url.searchParams), body }); settings = [{ payments_enabled: body.payments_enabled, cancellation_hours: body.cancellation_hours }]; await route.fulfill({ status: 204, body: '' }); return true; }
       return reply(route, settings);
@@ -99,6 +105,13 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByLabel('Members can cancel').selectOption('0');
   await c.has('no notice needed reads naturally', page.getByText('Members can cancel right up to the start of the class.'));
   c.ok('saved as 0', writes[3].body.cancellation_hours === 0);
+
+  // 6b. When a late payment counts as missed (money owed)
+  c.ok('the late payment window starts at 7 days', (await page.getByLabel('A payment counts as missed').inputValue()) === '7');
+  await page.getByLabel('A payment counts as missed').selectOption('14');
+  await c.has('...and is saved', page.getByText('Saved.'));
+  c.ok('saved exactly: this gym, 14 days, in its own table', overdueWrites.length === 1 && overdueWrites[0].body.gym_id === GYM && overdueWrites[0].body.overdue_grace_days === 14 && overdueWrites[0].query.on_conflict === 'gym_id');
+  c.ok('and the payment settings were left alone', writes.length === 4);
 
   // 7. Linked from Settings
   await page.goto(`${base}/settings`);

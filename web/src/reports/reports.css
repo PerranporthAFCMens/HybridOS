@@ -73,3 +73,19 @@ button.bar-row:hover { background: rgba(255, 255, 255, .04); }
 .heat-choice.on { background: var(--hybrid-raised); color: var(--hybrid-ink); border-color: var(--hybrid-line-strong); }
 .heat-choice:focus-visible { outline: 2px solid var(--hybrid-pulse, #6b7cff); outline-offset: 2px; }
 .heat-best { margin: 10px 0 0; }
+
+/* Money owed */
+.owed-find { margin: 12px 0 8px; max-width: 420px; }
+.owed-list, .missed-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.owed-row { width: 100%; display: flex; justify-content: space-between; gap: 14px; align-items: center; text-align: left; padding: 12px 14px; min-height: 44px; border: 1px solid var(--hybrid-line); border-radius: 12px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.owed-row:hover, .owed-row:focus-visible { background: var(--hybrid-raised); }
+.owed-who, .owed-sum { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.owed-sum { text-align: right; flex: none; }
+.owed-now { margin: 10px 0 6px; font-size: 16px; }
+.missed { border: 1px solid var(--hybrid-line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; }
+.missed.settled { opacity: .8; }
+.missed-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.missed-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.missed-form { display: grid; gap: 8px; }
+.owed-table { margin-top: 14px; }
+.owed-table summary { cursor: pointer; padding: 8px 0; }
