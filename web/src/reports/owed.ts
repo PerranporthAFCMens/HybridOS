@@ -73,3 +73,13 @@ export function missedTable(ctx: TableContext, name: string, rows: MissedPayment
 }
 
 export const owedOf = (rows: MissedPayment[]): number => rows.filter((r) => r.outstanding).reduce((n, r) => n + r.amountPence, 0);
+
+/** The one line for the front dashboard: "4 people owe £727.00". */
+export function alertLine(rows: Debtor[]): string {
+  const n = rows.length;
+  return `${n} ${n === 1 ? 'person owes' : 'people owe'} ${pounds(totalOwed(rows))} across ${missedText(totalMissed(rows))}`;
+}
+
+/** Who owes the most, for the dashboard: up to `n` names, each with what they owe. */
+export const biggestDebts = (rows: Debtor[], n = 3): { userId: string; name: string; owed: string }[] =>
+  [...rows].sort((a, b) => b.owedPence - a.owedPence).slice(0, n).map((r) => ({ userId: r.userId, name: r.name, owed: pounds(r.owedPence) }));

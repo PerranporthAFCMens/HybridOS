@@ -46,3 +46,7 @@
   .ct-bar { display: none; }
   .page-top h1 { font-size: 24px; }
 }
+
+.owed-alert { border-color: #8a3b1c; }
+.owed-alert-top { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.owed-alert-top .need-text { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }
