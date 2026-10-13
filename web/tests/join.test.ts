@@ -1,6 +1,6 @@
 import { looksLikeExistingAccount } from '../src/join/calc';
 import { describe, expect, it } from 'vitest';
-import { EMPTY_DETAILS, answersPayload, checkAbout, checkAccount, checkAddress, checkEmergency, checkGuardian, checkSign, isUnder18, normalisePhone, normalisePostcode, planPrice, stepsFor, toRpcArgs, type JoinDocument } from '../src/join/calc';
+import { EMPTY_DETAILS, answersPayload, canPayOnline, checkAgreed, checkPayer, isFreePlan, moneyText, payTermsText, checkAbout, checkAccount, checkAddress, checkEmergency, checkGuardian, checkSign, isUnder18, normalisePhone, normalisePostcode, planPrice, stepsFor, toRpcArgs, type JoinDocument } from '../src/join/calc';
 
 const NOW = new Date('2026-10-10T12:00:00Z');
 const good = { ...EMPTY_DETAILS, firstName: 'Sam', lastName: 'Penrose', dob: '1990-04-12', phone: '07700 900123', line1: '1 Cliff Road', town: 'Perranporth', postcode: 'pl28 8ab', emergencyName: 'Alex', emergencyPhone: '+44 7700 900124', emergencyRelationship: 'Partner' };
@@ -133,5 +133,35 @@ describe('an email that already has an account', () => {
   it('is recognised from the service saying so, but not from other errors', () => {
     expect(looksLikeExistingAccount({ message: 'User already registered' }, null)).toBe(true);
     expect(looksLikeExistingAccount({ message: 'Password should be at least 6 characters' }, null)).toBe(false);
+  });
+});
+
+describe('paying to join', () => {
+  it('payment is a step only when the gym takes it, after the plan', () => {
+    expect(stepsFor({ under18: false, hasDocuments: false, takesPayment: true })).toEqual(['account', 'about', 'address', 'emergency', 'plan', 'pay', 'done']);
+    expect(stepsFor({ under18: true, hasDocuments: true, takesPayment: true })).toEqual(['account', 'about', 'address', 'emergency', 'guardian', 'sign', 'plan', 'pay', 'done']);
+  });
+  it('only paid, repeating plans can be paid for online; free plans need no card', () => {
+    expect(canPayOnline({ pricePence: 5900, interval: 'monthly' })).toBe(true);
+    expect(canPayOnline({ pricePence: 5900, interval: 'quarterly' })).toBe(true);
+    expect(canPayOnline({ pricePence: 800, interval: 'one_off' })).toBe(false);
+    expect(canPayOnline({ pricePence: 0, interval: 'monthly' })).toBe(false);
+    expect(isFreePlan({ pricePence: 0 })).toBe(true);
+    expect(isFreePlan({ pricePence: 1 })).toBe(false);
+  });
+  it('says what is charged today and after', () => {
+    expect(moneyText(5900)).toBe('£59.00');
+    expect(payTermsText({ pricePence: 5900, interval: 'monthly' })).toBe('£59.00 today, then £59.00 every month');
+    expect(payTermsText({ pricePence: 15000, interval: 'quarterly' })).toBe('£150.00 today, then £150.00 every 3 months');
+  });
+  it('an under-18 needs a parent or guardian name and email; an adult needs neither', () => {
+    expect(checkPayer(false, '', '')).toBeNull();
+    expect(checkPayer(true, '', 'a@b.co')).toMatch(/name/);
+    expect(checkPayer(true, 'Sam', 'nonsense')).toMatch(/email/);
+    expect(checkPayer(true, 'Sam Penrose', ' sam@example.test ')).toBeNull();
+  });
+  it('they must tick the agreement before paying', () => {
+    expect(checkAgreed(false)).toMatch(/Tick/);
+    expect(checkAgreed(true)).toBeNull();
   });
 });

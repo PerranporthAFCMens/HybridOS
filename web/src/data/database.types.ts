@@ -3877,6 +3877,10 @@ export type Database = {
         }
         Returns: Json
       }
+      get_gym_payment_mode: {
+        Args: { p_gym_slug: string }
+        Returns: string
+      }
       get_public_gym_join_options: {
         Args: { p_gym_slug: string }
         Returns: Json
