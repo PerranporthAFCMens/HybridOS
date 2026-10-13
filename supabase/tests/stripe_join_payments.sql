@@ -156,7 +156,7 @@ select pt.check('staff cannot', pt.q(pt.u('staff_a'), format($s$select count(*) 
 select pt.check('another gym cannot', pt.q(pt.u('admin_b'), format($s$select count(*) from public.member_stripe_customers where gym_id = %L$s$, pt.gym_a())), '0');
 select pt.check('a member reads their own agreements', pt.q(pt.u('m4'), format($s$select count(*) from public.membership_agreements where gym_id = %L$s$, pt.gym_a())), '3');
 select pt.check('another member sees none', pt.q(pt.u('m2'), format($s$select count(*) from public.membership_agreements where gym_id = %L$s$, pt.gym_a())), '0');
-select pt.check('an admin sees every member's', pt.q(pt.u('admin_a'), format($s$select count(*) from public.membership_agreements where gym_id = %L$s$, pt.gym_a())), '4');
+select pt.check('an admin sees all members', pt.q(pt.u('admin_a'), format($s$select count(*) from public.membership_agreements where gym_id = %L$s$, pt.gym_a())), '4');
 select pt.check('staff do not', pt.q(pt.u('staff_a'), format($s$select count(*) from public.membership_agreements where gym_id = %L$s$, pt.gym_a())), '0');
 select pt.check('an admin sees the plan prices', pt.q(pt.u('admin_a'), format($s$select count(*) from public.plan_stripe_prices where gym_id = %L$s$, pt.gym_a())), '1');
 select pt.check('a member does not', pt.q(pt.u('m4'), format($s$select count(*) from public.plan_stripe_prices where gym_id = %L$s$, pt.gym_a())), '0');
