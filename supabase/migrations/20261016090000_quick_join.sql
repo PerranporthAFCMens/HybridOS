@@ -16,8 +16,8 @@
 --                                       items are done
 --   private.member_may_see_door_code(gym)
 --                                       false only for a person who joined a Quick join gym since it switched on, whose gym holds
---                                       the code, and who has not finished the required items. Staff always see it. The existing
---                                       "access settings readable by active members" policy now also asks this.
+--                                       the code, and who has not finished the required items. Staff always see it. The
+--                                       new restrictive policy "door code held until finished" on gym_access_settings asks this, on top of the existing policy.
 --   public.save_my_basics / save_my_emergency / save_my_address
 --                                       save one part of the person's details at a time (the same checks as save_my_join_details)
 --   public.get_my_ready_status(gym)     what the person still has to do, and whether the door code is being held
@@ -214,9 +214,9 @@ end$$;
 revoke all on function private.member_may_see_door_code(uuid) from public, anon;
 grant execute on function private.member_may_see_door_code(uuid) to authenticated;
 
-drop policy "access settings readable by active members" on public.gym_access_settings;
-create policy "access settings readable by active members" on public.gym_access_settings for select to authenticated
-  using (private.is_gym_member(gym_id) and private.member_may_see_door_code(gym_id));
+-- A restrictive policy is ANDed with the existing "access settings readable by active members" policy, which is left exactly as it is.
+create policy "door code held until finished" on public.gym_access_settings as restrictive for select to authenticated
+  using (private.member_may_see_door_code(gym_id));
 
 -- ---------------------------------------------------------------------------------------------------------------
 -- Saving details a part at a time (the same checks as save_my_join_details)

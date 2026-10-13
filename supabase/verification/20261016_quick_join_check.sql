@@ -39,9 +39,11 @@ select 'the helpers are private (only the door code check is open to signed-in p
              and has_function_privilege('authenticated', 'private.member_may_see_door_code(uuid)', 'execute')
              and not has_function_privilege('anon', 'private.member_may_see_door_code(uuid)', 'execute') then 'ok' else 'WRONG' end
 union all
-select 'the door code is held back by the access settings policy',
+select 'the door code is held back by a restrictive policy, and the existing policy is unchanged',
        case when exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'gym_access_settings'
-                           and policyname = 'access settings readable by active members' and qual like '%member_may_see_door_code%') then 'ok' else 'MISSING' end
+                           and policyname = 'door code held until finished' and permissive = 'RESTRICTIVE' and qual like '%member_may_see_door_code%')
+             and exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'gym_access_settings'
+                           and policyname = 'access settings readable by active members' and qual not like '%member_may_see_door_code%') then 'ok' else 'MISSING' end
 union all
 select 'the join check knows about Quick join',
        case when pg_get_functiondef('private.member_gaps(uuid, uuid)'::regprocedure) like '%quick%' then 'ok' else 'MISSING' end;

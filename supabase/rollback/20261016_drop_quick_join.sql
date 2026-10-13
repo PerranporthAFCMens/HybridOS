@@ -1,4 +1,4 @@
--- Undo 20261016090000_quick_join.sql: the door code goes back to being visible to every active member, member_gaps goes back to
+-- Undo 20261016090000_quick_join.sql: the door code goes back to being visible to every active member (the extra policy is dropped), member_gaps goes back to
 -- its previous version (every gym asks for everything before paying), the new functions and the settings table are removed, and
 -- the address and emergency contact columns are required again.
 -- It refuses to run if anyone has paid but not yet given their address or emergency contact, because those columns cannot be
@@ -16,9 +16,7 @@ begin
   end if;
 end $$;
 
-drop policy "access settings readable by active members" on public.gym_access_settings;
-create policy "access settings readable by active members" on public.gym_access_settings for select to authenticated
-  using (private.is_gym_member(gym_id));
+drop policy "door code held until finished" on public.gym_access_settings;
 
 drop function public.get_public_gym_join_style(text);
 drop function public.get_unfinished_members(uuid);

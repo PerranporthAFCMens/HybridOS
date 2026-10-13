@@ -46,7 +46,7 @@ jobs:
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
             if v_tables<>88 then raise exception 'Expected 88 app tables, got %',v_tables; end if;
             if v_functions<>157 then raise exception 'Expected 157 committed app functions, got %',v_functions; end if;
-            if v_policies<>208 then raise exception 'Expected 208 app/storage policies, got %',v_policies; end if;
+            if v_policies<>209 then raise exception 'Expected 209 app/storage policies, got %',v_policies; end if;
             if v_triggers<>37 then raise exception 'Expected 37 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;

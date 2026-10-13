@@ -17,7 +17,7 @@ or a gym can see.
 
 ## What was added
 `gym_join_settings`; `save_my_basics`, `save_my_emergency`, `save_my_address`, `get_my_ready_status`, `save_join_settings`,
-`get_unfinished_members`, `get_public_gym_join_style`; `member_gaps` is style-aware; the door code policy asks
+`get_unfinished_members`, `get_public_gym_join_style`; `member_gaps` is style-aware; a restrictive door code policy asks
 `member_may_see_door_code`.
 
 ## To switch Puffin Performance on (after the screens in part 2 are live)
