@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agreementWording, environmentOf, invoiceSecret, isUnder18, nextPaymentDate, paymentMethodId, poundsText, recurringOf, stripeForm, todayUtc } from '../../supabase/functions/stripe-join/index';
+import { agreementWording, termsWording, environmentOf, invoiceSecret, isUnder18, nextPaymentDate, paymentMethodId, poundsText, recurringOf, stripeForm, todayUtc } from '../../supabase/functions/stripe-join/index';
 
 describe('Stripe form encoding', () => {
   it('uses brackets for nested values, indexes for lists of objects and [] for lists of plain values', () => {
@@ -83,5 +83,25 @@ describe('reading what Stripe sends back', () => {
     expect(nextPaymentDate({ current_period_end: t })).toBe('2026-11-13');
     expect(nextPaymentDate({})).toBe('');
     expect(todayUtc(Date.UTC(2026, 9, 13, 23, 59))).toBe('2026-10-13');
+  });
+});
+
+describe('the plan\'s terms in the agreement', () => {
+  it('states the minimum term and the notice in the member\'s own words', () => {
+    expect(termsWording(6, 14)).toBe('I understand that this membership has a minimum term of 6 months and I need to give 2 weeks notice to cancel.');
+    expect(termsWording(12, 30)).toBe('I understand that this membership has a minimum term of 12 months and I need to give 1 month notice to cancel.');
+    expect(termsWording(1, 45)).toBe('I understand that this membership has a minimum term of 1 month and I need to give 45 days notice to cancel.');
+  });
+  it('says so when there is no term or notice', () => {
+    expect(termsWording(0, 0)).toBe('I understand that this membership has no minimum term and I can cancel at any time.');
+  });
+  it('says nothing about terms the plan does not set', () => {
+    expect(termsWording(null, null)).toBe('');
+    expect(termsWording(null, 30)).toBe('I understand that I need to give 1 month notice to cancel.');
+  });
+  it('adds them to the end of the whole agreement only when set', () => {
+    const base = { gymName: 'Puffin Performance', planName: 'Hybrid', interval: 'monthly', amountPence: 5900, dueTodayPence: 5900, nextPaymentDate: '2026-11-13', memberName: 'Sam Penrose', guardianName: null };
+    expect(agreementWording({ ...base, minTermMonths: 6, noticeDays: 14 }).endsWith('I understand that this membership has a minimum term of 6 months and I need to give 2 weeks notice to cancel.')).toBe(true);
+    expect(agreementWording(base)).not.toContain('minimum term');
   });
 });

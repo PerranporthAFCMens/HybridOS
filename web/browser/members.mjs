@@ -59,7 +59,10 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/member_signatures')) return reply(route, [{ id: 'sig1', gym_id: GYM, user_id: ADA, signed_at: '2026-10-06T09:00:00Z', signer_name: 'Ada Zane', signer_is_guardian: false, signature_png: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', terms_document_id: null, waiver_document_id: 'dw', signed_terms_path: 'u/g/sig1-terms.pdf', signed_waiver_path: null, emailed_at: '2026-10-06T09:01:00Z' }]);
     if (path.endsWith('/profiles')) return reply(route, profiles);
     if (path.endsWith('/memberships') && select.includes('starts_on')) {
-      return reply(route, [{ id: 'm1', status: 'active', starts_on: '2026-03-01', ends_on: null, payment_provider: 'manual', payment_status: 'confirmed', membership_plans: { name: 'Hybrid Monthly', price_pence: 4500, billing_interval: 'monthly' } }]);
+      return reply(route, [
+        { id: 'm1', status: 'active', starts_on: '2026-03-01', ends_on: null, payment_provider: 'manual', payment_status: 'confirmed', term_months: 6, notice_days: 14, membership_plans: { name: 'Hybrid Monthly', price_pence: 4500, billing_interval: 'monthly' } },
+        { id: 'm2', status: 'active', starts_on: '2026-04-01', ends_on: null, payment_provider: 'stripe', payment_status: 'confirmed', term_months: 0, notice_days: 30, membership_plans: { name: 'Stripe Gold', price_pence: 8000, billing_interval: 'monthly' } },
+      ]);
     }
     if (path.endsWith('/memberships')) return reply(route, [{ user_id: ADA, status: 'active', membership_plans: { name: 'Hybrid Monthly' } }]);
     if (path.endsWith('/membership_plans')) {
@@ -192,14 +195,51 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('lifecycle write body', life && life.body.joined_at === '2026-03-01T00:00:00' && life.body.attrition_on === '2026-09-01' && life.body.is_active === false && typeof life.body.updated_at === 'string');
 
   // Pause, then cancel
-  await dialog.getByRole('button', { name: 'Pause' }).click();
+  const card1 = dialog.locator('.membership-card', { hasText: 'Hybrid Monthly' });
+  const card2 = dialog.locator('.membership-card', { hasText: 'Stripe Gold' });
+  await card1.getByRole('button', { name: 'Pause' }).click();
   await c.has('membership updated', dialog.getByText('Membership updated.'));
   const pause = writes.find((w) => w.path.endsWith('/memberships') && w.body?.status === 'paused');
   c.ok('pause write', pause && pause.method === 'PATCH' && pause.query.id === 'eq.m1' && pause.query.gym_id === `eq.${GYM}` && Object.keys(pause.body).join() === 'status');
-  await dialog.getByRole('button', { name: 'Cancel' }).click();
-  await page.waitForTimeout(200);
-  const cancel = writes.find((w) => w.path.endsWith('/memberships') && w.body?.status === 'cancelled');
-  c.ok('cancel write ends today and cancels payment', cancel && cancel.body.ends_on === today && cancel.body.payment_status === 'cancelled' && cancel.query.gym_id === `eq.${GYM}`);
+
+  // Ending a membership is a staff override: it needs a reason, ignores the term and notice, and is kept on the record
+  await c.has('their own terms are shown', card1.getByText('Their terms: 6 months minimum · 2 weeks notice to leave'));
+  c.ok('the old one-click cancel button is gone', (await dialog.getByRole('button', { name: 'Cancel', exact: true }).count()) === 0);
+  await card1.getByRole('button', { name: 'End membership…' }).click();
+  await card1.getByRole('button', { name: 'End membership', exact: true }).click();
+  await c.has('a reason is required', card1.getByText('Give a reason (a few words is fine).'));
+  c.ok('nothing was sent without a reason', !writes.some((w) => w.path.endsWith('/rpc/staff_end_membership')));
+  await card1.getByLabel('Reason (required)').fill('Moved away, agreed at the desk');
+  await card1.getByRole('button', { name: 'End membership', exact: true }).click();
+  await c.has('ended today', card1.getByText('Membership ended today.'));
+  const ended = writes.find((w) => w.path.endsWith('/rpc/staff_end_membership'));
+  c.ok('end write: this membership, today, with the reason', ended && ended.body.p_membership_id === 'm1' && ended.body.p_last_day === null && ended.body.p_reason === 'Moved away, agreed at the desk');
+  c.ok('a manual membership does not call Stripe', !writes.some((w) => w.path.endsWith('/functions/v1/stripe-membership-sync')));
+
+  // Releasing from the minimum term
+  await card1.getByRole('button', { name: 'Release from minimum term…' }).click();
+  await card1.getByRole('button', { name: 'Release them' }).click();
+  await c.has('a reason is required to release', card1.getByText('Give a reason (a few words is fine).'));
+  await card1.getByLabel('Reason (required)').fill('Goodwill, long illness');
+  await card1.getByRole('button', { name: 'Release them' }).click();
+  await c.has('released', card1.getByText('Ada Zane is released from their minimum term.'));
+  const released = writes.find((w) => w.path.endsWith('/rpc/staff_release_from_term'));
+  c.ok('release write', released && released.body.p_membership_id === 'm1' && released.body.p_reason === 'Goodwill, long illness');
+  c.ok('a member with no term has no release button', (await card2.getByRole('button', { name: 'Release from minimum term…' }).count()) === 0);
+
+  // A card-paying (Stripe) member: ending it on a date also tells Stripe
+  await card2.getByRole('button', { name: 'End membership…' }).click();
+  await card2.getByLabel('When').selectOption('date');
+  await card2.getByRole('button', { name: 'End membership', exact: true }).click();
+  await c.has('a last day is required', card2.getByText('Choose their last day.'));
+  await card2.getByLabel('Last day').fill('2099-01-31');
+  await card2.getByLabel('Reason (required)').fill('Injury, last day agreed');
+  await card2.getByRole('button', { name: 'End membership', exact: true }).click();
+  await c.has('booked', card2.getByText(/Booked: their last day is 2099-01-31\./));
+  const ended2 = writes.find((w) => w.path.endsWith('/rpc/staff_end_membership') && w.body.p_membership_id === 'm2');
+  c.ok('end-on-a-date write', ended2 && ended2.body.p_last_day === '2099-01-31' && ended2.body.p_reason === 'Injury, last day agreed');
+  const synced = writes.find((w) => w.path.endsWith('/functions/v1/stripe-membership-sync'));
+  c.ok('Stripe was told to match, for that membership only', synced && synced.body.membership_id === 'm2');
 
   // Assign a membership
   await dialog.getByRole('button', { name: 'Assign membership' }).click();

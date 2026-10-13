@@ -28,6 +28,9 @@ export interface MemberMembership {
   planName: string | null;
   planPricePence: number | null;
   planInterval: string | null;
+  /** The terms this member joined on. Blank (null) means the gym-wide setting. */
+  termMonths: number | null;
+  noticeDays: number | null;
 }
 
 const CHUNK = 100;
@@ -89,7 +92,7 @@ export async function listMemberMemberships(gymId: string, userId: string): Prom
   const { data, error } = await supabase
     .from('memberships')
     .select(
-      'id, status, starts_on, ends_on, payment_provider, payment_status, membership_plans(name, price_pence, billing_interval)',
+      'id, status, starts_on, ends_on, payment_provider, payment_status, term_months, notice_days, membership_plans(name, price_pence, billing_interval)',
     )
     .eq('gym_id', gymId)
     .eq('user_id', userId)
@@ -105,6 +108,8 @@ export async function listMemberMemberships(gymId: string, userId: string): Prom
     planName: m.membership_plans?.name ?? null,
     planPricePence: m.membership_plans?.price_pence ?? null,
     planInterval: m.membership_plans?.billing_interval ?? null,
+    termMonths: m.term_months ?? null,
+    noticeDays: m.notice_days ?? null,
   }));
 }
 

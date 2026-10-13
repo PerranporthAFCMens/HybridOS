@@ -40,6 +40,9 @@ export interface PlanDetail {
   includesPt: boolean;
   isPublic: boolean;
   canSwitchTo: boolean;
+  /** Blank (null) means the gym-wide setting applies. */
+  minTermMonths: number | null;
+  noticeDays: number | null;
   isActive: boolean;
 }
 
@@ -57,6 +60,8 @@ export interface PlanInput {
   includesPt: boolean;
   isPublic: boolean;
   canSwitchTo: boolean;
+  minTermMonths: number | null;
+  noticeDays: number | null;
 }
 
 export async function listPlanDetails(gymId: string): Promise<PlanDetail[]> {
@@ -80,6 +85,8 @@ export async function listPlanDetails(gymId: string): Promise<PlanDetail[]> {
     includesPt: p.includes_pt,
     isPublic: p.is_public,
     canSwitchTo: p.members_can_switch_to,
+    minTermMonths: p.min_term_months ?? null,
+    noticeDays: p.notice_days ?? null,
     isActive: p.is_active,
   }));
 }
@@ -98,6 +105,8 @@ function toRow(input: PlanInput) {
     classes_per_week: input.classesPerWeek,
     is_public: input.isPublic,
     members_can_switch_to: input.canSwitchTo,
+    min_term_months: input.minTermMonths,
+    notice_days: input.noticeDays,
   };
 }
 

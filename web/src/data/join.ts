@@ -26,7 +26,8 @@ export async function getJoinGym(slug: string): Promise<JoinGym> {
     if (p.includes_open_gym) perks.push('Open gym');
     if (p.includes_classes) perks.push(typeof p.classes_per_week === 'number' ? `${p.classes_per_week} classes / week` : 'Classes included');
     if (p.includes_pt) perks.push('PT included');
-    return { id: str(p.id), name: str(p.name), description: str(p.description) || null, pricePence: Number(p.price_pence) || 0, interval: str(p.billing_interval), perks };
+    const whole = (v: Json | undefined): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+    return { id: str(p.id), name: str(p.name), description: str(p.description) || null, pricePence: Number(p.price_pence) || 0, interval: str(p.billing_interval), perks, minTermMonths: whole(p.min_term_months), noticeDays: whole(p.notice_days) };
   });
   return { gymId: str(g.gym_id), name: str(g.gym_name) || 'your gym', logoUrl: str(g.logo_url) || null, plans };
 }

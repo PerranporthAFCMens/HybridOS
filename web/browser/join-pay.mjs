@@ -4,7 +4,7 @@ import { base, launch, mockSupabase, reply, runChecks, sizes, signedInPage } fro
 
 const GYM = '33333333-3333-4333-8333-333333333333';
 const PLANS = [
-  { id: 'plan-1', name: 'Hybrid', description: null, price_pence: 5900, billing_interval: 'monthly', includes_open_gym: true, includes_classes: true, classes_per_week: 3, includes_pt: false },
+  { id: 'plan-1', name: 'Hybrid', description: null, price_pence: 5900, billing_interval: 'monthly', includes_open_gym: true, includes_classes: true, classes_per_week: 3, includes_pt: false, min_term_months: 6, notice_days: 14 },
   { id: 'plan-free', name: 'Starter', description: 'Free to join', price_pence: 0, billing_interval: 'monthly' },
   { id: 'plan-pass', name: 'Day pass', description: 'One visit', price_pence: 800, billing_interval: 'one_off' },
 ];
@@ -107,9 +107,11 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('plans are offered', page.getByRole('heading', { name: 'Choose your membership' }));
   await c.has('a one-off pass says it cannot be paid for online', page.getByText('This one cannot be paid for online'));
   c.ok('and has no choose button', (await page.getByRole('button', { name: 'Choose Day pass' }).count()) === 0);
+  await c.has('a plan shows its minimum term and notice before it is chosen', page.getByText('6 months minimum · 2 weeks notice to leave'));
   await page.getByRole('button', { name: 'Choose Hybrid' }).click();
   await c.has('a paid plan goes to the payment step', page.getByRole('heading', { name: 'Payment' }));
   await c.has('it says what is charged today and after', page.getByText('£59.00 today, then £59.00 every monthly'.replace('monthly', 'month')));
+  await c.has('the payment step repeats the terms', page.getByText('6 months minimum · 2 weeks notice to leave'));
   c.ok('no guardian email asked of an adult', (await page.getByLabel('Parent or guardian email').count()) === 0);
   c.ok('no payment set up until they continue', state.prepared === null);
   await next('Continue to payment');

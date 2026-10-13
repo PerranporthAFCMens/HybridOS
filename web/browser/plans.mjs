@@ -5,7 +5,7 @@
 import { GYM, base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
 
 const plansDb = [
-  { id: 'p1', name: 'Hybrid Monthly', description: 'All access', price_pence: 4500, billing_interval: 'monthly', access_type: 'hybrid', joining_fee_pence: 1000, classes_per_week: null, includes_open_gym: true, includes_classes: true, includes_pt: false, is_public: true, members_can_switch_to: false, is_active: true },
+  { id: 'p1', name: 'Hybrid Monthly', description: 'All access', price_pence: 4500, billing_interval: 'monthly', access_type: 'hybrid', joining_fee_pence: 1000, classes_per_week: null, includes_open_gym: true, includes_classes: true, includes_pt: false, is_public: true, members_can_switch_to: false, min_term_months: 6, notice_days: 14, is_active: true },
   { id: 'p2', name: 'Old Weekly Deal with a rather long plan name', description: null, price_pence: 1200, billing_interval: 'weekly', access_type: 'gym', joining_fee_pence: 0, classes_per_week: 3, includes_open_gym: true, includes_classes: false, includes_pt: true, is_public: false, is_active: false },
 ];
 
@@ -33,6 +33,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const writes = [];
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, async ({ route, url, path, method, body }) => {
+    if (path.endsWith('/rpc/apply_plan_terms_to_members')) { writes.push({ method, path, query: {}, body }); return reply(route, 2); }
     if (path.endsWith('/membership_plans') && ['PATCH', 'POST'].includes(method)) {
       writes.push({ method, query: Object.fromEntries(url.searchParams), body });
       await route.fulfill({ status: 204, body: '' });
@@ -95,6 +96,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('create write', created && JSON.stringify(created.body) === JSON.stringify({
     gym_id: GYM, name: 'Student', description: 'For students', price_pence: 2999, billing_interval: 'quarterly', joining_fee_pence: 500,
     access_type: 'hybrid', includes_open_gym: true, includes_classes: true, includes_pt: true, classes_per_week: 2, is_public: false, members_can_switch_to: false,
+    min_term_months: null, notice_days: null,
   }));
 
   // Edit p2: form is pre-filled; change the price only
@@ -108,6 +110,51 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => undefined);
   const edited = writes.find((w) => w.method === 'PATCH');
   c.ok('edit write scoped to this plan and gym', edited && edited.query.id === 'eq.p2' && edited.query.gym_id === `eq.${GYM}` && edited.body.price_pence === 1350 && edited.body.name.startsWith('Old Weekly') && edited.body.gym_id === undefined);
+
+  // Terms: each plan shows its own, the editor takes any numbers and only warns about long ones
+  writes.length = 0;
+  await c.has('a plan with its own terms shows them', page.locator('.plan', { hasText: 'Hybrid Monthly' }).getByText('6 months minimum · 2 weeks notice to leave'));
+  await c.has('a plan with none says it uses the gym-wide terms', page.locator('.plan', { hasText: 'Old Weekly Deal' }).getByText('Uses your gym-wide terms'));
+  await page.locator('.plan', { hasText: 'Hybrid Monthly' }).getByRole('button', { name: 'Edit' }).click();
+  c.ok('terms prefilled', (await dialog.getByLabel('Minimum term (months)').inputValue()) === '6' && (await dialog.getByLabel('Notice to leave (days)').inputValue()) === '14');
+  c.ok('no warning for ordinary terms', (await dialog.getByRole('note').count()) === 0);
+  await dialog.getByLabel('Minimum term (months)').fill('24');
+  await dialog.getByLabel('Notice to leave (days)').fill('90');
+  await c.has('a long term is warned about', dialog.getByText(/more than 12 months can be treated as unfair/));
+  await c.has('long notice is warned about', dialog.getByText(/More than a month of notice/));
+  c.ok('layout (terms warnings)', (await page.evaluate(layoutProblems)).length === 0);
+  await dialog.getByLabel('Minimum term (months)').fill('1.5');
+  await dialog.getByRole('button', { name: 'Save membership plan' }).click();
+  await c.has('a part month is refused', dialog.getByText(/whole number of months from 0 to 60/));
+  c.ok('and nothing was saved', writes.length === 0);
+  await dialog.getByLabel('Minimum term (months)').fill('24');
+  c.ok('passing terms on is held back while there are unsaved changes', await dialog.getByRole('button', { name: 'Pass these terms to current members' }).isDisabled());
+  await dialog.getByRole('button', { name: 'Save membership plan' }).click();
+  await dialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => undefined);
+  const termsSaved = writes.find((w) => w.method === 'PATCH');
+  c.ok('longer terms are saved as typed (a warning is not a block)', termsSaved && termsSaved.query.id === 'eq.p1' && termsSaved.body.min_term_months === 24 && termsSaved.body.notice_days === 90);
+  writes.length = 0;
+  await page.locator('.plan', { hasText: 'Old Weekly Deal' }).getByRole('button', { name: 'Edit' }).click();
+  await dialog.getByLabel('Minimum term (months)').fill('');
+  await dialog.getByLabel('Notice to leave (days)').fill('0');
+  await dialog.getByRole('button', { name: 'Save membership plan' }).click();
+  await dialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => undefined);
+  const blankTerm = writes.find((w) => w.method === 'PATCH');
+  c.ok('blank means the gym-wide setting and 0 means none', blankTerm && blankTerm.body.min_term_months === null && blankTerm.body.notice_days === 0);
+
+  // Passing a plan's terms on to its current members: a reason is needed, and only same-or-better terms go through
+  writes.length = 0;
+  await page.locator('.plan', { hasText: 'Hybrid Monthly' }).getByRole('button', { name: 'Edit' }).click();
+  await dialog.getByRole('button', { name: 'Pass these terms to current members' }).click();
+  await dialog.getByRole('button', { name: 'Pass them on' }).click();
+  await c.has('a reason is needed', dialog.getByText('Give a reason (a few words is fine).'));
+  c.ok('nothing sent without a reason', !writes.some((w) => w.path.endsWith('/rpc/apply_plan_terms_to_members')));
+  await dialog.getByLabel('Reason (kept on the record)').fill('We shortened the notice for everyone');
+  await dialog.getByRole('button', { name: 'Pass them on' }).click();
+  await c.has('the result is said in words', dialog.getByText('2 members now have these terms.'));
+  const passed = writes.find((w) => w.path.endsWith('/rpc/apply_plan_terms_to_members'));
+  c.ok('the request names the plan and the reason', passed && passed.body.p_plan_id === 'p1' && passed.body.p_reason === 'We shortened the notice for everyone');
+  await page.keyboard.press('Escape');
 
   // Escape closes the form without saving
   writes.length = 0;

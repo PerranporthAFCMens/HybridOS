@@ -53,7 +53,7 @@ export function Membership() {
             {o.membership.endsOn && <div className="muted small">Ends {niceDay(o.membership.endsOn)}</div>}
           </section>
 
-          <Requests o={o} busy={busy} onWithdraw={(id) => void run(() => withdrawRequest(id), 'Request withdrawn.')} />
+          <Requests o={o} busy={busy} onWithdraw={(id) => void run(() => withdrawRequest(id, o.membership.id), 'Request withdrawn.')} />
 
           {flow === null && <Choices o={o} onPick={(f) => { setMsg(null); setFlow(f); }} />}
           {flow === 'pause' && <PauseFlow o={o} busy={busy} onBack={() => setFlow(null)} onSend={(a, b, r) => void run(() => askToPause(o.membership.id, a, b, r), o.pause.approval === 'admin' ? 'Sent. The gym will let you know.' : 'Your pause is booked.')} />}

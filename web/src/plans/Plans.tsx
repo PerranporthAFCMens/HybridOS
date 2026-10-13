@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { applyPlanTerms } from '../data/terms';
 import { useReadyAuth } from '../auth/AuthProvider';
 import type { PlanDetail, PlanInput } from '../data/plans';
 import { money } from '../today/calc';
@@ -7,6 +8,7 @@ import { Card, Empty, SectionTitle } from '../ui/Card';
 import { Checkbox, Field, FieldRow, Input, Select, Textarea } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import { ACCESS_TYPES, INTERVALS, emptyForm, formFromPlan, includesText, planSummary, validatePlan, type PlanForm } from './calc';
+import { parseWhole, termWarnings, termsSentence } from './terms';
 import { usePlanDetails, usePlanWrites } from './usePlans';
 import '../members/members.css';
 import './plans.css';
@@ -52,6 +54,7 @@ export function Plans() {
             {p.joiningFeeInPence > 0 && <div className="muted">+ {money(p.joiningFeeInPence)} joining fee</div>}
             <div className="muted plan-text">{p.description || 'No description yet.'}</div>
             <div className="muted small plan-text">{includesText(p)}{p.isPublic ? '' : ' · Hidden from new members'}</div>
+            <div className="muted small plan-text">{termsSentence(p.minTermMonths, p.noticeDays) || 'Uses your gym-wide terms'}</div>
             <div className="membership-actions">
               <Button onClick={() => setEditing({ plan: p })}>Edit</Button>
               <Button
@@ -91,6 +94,9 @@ function PlanEditor({ plan, saving, onClose, onSave }: {
   const [form, setForm] = useState<PlanForm>(plan ? formFromPlan(plan) : emptyForm);
   const [error, setError] = useState('');
   const set = <K extends keyof PlanForm>(key: K, value: PlanForm[K]) => setForm((f) => ({ ...f, [key]: value }));
+  const typedTerm = parseWhole(form.minTerm, 0, 60);
+  const typedNotice = parseWhole(form.notice, 0, 365);
+  const warnings = termWarnings(typedTerm === 'bad' ? null : typedTerm, typedNotice === 'bad' ? null : typedNotice);
 
   const submit = () => {
     const check = validatePlan(form);
@@ -129,6 +135,15 @@ function PlanEditor({ plan, saving, onClose, onSave }: {
           <Input id="plan-classes" type="number" inputMode="numeric" min="0" step="1" value={form.classesPerWeek} onChange={(e) => set('classesPerWeek', e.target.value)} />
         </Field>
       </FieldRow>
+      <FieldRow>
+        <Field label="Minimum term (months)" htmlFor="plan-term" hint="How long a member signs up for. 0 means none. Leave blank to use your gym-wide setting.">
+          <Input id="plan-term" type="number" inputMode="numeric" min="0" max="60" step="1" placeholder="e.g. 6" value={form.minTerm} onChange={(e) => set('minTerm', e.target.value)} />
+        </Field>
+        <Field label="Notice to leave (days)" htmlFor="plan-notice" hint="Days of notice a member gives. 30 is one month. Leave blank to use your gym-wide setting.">
+          <Input id="plan-notice" type="number" inputMode="numeric" min="0" max="365" step="1" placeholder="e.g. 30" value={form.notice} onChange={(e) => set('notice', e.target.value)} />
+        </Field>
+      </FieldRow>
+      {warnings.map((w) => <div key={w} className="notice" role="note">{w}</div>)}
       <Field label="Description" htmlFor="plan-description">
         <Textarea id="plan-description" placeholder="What is included in this membership?" value={form.description} onChange={(e) => set('description', e.target.value)} />
       </Field>
@@ -138,7 +153,50 @@ function PlanEditor({ plan, saving, onClose, onSave }: {
       <Checkbox label="Visible for new members to join" checked={form.isPublic} onChange={(v) => set('isPublic', v)} />
       <Checkbox label="Members can switch to this plan themselves" checked={form.canSwitchTo} onChange={(v) => set('canSwitchTo', v)} />
       <div className="assign-msg">{error && <span className="msg error" role="alert">{error}</span>}</div>
+      {plan && (plan.minTermMonths !== null || plan.noticeDays !== null) && <PassOnTerms plan={plan} unsaved={form.minTerm !== (plan.minTermMonths === null ? '' : String(plan.minTermMonths)) || form.notice !== (plan.noticeDays === null ? '' : String(plan.noticeDays))} />}
       <Button variant="primary" className="wide-btn" disabled={saving} onClick={submit}>Save membership plan</Button>
     </Modal>
+  );
+}
+
+/** Members keep the terms they joined on. This passes the plan's saved terms to them, but only where that is the same or better for them. */
+function PassOnTerms({ plan, unsaved }: { plan: PlanDetail; unsaved: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ text: string; tone: 'good' | 'error' } | null>(null);
+  const go = async () => {
+    if (reason.trim().length < 3) return setMsg({ text: 'Give a reason (a few words is fine).', tone: 'error' });
+    setBusy(true);
+    setMsg(null);
+    try {
+      const n = await applyPlanTerms(plan.id, reason);
+      setMsg({ text: n === 0 ? 'No one needed changing. Members only get terms that are the same or better for them.' : `${n} ${n === 1 ? 'member now has' : 'members now have'} these terms.`, tone: 'good' });
+      setOpen(false);
+      setReason('');
+    } catch (e) {
+      setMsg({ text: e instanceof Error ? e.message : 'Could not do that. Try again.', tone: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section className="record-section" aria-label="Current members">
+      <h4>Current members</h4>
+      <div className="muted small">Members keep the terms they joined on. If this plan's saved terms are now better for them (a shorter term or less notice), you can pass them on. Worse terms are never passed on.</div>
+      {unsaved && <div className="muted small">You have unsaved changes: save them first, because this uses the saved terms.</div>}
+      {!open ? (
+        <Button onClick={() => { setMsg(null); setOpen(true); }} disabled={unsaved}>Pass these terms to current members</Button>
+      ) : (
+        <>
+          <Field label="Reason (kept on the record)" htmlFor="plan-pass-reason">
+            <Input id="plan-pass-reason" placeholder="e.g. We shortened the notice for everyone" value={reason} onChange={(e) => setReason(e.target.value)} />
+          </Field>
+          <Button variant="primary" disabled={busy} onClick={() => void go()}>{busy ? 'Passing on…' : 'Pass them on'}</Button>{' '}
+          <Button disabled={busy} onClick={() => setOpen(false)}>Not now</Button>
+        </>
+      )}
+      {msg && <div className={`msg ${msg.tone}`} role={msg.tone === 'error' ? 'alert' : 'status'}>{msg.text}</div>}
+    </section>
   );
 }

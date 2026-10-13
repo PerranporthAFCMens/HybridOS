@@ -12,6 +12,7 @@ import { DateInput, Field, FieldRow, Select } from '../ui/Field';
 import { money } from '../today/calc';
 import { dateInputValue, initials, isTeam, ROLE_LABEL, formatDate, formatRegistered, labelStatus, nameOf, paymentHint, validateLifecycle } from './calc';
 import { MemberAgreements } from './MemberAgreements';
+import { EndMembership } from './EndMembership';
 import { MemberDetailsCard } from './MemberDetailsCard';
 import { MemberTraining } from './MemberTraining';
 import { NotFinancial } from './NotFinancial';
@@ -198,10 +199,8 @@ function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string })
               <div className="membership-actions">
                 {m.status !== 'active' && <Button disabled={writes.setStatus.isPending} onClick={() => changeStatus(m.id, 'active')}>Activate</Button>}
                 {m.status !== 'paused' && <Button disabled={writes.setStatus.isPending} onClick={() => changeStatus(m.id, 'paused')}>Pause</Button>}
-                {m.status !== 'cancelled' && (
-                  <Button className="danger" disabled={writes.setStatus.isPending} onClick={() => changeStatus(m.id, 'cancelled')}>Cancel</Button>
-                )}
               </div>
+              <EndMembership gymId={gymId} userId={member.userId} membership={m} name={name} />
             </div>
           ))
         ) : (

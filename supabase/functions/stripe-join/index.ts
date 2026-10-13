@@ -85,13 +85,25 @@ const dayText = (iso: string) => {
  * The exact words the member agrees to, saved word for word with the payment. Server-made, so the page cannot change them.
  * It covers: starting today and the 14 day cooling-off (people who join online), the amounts and dates, and being charged later.
  */
-export function agreementWording(o: { gymName: string; planName: string; interval: string; amountPence: number; dueTodayPence: number; nextPaymentDate: string; memberName: string; guardianName: string | null }): string {
+export function agreementWording(o: { gymName: string; planName: string; interval: string; amountPence: number; dueTodayPence: number; nextPaymentDate: string; memberName: string; guardianName: string | null; minTermMonths?: number | null; noticeDays?: number | null }): string {
   const every = EVERY[o.interval] ?? 'period'
   const who = o.guardianName ? `I am ${o.memberName}'s parent or guardian. I agree to pay for this membership, to be responsible for ${o.memberName} while at the gym, and ` : 'I '
   return [
     `${who}want the ${o.planName} membership at ${o.gymName} to start today. I understand I can cancel within 14 days of joining, and that I would then pay for the days I have used.`,
     `I agree that ${o.gymName} can charge this card ${poundsText(o.dueTodayPence)} today, then ${poundsText(o.amountPence)} every ${every} from ${dayText(o.nextPaymentDate)}, and for any classes, visits or passes I buy and any payment I miss.`,
-  ].join(' ')
+    termsWording(o.minTermMonths ?? null, o.noticeDays ?? null),
+  ].filter(Boolean).join(' ')
+}
+
+/** The plan's term and notice in the agreement, in the person's own words. Empty when the plan sets neither. */
+export function termsWording(term: number | null, notice: number | null): string {
+  const noticeText = (d: number) => (d % 30 === 0 ? (d === 30 ? '1 month' : `${d / 30} months`) : d % 7 === 0 ? (d === 7 ? '1 week' : `${d / 7} weeks`) : d === 1 ? '1 day' : `${d} days`)
+  const parts: string[] = []
+  if (term !== null) parts.push(term > 0 ? `this membership has a minimum term of ${term === 1 ? '1 month' : `${term} months`}` : 'this membership has no minimum term')
+  if (notice !== null) parts.push(notice > 0 ? `I need to give ${noticeText(notice)} notice to cancel` : 'I can cancel at any time')
+  if (parts.length === 0) return ''
+  const text = parts.join(' and ')
+  return `I understand that ${text}.`
 }
 
 /** The client secret the card form needs, from either shape of invoice Stripe may send (newer: confirmation_secret; older: payment_intent). */
@@ -284,7 +296,8 @@ async function handle(req: Request): Promise<Response> {
     if (!clientSecret) return reply(502, { error: 'Stripe did not return a payment form.', stage })
     const dueToday = num(invoice.amount_due) || amount
     const next = nextPaymentDate(sub.json)
-    const wording = agreementWording({ gymName: str(gym.name), planName, interval: str(plan.billing_interval), amountPence: amount, dueTodayPence: dueToday, nextPaymentDate: next, memberName, guardianName: under18 ? guardianName : null })
+    const wording = agreementWording({ gymName: str(gym.name), planName, interval: str(plan.billing_interval), amountPence: amount, dueTodayPence: dueToday, nextPaymentDate: next, memberName, guardianName: under18 ? guardianName : null,
+      minTermMonths: typeof plan.min_term_months === 'number' ? plan.min_term_months : null, noticeDays: typeof plan.notice_days === 'number' ? plan.notice_days : null })
 
     stage = 'save'
     const { error: be } = await admin.rpc('stripe_begin_membership', {
