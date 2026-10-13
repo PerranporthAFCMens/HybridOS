@@ -93,6 +93,8 @@ select pt.gym_a(), pt.u(n), pt.plan(1), 'active', current_date from (values ('m1
 insert into public.gym_signup_documents(id, gym_id, kind, version, title, source, body_text, is_current)
 values ('e0000000-0000-4000-8000-000000000001', pt.gym_a(), 'waiver', 1, 'Waiver', 'text', 'I accept the risks.', true);
 insert into public.gym_access_settings(gym_id, access_enabled, access_code) values (pt.gym_a(), true, '1234');
+-- a real new account starts with its email address as its display name
+update public.profiles set display_name = 'm3@qj.invalid' where id = pt.u('m3');
 -- m1 joined long before Quick join was switched on
 update public.gym_members set created_at = now() - interval '30 days' where gym_id = pt.gym_a() and user_id = pt.u('m1');
 
