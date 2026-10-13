@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { accountState, environmentOf, returnAllowed, stripeForm } from '../../supabase/functions/stripe-connect/index';
+import { accountIdempotencyKey, accountState, environmentOf, returnAllowed } from '../../supabase/functions/stripe-connect/index';
 import { hourOptions, stripeStatus, windowText } from '../src/payments/calc';
-
-describe('Stripe form encoding', () => {
-  it('uses brackets for nested values and skips empty ones', () => {
-    expect(stripeForm({ type: 'standard', country: 'GB', metadata: { gym_id: 'g1' }, business_profile: { name: 'Puffin & Co' }, skip: undefined, nope: null })).toBe('type=standard&country=GB&metadata%5Bgym_id%5D=g1&business_profile%5Bname%5D=Puffin%20%26%20Co');
-  });
-});
 
 describe('which Stripe environment a key is for', () => {
   it('tells test from live and refuses anything else', () => {
@@ -31,19 +25,40 @@ describe('where Stripe may send the owner back to', () => {
   });
 });
 
-describe('what we keep of a Stripe account', () => {
-  it('keeps three yes/no answers', () => {
-    expect(accountState({ details_submitted: true, charges_enabled: true, payouts_enabled: false })).toEqual({ details_submitted: true, charges_enabled: true, payouts_enabled: false, last_error: null });
+const merchant = (card: string, payouts = 'inactive') => ({ configuration: { merchant: { capabilities: { card_payments: { status: card }, stripe_balance: { payouts: { status: payouts } } } } } });
+
+describe('what we keep of a Stripe account (Accounts v2)', () => {
+  it('reads the capabilities as three yes/no answers', () => {
+    expect(accountState(merchant('active', 'active'))).toEqual({ details_submitted: true, charges_enabled: true, payouts_enabled: true, last_error: null });
+    expect(accountState(merchant('active'))).toMatchObject({ charges_enabled: true, payouts_enabled: false });
+  });
+  it('treats a capability Stripe is still reviewing as details sent but not ready', () => {
+    expect(accountState(merchant('pending'))).toMatchObject({ details_submitted: true, charges_enabled: false });
+  });
+  it('treats a brand new account as not started', () => {
+    expect(accountState({})).toEqual({ details_submitted: false, charges_enabled: false, payouts_enabled: false, last_error: null });
+    expect(accountState(merchant('inactive'))).toMatchObject({ details_submitted: false, charges_enabled: false });
   });
   it('says what Stripe is waiting for, in words', () => {
-    const s = accountState({ details_submitted: false, charges_enabled: false, payouts_enabled: false, requirements: { currently_due: ['individual.id_number', 'external_account', 'business_profile.url', 'tos_acceptance.date'] } });
+    const s = accountState({ ...merchant('restricted'), requirements: { entries: [
+      { description: 'individual.id_number', minimum_deadline: { status: 'currently_due' } },
+      { description: 'external_account', minimum_deadline: { status: 'past_due' } },
+      { description: 'business_profile.url', minimum_deadline: { status: 'currently_due' } },
+      { description: 'tos_acceptance.date', minimum_deadline: { status: 'currently_due' } },
+      { description: 'later.thing', minimum_deadline: { status: 'eventually_due' } },
+    ] } });
     expect(s.last_error).toBe('Stripe still needs: individual id number, external account, business profile url and more.');
+    expect(s.details_submitted).toBe(false);
   });
-  it('says when Stripe has paused it', () => {
-    expect(accountState({ charges_enabled: false, requirements: { disabled_reason: 'requirements.past_due' } }).last_error).toBe('Stripe has paused this account (requirements past due).');
+  it('says when Stripe has not allowed card payments', () => {
+    expect(accountState(merchant('restricted')).last_error).toBe('Stripe has not allowed card payments on this account (restricted).');
+    expect(accountState(merchant('unsupported')).last_error).toContain('unsupported');
   });
   it('does not complain once it can take payments', () => {
-    expect(accountState({ charges_enabled: true, requirements: { currently_due: ['x'] } }).last_error).toBeNull();
+    expect(accountState({ ...merchant('active'), requirements: { entries: [{ description: 'x', minimum_deadline: { status: 'currently_due' } }] } }).last_error).toBeNull();
+  });
+  it('copes with anything odd', () => {
+    expect(accountState({ configuration: null, requirements: 'x' } as never)).toMatchObject({ charges_enabled: false });
   });
 });
 
@@ -70,5 +85,15 @@ describe('the payments page wording', () => {
     expect(hourOptions(30).map((o) => o.value)).toContain(30);
     expect(hourOptions(0)[0]?.label).toBe('No notice needed');
     expect(hourOptions(24).find((o) => o.value === 168)?.label).toBe('7 days before');
+  });
+});
+
+describe('the key that stops a double click making two accounts', () => {
+  it('is the same within a minute and different the next, so an old failure is never replayed', () => {
+    const t = Date.UTC(2026, 9, 13, 10, 16, 39);
+    expect(accountIdempotencyKey('sandbox', 'g1', t)).toBe(accountIdempotencyKey('sandbox', 'g1', t + 5000));
+    expect(accountIdempotencyKey('sandbox', 'g1', t)).not.toBe(accountIdempotencyKey('sandbox', 'g1', t + 60000));
+    expect(accountIdempotencyKey('sandbox', 'g1', t)).not.toBe(accountIdempotencyKey('live', 'g1', t));
+    expect(accountIdempotencyKey('sandbox', 'g1', t)).not.toBe(accountIdempotencyKey('sandbox', 'g2', t));
   });
 });
