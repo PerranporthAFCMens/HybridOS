@@ -35,3 +35,11 @@ export function hourOptions(current: number): { value: number; label: string }[]
   const all = HOUR_CHOICES.includes(current) ? HOUR_CHOICES : [...HOUR_CHOICES, current].sort((a, b) => a - b);
   return all.map((value) => ({ value, label: value === 0 ? 'No notice needed' : value % 24 === 0 ? `${value / 24} ${value === 24 ? 'day' : 'days'} before` : `${value} ${value === 1 ? 'hour' : 'hours'} before` }));
 }
+
+export const OVERDUE_CHOICES = [0, 3, 7, 14, 30];
+
+/** The choices for how long a payment can be late before it counts as missed, plus the gym's current one if it is something else. */
+export function overdueOptions(current: number): { value: number; label: string }[] {
+  const all = OVERDUE_CHOICES.includes(current) ? OVERDUE_CHOICES : [...OVERDUE_CHOICES, current].sort((a, b) => a - b);
+  return all.map((value) => ({ value, label: value === 0 ? 'The day after it is due' : `${value} ${value === 1 ? 'day' : 'days'} after it is due` }));
+}

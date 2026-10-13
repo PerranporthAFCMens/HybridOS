@@ -113,3 +113,5 @@
 .assign-preview { display: grid; gap: 6px; margin: 10px 0; padding: 12px; border: 1px solid var(--hybrid-line); border-radius: 12px; background: var(--hybrid-raised); }
 .assign-preview ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; overflow-wrap: anywhere; }
 .assign-list { display: grid; gap: 6px; margin: 8px 0; max-height: 260px; overflow-y: auto; }
+.chip.bad { border-color: #8a3b1c; color: var(--hybrid-ember); }
+.file-sub .chip.bad { text-transform: none; }

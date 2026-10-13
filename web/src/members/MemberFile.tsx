@@ -14,6 +14,7 @@ import { dateInputValue, initials, isTeam, ROLE_LABEL, formatDate, formatRegiste
 import { MemberAgreements } from './MemberAgreements';
 import { MemberDetailsCard } from './MemberDetailsCard';
 import { MemberTraining } from './MemberTraining';
+import { NotFinancial } from './NotFinancial';
 import { useMemberDirectory, useMemberMemberships, useMemberWrites, usePlans } from './useMembers';
 import '../staff/staff.css';
 import './members.css';
@@ -144,6 +145,7 @@ function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string })
           <div className="file-sub">
             <span className="chip">{ROLE_LABEL[member.role] ?? 'Member'}</span>
             {latest && <span className={`chip ${latest.status === 'active' ? 'good' : latest.status === 'paused' ? 'warn' : ''}`}>{labelStatus(latest.status)}</span>}
+            <NotFinancial gymId={gymId} userId={member.userId} />
           </div>
         </div>
         <div className="file-actions">

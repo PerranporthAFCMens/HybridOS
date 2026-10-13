@@ -43,7 +43,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     }
     if (path.endsWith('/gym_stripe_accounts')) return reply(route, link);
     if (path.endsWith('/gym_payment_settings')) {
-      if (method === 'POST') { writes.push({ query: Object.fromEntries(url.searchParams), body }); settings = [{ payments_enabled: body.payments_enabled, cancellation_hours: body.cancellation_hours }]; await route.fulfill({ status: 204, body: '' }); return true; }
+      if (method === 'POST') { writes.push({ query: Object.fromEntries(url.searchParams), body }); settings = [{ payments_enabled: body.payments_enabled, cancellation_hours: body.cancellation_hours, overdue_grace_days: body.overdue_grace_days }]; await route.fulfill({ status: 204, body: '' }); return true; }
       return reply(route, settings);
     }
     return false;
@@ -99,6 +99,12 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByLabel('Members can cancel').selectOption('0');
   await c.has('no notice needed reads naturally', page.getByText('Members can cancel right up to the start of the class.'));
   c.ok('saved as 0', writes[3].body.cancellation_hours === 0);
+
+  // 6b. When a late payment counts as missed (money owed)
+  c.ok('the late payment window starts at 7 days', (await page.getByLabel('A payment counts as missed').inputValue()) === '7');
+  await page.getByLabel('A payment counts as missed').selectOption('14');
+  await c.has('...and is saved', page.getByText('Saved.'));
+  c.ok('saved exactly: 14 days, nothing else changed', writes.length === 5 && writes[4].body.overdue_grace_days === 14 && writes[4].body.cancellation_hours === 0 && writes[4].body.payments_enabled === false);
 
   // 7. Linked from Settings
   await page.goto(`${base}/settings`);

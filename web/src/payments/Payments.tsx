@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { loadPayments, type PaymentsData, refreshStripe, savePaymentSettings, startStripe } from '../data/payments';
+import { loadPayments, type PaymentSettings, type PaymentsData, refreshStripe, savePaymentSettings, startStripe } from '../data/payments';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Checkbox, Field, Select } from '../ui/Field';
-import { hourOptions, stripeStatus, windowText } from './calc';
+import { hourOptions, overdueOptions, stripeStatus, windowText } from './calc';
 import '../members/members.css';
 import '../staff/staff.css';
 
@@ -44,7 +44,7 @@ export function Payments() {
     onError: fail,
   });
   const save = useMutation({
-    mutationFn: (v: { enabled: boolean; cancellationHours: number }) => savePaymentSettings(gym.gymId, v),
+    mutationFn: (v: PaymentSettings) => savePaymentSettings(gym.gymId, v),
     // The switch and the list move at once; they go back only if saving fails (the database refuses to switch payments on before Stripe is ready).
     onMutate: (v) => {
       void qc.cancelQueries({ queryKey: key });
@@ -107,6 +107,15 @@ export function Payments() {
             <Field label="Members can cancel" htmlFor="pay-hours" hint={`Members can cancel ${windowText(settings.cancellationHours)}. After that, a pass credit is used or a charge is made.`}>
               <Select id="pay-hours" value={String(settings.cancellationHours)} disabled={save.isPending} onChange={(e) => { setMessage(''); setSaved(''); save.mutate({ ...settings, cancellationHours: Number(e.target.value) }); }}>
                 {hourOptions(settings.cancellationHours).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
+            </Field>
+          </Card>
+
+          <Card>
+            <h3>Late payments</h3>
+            <Field label="A payment counts as missed" htmlFor="pay-overdue" hint="A payment that fails or is charged back is missed straight away. One that has simply not arrived counts as missed after this long. A member with a missed payment is shown as not financial in Reports, under Money owed.">
+              <Select id="pay-overdue" value={String(settings.overdueDays)} disabled={save.isPending} onChange={(e) => { setMessage(''); setSaved(''); save.mutate({ ...settings, overdueDays: Number(e.target.value) }); }}>
+                {overdueOptions(settings.overdueDays).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </Select>
             </Field>
             {saved && <div className="muted" role="status">{saved}</div>}

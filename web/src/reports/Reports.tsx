@@ -12,6 +12,7 @@ import {
 import { Bars } from './Bars';
 import { DataTable } from './DataTable';
 import { DownloadButtons } from './DownloadButtons';
+import { Owed } from './Owed';
 import { OverviewCharts } from './ReportCharts';
 import { ReportTabs, TABS, type TabKey } from './ReportTabs';
 import type { ReportTable } from './download';
@@ -119,7 +120,9 @@ export function Reports() {
         </>
       )}
 
-      {tab !== 'overview' && (
+      {tab === 'owed' && <Owed />}
+
+      {tab !== 'overview' && tab !== 'owed' && (
         <ReportTabs tab={tab} rangeDays={Number(range)} rangeLabel={rangeLabel} onOpenTable={(build) => setDrill(() => build)} />
       )}
 

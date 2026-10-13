@@ -450,6 +450,7 @@ export type Database = {
         Row: {
           cancellation_hours: number
           gym_id: string
+          overdue_grace_days: number
           payments_enabled: boolean
           updated_at: string
           updated_by: string | null
@@ -457,6 +458,7 @@ export type Database = {
         Insert: {
           cancellation_hours?: number
           gym_id: string
+          overdue_grace_days?: number
           payments_enabled?: boolean
           updated_at?: string
           updated_by?: string | null
@@ -464,6 +466,7 @@ export type Database = {
         Update: {
           cancellation_hours?: number
           gym_id?: string
+          overdue_grace_days?: number
           payments_enabled?: boolean
           updated_at?: string
           updated_by?: string | null
@@ -503,6 +506,33 @@ export type Database = {
           payouts_enabled?: boolean
           stripe_account_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_settlements: {
+        Row: {
+          gym_id: string
+          how: string
+          note: string | null
+          payment_id: string
+          settled_at: string
+          settled_by: string | null
+        }
+        Insert: {
+          gym_id: string
+          how: string
+          note?: string | null
+          payment_id: string
+          settled_at?: string
+          settled_by?: string | null
+        }
+        Update: {
+          gym_id?: string
+          how?: string
+          note?: string | null
+          payment_id?: string
+          settled_at?: string
+          settled_by?: string | null
         }
         Relationships: []
       }
@@ -3648,6 +3678,45 @@ export type Database = {
       get_class_booking_options: {
         Args: { p_session_id: string }
         Returns: Json
+      }
+      get_gym_arrears: {
+        Args: { p_gym_id: string }
+        Returns: {
+          display_name: string
+          latest_missed: string | null
+          latest_reason: string | null
+          membership_status: string | null
+          missed_count: number
+          oldest_missed: string | null
+          owed_pence: number
+          plan_name: string | null
+          user_id: string
+        }[]
+      }
+      get_member_missed_payments: {
+        Args: { p_gym_id: string; p_user_id: string }
+        Returns: {
+          amount_pence: number
+          charge_date: string | null
+          outstanding: boolean
+          payment_id: string
+          plan_name: string | null
+          provider: string
+          reason: string | null
+          settled_at: string | null
+          settled_by_name: string | null
+          settled_how: string | null
+          settled_note: string | null
+          state: string
+        }[]
+      }
+      settle_missed_payment: {
+        Args: { p_gym_id: string; p_how: string; p_note?: string; p_payment_id: string }
+        Returns: undefined
+      }
+      reopen_missed_payment: {
+        Args: { p_gym_id: string; p_payment_id: string }
+        Returns: undefined
       }
       get_lift_leaderboard: {
         Args: { p_exercise_key: string; p_gym_id: string }

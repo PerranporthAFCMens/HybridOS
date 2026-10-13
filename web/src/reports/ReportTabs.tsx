@@ -18,9 +18,9 @@ import {
 } from './tabs';
 import { useLibraryData } from './useReports';
 
-export type TabKey = 'overview' | 'memberships' | 'classes' | 'members' | 'payments' | 'xero' | 'library' | 'builder';
+export type TabKey = 'overview' | 'memberships' | 'classes' | 'members' | 'payments' | 'owed' | 'xero' | 'library' | 'builder';
 export const TABS: [TabKey, string][] = [
-  ['overview', 'Overview'], ['memberships', 'Memberships'], ['classes', 'Classes'], ['members', 'Members'], ['payments', 'Payments'], ['xero', 'Accounting (Xero)'], ['library', 'Report library'], ['builder', 'Report builder'],
+  ['overview', 'Overview'], ['memberships', 'Memberships'], ['classes', 'Classes'], ['members', 'Members'], ['payments', 'Payments'], ['owed', 'Money owed'], ['xero', 'Accounting (Xero)'], ['library', 'Report library'], ['builder', 'Report builder'],
 ];
 
 const HEAT_CHOICES: [HeatMetric, string][] = [['bookings', 'Bookings'], ['revenue', 'Revenue'], ['fill', 'Fill']];
