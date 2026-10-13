@@ -446,6 +446,66 @@ export type Database = {
         }
         Relationships: []
       }
+      gym_payment_settings: {
+        Row: {
+          cancellation_hours: number
+          gym_id: string
+          payments_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cancellation_hours?: number
+          gym_id: string
+          payments_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cancellation_hours?: number
+          gym_id?: string
+          payments_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      gym_stripe_accounts: {
+        Row: {
+          charges_enabled: boolean
+          connected_at: string | null
+          details_submitted: boolean
+          environment: string
+          gym_id: string
+          last_error: string | null
+          payouts_enabled: boolean
+          stripe_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          charges_enabled?: boolean
+          connected_at?: string | null
+          details_submitted?: boolean
+          environment?: string
+          gym_id: string
+          last_error?: string | null
+          payouts_enabled?: boolean
+          stripe_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          charges_enabled?: boolean
+          connected_at?: string | null
+          details_submitted?: boolean
+          environment?: string
+          gym_id?: string
+          last_error?: string | null
+          payouts_enabled?: boolean
+          stripe_account_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       class_blocks: {
         Row: {
           created_at: string

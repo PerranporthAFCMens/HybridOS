@@ -24,6 +24,12 @@ const GROUPS: { title: string; items: { key: LinkKey; name: string; text: string
     ],
   },
   {
+    title: 'Money',
+    items: [
+      { key: 'payments', name: 'Payments', text: 'Connect Stripe so members can pay by card, and set how long before a class they can cancel.', moved: true },
+    ],
+  },
+  {
     title: 'Members',
     items: [
       { key: 'member-view', name: 'What members see', text: 'Choose and order the tiles on the member home, and the promo panel.', moved: true },
