@@ -97,6 +97,11 @@ select pt.check('a membership takes its plan''s terms when it starts', (select t
 select pt.check('a plan with no terms leaves the membership on the gym rule', (select coalesce(term_months::text, 'rule') || ':' || coalesce(notice_days::text, 'rule') from public.memberships where user_id = pt.u('m2')), 'rule:rule');
 select pt.check('the sign-up page is told each plan''s terms (own, else the gym rule)', (select string_agg(p->>'name' || '=' || coalesce(p->>'min_term_months', '-') || '/' || coalesce(p->>'notice_days', '-'), ', ' order by p->>'name') from jsonb_array_elements((public.get_public_gym_join_options('tr-a'))->'plans') p), 'Annual deal=12/60, Rolling=0/30, Six month=6/14');
 select pt.check('the payment step is told the plan''s terms', (public.stripe_join_context(pt.gym_a(), pt.u('m1'), pt.plan(1))) #>> '{plan,min_term_months}', '6');
+-- A gym that has never saved any rules still has usual terms (no minimum term, 30 days notice) for a plan that sets none.
+insert into public.membership_plans(id, gym_id, name, price_pence, billing_interval, is_active, is_public, min_term_months, notice_days) values
+ (pt.plan(9), pt.gym_b(), 'Plain plan', 2000, 'monthly', true, true, null, null);
+select pt.check('a gym with no saved rules still shows its usual terms on the sign-up page', (select (p->>'min_term_months') || '/' || (p->>'notice_days') from jsonb_array_elements((public.get_public_gym_join_options('tr-b'))->'plans') p), '0/30');
+select pt.check('...and the payment step is told the same', (public.stripe_join_context(pt.gym_b(), pt.u('mb'), pt.plan(9))) #>> '{plan,notice_days}', '30');
 
 -- ---------- a member leaving: own terms, else the gym rule ----------
 select pt.check('a member on a 6 month, 14 day plan asks to leave: last day follows the 6 month term', pt.q(pt.u('m1'), format($s$select (public.request_membership_cancel(%L, 'moving'))::text$s$, (select id from public.memberships where user_id = pt.u('m1')))) not like 'ERROR:%', true);

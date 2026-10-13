@@ -5,6 +5,10 @@
 export const MAX_TERM_MONTHS = 60;
 export const MAX_NOTICE_DAYS = 365;
 
+/** What a gym uses when it has never saved terms of its own and a plan sets none: no minimum term, one month's notice. Matches the database. */
+export const DEFAULT_TERM_MONTHS = 0;
+export const DEFAULT_NOTICE_DAYS = 30;
+
 export const termText = (months: number): string => (months <= 0 ? 'No minimum term' : months === 1 ? '1 month' : `${months} months`);
 
 /** 30 days reads as "1 month", 14 as "2 weeks", anything else in days. */

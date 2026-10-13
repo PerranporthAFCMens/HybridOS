@@ -170,14 +170,14 @@ for (const role of ['member', 'owner']) {
 
     await page.getByRole('button', { name: 'Change password' }).click();
     await page.getByLabel('New password', { exact: true }).fill('short');
-    await page.getByLabel('New password again').fill('short');
+    await page.getByLabel('New password again', { exact: true }).fill('short');
     await page.getByRole('button', { name: 'Save password' }).click();
     await c.has('a short password is refused', page.getByRole('alert').getByText(/at least 8 characters/));
     await page.getByLabel('New password', { exact: true }).fill('a-long-password-1');
-    await page.getByLabel('New password again').fill('a-different-one-2');
+    await page.getByLabel('New password again', { exact: true }).fill('a-different-one-2');
     await page.getByRole('button', { name: 'Save password' }).click();
     await c.has('mismatched passwords are refused', page.getByRole('alert').getByText('The two passwords do not match.'));
-    await page.getByLabel('New password again').fill('a-long-password-1');
+    await page.getByLabel('New password again', { exact: true }).fill('a-long-password-1');
     await page.getByRole('button', { name: 'Save password' }).click();
     await c.has('password saved', page.getByText('Your password has been changed.'));
     c.ok('the password request was sent', writes.some((w) => w.startsWith('PUT user') && w.includes('"password":"a-long-password-1"')));

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getRules } from '../data/rules';
 import { applyPlanTerms } from '../data/terms';
 import { useReadyAuth } from '../auth/AuthProvider';
 import type { PlanDetail, PlanInput } from '../data/plans';
@@ -8,7 +10,7 @@ import { Card, Empty, SectionTitle } from '../ui/Card';
 import { Checkbox, Field, FieldRow, Input, Select, Textarea } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import { ACCESS_TYPES, INTERVALS, emptyForm, formFromPlan, includesText, planSummary, validatePlan, type PlanForm } from './calc';
-import { parseWhole, termWarnings, termsSentence } from './terms';
+import { DEFAULT_NOTICE_DAYS, DEFAULT_TERM_MONTHS, parseWhole, termWarnings, termsSentence } from './terms';
 import { usePlanDetails, usePlanWrites } from './usePlans';
 import '../members/members.css';
 import './plans.css';
@@ -17,6 +19,10 @@ export function Plans() {
   const { gym } = useReadyAuth();
   const q = usePlanDetails(gym.gymId);
   const writes = usePlanWrites(gym.gymId);
+  // The gym's usual terms: what a plan with none of its own uses (shown so nobody has to remember what they set).
+  const rulesQ = useQuery({ queryKey: ['rules', gym.gymId], queryFn: () => getRules(gym.gymId), retry: false });
+  const usualTerm = rulesQ.data?.cancel_min_term_months ?? DEFAULT_TERM_MONTHS;
+  const usualNotice = rulesQ.data?.cancel_notice_days ?? DEFAULT_NOTICE_DAYS;
   // null = closed; { plan: null } = a new plan; { plan } = editing that plan
   const [editing, setEditing] = useState<{ plan: PlanDetail | null } | null>(null);
   const [toggleError, setToggleError] = useState('');
@@ -54,7 +60,7 @@ export function Plans() {
             {p.joiningFeeInPence > 0 && <div className="muted">+ {money(p.joiningFeeInPence)} joining fee</div>}
             <div className="muted plan-text">{p.description || 'No description yet.'}</div>
             <div className="muted small plan-text">{includesText(p)}{p.isPublic ? '' : ' · Hidden from new members'}</div>
-            <div className="muted small plan-text">{termsSentence(p.minTermMonths, p.noticeDays) || 'Uses your gym-wide terms'}</div>
+            <div className="muted small plan-text">{termsSentence(p.minTermMonths, p.noticeDays) || `Your usual terms: ${termsSentence(usualTerm, usualNotice)}`}</div>
             <div className="membership-actions">
               <Button onClick={() => setEditing({ plan: p })}>Edit</Button>
               <Button
@@ -74,6 +80,7 @@ export function Plans() {
       {editing && (
         <PlanEditor
           plan={editing.plan}
+          usual={{ term: usualTerm, notice: usualNotice }}
           saving={writes.save.isPending}
           onClose={() => setEditing(null)}
           onSave={(input, onError) =>
@@ -85,8 +92,9 @@ export function Plans() {
   );
 }
 
-function PlanEditor({ plan, saving, onClose, onSave }: {
+function PlanEditor({ plan, saving, usual, onClose, onSave }: {
   plan: PlanDetail | null;
+  usual: { term: number; notice: number };
   saving: boolean;
   onClose: () => void;
   onSave: (input: PlanInput, onError: (message: string) => void) => void;
@@ -136,11 +144,11 @@ function PlanEditor({ plan, saving, onClose, onSave }: {
         </Field>
       </FieldRow>
       <FieldRow>
-        <Field label="Minimum term (months)" htmlFor="plan-term" hint="How long a member signs up for. 0 means none. Leave blank to use your gym-wide setting.">
-          <Input id="plan-term" type="number" inputMode="numeric" min="0" max="60" step="1" placeholder="e.g. 6" value={form.minTerm} onChange={(e) => set('minTerm', e.target.value)} />
+        <Field label="Minimum term (months)" htmlFor="plan-term" hint={`How long a member signs up for. 0 means none. Leave blank to use your usual terms (${termsSentence(usual.term, usual.notice)}).`}>
+          <Input id="plan-term" type="number" inputMode="numeric" min="0" max="60" step="1" placeholder={`Usual: ${usual.term}`} value={form.minTerm} onChange={(e) => set('minTerm', e.target.value)} />
         </Field>
-        <Field label="Notice to leave (days)" htmlFor="plan-notice" hint="Days of notice a member gives. 30 is one month. Leave blank to use your gym-wide setting.">
-          <Input id="plan-notice" type="number" inputMode="numeric" min="0" max="365" step="1" placeholder="e.g. 30" value={form.notice} onChange={(e) => set('notice', e.target.value)} />
+        <Field label="Notice to leave (days)" htmlFor="plan-notice" hint="Days of notice a member gives. 30 is one month. Leave blank to use your usual terms.">
+          <Input id="plan-notice" type="number" inputMode="numeric" min="0" max="365" step="1" placeholder={`Usual: ${usual.notice}`} value={form.notice} onChange={(e) => set('notice', e.target.value)} />
         </Field>
       </FieldRow>
       {warnings.map((w) => <div key={w} className="notice" role="note">{w}</div>)}
