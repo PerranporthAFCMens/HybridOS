@@ -166,7 +166,7 @@ async function handle(req: Request): Promise<Response> {
         if (saved.error && saved.error.code !== '23505') return reply(500, { error: `Could not save the Stripe link: ${saved.error.message}`, stage })
       }
       stage = 'create_link'
-      const link = await stripe(key, version, 'POST', '/v2/core/account_links', { account: accountId, use_case: { type: 'account_onboarding', account_onboarding: { configurations: ['merchant'], refresh_url: returnTo, return_url: returnTo } } })
+      const link = await stripe(key, version, 'POST', '/v2/core/account_links', { account: accountId, use_case: { type: 'account_onboarding', account_onboarding: { refresh_url: returnTo, return_url: returnTo } } })
       if (!link.ok) return reply(502, { error: stripeError(link), stage })
       return reply(200, { ok: true, url: str(link.json.url) })
     }
