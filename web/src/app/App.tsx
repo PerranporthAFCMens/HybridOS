@@ -10,6 +10,7 @@ import { Classes } from '../classes/Classes';
 import { Reports } from '../reports/Reports';
 import { ClassSetup } from '../classsetup/ClassSetup';
 import { Lifts } from '../lifts/Lifts';
+import { Payments } from '../payments/Payments';
 import { Staff } from '../staff/Staff';
 import { Settings } from '../staff/Settings';
 import { Rooms } from '../rooms/Rooms';
@@ -115,6 +116,7 @@ function Main() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/class-setup" element={<ClassSetup />} />
             <Route path="/lifts" element={<Lifts />} />
+            <Route path="/payments" element={<Payments />} />
             <Route path="*" element={<Navigate to="/today" replace />} />
           </Route>
         </Routes>
