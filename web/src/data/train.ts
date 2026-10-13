@@ -110,7 +110,7 @@ export async function markFeedbackSeen(assignmentId: string): Promise<void> {
 export async function listLastTimes(userId: string, gymId: string): Promise<Map<string, LastTime>> {
   const { data, error } = await supabase
     .from('workout_entries')
-    .select('exercise_name, created_at, workout_sets(set_number, weight_kg, reps, duration_seconds, distance_m, calories, side)')
+    .select('exercise_name, created_at, workout_sets(set_number, weight_kg, reps, duration_seconds, distance_m, calories, side, custom_value, custom_unit)')
     .eq('gym_id', gymId)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })

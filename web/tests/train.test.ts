@@ -68,7 +68,7 @@ describe('numbers', () => {
     expect(formatDuration(3600)).toBe('1:00:00');
   });
   it('a set becomes columns, or says what is wrong', () => {
-    expect(toDbSet('strength', { weight: '24', reps: '10' }).row).toEqual({ weight_kg: 24, reps: 10, duration_seconds: null, distance_m: null, calories: null, side: null });
+    expect(toDbSet('strength', { weight: '24', reps: '10' }).row).toEqual({ weight_kg: 24, reps: 10, duration_seconds: null, distance_m: null, calories: null, side: null, custom_value: null, custom_unit: null });
     expect(toDbSet('strength', {}).row).toBeNull();
     expect(toDbSet('strength', { weight: 'abc' }).error).toBe('"abc" is not a number.');
     expect(toDbSet('time', { time: '12:30' }).row?.duration_seconds).toBe(750);

@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import { fromDbSet, hasPainFlag, readResult, resultSummary, setText, type ExerciseResult, type Tracking } from '../train/calc';
+import { ROUNDS_MARK, SCORE_MARK, fromDbSet, hasPainFlag, readResult, resultSummary, setText, type ExerciseResult, type Tracking } from '../train/calc';
 
 export interface WaitingWorkout { id: string; title: string; createdAt: string; status: string }
 export interface Feedback { id: string; body: string; createdAt: string; authorId: string; authorName: string }
@@ -76,11 +76,14 @@ export async function loadLoggedExercises(sessionId: string): Promise<LoggedExer
   if (e.error) throw e.error;
   const entries = e.data ?? [];
   if (entries.length === 0) return [];
-  const st = await supabase.from('workout_sets').select('entry_id, set_number, reps, weight_kg, duration_seconds, distance_m, calories').in('entry_id', entries.map((x) => x.id)).order('set_number');
+  const st = await supabase.from('workout_sets').select('entry_id, set_number, reps, weight_kg, duration_seconds, distance_m, calories, custom_value, custom_unit').in('entry_id', entries.map((x) => x.id)).order('set_number');
   if (st.error) throw st.error;
   return entries.map((x) => {
-    const tracking = (['strength', 'reps', 'time', 'distance', 'calories', 'intervals'].includes(x.tracking_type) ? x.tracking_type : 'strength') as Tracking;
-    const text = (st.data ?? []).filter((r) => r.entry_id === x.id).map((r) => setText(tracking, fromDbSet(tracking, r))).filter(Boolean).join(', ');
+    const rows = (st.data ?? []).filter((r) => r.entry_id === x.id);
+    // An exercise scored two ways was saved as "custom" with its sets marked; the mark is how it is told apart from other custom ones.
+    const twoScores = x.tracking_type === 'custom' && rows.some((r) => r.custom_unit === SCORE_MARK || r.custom_unit === ROUNDS_MARK);
+    const tracking = (twoScores ? 'scores' : ['strength', 'reps', 'time', 'distance', 'calories', 'intervals'].includes(x.tracking_type) ? x.tracking_type : 'strength') as Tracking;
+    const text = rows.map((r) => setText(tracking, fromDbSet(tracking, r))).filter(Boolean).join(', ');
     return { name: x.exercise_name, text };
   });
 }

@@ -1,5 +1,6 @@
 import { describeTarget, type SetValues, type Tracking } from './calc';
 import { pbKey, type StoredPb } from './pb';
+import { isRepsTarget } from './reps';
 
 // Percentage targets. A coach can type a weight as a percentage of the member's best ("80%") instead of kilos. The
 // member's app turns it into kilos from their heaviest recorded lift for that exercise, rounded to the nearest 1 kg, and
@@ -46,8 +47,11 @@ export const hasPercent = (sets: SetValues[]): boolean => sets.some((s) => isPer
 
 /** The coach's sets with each percentage turned into kilos. Where there is no best, the weight box is left empty. */
 export function resolveTarget(sets: SetValues[], best: number | null | undefined): SetValues[] {
-  return sets.map((s) => {
-    if (!isPercent(s.weight)) return { ...s };
+  return sets.map((set) => {
+    // A range ("8-12") or "max" is something to aim for, not a number to fill in: the member's box is left for what they did.
+    const s = { ...set };
+    if (isRepsTarget(s.reps)) delete s.reps;
+    if (!isPercent(s.weight)) return s;
     const rest = { ...s };
     delete rest.weight;
     const p = parsePercent(s.weight);

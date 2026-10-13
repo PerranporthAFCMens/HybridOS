@@ -94,6 +94,12 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('a badly typed percentage is refused, naming the exercise', page.getByText('Back squat: "abc%" is not a percentage from 1% to 150%. Type something like 80%, or a weight in kg.'));
   c.ok('and nothing is written for it', writes.length === 0);
   await page.getByLabel('Back squat set 2 Weight').fill('80%');
+  c.ok('the reps box says it takes a number, a range or max', (await page.getByLabel('Back squat set 2 Reps').getAttribute('placeholder')) === 'reps or 8-12' && (await page.getByText(/Reps: a number, a range like 8-12, or max\./).count()) >= 1);
+  await page.getByLabel('Back squat set 2 Reps').fill('12-8');
+  await page.getByRole('button', { name: 'Save workout' }).click();
+  await c.has('a range the wrong way round is refused, naming the exercise', page.getByText('Back squat: "12-8" is not a range of reps. Type it like 8-12, with the smaller number first.'));
+  c.ok('and nothing is written for it', writes.length === 0);
+  await page.getByLabel('Back squat set 2 Reps').fill('8-12');
   c.ok('unsaved changes disable assign and publish', (await page.getByRole('button', { name: 'Assign to member' }).isDisabled()) && (await page.getByRole('button', { name: 'Publish as WOD' }).isDisabled()));
   await page.getByLabel('Workout name').fill(' ');
   await page.getByRole('button', { name: 'Save workout' }).click();
@@ -107,7 +113,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const nb = writes.filter((w) => w.table === 'workout_template_blocks' && w.method === 'POST');
   c.ok('the block is written again with its rounds', nb.length === 1 && nb[0].body.rounds === 4 && nb[0].body.position === 0 && nb[0].body.title === 'Main lift' && nb[0].body.template_id === 't-leg');
   const na = writes.find((w) => w.table === 'workout_template_activities' && w.method === 'POST');
-  c.ok('activities written with the set boxes, the kept extra key and the earlier wording where no sets were set', na && na.body.length === 2 && na.body[0].prescription.display === '5 × 85 kg / 5 × 80%' && JSON.stringify(na.body[0].prescription.sets) === '[{"reps":"5","weight":"85"},{"reps":"5","weight":"80%"}]' && na.body[0].prescription.target === 'RPE 8' && na.body[0].block_id === 'blk-new-1' && na.body[1].position === 1 && na.body[1].prescription.display === '3 x 12' && !('sets' in na.body[1].prescription));
+  c.ok('activities written with the set boxes, the kept extra key and the earlier wording where no sets were set', na && na.body.length === 2 && na.body[0].prescription.display === '5 × 85 kg / 8–12 × 80%' && JSON.stringify(na.body[0].prescription.sets) === '[{"reps":"5","weight":"85"},{"reps":"8-12","weight":"80%"}]' && na.body[0].prescription.target === 'RPE 8' && na.body[0].block_id === 'blk-new-1' && na.body[1].position === 1 && na.body[1].prescription.display === '3 x 12' && !('sets' in na.body[1].prescription));
   const del = writes.filter((w) => w.method === 'DELETE');
   c.ok('old block removed, scoped, and it is the LAST write', del.length === 1 && del[0].table === 'workout_template_blocks' && del[0].query.template_id === 'eq.t-leg' && del[0].query.id === 'in.(blk-old)' && writes[writes.length - 1] === del[0]);
   c.ok('assign enabled again after saving', !(await page.getByRole('button', { name: 'Assign to member' }).isDisabled()));
@@ -217,6 +223,25 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('a box that is not a number is named', page.getByText('Sled push: "lots" is not a number.'));
   c.ok('nothing written for that either', writes.length === 0);
   await page.getByLabel('Sled push set 1 Distance in km').fill('0.05');
+  // An exercise scored two ways (rounds and reps, time and reps...): the coach names both scores and says what kind each is
+  await page.getByLabel('Add an exercise', { exact: true }).fill('AMRAP 12');
+  await page.getByRole('button', { name: 'Add exercise' }).click();
+  await page.getByLabel('Record').last().selectOption('scores');
+  const scoreGroup = page.getByRole('group', { name: 'AMRAP 12 scores' });
+  await c.has('the two scores appear, starting as rounds and reps', scoreGroup);
+  c.ok('with those names and kinds filled in, and no set boxes', (await scoreGroup.getByLabel('Score 1 name').inputValue()) === 'Rounds' && (await scoreGroup.getByLabel('Score 1 kind').inputValue()) === 'rounds' && (await scoreGroup.getByLabel('Score 2 name').inputValue()) === 'Reps' && (await scoreGroup.getByLabel('Score 2 kind').inputValue()) === 'reps' && (await page.getByLabel('AMRAP 12 set 1 Reps').count()) === 0);
+  c.ok('layout (two scores)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await scoreGroup.screenshot({ path: `${shots}/workouts-scores-${name}.png` });
+  await scoreGroup.getByLabel('Score 2 kind').selectOption('rounds');
+  await page.getByRole('button', { name: 'Save workout' }).click();
+  await c.has('two scores of the same kind are refused, naming the exercise', page.getByText('AMRAP 12: The two scores must be different kinds (for example rounds and reps).'));
+  c.ok('nothing written for it', writes.length === 0);
+  await scoreGroup.getByLabel('Score 2 kind').selectOption('time');
+  await scoreGroup.getByLabel('Score 2 name').fill('');
+  await page.getByRole('button', { name: 'Save workout' }).click();
+  await c.has('a score without a name is refused', page.getByText('AMRAP 12: Give both scores a name (up to 40 characters).'));
+  await scoreGroup.getByLabel('Score 2 name').fill('Finish time');
+  await scoreGroup.getByLabel('Score 1 name').fill('Rounds completed');
   await page.getByRole('button', { name: 'Save workout' }).click();
   await c.has('new workout saved', page.getByText('Workout saved.'));
   const nt = writes.find((w) => w.table === 'workout_templates' && w.method === 'POST');
@@ -224,7 +249,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const nbk = writes.find((w) => w.table === 'workout_template_blocks' && w.method === 'POST');
   c.ok('one plain block holds the exercises', nbk && writes.filter((w) => w.table === 'workout_template_blocks' && w.method === 'POST').length === 1 && nbk.body.title === 'Workout' && nbk.body.block_type === 'standard');
   const nn = writes.find((w) => w.table === 'workout_template_activities' && w.method === 'POST');
-  c.ok('new activity exact', nn && nn.body.length === 1 && nn.body[0].activity_name === 'Sled push' && nn.body[0].tracking_type === 'distance' && nn.body[0].prescription.display === '0.05 km' && JSON.stringify(nn.body[0].prescription.sets) === '[{"distance":"0.05"}]');
+  c.ok('new activity exact', nn && nn.body.length === 2 && nn.body[0].activity_name === 'Sled push' && nn.body[0].tracking_type === 'distance' && nn.body[0].prescription.display === '0.05 km' && JSON.stringify(nn.body[0].prescription.sets) === '[{"distance":"0.05"}]' && !('scores' in nn.body[0].prescription));
+  c.ok('the two-score exercise keeps both scores (name and kind) and has no sets', nn && nn.body[1].activity_name === 'AMRAP 12' && nn.body[1].tracking_type === 'scores' && JSON.stringify(nn.body[1].prescription.scores) === '[{"name":"Rounds completed","kind":"rounds"},{"name":"Finish time","kind":"time"}]' && nn.body[1].prescription.display === 'Record Rounds completed and Finish time' && !('sets' in nn.body[1].prescription));
   c.ok('nothing is deleted for a brand new workout', !writes.some((w) => w.method === 'DELETE'));
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;

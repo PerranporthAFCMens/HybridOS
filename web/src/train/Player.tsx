@@ -11,9 +11,9 @@ import { guessTracking } from './activities';
 import { ExercisePicker } from './ExercisePicker';
 import { Checkbox, Input, Select } from '../ui/Field';
 import { SetGrid } from './SetGrid';
-import { REASONS, assignmentNote, blankSets, buildResult, fromDbSet, hasEntered, prepareFinish, readSnapshot, resultJson, setText, type PlayedActivity, type SetValues, type Tracking } from './calc';
+import { REASONS, assignmentNote, blankSets, buildResult, fromDbSet, hasEntered, prepareFinish, readSnapshot, resultJson, setText, type PlayedActivity, type ScoreDef, type SetValues, type Tracking } from './calc';
 
-interface Act extends PlayedActivity { key: string; plan: string; planNote: string; block: string; target: SetValues[]; entryId?: string; savedText?: string }
+interface Act extends PlayedActivity { key: string; plan: string; planNote: string; block: string; target: SetValues[]; scores?: ScoreDef[]; entryId?: string; savedText?: string }
 interface Draft { acts: Act[]; rpe: string; notes: string; sessionId?: string | null }
 
 const draftKey = (gymId: string, id: string) => `hybrid-train-draft:${gymId}:${id}`;
@@ -84,7 +84,7 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
   const initial = useMemo<Draft>(() => {
     const saved = readDraft(key);
     if (saved) return saved;
-    const acts: Act[] = readSnapshot(snapshot).activities.map((a) => ({ key: a.key, name: a.name, originalName: a.name, tracking: a.tracking, sets: blankSets(a.tracking), done: false, skipped: false, note: '', plan: a.plan, planNote: a.note, block: a.block, target: a.target }));
+    const acts: Act[] = readSnapshot(snapshot).activities.map((a) => ({ key: a.key, name: a.name, originalName: a.name, tracking: a.tracking, sets: blankSets(a.tracking), done: false, skipped: false, note: '', plan: a.plan, planNote: a.note, block: a.block, target: a.target, scores: a.scores }));
     return { acts, rpe: '', notes: '' };
   }, [key, snapshot]);
   const [acts, setActs] = useState<Act[]>(initial.acts);
@@ -276,7 +276,7 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
             ) : (
               <>
                 {l && l.sets.length > 0 && <div className="muted small">Last time: {l.sets.map((s) => setText(a.tracking, fromDbSet(a.tracking, s))).filter(Boolean).join(', ')}</div>}
-                <SetGrid name={a.name} tracking={a.tracking} sets={a.sets} sided={a.sided} onChange={(i, f, v) => setSet(a.key, i, f, v)} onRemove={(i) => removeSet(a.key, i)} onSide={(i, v) => setSet(a.key, i, 'side', v)} />
+                <SetGrid name={a.name} tracking={a.tracking} scores={a.scores ?? []} sets={a.sets} sided={a.sided} onChange={(i, f, v) => setSet(a.key, i, f, v)} onRemove={(i) => removeSet(a.key, i)} onSide={(i, v) => setSet(a.key, i, 'side', v)} />
                 <div className="mem-actions tr-tools">
                   <Button onClick={() => patch(a.key, { sets: [...a.sets, {}] })} aria-label={`Add a set to ${a.name}`}>+ Set</Button>
                   <Button onClick={() => patch(a.key, { sided: !a.sided })} aria-pressed={!!a.sided} aria-label={`Left and right for ${a.name}`}>{a.sided ? 'Left / right: on' : 'Left / right'}</Button>
