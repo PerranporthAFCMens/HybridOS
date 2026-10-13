@@ -66,10 +66,6 @@ insert into public.gym_members(gym_id,user_id,role,is_active,access_status) valu
  (pt.gym_b(),pt.u('admin_b'),'owner',true,'active'),(pt.gym_b(),pt.u('mb'),'member',true,'active');
 
 
-insert into public.membership_plans(id,gym_id,name,price_pence,billing_interval) values ('c0000000-0000-4000-8000-000000000001',pt.gym_a(),'Basic',3000,'monthly');
--- m1 has an active membership; m2 has none (a member is only a member for these rules while theirs is active).
-insert into public.memberships(gym_id,user_id,plan_id,status,starts_on) values (pt.gym_a(), pt.u('m1'), 'c0000000-0000-4000-8000-000000000001', 'active', current_date-30);
-
 
 update public.profiles set first_name = 'Priya', last_name = 'Nair' where id = pt.u('m1');
 update public.profiles set first_name = 'Sam', last_name = 'Lee' where id = pt.u('m2');
