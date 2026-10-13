@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { assignWorkouts, loadAssignableMembers } from '../data/workouts';
+import { assignWorkouts, loadAssignableMembers, loadBlocks } from '../data/workouts';
+import { listMyPbs } from '../data/train';
 import { loadClientTraining } from '../data/clientTraining';
 import { emailNote, notifyTraining } from '../data/notify';
 import { Button } from '../ui/Button';
@@ -9,6 +10,7 @@ import { Empty, SectionTitle } from '../ui/Card';
 import { Checkbox, Field, Select, Textarea } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import { useTemplates } from './useWorkouts';
+import { previewLines } from './preview';
 
 export type AssignNote = { text: string; good: boolean };
 
@@ -29,6 +31,15 @@ export function AssignWorkoutsDialog({ memberId, memberName, preselect, onClose 
   const chosen = memberId ?? (member || people.data?.[0]?.userId || '');
   const who = memberName ?? people.data?.find((m) => m.userId === chosen)?.name ?? 'the client';
   const waiting = useQuery({ queryKey: ['client-training', gym.gymId, chosen], queryFn: () => loadClientTraining(gym.gymId, chosen), enabled: !!chosen });
+  // Exercises set as a percentage of the person's best: show the coach the kilos that person will actually see.
+  const blocksOf = useQueries({ queries: picked.map((id) => ({ queryKey: ['template-blocks', id], queryFn: () => loadBlocks(id) })) });
+  const theirBests = useQuery({ queryKey: ['assign-bests', gym.gymId, chosen], queryFn: () => listMyPbs(chosen, gym.gymId), enabled: !!chosen && picked.length > 0 });
+  const preview = blocksOf.every((q) => q.data)
+    ? picked.flatMap((id, i) => {
+        const t = (templates.data ?? []).find((x) => x.id === id);
+        return previewLines(blocksOf[i]?.data ?? [], theirBests.data ?? []).map((l) => ({ ...l, workout: t?.title ?? '' }));
+      })
+    : [];
   const send = useMutation({
     mutationFn: async () => {
       const ids = await assignWorkouts(gym.gymId, userId, (templates.data ?? []).filter((t) => picked.includes(t.id)), chosen, note.trim() || null);
@@ -66,6 +77,16 @@ export function AssignWorkoutsDialog({ memberId, memberName, preselect, onClose 
             </div>
           )}
           <Field label="Note (optional)" htmlFor="as-note"><Textarea id="as-note" maxLength={500} placeholder="Take them in any order. Slow on the way down." value={note} onChange={(e) => setNote(e.target.value)} /></Field>
+          {preview.length > 0 && theirBests.data && (
+            <section className="assign-preview" aria-label={`What ${who} will see`}>
+              <b>What {who} will see</b>
+              <div className="muted small">Weights set as a percentage of their best, worked out from the best {who} has recorded for each exercise.</div>
+              <ul>
+                {preview.map((l, i) => <li key={`${l.workout}-${l.exercise}-${i}`}><b>{l.exercise}</b>{picked.length > 1 ? <span className="muted"> ({l.workout})</span> : null}: {l.text}</li>)}
+              </ul>
+              {preview.some((l) => l.missingBest) && <div className="muted small" role="status">{who} has no best yet for {[...new Set(preview.filter((l) => l.missingBest).map((l) => l.exercise))].join(', ')}, so they will fill in the weight themselves.</div>}
+            </section>
+          )}
           {waitingCount > 0 && <p className="muted small" role="status">{who} already has {waitingCount} waiting from you.</p>}
           <div className="assign-msg">{error && <span className="msg error" role="alert">{error}</span>}</div>
           <Button variant="primary" className="wide-btn" disabled={send.isPending} onClick={go}>{send.isPending ? 'Sending…' : picked.length > 1 ? `Send ${picked.length} workouts` : 'Send workout'}</Button>
