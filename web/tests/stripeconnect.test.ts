@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accountIdempotencyKey, accountState, environmentOf, returnAllowed } from '../../supabase/functions/stripe-connect/index';
+import { accountIdempotencyKey, accountState, DEFAULT_API_VERSION, environmentOf, returnAllowed } from '../../supabase/functions/stripe-connect/index';
 import { hourOptions, stripeStatus, windowText } from '../src/payments/calc';
 
 describe('which Stripe environment a key is for', () => {
@@ -95,5 +95,11 @@ describe('the key that stops a double click making two accounts', () => {
     expect(accountIdempotencyKey('sandbox', 'g1', t)).not.toBe(accountIdempotencyKey('sandbox', 'g1', t + 60000));
     expect(accountIdempotencyKey('sandbox', 'g1', t)).not.toBe(accountIdempotencyKey('live', 'g1', t));
     expect(accountIdempotencyKey('sandbox', 'g1', t)).not.toBe(accountIdempotencyKey('sandbox', 'g2', t));
+  });
+});
+
+describe('the Stripe API version', () => {
+  it('is a dated version Stripe will accept for Accounts v2', () => {
+    expect(DEFAULT_API_VERSION).toMatch(/^\d{4}-\d{2}-\d{2}\.[a-z]+$/);
   });
 });

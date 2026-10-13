@@ -85,9 +85,12 @@ const DEFAULT_ORIGINS = ['https://www.hybridone.co.uk', 'https://hybridone.co.uk
 const ADMIN_ROLES = ['owner', 'admin']
 const API = 'https://api.stripe.com'
 
-// Accounts v2 speaks JSON and uses the account's default API version.
-async function stripe(key: string, method: 'GET' | 'POST', path: string, body?: Record<string, unknown>, idempotency?: string): Promise<{ ok: boolean; status: number; json: Row }> {
-  const headers: Record<string, string> = { Authorization: `Bearer ${key}` }
+/** Accounts v2 needs an API version on every request (Stripe's own v2 examples use this one). Override with the STRIPE_API_VERSION secret if Stripe asks for another. */
+export const DEFAULT_API_VERSION = '2026-09-30.preview'
+
+// Accounts v2 speaks JSON.
+async function stripe(key: string, version: string, method: 'GET' | 'POST', path: string, body?: Record<string, unknown>, idempotency?: string): Promise<{ ok: boolean; status: number; json: Row }> {
+  const headers: Record<string, string> = { Authorization: `Bearer ${key}`, 'Stripe-Version': version }
   if (body) headers['Content-Type'] = 'application/json'
   if (idempotency) headers['Idempotency-Key'] = idempotency
   const res = await fetch(`${API}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined })
@@ -104,6 +107,7 @@ async function handle(req: Request): Promise<Response> {
     const url = Deno.env.get('SUPABASE_URL') ?? ''
     const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     const key = Deno.env.get('STRIPE_SECRET_KEY') ?? ''
+    const version = (Deno.env.get('STRIPE_API_VERSION') ?? '').trim() || DEFAULT_API_VERSION
     if (!url || !service) return reply(500, { error: 'Not configured' })
     const origins = [...DEFAULT_ORIGINS, ...(Deno.env.get('ALLOWED_ORIGINS') ?? '').split(',').map((o) => o.trim()).filter(Boolean)]
     const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } })
@@ -144,7 +148,7 @@ async function handle(req: Request): Promise<Response> {
         stage = 'create_account'
         const { data: gym, error: ge } = await admin.from('gyms').select('id,name,country_code,currency').eq('id', gymId).maybeSingle()
         if (ge || !gym) return reply(500, { error: `Could not read the gym: ${ge?.message ?? 'not found'}`, stage })
-        const made = await stripe(key, 'POST', '/v2/core/accounts', {
+        const made = await stripe(key, version, 'POST', '/v2/core/accounts', {
           display_name: str(gym.name),
           contact_email: u.user.email ?? undefined,
           dashboard: 'full',
@@ -162,7 +166,7 @@ async function handle(req: Request): Promise<Response> {
         if (saved.error && saved.error.code !== '23505') return reply(500, { error: `Could not save the Stripe link: ${saved.error.message}`, stage })
       }
       stage = 'create_link'
-      const link = await stripe(key, 'POST', '/v2/core/account_links', { account: accountId, use_case: { type: 'account_onboarding', account_onboarding: { configurations: ['merchant'], refresh_url: returnTo, return_url: returnTo } } })
+      const link = await stripe(key, version, 'POST', '/v2/core/account_links', { account: accountId, use_case: { type: 'account_onboarding', account_onboarding: { configurations: ['merchant'], refresh_url: returnTo, return_url: returnTo } } })
       if (!link.ok) return reply(502, { error: stripeError(link), stage })
       return reply(200, { ok: true, url: str(link.json.url) })
     }
@@ -170,7 +174,7 @@ async function handle(req: Request): Promise<Response> {
     // refresh
     if (!accountId) return reply(200, { ok: true, status: { linked: false } })
     stage = 'read_account'
-    const acct = await stripe(key, 'GET', `/v2/core/accounts/${encodeURIComponent(accountId)}?${INCLUDE.map((i) => `include=${encodeURIComponent(i)}`).join('&')}`)
+    const acct = await stripe(key, version, 'GET', `/v2/core/accounts/${encodeURIComponent(accountId)}?${INCLUDE.map((i) => `include=${encodeURIComponent(i)}`).join('&')}`)
     if (!acct.ok) return reply(502, { error: stripeError(acct), stage })
     const state = accountState(acct.json)
     const patch: Row = { ...state, updated_at: new Date().toISOString() }
