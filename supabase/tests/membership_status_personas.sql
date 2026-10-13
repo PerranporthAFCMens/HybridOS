@@ -339,6 +339,7 @@ insert into pt.fn_allow values
  ('accept_gym_terms(text)','superseded by sign_gym_documents and no longer used; writes only the caller''s own row by auth.uid()'),
  ('get_public_gym_join_terms(text)','superseded and no longer used; returns a gym''s public wording to any signed-in person'),
  ('get_public_gym_signup_documents(text)','returns a gym''s current terms and waiver (public by design: a joiner must read them before they are a member)'),
+ ('get_gym_payment_mode(text)','returns only "stripe" or "off" for a gym slug, to a signed-in person who is joining: whether the gym takes payment at sign-up (not secret; the page needs it before the person is a member)'),
  ('sign_gym_documents(text,text,text,jsonb)','scoped to the caller''s own signature by auth.uid(); signs only the gym''s current documents; tested on a scratch database (see the PR that added it)'),
  ('private.can_view_member_details(uuid)','row-security helper: true only for the caller''s gym owner, admin or staff; private schema not exposed');
 create table pt.fn_audit as

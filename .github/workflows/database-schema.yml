@@ -44,9 +44,9 @@ jobs:
             select count(*) into v_triggers from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace tn on tn.oid=c.relnamespace join pg_proc p on p.oid=t.tgfoid join pg_namespace fn on fn.oid=p.pronamespace where not t.tgisinternal and (tn.nspname in ('public','private') or fn.nspname in ('public','private'));
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
-            if v_tables<>83 then raise exception 'Expected 83 app tables, got %',v_tables; end if;
-            if v_functions<>134 then raise exception 'Expected 134 committed app functions, got %',v_functions; end if;
-            if v_policies<>203 then raise exception 'Expected 203 app/storage policies, got %',v_policies; end if;
+            if v_tables<>86 then raise exception 'Expected 86 app tables, got %',v_tables; end if;
+            if v_functions<>141 then raise exception 'Expected 141 committed app functions, got %',v_functions; end if;
+            if v_policies<>206 then raise exception 'Expected 206 app/storage policies, got %',v_policies; end if;
             if v_triggers<>36 then raise exception 'Expected 36 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
@@ -251,6 +251,24 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           snap /tmp/mo_after_reapply.txt
           if diff -u /tmp/mo_after_migration.txt /tmp/mo_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: Stripe join payments verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261014091000_stripe_join_payments.sql
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261014_stripe_join_payments_check.sql > /tmp/sjp_check.txt
+          cat /tmp/sjp_check.txt
+          if grep -v ' | ok$' /tmp/sjp_check.txt; then echo 'A Stripe join payments check is not ok'; exit 1; fi
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/stripe_join_payments.sql
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/sjp_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261014_drop_stripe_join_payments.sql
+          snap /tmp/sjp_after_rollback.txt
+          if diff -q /tmp/sjp_after_migration.txt /tmp/sjp_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/sjp_after_reapply.txt
+          if diff -u /tmp/sjp_after_migration.txt /tmp/sjp_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Admin invite signed-in only verification and rollback
         shell: bash
         run: |
