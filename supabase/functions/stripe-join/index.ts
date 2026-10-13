@@ -101,12 +101,10 @@ export function invoiceSecret(invoice: Row): string {
   return str(obj(invoice.payment_intent).client_secret)
 }
 
-/** Brand, last four digits and expiry of a Stripe payment method. Nothing else of the card is ever read. */
-export function cardOf(pm: Row | null | undefined): { id: string; brand: string; last4: string; month: number; year: number } | null {
-  const c = obj(obj(pm).card)
-  const last4 = str(c.last4)
-  if (!pm || !/^\d{4}$/.test(last4)) return null
-  return { id: str(obj(pm).id), brand: str(c.brand) || 'card', last4, month: num(c.exp_month), year: num(c.exp_year) }
+/** The id of a Stripe payment method ("pm_..."), from either the id itself or the expanded object. It is only a token: Stripe keeps the card, we keep nothing about it. */
+export function paymentMethodId(pm: unknown): string {
+  const id = typeof pm === 'string' ? pm : str(obj(pm).id)
+  return /^pm_[A-Za-z0-9]+$/.test(id) ? id : ''
 }
 
 /** The date the next payment is due, as YYYY-MM-DD in UTC, from a Stripe subscription (item period end, or the subscription's own). */
@@ -182,20 +180,20 @@ async function handle(req: Request): Promise<Response> {
       const acct = str(obj(c.account).stripe_account_id)
       if (!acct) return reply(409, { error: 'This gym has no Stripe account.', stage })
       stage = 'read_subscription'
-      const sub = await stripe(key, version, acct, 'GET', `/v1/subscriptions/${subId}?expand[]=latest_invoice&expand[]=default_payment_method`)
+      const sub = await stripe(key, version, acct, 'GET', `/v1/subscriptions/${subId}?expand[]=latest_invoice`)
       if (!sub.ok) return reply(502, { error: stripeError(sub), stage })
       const status = str(sub.json.status)
       if (status !== 'active' && status !== 'trialing') return reply(200, { ok: true, status: 'pending', stripe_status: status })
       const inv = obj(sub.json.latest_invoice)
-      const card = cardOf(obj(sub.json.default_payment_method))
+      const pmId = paymentMethodId(sub.json.default_payment_method)
       stage = 'activate'
       const { data: act, error: ae } = await admin.rpc('stripe_activate_membership', {
         p_subscription_id: subId, p_invoice_id: str(inv.id) || null, p_amount_pence: num(inv.amount_paid), p_currency: str(inv.currency) || 'gbp',
-        p_paid_at: new Date().toISOString(), p_payment_method_id: card?.id ?? null, p_card_brand: card?.brand ?? null, p_card_last4: card?.last4 ?? null,
-        p_card_exp_month: card?.month ?? null, p_card_exp_year: card?.year ?? null,
+        p_paid_at: new Date().toISOString(), p_payment_method_id: pmId || null,
+        p_card_brand: null, p_card_last4: null, p_card_exp_month: null, p_card_exp_year: null, // no card detail is kept: Stripe holds the card
       })
       if (ae) return reply(500, { error: `Could not start your membership: ${ae.message}`, stage })
-      return reply(200, { ok: true, status: 'active', membership_id: str(obj(act).membership_id), next_payment_date: nextPaymentDate(sub.json), card })
+      return reply(200, { ok: true, status: 'active', membership_id: str(obj(act).membership_id), next_payment_date: nextPaymentDate(sub.json) })
     }
 
     // ---- prepare ----

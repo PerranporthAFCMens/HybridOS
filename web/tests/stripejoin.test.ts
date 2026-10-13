@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agreementWording, cardOf, environmentOf, invoiceSecret, isUnder18, nextPaymentDate, poundsText, recurringOf, stripeForm, todayUtc } from '../../supabase/functions/stripe-join/index';
+import { agreementWording, environmentOf, invoiceSecret, isUnder18, nextPaymentDate, paymentMethodId, poundsText, recurringOf, stripeForm, todayUtc } from '../../supabase/functions/stripe-join/index';
 
 describe('Stripe form encoding', () => {
   it('uses brackets for nested values, indexes for lists of objects and [] for lists of plain values', () => {
@@ -70,10 +70,12 @@ describe('reading what Stripe sends back', () => {
     expect(invoiceSecret({ payment_intent: { client_secret: 'pi_2_secret_b' } })).toBe('pi_2_secret_b');
     expect(invoiceSecret({})).toBe('');
   });
-  it('keeps only the brand, last four and expiry of a card', () => {
-    expect(cardOf({ id: 'pm_1', card: { brand: 'visa', last4: '4242', exp_month: 12, exp_year: 2030, number: '4242424242424242', fingerprint: 'x' } })).toEqual({ id: 'pm_1', brand: 'visa', last4: '4242', month: 12, year: 2030 });
-    expect(cardOf(null)).toBeNull();
-    expect(cardOf({ id: 'pm_2', card: { brand: 'visa', last4: 'oops' } })).toBeNull();
+  it('keeps only the Stripe token of a payment method, never anything about the card', () => {
+    expect(paymentMethodId('pm_1AbC')).toBe('pm_1AbC');
+    expect(paymentMethodId({ id: 'pm_2', card: { brand: 'visa', last4: '4242', number: '4242424242424242' } })).toBe('pm_2');
+    expect(paymentMethodId(null)).toBe('');
+    expect(paymentMethodId('4242424242424242')).toBe('');
+    expect(paymentMethodId({ id: 'card_1' })).toBe('');
   });
   it('finds the next payment date from the subscription item or the subscription', () => {
     const t = Date.UTC(2026, 10, 13) / 1000;

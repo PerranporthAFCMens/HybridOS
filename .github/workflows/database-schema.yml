@@ -267,8 +267,27 @@ jobs:
           snap /tmp/sjp_after_rollback.txt
           if diff -q /tmp/sjp_after_migration.txt /tmp/sjp_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          # The card-details migration changes what this one created (it drops four columns), so put that back too.
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261014120000_no_card_details.sql
           snap /tmp/sjp_after_reapply.txt
           if diff -u /tmp/sjp_after_migration.txt /tmp/sjp_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: No card details verification and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261014120000_no_card_details.sql
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261014_no_card_details_check.sql > /tmp/ncd_check.txt
+          cat /tmp/ncd_check.txt
+          if grep -v ' | ok$' /tmp/ncd_check.txt; then echo 'A no card details check is not ok'; exit 1; fi
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/ncd_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261014_restore_card_columns.sql
+          snap /tmp/ncd_after_rollback.txt
+          if diff -q /tmp/ncd_after_migration.txt /tmp/ncd_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/ncd_after_reapply.txt
+          if diff -u /tmp/ncd_after_migration.txt /tmp/ncd_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Admin invite signed-in only verification and rollback
         shell: bash
         run: |
