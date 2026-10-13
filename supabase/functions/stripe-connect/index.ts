@@ -52,6 +52,12 @@ export function returnAllowed(url: string, origins: string[]): boolean {
   }
 }
 
+/**
+ * Stops two quick clicks making two Stripe accounts. Stripe replays the saved answer for the same key for 24 hours, errors included,
+ * so the key changes every minute: a retry after fixing something on Stripe's side is never answered with the old failure.
+ */
+export const accountIdempotencyKey = (environment: string, gymId: string, now: number) => `hybridone-account-${environment}-${gymId}-${Math.floor(now / 60000)}`
+
 export interface AccountState { details_submitted: boolean; charges_enabled: boolean; payouts_enabled: boolean; last_error: string | null }
 
 /** What we keep of Stripe's account: three yes/no answers and, if Stripe is waiting on something, the first thing it says. */
@@ -136,7 +142,7 @@ async function handle(req: Request): Promise<Response> {
         stage = 'create_account'
         const { data: gym, error: ge } = await admin.from('gyms').select('id,name,country_code').eq('id', gymId).maybeSingle()
         if (ge || !gym) return reply(500, { error: `Could not read the gym: ${ge?.message ?? 'not found'}`, stage })
-        const made = await stripe(key, 'POST', '/accounts', { type: 'standard', country: str(gym.country_code) || 'GB', business_profile: { name: str(gym.name) }, metadata: { gym_id: gymId } }, `hybridone-account-${environment}-${gymId}`)
+        const made = await stripe(key, 'POST', '/accounts', { type: 'standard', country: str(gym.country_code) || 'GB', business_profile: { name: str(gym.name) }, metadata: { gym_id: gymId } }, accountIdempotencyKey(environment, gymId, Date.now()))
         if (!made.ok) return reply(502, { error: stripeError(made), stage })
         accountId = str(made.json.id)
         if (!accountId) return reply(502, { error: 'Stripe did not return an account.', stage })

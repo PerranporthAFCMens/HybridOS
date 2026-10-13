@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accountState, environmentOf, returnAllowed, stripeForm } from '../../supabase/functions/stripe-connect/index';
+import { accountIdempotencyKey, accountState, environmentOf, returnAllowed, stripeForm } from '../../supabase/functions/stripe-connect/index';
 import { hourOptions, stripeStatus, windowText } from '../src/payments/calc';
 
 describe('Stripe form encoding', () => {
@@ -70,5 +70,15 @@ describe('the payments page wording', () => {
     expect(hourOptions(30).map((o) => o.value)).toContain(30);
     expect(hourOptions(0)[0]?.label).toBe('No notice needed');
     expect(hourOptions(24).find((o) => o.value === 168)?.label).toBe('7 days before');
+  });
+});
+
+describe('the key that stops a double click making two accounts', () => {
+  it('is the same within a minute and different the next, so an old failure is never replayed', () => {
+    const t = Date.UTC(2026, 9, 13, 10, 16, 39);
+    expect(accountIdempotencyKey('sandbox', 'g1', t)).toBe(accountIdempotencyKey('sandbox', 'g1', t + 5000));
+    expect(accountIdempotencyKey('sandbox', 'g1', t)).not.toBe(accountIdempotencyKey('sandbox', 'g1', t + 60000));
+    expect(accountIdempotencyKey('sandbox', 'g1', t)).not.toBe(accountIdempotencyKey('live', 'g1', t));
+    expect(accountIdempotencyKey('sandbox', 'g1', t)).not.toBe(accountIdempotencyKey('sandbox', 'g2', t));
   });
 });
