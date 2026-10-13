@@ -22,7 +22,10 @@ import './reports.css';
 export function Reports() {
   const { gym } = useReadyAuth();
   const [range, setRange] = useState('30');
-  const [tab, setTab] = useState<TabKey>('overview');
+  const [tab, setTab] = useState<TabKey>(() => {
+    const wanted = new URLSearchParams(window.location.search).get('tab');
+    return TABS.some(([k]) => k === wanted) ? (wanted as TabKey) : 'overview';
+  });
   const [drill, setDrill] = useState<(() => ReportTable) | null>(null);
   const q = useReportData(gym.gymId, Number(range));
   const rangeLabel = RANGES.find(([v]) => v === range)?.[1] ?? '';
