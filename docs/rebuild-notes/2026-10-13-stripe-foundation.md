@@ -11,7 +11,7 @@ First of the payment pieces. Nothing is charged by this change. It links a gym t
 
 ## Pieces
 - `supabase/migrations/20261013100000_stripe_foundation.sql` (+ rollback, verification, `supabase/tests/stripe_foundation.sql`): `gym_stripe_accounts` (written only by the Edge Function; owners/admins can read), `gym_payment_settings` (owners/admins manage, members of the gym read), trigger refusing `payments_enabled` before Stripe is ready. CI counts: tables 81, functions 129, policies 201, triggers 36.
-- `supabase/functions/stripe-connect/index.ts`: `start` (create the Standard account if the gym has none, return Stripe's set-up link) and `refresh` (read the account from Stripe and save the three yes/no answers). Owner/admin only. The return address must be our own site. Uses the secret `STRIPE_SECRET_KEY`; test keys (`sk_test_`) are recorded as `sandbox`, live ones as `live`, and a gym linked with one kind is refused if the keys later change to the other.
+- `supabase/functions/stripe-connect/index.ts`: `start` (create the account with POST /v2/core/accounts if the gym has none, return Stripe's set-up link) and `refresh` (read the account from Stripe and save the three yes/no answers). Owner/admin only. The return address must be our own site. Uses the secret `STRIPE_SECRET_KEY`; test keys (`sk_test_`) are recorded as `sandbox`, live ones as `live`, and a gym linked with one kind is refused if the keys later change to the other.
 - `web/src/payments/*`, `web/src/data/payments.ts`; tests `web/tests/stripeconnect.test.ts`, `web/browser/payments.mjs`.
 
 ## To switch it on (owner)

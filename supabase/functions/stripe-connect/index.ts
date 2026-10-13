@@ -1,4 +1,4 @@
-// stripe-connect: links a gym to its own Stripe account (Stripe Connect, Standard accounts) and keeps our copy of its status up to date.
+// stripe-connect: links a gym to its own Stripe account (Stripe Connect, Accounts v2, with the full Stripe Dashboard for the gym) and keeps our copy of its status up to date.
 //
 // The owner's or an admin's own sign-in (JWT) calls it from Settings > Payments:
 //   { action: 'start',   gym_id, return_to }   creates the gym's Stripe account if it has none, and returns { url }: Stripe's own
@@ -21,18 +21,6 @@ declare const Deno: {
 // ---------------------------------------------------------------------------------------------------------------
 type Row = Record<string, unknown>
 const str = (v: unknown) => (typeof v === 'string' ? v : '')
-
-/** Stripe wants form encoding with brackets for nested values: { metadata: { gym_id: 'x' } } -> metadata[gym_id]=x */
-export function stripeForm(values: Record<string, unknown>, prefix = ''): string {
-  const parts: string[] = []
-  for (const [k, v] of Object.entries(values)) {
-    if (v === undefined || v === null) continue
-    const key = prefix ? `${prefix}[${k}]` : k
-    if (typeof v === 'object') parts.push(stripeForm(v as Record<string, unknown>, key))
-    else parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(v))}`)
-  }
-  return parts.filter(Boolean).join('&')
-}
 
 /** A test key (sk_test_..., rk_test_...) means sandbox, anything else that looks like a key means live; no key at all is not allowed. */
 export function environmentOf(key: string): 'sandbox' | 'live' | null {
@@ -60,15 +48,27 @@ export const accountIdempotencyKey = (environment: string, gymId: string, now: n
 
 export interface AccountState { details_submitted: boolean; charges_enabled: boolean; payouts_enabled: boolean; last_error: string | null }
 
-/** What we keep of Stripe's account: three yes/no answers and, if Stripe is waiting on something, the first thing it says. */
+const obj = (v: unknown): Row => (v && typeof v === 'object' && !Array.isArray(v) ? (v as Row) : {})
+const words = (v: string) => v.replace(/[._]/g, ' ')
+
+/**
+ * What we keep of a Stripe Accounts v2 account: three yes/no answers and, if Stripe is waiting on something, the first thing it says.
+ *   charges_enabled     the merchant card_payments capability is active
+ *   details_submitted   the gym has sent what Stripe asked for (the capability is active or Stripe is reviewing it)
+ *   payouts_enabled     the merchant stripe_balance payouts capability is active
+ */
 export function accountState(a: Row): AccountState {
-  const req = (a.requirements ?? {}) as Row
-  const disabled = str(req.disabled_reason)
-  const due = Array.isArray(req.currently_due) ? (req.currently_due as unknown[]).map(str).filter(Boolean) : []
+  const merchant = obj(obj(a.configuration).merchant)
+  const caps = obj(merchant.capabilities)
+  const card = str(obj(caps.card_payments).status)
+  const payouts = str(obj(obj(caps.stripe_balance).payouts).status)
+  const charges = card === 'active'
+  const entries = Array.isArray(obj(a.requirements).entries) ? (obj(a.requirements).entries as unknown[]).map(obj) : []
+  const due = entries.filter((e) => ['currently_due', 'past_due'].includes(str(obj(e.minimum_deadline).status))).map((e) => words(str(e.description) || str(e.reference_type) || 'something')).filter(Boolean)
   let last: string | null = null
-  if (disabled) last = `Stripe has paused this account (${disabled.replace(/[._]/g, ' ')}).`
-  else if (a.charges_enabled !== true && due.length > 0) last = `Stripe still needs: ${due.slice(0, 3).map((d) => d.replace(/[._]/g, ' ')).join(', ')}${due.length > 3 ? ' and more' : ''}.`
-  return { details_submitted: a.details_submitted === true, charges_enabled: a.charges_enabled === true, payouts_enabled: a.payouts_enabled === true, last_error: last }
+  if (!charges && due.length > 0) last = `Stripe still needs: ${due.slice(0, 3).join(', ')}${due.length > 3 ? ' and more' : ''}.`
+  else if (card === 'restricted' || card === 'unsupported') last = `Stripe has not allowed card payments on this account (${card}).`
+  return { details_submitted: charges || card === 'pending' || (card === 'restricted' && due.length === 0), charges_enabled: charges, payouts_enabled: payouts === 'active', last_error: last }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -83,17 +83,19 @@ const reply = (status: number, body: unknown) => new Response(JSON.stringify(bod
 
 const DEFAULT_ORIGINS = ['https://www.hybridone.co.uk', 'https://hybridone.co.uk', 'https://perranporthafcmens.github.io']
 const ADMIN_ROLES = ['owner', 'admin']
-const API = 'https://api.stripe.com/v1'
+const API = 'https://api.stripe.com'
 
+// Accounts v2 speaks JSON and uses the account's default API version.
 async function stripe(key: string, method: 'GET' | 'POST', path: string, body?: Record<string, unknown>, idempotency?: string): Promise<{ ok: boolean; status: number; json: Row }> {
   const headers: Record<string, string> = { Authorization: `Bearer ${key}` }
-  if (method === 'POST') headers['Content-Type'] = 'application/x-www-form-urlencoded'
+  if (body) headers['Content-Type'] = 'application/json'
   if (idempotency) headers['Idempotency-Key'] = idempotency
-  const res = await fetch(`${API}${path}`, { method, headers, body: body ? stripeForm(body) : undefined })
+  const res = await fetch(`${API}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined })
   const json = (await res.json().catch(() => ({}))) as Row
   return { ok: res.ok, status: res.status, json }
 }
-const stripeError = (r: { status: number; json: Row }) => `Stripe ${r.status}: ${str(((r.json.error ?? {}) as Row).message) || 'something went wrong'}`
+const stripeError = (r: { status: number; json: Row }) => `Stripe ${r.status}: ${str(obj(r.json.error).message) || 'something went wrong'}`
+const INCLUDE = ['configuration.merchant', 'requirements']
 
 async function handle(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
@@ -140,9 +142,18 @@ async function handle(req: Request): Promise<Response> {
       if (!returnAllowed(returnTo, origins)) return reply(400, { error: 'return_to must be a page on the HybridOne site.', stage })
       if (!accountId) {
         stage = 'create_account'
-        const { data: gym, error: ge } = await admin.from('gyms').select('id,name,country_code').eq('id', gymId).maybeSingle()
+        const { data: gym, error: ge } = await admin.from('gyms').select('id,name,country_code,currency').eq('id', gymId).maybeSingle()
         if (ge || !gym) return reply(500, { error: `Could not read the gym: ${ge?.message ?? 'not found'}`, stage })
-        const made = await stripe(key, 'POST', '/accounts', { type: 'standard', country: str(gym.country_code) || 'GB', business_profile: { name: str(gym.name) }, metadata: { gym_id: gymId } }, accountIdempotencyKey(environment, gymId, Date.now()))
+        const made = await stripe(key, 'POST', '/v2/core/accounts', {
+          display_name: str(gym.name),
+          contact_email: u.user.email ?? undefined,
+          dashboard: 'full',
+          identity: { country: (str(gym.country_code) || 'GB').toLowerCase() },
+          configuration: { merchant: { capabilities: { card_payments: { requested: true } } } },
+          defaults: { currency: (str(gym.currency) || 'GBP').toLowerCase(), responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' } },
+          metadata: { gym_id: gymId },
+          include: INCLUDE,
+        }, accountIdempotencyKey(environment, gymId, Date.now()))
         if (!made.ok) return reply(502, { error: stripeError(made), stage })
         accountId = str(made.json.id)
         if (!accountId) return reply(502, { error: 'Stripe did not return an account.', stage })
@@ -151,7 +162,7 @@ async function handle(req: Request): Promise<Response> {
         if (saved.error && saved.error.code !== '23505') return reply(500, { error: `Could not save the Stripe link: ${saved.error.message}`, stage })
       }
       stage = 'create_link'
-      const link = await stripe(key, 'POST', '/account_links', { account: accountId, refresh_url: returnTo, return_url: returnTo, type: 'account_onboarding' })
+      const link = await stripe(key, 'POST', '/v2/core/account_links', { account: accountId, use_case: { type: 'account_onboarding', account_onboarding: { configurations: ['merchant'], refresh_url: returnTo, return_url: returnTo } } })
       if (!link.ok) return reply(502, { error: stripeError(link), stage })
       return reply(200, { ok: true, url: str(link.json.url) })
     }
@@ -159,7 +170,7 @@ async function handle(req: Request): Promise<Response> {
     // refresh
     if (!accountId) return reply(200, { ok: true, status: { linked: false } })
     stage = 'read_account'
-    const acct = await stripe(key, 'GET', `/accounts/${encodeURIComponent(accountId)}`)
+    const acct = await stripe(key, 'GET', `/v2/core/accounts/${encodeURIComponent(accountId)}?${INCLUDE.map((i) => `include=${encodeURIComponent(i)}`).join('&')}`)
     if (!acct.ok) return reply(502, { error: stripeError(acct), stage })
     const state = accountState(acct.json)
     const patch: Row = { ...state, updated_at: new Date().toISOString() }
