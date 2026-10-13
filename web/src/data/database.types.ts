@@ -450,7 +450,6 @@ export type Database = {
         Row: {
           cancellation_hours: number
           gym_id: string
-          overdue_grace_days: number
           payments_enabled: boolean
           updated_at: string
           updated_by: string | null
@@ -458,7 +457,6 @@ export type Database = {
         Insert: {
           cancellation_hours?: number
           gym_id: string
-          overdue_grace_days?: number
           payments_enabled?: boolean
           updated_at?: string
           updated_by?: string | null
@@ -466,8 +464,28 @@ export type Database = {
         Update: {
           cancellation_hours?: number
           gym_id?: string
-          overdue_grace_days?: number
           payments_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      gym_arrears_settings: {
+        Row: {
+          gym_id: string
+          overdue_grace_days: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          gym_id: string
+          overdue_grace_days?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          gym_id?: string
+          overdue_grace_days?: number
           updated_at?: string
           updated_by?: string | null
         }

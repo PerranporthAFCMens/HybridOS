@@ -3,10 +3,11 @@
 -- A payment counts as MISSED (outstanding) when it has not been settled and either
 --   * its state is failed or charged_back, or
 --   * it is still pending / submitted but its charge date is more than the gym's grace period ago
---     (gym_payment_settings.overdue_grace_days, 7 by default).
+--     (gym_arrears_settings.overdue_grace_days, 7 by default).
 -- Anyone with one or more missed payments is "not financial". It is worked out from the payment records every time, so it cannot
 -- drift out of date: pay it, waive it or write it off and the person is financial again. Reopening reverses that.
 --
+--   gym_arrears_settings      one row per gym with ONE choice: overdue_grace_days (7 by default). No row = 7.
 --   payment_settlements       how a missed payment was dealt with (paid by other means, waived, written off) and a private note.
 --                             Kept apart from payment_records so a member can never read the note. Owners and admins read it;
 --                             it is only ever written by settle_missed_payment.
@@ -16,7 +17,18 @@
 --   settle_missed_payment / reopen_missed_payment   mark one missed payment dealt with, or put it back
 -- Rollback: supabase/rollback/20261013_drop_money_owed.sql
 
-alter table public.gym_payment_settings add column overdue_grace_days integer not null default 7 check (overdue_grace_days between 0 and 90);
+create table public.gym_arrears_settings (
+  gym_id uuid primary key references public.gyms(id) on delete cascade,
+  overdue_grace_days integer not null default 7 check (overdue_grace_days between 0 and 90),
+  updated_at timestamptz not null default now(),
+  updated_by uuid default auth.uid() references public.profiles(id) on delete set null
+);
+alter table public.gym_arrears_settings enable row level security;
+revoke all on table public.gym_arrears_settings from anon, authenticated, service_role;
+grant select, insert, update on table public.gym_arrears_settings to authenticated;
+create policy "owners admins manage arrears settings" on public.gym_arrears_settings for all to authenticated
+  using (private.has_gym_role(gym_id, array['owner'::public.gym_member_role, 'admin'::public.gym_member_role]))
+  with check (private.has_gym_role(gym_id, array['owner'::public.gym_member_role, 'admin'::public.gym_member_role]));
 
 create table public.payment_settlements (
   payment_id uuid primary key references public.payment_records(id) on delete cascade,
@@ -42,7 +54,7 @@ as $$
   select pr.id, coalesce(pr.user_id, ms.user_id), pr.membership_id, pr.amount_pence, pr.state, pr.charge_date, pr.failure_code, pr.failure_message
     from public.payment_records pr
     left join public.memberships ms on ms.id = pr.membership_id
-    left join public.gym_payment_settings s on s.gym_id = pr.gym_id
+    left join public.gym_arrears_settings s on s.gym_id = pr.gym_id
     left join public.payment_settlements ps on ps.payment_id = pr.id
    where pr.gym_id = p_gym_id
      and ps.payment_id is null

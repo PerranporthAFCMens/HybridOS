@@ -159,11 +159,18 @@ select pt.check('reopening one that was never settled is refused', pt.q(pt.u('ad
 select pt.check('another gym cannot reopen this gym''s', pt.q(pt.u('admin_b'), format($s$select public.reopen_missed_payment(%L, %L)::text$s$, pt.gym_b(), pt.pid(2))), 'ERROR:That payment has not been settled');
 
 -- ---------- the grace period ----------
-select pt.check('the grace period starts at 7 days', pt.q(pt.u('admin_a'), format($s$insert into public.gym_payment_settings(gym_id) values (%L) on conflict (gym_id) do update set updated_at = now() returning overdue_grace_days$s$, pt.gym_a())), '7');
-select pt.check('a gym can make it shorter: Sam''s newer pending payment is now overdue too', pt.q(pt.u('admin_a'), format($s$update public.gym_payment_settings set overdue_grace_days = 2 where gym_id = %L returning overdue_grace_days$s$, pt.gym_a())), '2');
-select pt.check('...and Sam owes both', pt.q(pt.u('owner_a'), format($s$select owed_pence || ':' || missed_count from public.get_gym_arrears(%L) where display_name = 'Sam Lee'$s$, pt.gym_a())), '7000:2');
-select pt.check('a grace period of more than 90 days is refused', pt.q(pt.u('admin_a'), format($s$update public.gym_payment_settings set overdue_grace_days = 91 where gym_id = %L returning 1$s$, pt.gym_a())) like 'ERROR:%', true);
-select pt.check('a negative one is refused', pt.q(pt.u('admin_a'), format($s$update public.gym_payment_settings set overdue_grace_days = -1 where gym_id = %L returning 1$s$, pt.gym_a())) like 'ERROR:%', true);
+select pt.check('with no setting the grace period is 7 days (Sam''s newer pending payment is not owed yet)', pt.q(pt.u('owner_a'), format($s$select owed_pence || ':' || missed_count from public.get_gym_arrears(%L) where display_name = 'Sam Lee'$s$, pt.gym_a())), '5000:1');
+select pt.check('staff cannot change it', pt.q(pt.u('staff_a'), format($s$insert into public.gym_arrears_settings(gym_id, overdue_grace_days) values (%L, 1) returning 1$s$, pt.gym_a())) like 'ERROR:%', true);
+select pt.check('a member cannot change it', pt.q(pt.u('m1'), format($s$insert into public.gym_arrears_settings(gym_id, overdue_grace_days) values (%L, 1) returning 1$s$, pt.gym_a())) like 'ERROR:%', true);
+select pt.check('another gym''s admin cannot change it', pt.q(pt.u('admin_b'), format($s$insert into public.gym_arrears_settings(gym_id, overdue_grace_days) values (%L, 1) returning 1$s$, pt.gym_a())) like 'ERROR:%', true);
+select pt.check('a gym can make it shorter', pt.q(pt.u('admin_a'), format($s$insert into public.gym_arrears_settings(gym_id, overdue_grace_days) values (%L, 2) on conflict (gym_id) do update set overdue_grace_days = excluded.overdue_grace_days returning overdue_grace_days$s$, pt.gym_a())), '2');
+select pt.check('...and Sam''s newer pending payment is now overdue too, so he owes both', pt.q(pt.u('owner_a'), format($s$select owed_pence || ':' || missed_count from public.get_gym_arrears(%L) where display_name = 'Sam Lee'$s$, pt.gym_a())), '7000:2');
+select pt.check('the setting belongs to the gym: the other gym''s debtor is unaffected', pt.arrears(pt.u('admin_b'), pt.gym_b()), 'mb:9900:1');
+select pt.check('only owners and admins can read the setting', pt.q(pt.u('staff_a'), format($s$select count(*) from public.gym_arrears_settings where gym_id = %L$s$, pt.gym_a())), '0');
+select pt.check('an owner can read it', pt.q(pt.u('owner_a'), format($s$select overdue_grace_days from public.gym_arrears_settings where gym_id = %L$s$, pt.gym_a())), '2');
+select pt.check('a grace period of more than 90 days is refused', pt.q(pt.u('admin_a'), format($s$update public.gym_arrears_settings set overdue_grace_days = 91 where gym_id = %L returning 1$s$, pt.gym_a())) like 'ERROR:%', true);
+select pt.check('a negative one is refused', pt.q(pt.u('admin_a'), format($s$update public.gym_arrears_settings set overdue_grace_days = -1 where gym_id = %L returning 1$s$, pt.gym_a())) like 'ERROR:%', true);
+select pt.check('someone not signed in cannot read it', pt.anon(format($s$select count(*) from public.gym_arrears_settings where gym_id = %L$s$, pt.gym_a())) like 'ERROR:%', true);
 
 \o
 do $$

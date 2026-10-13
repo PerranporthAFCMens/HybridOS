@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { loadPayments, type PaymentSettings, type PaymentsData, refreshStripe, savePaymentSettings, startStripe } from '../data/payments';
+import { loadPayments, type PaymentSettings, type PaymentsData, refreshStripe, saveOverdueDays, savePaymentSettings, startStripe } from '../data/payments';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Checkbox, Field, Select } from '../ui/Field';
@@ -53,6 +53,18 @@ export function Payments() {
       return { before };
     },
     onSuccess: async () => { await qc.invalidateQueries({ queryKey: key }); setSaved('Saved.'); },
+    onError: (e, _v, ctx) => { qc.setQueryData(key, ctx?.before); fail(e); },
+  });
+
+  const overdue = useMutation({
+    mutationFn: (days: number) => saveOverdueDays(gym.gymId, days),
+    onMutate: (days) => {
+      void qc.cancelQueries({ queryKey: key });
+      const before = qc.getQueryData<PaymentsData>(key);
+      qc.setQueryData<PaymentsData>(key, (old) => (old ? { ...old, overdueDays: days } : old));
+      return { before };
+    },
+    onSuccess: async () => { await qc.invalidateQueries({ queryKey: key }); await qc.invalidateQueries({ queryKey: ['owed'] }); setSaved('Saved.'); },
     onError: (e, _v, ctx) => { qc.setQueryData(key, ctx?.before); fail(e); },
   });
 
@@ -114,8 +126,8 @@ export function Payments() {
           <Card>
             <h3>Late payments</h3>
             <Field label="A payment counts as missed" htmlFor="pay-overdue" hint="A payment that fails or is charged back is missed straight away. One that has simply not arrived counts as missed after this long. A member with a missed payment is shown as not financial in Reports, under Money owed.">
-              <Select id="pay-overdue" value={String(settings.overdueDays)} disabled={save.isPending} onChange={(e) => { setMessage(''); setSaved(''); save.mutate({ ...settings, overdueDays: Number(e.target.value) }); }}>
-                {overdueOptions(settings.overdueDays).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <Select id="pay-overdue" value={String(data.data.overdueDays)} disabled={overdue.isPending} onChange={(e) => { setMessage(''); setSaved(''); overdue.mutate(Number(e.target.value)); }}>
+                {overdueOptions(data.data.overdueDays).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </Select>
             </Field>
             {saved && <div className="muted" role="status">{saved}</div>}
