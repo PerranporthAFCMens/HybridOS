@@ -124,7 +124,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('layout (overview charts)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/reports-charts-overview-${name}.png`, fullPage: true });
   c.ok('old page link still there', (await page.getByRole('link', { name: 'Open the detailed reports' }).getAttribute('href')).includes('reporting.html'));
-  c.ok('eight tabs', (await page.getByRole('tab').count()) === 8);
+  c.ok('nine tabs, Money owed among them', (await page.getByRole('tab').count()) === 9 && (await page.getByRole('tab', { name: 'Money owed' }).count()) === 1);
   c.ok('Overview is the first tab', (await page.getByRole('tab', { name: 'Overview', exact: true }).getAttribute('aria-selected')) === 'true');
 
   // The other tabs: figures, tables and the heatmap (all from the same mocked data)
