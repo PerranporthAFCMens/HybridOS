@@ -63,6 +63,19 @@ export async function createAccount(email: string, password: string, slug: strin
   return { signedIn: !!data.session, existing: false };
 }
 
+/** Confirms a new account with the 6-digit code from the email. On success the person is signed in. */
+export async function confirmWithCode(email: string, code: string): Promise<void> {
+  const { error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code, type: 'email' });
+  if (error) throw new Error(/expired|invalid/i.test(error.message) ? 'That code is wrong or has run out. Check it, or ask for a new one.' : error.message);
+}
+
+/** Sends a fresh code to the same address. */
+export async function resendCode(email: string, slug: string): Promise<void> {
+  const back = new URL(siteUrl(`join/${encodeURIComponent(slug)}`), window.location.origin);
+  const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase(), options: { emailRedirectTo: back.toString() } });
+  if (error) throw new Error(error.message);
+}
+
 export async function signInToJoin(email: string, password: string): Promise<void> {
   const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
   if (error) throw new Error(error.message);
