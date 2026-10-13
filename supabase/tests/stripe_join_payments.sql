@@ -88,9 +88,9 @@ begin
 exception when others then return 'ERROR:' || sqlerrm;
 end $f$;
 
-update public.profiles set first_name = 'One', last_name = 'Member', date_of_birth = date '1990-01-01', phone = '+447700900101' where id in (pt.u('m1'), pt.u('m2'), pt.u('m4'), pt.u('m6'));
-insert into public.member_details(user_id, address_line1, town, postcode, emergency_name, emergency_phone, emergency_relationship)
-  select pt.u(n), '1 Test Street', 'Perranporth', 'TR6 0AA', 'Parent', '+447700900102', 'Parent' from unnest(array['m1','m2','m4','m6']) n;
+update public.profiles set first_name = 'One', last_name = 'Member', date_of_birth = date '1990-01-01' where id in (pt.u('m1'), pt.u('m2'), pt.u('m4'), pt.u('m6'));
+insert into public.member_details(user_id, phone, address_line1, town, postcode, emergency_name, emergency_phone, emergency_relationship)
+  select pt.u(n), '+447700900101', '1 Test Street', 'Perranporth', 'TR6 0AA', 'Parent', '+447700900102', 'Parent' from unnest(array['m1','m2','m4','m6']) n;
 insert into public.membership_plans(id, gym_id, name, price_pence, billing_interval, is_active, is_public) values
  ('c0000000-0000-4000-8000-000000000001', pt.gym_a(), 'Basic', 3000, 'monthly', true, true),
  ('c0000000-0000-4000-8000-000000000002', pt.gym_a(), 'Free', 0, 'monthly', true, true),
@@ -128,7 +128,6 @@ select public.stripe_save_customer(pt.gym_a(), pt.u('m4'), 'cus_M4', 'sandbox');
 select pt.check('the customer is saved once for the member and gym', (select count(*) || ':' || max(stripe_customer_id) from public.member_stripe_customers where user_id = pt.u('m4')), '1:cus_M4');
 
 -- ---------- starting to pay ----------
-do $d$ begin raise exception 'DIAG1 %', (select string_agg(id::text || ' ' || coalesce(phone,'-') || ' ' || coalesce(first_name,'-'), ' | ') from public.profiles where id in (pt.u('m1'), pt.u('m4'))) || ' // ' || (select coalesce(string_agg(user_id::text || ' ' || status::text, ' | '), 'no memberships') from public.memberships where gym_id = pt.gym_a()) || ' // ' || private.member_gaps(pt.u('m1'), pt.gym_a())::text || ' // ' || private.member_gaps(pt.u('m4'), pt.gym_a())::text || ' // BEGIN m1: ' || pt.begin(pt.u('m1'), pt.plan(1), 'sub_M1') || ' // BEGIN m4: ' || pt.begin(pt.u('m4'), pt.plan(1), 'sub_M4'); end $d$;
 select pt.check('a person with missing details cannot start paying', pt.begin(pt.u('m3'), pt.plan(1), 'sub_M3') like 'ERROR:Complete your details before joining:%', true);
 select pt.check('someone who already has a membership cannot start again', pt.begin(pt.u('m1'), pt.plan(1), 'sub_M1'), 'ERROR:You already have a membership at this gym. Contact your gym.');
 select pt.check('a plan that is not public cannot be paid for', pt.begin(pt.u('m4'), pt.plan(3), 'sub_M4'), 'ERROR:Membership plan is not available');
