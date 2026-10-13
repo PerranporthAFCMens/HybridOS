@@ -6,7 +6,7 @@
 //   Events: invoice.paid
 //   Then copy the signing secret (whsec_...) into Supabase > Edge Functions > Secrets as STRIPE_WEBHOOK_SECRET.
 // A paid invoice for a membership still waiting for its first payment makes it ACTIVE and records the payment and the card
-// (brand, last four, expiry). Later paid invoices (monthly payments) are recorded too. Receiving the same event twice does nothing new.
+// (only Stripe's token for it: no card detail is kept). Later paid invoices (monthly payments) are recorded too. Receiving the same event twice does nothing new.
 //
 // One file on purpose (it can be pasted into the Supabase function editor). The helpers at the top have no Deno-only code and are
 // unit tested (web/tests/stripewebhook.test.ts).
@@ -68,11 +68,10 @@ export function subscriptionIdOf(invoice: Row): string {
   return typeof b === 'string' ? b : str(obj(b).id)
 }
 
-export function cardOf(pm: Row | null | undefined): { id: string; brand: string; last4: string; month: number; year: number } | null {
-  const c = obj(obj(pm).card)
-  const last4 = str(c.last4)
-  if (!pm || !/^\d{4}$/.test(last4)) return null
-  return { id: str(obj(pm).id), brand: str(c.brand) || 'card', last4, month: num(c.exp_month), year: num(c.exp_year) }
+/** The id of a Stripe payment method ("pm_..."), from either the id itself or the expanded object. It is only a token: Stripe keeps the card, we keep nothing about it. */
+export function paymentMethodId(pm: unknown): string {
+  const id = typeof pm === 'string' ? pm : str(obj(pm).id)
+  return /^pm_[A-Za-z0-9]+$/.test(id) ? id : ''
 }
 
 export function environmentOf(key: string): 'sandbox' | 'live' | null {
@@ -108,19 +107,19 @@ async function handle(req: Request): Promise<Response> {
     const subId = subscriptionIdOf(invoice)
     if (!account || !subId) return json(200, { ok: true, ignored: 'not a subscription invoice on a connected account' })
 
-    // What the invoice does not say (the card) is asked of Stripe, using the platform key on that gym's account.
-    const res = await fetch(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(subId)}?expand[]=default_payment_method`, {
+    // What the invoice does not say (which saved payment method it used, as a token) is asked of Stripe, using the platform key on that gym's account.
+    const res = await fetch(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(subId)}`, {
       headers: { Authorization: `Bearer ${key}`, 'Stripe-Version': version, 'Stripe-Account': account },
     })
     const sub = (await res.json().catch(() => ({}))) as Row
     if (!res.ok) return json(502, { error: `Stripe ${res.status}` })
-    const card = cardOf(obj(sub.default_payment_method))
+    const pmId = paymentMethodId(sub.default_payment_method)
 
     const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } })
     const { data, error } = await admin.rpc('stripe_activate_membership', {
       p_subscription_id: subId, p_invoice_id: str(invoice.id) || null, p_amount_pence: num(invoice.amount_paid), p_currency: str(invoice.currency) || 'gbp',
-      p_paid_at: new Date().toISOString(), p_payment_method_id: card?.id ?? null, p_card_brand: card?.brand ?? null, p_card_last4: card?.last4 ?? null,
-      p_card_exp_month: card?.month ?? null, p_card_exp_year: card?.year ?? null,
+      p_paid_at: new Date().toISOString(), p_payment_method_id: pmId || null,
+      p_card_brand: null, p_card_last4: null, p_card_exp_month: null, p_card_exp_year: null, // no card detail is kept: Stripe holds the card
     })
     if (error) return json(500, { error: error.message })
     return json(200, { ok: true, result: data })

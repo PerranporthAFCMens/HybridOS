@@ -143,13 +143,13 @@ select pt.check('an unknown subscription is not activated', pt.su($s$select publ
 select pt.check('the first payment activates the membership, and a repeat changes nothing', pt.act('sub_M4c', 'in_M4'), 'active:false:true');
 select pt.check('it is active now', (select status::text || ':' || payment_status::text || ':' || provider_status from public.memberships where user_id = pt.u('m4')), 'active:confirmed:active');
 select pt.check('the payment is recorded once', (select count(*) || ':' || max(amount_pence) || ':' || max(provider::text) || ':' || max(state::text) from public.payment_records where user_id = pt.u('m4') and provider_payment_id = 'in_M4'), '1:3000:stripe:confirmed');
-select pt.check('the card (brand, last four, expiry) is kept, never the number', (select card_brand || ':' || card_last4 || ':' || card_exp_month || ':' || card_exp_year from public.member_stripe_customers where user_id = pt.u('m4')), 'visa:4242:12:2030');
+select pt.check('only Stripe''s payment-method token is kept; no card detail exists in the database', (select payment_method_id from public.member_stripe_customers where user_id = pt.u('m4')) || ':' || (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'member_stripe_customers' and column_name ~ '(card|last4|exp_)'), 'pm_1:0');
 select pt.check('a trial (nothing to pay today) starts a pending membership', pt.begin(pt.u('m6'), pt.plan(1), 'sub_M6') not like 'ERROR:%', true);
 select pt.check('...and activates when the card is saved, with no payment record for nothing', pt.act('sub_M6', 'in_M6', 0), 'active:false:true');
 select pt.check('...so no payment is recorded for a free first invoice', (select count(*) from public.payment_records where provider_payment_id = 'in_M6')::text, '0');
 
 -- ---------- who can see what ----------
-select pt.check('a member reads their own customer record', pt.q(pt.u('m4'), format($s$select card_last4 from public.member_stripe_customers where gym_id = %L$s$, pt.gym_a())), '4242');
+select pt.check('a member reads their own customer record', pt.q(pt.u('m4'), format($s$select stripe_customer_id from public.member_stripe_customers where gym_id = %L$s$, pt.gym_a())), 'cus_M4');
 select pt.check('another member sees nothing of it', pt.q(pt.u('m2'), format($s$select count(*) from public.member_stripe_customers where gym_id = %L$s$, pt.gym_a())), '0');
 select pt.check('an admin reads it', pt.q(pt.u('admin_a'), format($s$select count(*) from public.member_stripe_customers where gym_id = %L$s$, pt.gym_a())), '1');
 select pt.check('staff cannot', pt.q(pt.u('staff_a'), format($s$select count(*) from public.member_stripe_customers where gym_id = %L$s$, pt.gym_a())), '0');
@@ -161,7 +161,7 @@ select pt.check('staff do not', pt.q(pt.u('staff_a'), format($s$select count(*) 
 select pt.check('an admin sees the plan prices', pt.q(pt.u('admin_a'), format($s$select count(*) from public.plan_stripe_prices where gym_id = %L$s$, pt.gym_a())), '1');
 select pt.check('a member does not', pt.q(pt.u('m4'), format($s$select count(*) from public.plan_stripe_prices where gym_id = %L$s$, pt.gym_a())), '0');
 select pt.check('nobody signed in can write an agreement', pt.q(pt.u('owner_a'), format($s$insert into public.membership_agreements(gym_id, user_id, wording, signer_name, amount_pence) values (%L, %L, repeat('x', 30), 'x', 0) returning 1$s$, pt.gym_a(), pt.u('m4'))) like 'ERROR:%', true);
-select pt.check('nobody signed in can edit a customer', pt.q(pt.u('admin_a'), format($s$update public.member_stripe_customers set card_last4 = '0000' where gym_id = %L returning 1$s$, pt.gym_a())) like 'ERROR:%', true);
+select pt.check('nobody signed in can edit a customer', pt.q(pt.u('admin_a'), format($s$update public.member_stripe_customers set payment_method_id = 'pm_x' where gym_id = %L returning 1$s$, pt.gym_a())) like 'ERROR:%', true);
 select pt.check('a signed-in person cannot run the Stripe functions', pt.q(pt.u('admin_a'), format($s$select public.stripe_activate_membership('sub_M4c', 'in_X', 100, 'gbp', now(), null, null, null, null, null)::text$s$)) like 'ERROR:%permission denied%', true);
 select pt.check('...nor start a membership', pt.q(pt.u('owner_a'), format($s$select public.stripe_begin_membership(%L, %L, %L, 's', 'c', repeat('w', 30), 'n', false, 1, current_date)::text$s$, pt.gym_a(), pt.u('m5'), pt.plan(1))) like 'ERROR:%permission denied%', true);
 select pt.check('...nor read the context', pt.q(pt.u('owner_a'), format($s$select public.stripe_join_context(%L, %L, %L)::text$s$, pt.gym_a(), pt.u('m4'), pt.plan(1))) like 'ERROR:%permission denied%', true);

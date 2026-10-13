@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cardOf, safeEqual, sign, subscriptionIdOf, verifySignature } from '../../supabase/functions/stripe-webhook/index';
+import { paymentMethodId, safeEqual, sign, subscriptionIdOf, verifySignature } from '../../supabase/functions/stripe-webhook/index';
 
 const secret = 'whsec_test_123';
 const body = JSON.stringify({ id: 'evt_1', type: 'invoice.paid' });
@@ -53,8 +53,9 @@ describe('reading an invoice', () => {
     expect(subscriptionIdOf({ subscription: { id: 'sub_obj' } })).toBe('sub_obj');
     expect(subscriptionIdOf({})).toBe('');
   });
-  it('keeps only the brand, last four and expiry of a card', () => {
-    expect(cardOf({ id: 'pm_1', card: { brand: 'mastercard', last4: '4444', exp_month: 1, exp_year: 2031 } })).toEqual({ id: 'pm_1', brand: 'mastercard', last4: '4444', month: 1, year: 2031 });
-    expect(cardOf(undefined)).toBeNull();
+  it('keeps only the Stripe token of a payment method, never anything about the card', () => {
+    expect(paymentMethodId('pm_1AbC')).toBe('pm_1AbC');
+    expect(paymentMethodId({ id: 'pm_2', card: { brand: 'mastercard', last4: '4444' } })).toBe('pm_2');
+    expect(paymentMethodId(undefined)).toBe('');
   });
 });
