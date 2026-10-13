@@ -66,6 +66,10 @@ insert into public.gym_members(gym_id,user_id,role,is_active,access_status) valu
  (pt.gym_b(),pt.u('admin_b'),'owner',true,'active'),(pt.gym_b(),pt.u('mb'),'member',true,'active');
 
 
+insert into public.membership_plans(id,gym_id,name,price_pence,billing_interval) values ('c0000000-0000-4000-8000-000000000001',pt.gym_a(),'Basic',3000,'monthly');
+-- m1 has an active membership; m2 has none (a member is only a member for these rules while theirs is active).
+insert into public.memberships(gym_id,user_id,plan_id,status,starts_on) values (pt.gym_a(), pt.u('m1'), 'c0000000-0000-4000-8000-000000000001', 'active', current_date-30);
+
 create function pt.sql(uid uuid, stmt text) returns text language sql as $$ select pt.q(uid, stmt) $$;
 create function pt.set_on(uid uuid, gym uuid, on_ boolean) returns text language sql as $$
   select pt.q(uid, format($s$insert into public.gym_payment_settings(gym_id, payments_enabled) values (%L, %L) on conflict (gym_id) do update set payments_enabled = excluded.payments_enabled returning payments_enabled$s$, gym, on_)) $$;
@@ -91,6 +95,7 @@ select pt.check('staff cannot see the Stripe link', pt.q(pt.u('staff_a'), format
 select pt.check('a member cannot see the Stripe link', pt.q(pt.u('m1'), format($s$select count(*) from public.gym_stripe_accounts where gym_id = %L$s$, pt.gym_a())), '0');
 select pt.check('another gym cannot see the Stripe link', pt.q(pt.u('admin_b'), format($s$select count(*) from public.gym_stripe_accounts where gym_id = %L$s$, pt.gym_a())), '0');
 select pt.check('a member can read the gym''s payment settings', pt.q(pt.u('m1'), format($s$select cancellation_hours from public.gym_payment_settings where gym_id = %L$s$, pt.gym_a())), '24');
+select pt.check('a person without an active membership cannot read them', pt.q(pt.u('m2'), format($s$select count(*) from public.gym_payment_settings where gym_id = %L$s$, pt.gym_a())), '0');
 select pt.check('...but not change them', pt.q(pt.u('m1'), format($s$update public.gym_payment_settings set cancellation_hours = 1 where gym_id = %L returning 1$s$, pt.gym_a())), null);
 select pt.check('a member cannot switch payments on', pt.q(pt.u('m1'), format($s$update public.gym_payment_settings set payments_enabled = true where gym_id = %L returning 1$s$, pt.gym_a())), null);
 select pt.check('staff cannot change the settings', pt.q(pt.u('staff_a'), format($s$update public.gym_payment_settings set cancellation_hours = 2 where gym_id = %L returning 1$s$, pt.gym_a())), null);
