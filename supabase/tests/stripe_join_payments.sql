@@ -129,13 +129,14 @@ select pt.check('the customer is saved once for the member and gym', (select cou
 
 -- ---------- starting to pay ----------
 select pt.check('a person with missing details cannot start paying', pt.begin(pt.u('m3'), pt.plan(1), 'sub_M3') like 'ERROR:Complete your details before joining:%', true);
-select pt.check('someone who already has a membership cannot start again', pt.begin(pt.u('m1'), pt.plan(1), 'sub_M1'), 'ERROR:You already have a membership at this gym. Contact your gym.');
+select pt.check('someone who already has a membership cannot start again', pt.begin(pt.u('m1'), pt.plan(1), 'sub_M1'), 'ERROR:You already have a membership at this gym. Contact your gym to change it.');
 select pt.check('a plan that is not public cannot be paid for', pt.begin(pt.u('m4'), pt.plan(3), 'sub_M4'), 'ERROR:Membership plan is not available');
 select pt.check('starting to pay makes a pending membership', (pt.begin(pt.u('m4'), pt.plan(1), 'sub_M4')) not like 'ERROR:%' and (pt.begin(pt.u('m4'), pt.plan(1), 'sub_M4b')) not like 'ERROR:%', true);
 select pt.check('...one only, even after a second try, tied to the newest subscription', (select count(*) || ':' || max(status::text) || ':' || max(provider_subscription_id) || ':' || max(payment_provider::text) from public.memberships where user_id = pt.u('m4')), '1:pending:sub_M4b:stripe');
 select pt.check('a pending member is not an active one (no access yet)', (select count(*) from public.memberships where user_id = pt.u('m4') and status = 'active')::text, '0');
 select pt.check('each try is recorded as an agreement with the wording and the amount', (select count(*) || ':' || max(amount_pence) from public.membership_agreements where user_id = pt.u('m4')), '2:3000');
-select pt.check('a guardian agreeing is recorded as one', (pt.begin(pt.u('m4'), pt.plan(1), 'sub_M4c', true)) not like 'ERROR:%' and (select bool_or(signer_is_guardian) from public.membership_agreements where user_id = pt.u('m4')), true);
+select pt.check('a guardian can start the payment', (pt.begin(pt.u('m4'), pt.plan(1), 'sub_M4c', true)) not like 'ERROR:%', true);
+select pt.check('...and agreeing as a guardian is recorded as one', (select bool_or(signer_is_guardian) from public.membership_agreements where user_id = pt.u('m4')), true);
 
 -- ---------- Stripe confirms the payment ----------
 select pt.check('an unknown subscription is not activated', pt.su($s$select public.stripe_activate_membership('sub_nope', 'in_1', 3000, 'gbp', now(), null, null, null, null, null)->>'reason'$s$), 'No membership for that subscription');
@@ -155,7 +156,7 @@ select pt.check('staff cannot', pt.q(pt.u('staff_a'), format($s$select count(*) 
 select pt.check('another gym cannot', pt.q(pt.u('admin_b'), format($s$select count(*) from public.member_stripe_customers where gym_id = %L$s$, pt.gym_a())), '0');
 select pt.check('a member reads their own agreements', pt.q(pt.u('m4'), format($s$select count(*) from public.membership_agreements where gym_id = %L$s$, pt.gym_a())), '3');
 select pt.check('another member sees none', pt.q(pt.u('m2'), format($s$select count(*) from public.membership_agreements where gym_id = %L$s$, pt.gym_a())), '0');
-select pt.check('an admin sees them', pt.q(pt.u('admin_a'), format($s$select count(*) from public.membership_agreements where gym_id = %L$s$, pt.gym_a())), '3');
+select pt.check('an admin sees every member's', pt.q(pt.u('admin_a'), format($s$select count(*) from public.membership_agreements where gym_id = %L$s$, pt.gym_a())), '4');
 select pt.check('staff do not', pt.q(pt.u('staff_a'), format($s$select count(*) from public.membership_agreements where gym_id = %L$s$, pt.gym_a())), '0');
 select pt.check('an admin sees the plan prices', pt.q(pt.u('admin_a'), format($s$select count(*) from public.plan_stripe_prices where gym_id = %L$s$, pt.gym_a())), '1');
 select pt.check('a member does not', pt.q(pt.u('m4'), format($s$select count(*) from public.plan_stripe_prices where gym_id = %L$s$, pt.gym_a())), '0');
