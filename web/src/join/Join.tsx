@@ -6,7 +6,7 @@ import { confirmWithCode, createAccount, resendCode, currentUserId, getJoinGym, 
 import { publicPdfUrl } from '../data/signup';
 import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { Checkbox, DateInput, Field, FieldRow, Input, Select } from '../ui/Field';
+import { Checkbox, DateInput, Field, FieldRow, Input, PasswordInput, Select } from '../ui/Field';
 import {
   EMPTY_DETAILS, STEP_TITLES, answersPayload, canPayOnline, checkAbout, checkAccount, checkAddress, checkCode, cleanCode, checkEmergency, checkGuardian, checkPayer, checkSign, isFreePlan, isUnder18, payTermsText, planPrice, stepsFor, toRpcArgs,
   type Answers, type JoinDetails, type JoinPlan, type StepId,
@@ -278,10 +278,10 @@ export function Join() {
             <h2>{mode === 'signup' ? 'Create your account' : 'Sign in to continue'}</h2>
             <Field label="Email" htmlFor="join-email"><Input id="join-email" type="email" autoComplete="email" value={acct.email} onChange={(e) => setAcct({ ...acct, email: e.target.value })} /></Field>
             <Field label="Password" htmlFor="join-password" hint={mode === 'signup' ? 'At least 8 characters.' : undefined}>
-              <Input id="join-password" type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={acct.password} onChange={(e) => setAcct({ ...acct, password: e.target.value })} />
+              <PasswordInput id="join-password" eyeFor="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={acct.password} onChange={(e) => setAcct({ ...acct, password: e.target.value })} />
             </Field>
             {mode === 'signup' && (
-              <Field label="Confirm password" htmlFor="join-confirm"><Input id="join-confirm" type="password" autoComplete="new-password" value={acct.confirm} onChange={(e) => setAcct({ ...acct, confirm: e.target.value })} /></Field>
+              <Field label="Confirm password" htmlFor="join-confirm"><PasswordInput id="join-confirm" eyeFor="confirm password" autoComplete="new-password" value={acct.confirm} onChange={(e) => setAcct({ ...acct, confirm: e.target.value })} /></Field>
             )}
             {alertBox}
             {nav(mode === 'signup' ? 'Create account' : 'Sign in', false)}

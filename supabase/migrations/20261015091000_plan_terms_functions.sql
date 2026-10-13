@@ -1,7 +1,7 @@
 -- Plan terms, part 2: four existing functions changed to use the member's own terms (else the gym-wide rule) and to carry the plan's terms.
 -- Only "create or replace", so it is safe to run again. Part 1 (20261015090000_plan_terms.sql) must be run first: it adds the columns used here.
 --   request_membership_cancel / get_my_membership_options   last day follows the member's own notice and term, else the gym-wide rule
---   get_public_gym_join_options                              each plan also carries its minimum term and notice, shown before joining
+--   get_public_gym_join_options                              each plan also carries its minimum term and notice, shown before joining (a plan with none uses the gym's usual terms; a gym that never saved any has no minimum term and 30 days notice)
 --   stripe_join_context                                      the same, so the payment agreement can state them
 -- Rollback: supabase/rollback/20261015_drop_plan_terms.sql (restores the previous versions of all four).
 
@@ -153,8 +153,8 @@ begin
       'includes_pt', mp.includes_pt,
       'classes_per_week', mp.classes_per_week,
       'trial_days', mp.trial_days,
-      'min_term_months', coalesce(mp.min_term_months, (select r.cancel_min_term_months from public.membership_rules r where r.gym_id = v_gym.id)),
-      'notice_days', coalesce(mp.notice_days, (select r.cancel_notice_days from public.membership_rules r where r.gym_id = v_gym.id))
+      'min_term_months', coalesce(mp.min_term_months, (private.rules_for(v_gym.id)).cancel_min_term_months),
+      'notice_days', coalesce(mp.notice_days, (private.rules_for(v_gym.id)).cancel_notice_days)
     )
     order by mp.price_pence, mp.name
   ), '[]'::jsonb)
@@ -196,8 +196,8 @@ begin
     'gym', jsonb_build_object('id', g.id, 'name', g.name, 'currency', g.currency, 'country', g.country_code),
     'account', case when a.gym_id is null then null else jsonb_build_object('stripe_account_id', a.stripe_account_id, 'environment', a.environment, 'charges_enabled', a.charges_enabled) end,
     'plan', jsonb_build_object('id', p.id, 'name', p.name, 'price_pence', p.price_pence, 'billing_interval', p.billing_interval,
-      'min_term_months', coalesce(p.min_term_months, (select r.cancel_min_term_months from public.membership_rules r where r.gym_id = p_gym_id)),
-      'notice_days', coalesce(p.notice_days, (select r.cancel_notice_days from public.membership_rules r where r.gym_id = p_gym_id))),
+      'min_term_months', coalesce(p.min_term_months, (private.rules_for(p_gym_id)).cancel_min_term_months),
+      'notice_days', coalesce(p.notice_days, (private.rules_for(p_gym_id)).cancel_notice_days)),
     'price', case when pp.plan_id is null then null else jsonb_build_object('stripe_product_id', pp.stripe_product_id, 'stripe_price_id', pp.stripe_price_id, 'amount_pence', pp.amount_pence, 'billing_interval', pp.billing_interval, 'environment', pp.environment) end,
     'customer', case when c.user_id is null then null else jsonb_build_object('stripe_customer_id', c.stripe_customer_id, 'environment', c.environment) end,
     'person', jsonb_build_object('first_name', pr.first_name, 'last_name', pr.last_name, 'date_of_birth', pr.date_of_birth),

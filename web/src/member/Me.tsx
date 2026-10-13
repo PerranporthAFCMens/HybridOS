@@ -11,7 +11,7 @@ import { changeMyEmail, changeMyPassword, getMyBirthday, getProfileNames, saveMy
 import { fullName } from '../shell/account';
 import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
-import { DateInput, Input } from '../ui/Field';
+import { DateInput, Input, PasswordInput } from '../ui/Field';
 import { LeaderboardChoice } from '../train/LeaderboardChoice';
 import { checkBirthday, checkEmail, checkName, checkPassword } from './account';
 import type { MemberCtx } from './useMember';
@@ -132,8 +132,8 @@ export function Me() {
       {open === 'password' && (
         <section className="mem-card" aria-label="Change password">
           <h2>Change password</h2>
-          <Input aria-label="New password" type="password" autoComplete="new-password" placeholder="New password (8 or more characters)" value={pw.a} onChange={(e) => setPw({ ...pw, a: e.target.value })} />
-          <Input aria-label="New password again" type="password" autoComplete="new-password" placeholder="New password again" value={pw.b} onChange={(e) => setPw({ ...pw, b: e.target.value })} />
+          <PasswordInput aria-label="New password" autoComplete="new-password" placeholder="New password (8 or more characters)" value={pw.a} onChange={(e) => setPw({ ...pw, a: e.target.value })} />
+          <PasswordInput aria-label="New password again" autoComplete="new-password" placeholder="New password again" value={pw.b} onChange={(e) => setPw({ ...pw, b: e.target.value })} />
           <Button variant="primary" disabled={busy} onClick={() => void run(checkPassword(pw.a, pw.b), async () => {
             await changeMyPassword(pw.a);
             return 'Your password has been changed.';

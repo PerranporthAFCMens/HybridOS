@@ -74,6 +74,16 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.goto(`${base}/join/puffin`);
   await c.has('the link shows the gym', page.getByRole('heading', { name: 'Join Puffin Performance' }));
   await c.has('it starts at the account step', page.getByRole('heading', { name: 'Create your account' }));
+  // The password can be shown with the eye, and hidden again
+  const pw = page.getByLabel('Password', { exact: true });
+  await pw.fill('longenough1');
+  c.ok('the password is hidden to start with', (await pw.getAttribute('type')) === 'password');
+  await page.getByRole('button', { name: 'Show password', exact: true }).click();
+  c.ok('the eye shows what was typed', (await pw.getAttribute('type')) === 'text' && (await pw.inputValue()) === 'longenough1');
+  await page.getByRole('button', { name: 'Hide password', exact: true }).click();
+  c.ok('and hides it again', (await pw.getAttribute('type')) === 'password');
+  c.ok('the confirm box has its own eye', (await page.getByRole('button', { name: 'Show confirm password', exact: true }).count()) === 1);
+  await pw.fill('');
   await next('Create account');
   await c.has('an empty account is refused', alert.filter({ hasText: 'valid email' }));
   await fill('Email', 'sam@example.test');

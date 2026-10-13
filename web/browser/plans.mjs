@@ -114,7 +114,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   // Terms: each plan shows its own, the editor takes any numbers and only warns about long ones
   writes.length = 0;
   await c.has('a plan with its own terms shows them', page.locator('.plan', { hasText: 'Hybrid Monthly' }).getByText('6 months minimum · 2 weeks notice to leave'));
-  await c.has('a plan with none says it uses the gym-wide terms', page.locator('.plan', { hasText: 'Old Weekly Deal' }).getByText('Uses your gym-wide terms'));
+  await c.has('a plan with none shows the gym\'s usual terms (no minimum term, 30 days, when none are saved)', page.locator('.plan', { hasText: 'Old Weekly Deal' }).getByText('Your usual terms: No minimum term · 1 month notice to leave'));
   await page.locator('.plan', { hasText: 'Hybrid Monthly' }).getByRole('button', { name: 'Edit' }).click();
   c.ok('terms prefilled', (await dialog.getByLabel('Minimum term (months)').inputValue()) === '6' && (await dialog.getByLabel('Notice to leave (days)').inputValue()) === '14');
   c.ok('no warning for ordinary terms', (await dialog.getByRole('note').count()) === 0);

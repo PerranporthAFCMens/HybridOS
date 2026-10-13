@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ComponentPropsWithRef, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 
 // The ONLY place a raw <input> or <select> may appear (lint enforces this). The styling in
@@ -5,6 +6,24 @@ import type { ComponentPropsWithRef, InputHTMLAttributes, ReactNode, SelectHTMLA
 
 export function Input({ className = '', ...rest }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={`ctl ${className}`.trim()} {...rest} />;
+}
+
+/** A password box with an eye to show what has been typed. The label of the button says what tapping it will do. */
+export function PasswordInput({ className = '', eyeFor, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & { eyeFor?: string }) {
+  const [shown, setShown] = useState(false);
+  const what = eyeFor ?? (rest['aria-label'] ? rest['aria-label'].toLowerCase() : 'password');
+  return (
+    <span className="ctl-pass">
+      <input type={shown ? 'text' : 'password'} className={`ctl ${className}`.trim()} {...rest} />
+      <button type="button" className="ctl-eye" aria-label={`${shown ? 'Hide' : 'Show'} ${what}`} aria-pressed={shown} onClick={() => setShown((v) => !v)}>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+          <circle cx="12" cy="12" r="3" />
+          {shown && <path d="M3 3l18 18" />}
+        </svg>
+      </button>
+    </span>
+  );
 }
 
 export function DateInput({ className = '', ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
