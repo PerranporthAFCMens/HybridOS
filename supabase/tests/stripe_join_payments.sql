@@ -128,6 +128,7 @@ select public.stripe_save_customer(pt.gym_a(), pt.u('m4'), 'cus_M4', 'sandbox');
 select pt.check('the customer is saved once for the member and gym', (select count(*) || ':' || max(stripe_customer_id) from public.member_stripe_customers where user_id = pt.u('m4')), '1:cus_M4');
 
 -- ---------- starting to pay ----------
+select pt.check('DIAG1', (select string_agg(user_id::text || ' ' || coalesce(phone,'-') || ' ' || coalesce(first_name,'-'), ' | ') from public.profiles where id in (pt.u('m1'), pt.u('m4'))) || ' // ' || (select coalesce(string_agg(user_id::text || ' ' || status::text, ' | '), 'no memberships') from public.memberships where gym_id = pt.gym_a()) || ' // ' || private.member_gaps(pt.u('m1'), pt.gym_a())::text || ' // ' || private.member_gaps(pt.u('m4'), pt.gym_a())::text, 'x');
 select pt.check('a person with missing details cannot start paying', pt.begin(pt.u('m3'), pt.plan(1), 'sub_M3') like 'ERROR:Complete your details before joining:%', true);
 select pt.check('someone who already has a membership cannot start again', pt.begin(pt.u('m1'), pt.plan(1), 'sub_M1'), 'ERROR:You already have a membership at this gym. Contact your gym.');
 select pt.check('a plan that is not public cannot be paid for', pt.begin(pt.u('m4'), pt.plan(3), 'sub_M4'), 'ERROR:Membership plan is not available');
