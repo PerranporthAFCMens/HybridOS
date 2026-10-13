@@ -5,6 +5,7 @@ import { Card, Empty, SectionTitle } from '../ui/Card';
 import { LinkButton } from '../ui/Button';
 import { links } from '../shell/legacy';
 import { MemberTrend } from './MemberTrend';
+import { OwedAlert } from './OwedAlert';
 import {
   activePlans,
   bookedPercent,
@@ -55,6 +56,7 @@ export function Today() {
       {failed && <div className="empty" role="alert" style={{ marginBottom: 16 }}>Some figures could not load. Refresh to try again.</div>}
 
       <div className="today-grid">
+        <OwedAlert />
         <Card className="full today-head">
           <p className="muted">{needs ? summaryLine(needs.length) : 'Checking what needs you…'}</p>
           <div className="today-actions">

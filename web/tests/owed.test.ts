@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Debtor, MissedPayment } from '../src/data/arrears';
-import { daysLate, findDebtors, HOW_WORDS, missedTable, missedText, owedOf, owedTable, reasonWords, shortDate, stateWords, totalMissed, totalOwed } from '../src/reports/owed';
+import { alertLine, biggestDebts, daysLate, findDebtors, HOW_WORDS, missedTable, missedText, owedOf, owedTable, reasonWords, shortDate, stateWords, totalMissed, totalOwed } from '../src/reports/owed';
 import { overdueOptions } from '../src/payments/calc';
 
 const d = (o: Partial<Debtor> = {}): Debtor => ({ userId: 'u1', name: 'Priya Nair', planName: 'Basic', membershipStatus: 'active', owedPence: 7000, missedCount: 2, oldestMissed: '2026-09-10', latestMissed: '2026-10-10', latestReason: 'insufficient_funds', ...o });
@@ -84,5 +84,17 @@ describe('the late payment setting', () => {
     expect(overdueOptions(10).map((o) => o.value)).toEqual([0, 3, 7, 10, 14, 30]);
     expect(overdueOptions(0)[0]?.label).toBe('The day after it is due');
     expect(overdueOptions(7).find((o) => o.value === 14)?.label).toBe('14 days after it is due');
+  });
+});
+
+describe('the front dashboard alert', () => {
+  const rows = [d(), d({ userId: 'u2', name: 'Sam Lee', owedPence: 5000, missedCount: 1 }), d({ userId: 'u3', name: 'Dee', owedPence: 1500, missedCount: 1 }), d({ userId: 'u4', name: 'Quinn', owedPence: 9000, missedCount: 3 })];
+  it('says how many owe how much', () => {
+    expect(alertLine(rows)).toBe('4 people owe £225.00 across 7 missed payments');
+    expect(alertLine([d({ owedPence: 2500, missedCount: 1 })])).toBe('1 person owes £25.00 across 1 missed payment');
+  });
+  it('names the biggest debts first', () => {
+    expect(biggestDebts(rows).map((r) => `${r.name} ${r.owed}`)).toEqual(['Quinn £90.00', 'Priya Nair £70.00', 'Sam Lee £50.00']);
+    expect(biggestDebts(rows, 1)).toHaveLength(1);
   });
 });

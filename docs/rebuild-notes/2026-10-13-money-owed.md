@@ -21,3 +21,6 @@
 - Members are not stopped from booking or entering because they are not financial. This is a flag and a report only.
 - A member cannot yet see their own missed payment in the app.
 - Emails or reminders to people who owe.
+
+## Front dashboard alert (added later the same day)
+Owners and admins see a red "Not financial: 4 people owe £727.00 across 4 missed payments" card at the top of Today, with the three biggest debts named and a "See who owes" button that opens Reports on the Money owed tab (`/reports?tab=owed`). It shows nothing when nobody owes anything, and nothing to anyone who cannot see money owed. `web/src/today/OwedAlert.tsx`; checks in `web/browser/owed.mjs`.
