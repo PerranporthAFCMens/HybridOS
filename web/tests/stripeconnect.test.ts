@@ -50,6 +50,12 @@ describe('what we keep of a Stripe account (Accounts v2)', () => {
     expect(s.last_error).toBe('Stripe still needs: individual id number, external account, business profile url and more.');
     expect(s.details_submitted).toBe(false);
   });
+  it('says nothing is needed from the gym while Stripe is reviewing, or when Stripe is the one to act', () => {
+    const entries = [{ description: 'identity.individual.dob.day', minimum_deadline: { status: 'currently_due' } }];
+    expect(accountState({ ...merchant('pending'), requirements: { entries } }).last_error).toBeNull();
+    const byStripe = [{ description: 'identity.individual.dob.day', awaiting_action_from: 'stripe', minimum_deadline: { status: 'currently_due' } }];
+    expect(accountState({ ...merchant('restricted'), requirements: { entries: byStripe } }).last_error).toBe('Stripe has not allowed card payments on this account (restricted).');
+  });
   it('says when Stripe has not allowed card payments', () => {
     expect(accountState(merchant('restricted')).last_error).toBe('Stripe has not allowed card payments on this account (restricted).');
     expect(accountState(merchant('unsupported')).last_error).toContain('unsupported');

@@ -64,9 +64,10 @@ export function accountState(a: Row): AccountState {
   const payouts = str(obj(obj(caps.stripe_balance).payouts).status)
   const charges = card === 'active'
   const entries = Array.isArray(obj(a.requirements).entries) ? (obj(a.requirements).entries as unknown[]).map(obj) : []
-  const due = entries.filter((e) => ['currently_due', 'past_due'].includes(str(obj(e.minimum_deadline).status))).map((e) => words(str(e.description) || str(e.reference_type) || 'something')).filter(Boolean)
+  // Only what the gym itself still has to give: not what Stripe is checking, and nothing at all while the whole capability is under review.
+  const due = entries.filter((e) => str(e.awaiting_action_from) !== 'stripe' && ['currently_due', 'past_due'].includes(str(obj(e.minimum_deadline).status))).map((e) => words(str(e.description) || str(e.reference_type) || 'something')).filter(Boolean)
   let last: string | null = null
-  if (!charges && due.length > 0) last = `Stripe still needs: ${due.slice(0, 3).join(', ')}${due.length > 3 ? ' and more' : ''}.`
+  if (!charges && card !== 'pending' && due.length > 0) last = `Stripe still needs: ${due.slice(0, 3).join(', ')}${due.length > 3 ? ' and more' : ''}.`
   else if (card === 'restricted' || card === 'unsupported') last = `Stripe has not allowed card payments on this account (${card}).`
   return { details_submitted: charges || card === 'pending' || (card === 'restricted' && due.length === 0), charges_enabled: charges, payouts_enabled: payouts === 'active', last_error: last }
 }
