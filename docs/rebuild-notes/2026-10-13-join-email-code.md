@@ -18,3 +18,14 @@ Verify JWT off, as it is now). The web page change comes with the next release o
 **Checked.** Unit tests for the code cleaning and check; browser check (phone and desktop): empty and short code refused, wrong code
 refused with a plain message, tidy digits sent for the right email and type, a new code can be requested, the right code lands on
 "About you" signed in. Email hook smoke check passes.
+
+## Follow-up: the code is 8 digits, not 6 (13 October 2026)
+
+The first real test showed the email carries an **8-digit** code (this Supabase project's "email code length" is 8; Supabase allows 6 to
+10). The page only accepted exactly 6, so it would have refused a correct code. The page now accepts 6 to 10 digits, says "Code from the
+email", and ignores spaces and dashes. The length is a Supabase setting (Authentication, Providers, Email), so it can be changed there
+without touching the page.
+
+**Not changed, noted for later.** The sign-up email still says "HybridOne" instead of the gym's name. The email sender only finds the
+gym when the link carries `gym_id`, which the new sign-up page does not send, and the database lookup needs it. Making emails carry the
+gym's name needs both the page and a small database change; left alone so the confirmation link's redirect does not change.

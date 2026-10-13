@@ -78,11 +78,12 @@ export function checkAccount(email: string, password: string, confirm: string): 
   return null;
 }
 
-/** The six digits from what someone typed or pasted (spaces, dashes and other characters are ignored). */
-export const cleanCode = (text: string): string => text.replace(/\D/g, '').slice(0, 6);
+/** The digits from what someone typed or pasted (spaces, dashes and other characters are ignored). Supabase codes are 6 to 10 digits long; this project's are 8. */
+export const cleanCode = (text: string): string => text.replace(/\D/g, '').slice(0, 10);
 
 export function checkCode(text: string): string | null {
-  return cleanCode(text).length === 6 ? null : 'Enter the 6-digit code from the email.';
+  const n = cleanCode(text).length;
+  return n >= 6 && n <= 10 ? null : 'Enter the code from the email. It is made of numbers only.';
 }
 
 const name = (v: string, what: string): string | null => (!v.trim() ? `Enter ${what}.` : v.trim().length > 80 ? 'That is too long.' : null);

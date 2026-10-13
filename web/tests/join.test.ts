@@ -166,19 +166,21 @@ describe('paying to join', () => {
   });
 });
 
-describe('the 6-digit email code', () => {
+describe('the email code', () => {
   it('keeps the digits, however it was typed or pasted', () => {
     expect(cleanCode('123456')).toBe('123456');
     expect(cleanCode(' 123 456 ')).toBe('123456');
     expect(cleanCode('123-456')).toBe('123456');
     expect(cleanCode('code: 654321.')).toBe('654321');
-    expect(cleanCode('1234567890')).toBe('123456');
+    expect(cleanCode('06700482')).toBe('06700482');
+    expect(cleanCode('123456789012')).toBe('1234567890');
   });
-  it('needs six digits', () => {
+  it('accepts the 6 to 10 digit codes Supabase sends, and nothing else', () => {
     expect(checkCode('123456')).toBeNull();
-    expect(checkCode('12 34 56')).toBeNull();
-    expect(checkCode('')).toMatch(/6-digit code/);
-    expect(checkCode('12345')).toMatch(/6-digit code/);
-    expect(checkCode('abcdef')).toMatch(/6-digit code/);
+    expect(checkCode('0670 0482')).toBeNull();
+    expect(checkCode('1234567890')).toBeNull();
+    expect(checkCode('')).toMatch(/code from the email/);
+    expect(checkCode('12345')).toMatch(/code from the email/);
+    expect(checkCode('abcdef')).toMatch(/code from the email/);
   });
 });
