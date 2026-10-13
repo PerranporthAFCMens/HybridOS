@@ -2,15 +2,16 @@ import { siteUrl } from '../app/site';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { createAccount, currentUserId, getJoinGym, getSignupDocuments, joinWithPlan, myMembershipAt, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin } from '../data/join';
+import { createAccount, currentUserId, getJoinGym, getPaymentMode, getSignupDocuments, joinWithPlan, myMembershipAt, preparePayment, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin, type PaymentSession } from '../data/join';
 import { publicPdfUrl } from '../data/signup';
 import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Checkbox, DateInput, Field, FieldRow, Input, Select } from '../ui/Field';
 import {
-  EMPTY_DETAILS, STEP_TITLES, answersPayload, checkAbout, checkAccount, checkAddress, checkEmergency, checkGuardian, checkSign, isUnder18, planPrice, stepsFor, toRpcArgs,
-  type Answers, type JoinDetails, type StepId,
+  EMPTY_DETAILS, STEP_TITLES, answersPayload, canPayOnline, checkAbout, checkAccount, checkAddress, checkEmergency, checkGuardian, checkPayer, checkSign, isFreePlan, isUnder18, payTermsText, planPrice, stepsFor, toRpcArgs,
+  type Answers, type JoinDetails, type JoinPlan, type StepId,
 } from './calc';
+import { PayForm } from './PayForm';
 import { SignaturePad } from './SignaturePad';
 import './join.css';
 
@@ -54,7 +55,10 @@ export function Join() {
   const [msg, setMsg] = useState<{ text: string; good: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
-  const [joined, setJoined] = useState<{ planName: string; gymId: string } | null>(null);
+  const [joined, setJoined] = useState<{ planName: string; gymId: string; confirming?: boolean } | null>(null);
+  const [chosen, setChosen] = useState<JoinPlan | null>(null);
+  const [payer, setPayer] = useState({ email: '' });
+  const [payment, setPayment] = useState<PaymentSession | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -73,10 +77,13 @@ export function Join() {
 
   // Someone who already has a membership here is never shown the join steps or the plan list.
   const existingQ = useQuery({ queryKey: ['join-existing', gymQ.data?.gymId, userId], queryFn: () => myMembershipAt(gymQ.data?.gymId ?? '', userId ?? ''), enabled: !!userId && !!gymQ.data?.gymId, retry: false });
+  // If the payment service cannot be asked (not set up yet), joining carries on without a payment step.
+  const modeQ = useQuery({ queryKey: ['join-mode', slug, userId], queryFn: () => getPaymentMode(slug), enabled: !!userId, retry: false });
+  const takesPayment = modeQ.data === 'stripe';
   const docsQ = useQuery({ queryKey: ['join-docs', slug, userId], queryFn: () => getSignupDocuments(slug), enabled: !!userId, retry: false });
   const docs = docsQ.data;
   const under18 = isUnder18(d.dob, now);
-  const steps = stepsFor({ under18, hasDocuments: docs ? docs.length > 0 : false });
+  const steps = stepsFor({ under18, hasDocuments: docs ? docs.length > 0 : false, takesPayment });
   const at = steps.indexOf(step);
   const gym = gymQ.data;
 
@@ -155,23 +162,38 @@ export function Join() {
       next();
     });
   };
-  const choose = (planId: string) =>
-    void run(null, async () => {
-      const r = await joinWithPlan(slug, planId);
-      try {
-        sessionStorage.removeItem(draftKey(slug));
-        sessionStorage.setItem('hybrid-gym-id', r.gymId);
-      } catch {
-        /* nothing to clear */
-      }
-      setJoined(r);
-      setStep('done');
+  const finishJoin = (r: { planName: string; gymId: string; confirming?: boolean }) => {
+    try {
+      sessionStorage.removeItem(draftKey(slug));
+      sessionStorage.setItem('hybrid-gym-id', r.gymId);
+    } catch {
+      /* nothing to clear */
+    }
+    setJoined(r);
+    setStep('done');
+  };
+  const choose = (p: JoinPlan) => {
+    // A paid plan at a gym that takes payment here goes to the payment step; free plans and gyms without payments join as before.
+    if (takesPayment && !isFreePlan(p)) {
+      setChosen(p);
+      setPayment(null);
+      return go('pay');
+    }
+    void run(null, async () => finishJoin(await joinWithPlan(slug, p.id)));
+  };
+  const submitPayer = (e: FormEvent) => {
+    e.preventDefault();
+    if (!chosen) return;
+    void run(checkPayer(under18, d.guardianName, payer.email), async () => {
+      setPayment(await preparePayment(gym?.gymId ?? '', chosen.id, under18 ? { name: d.guardianName.trim(), email: payer.email.trim() } : null));
     });
+  };
 
   if (gymQ.isLoading || userId === undefined) return <div className="center muted">Loading…</div>;
   if (gymQ.isError || !gym) return <div className="center">This sign-up link is not valid. Ask your gym for a new one.</div>;
-  if (userId && existingQ.isLoading) return <div className="center muted">Loading…</div>;
-  if (userId && existingQ.data && step !== 'done') {
+  if (userId && (existingQ.isLoading || modeQ.isLoading)) return <div className="center muted">Loading…</div>;
+  // A pending membership at a gym that takes payment here is an unfinished payment: they may carry on and pay.
+  if (userId && existingQ.data && !(existingQ.data === 'pending' && takesPayment) && step !== 'done') {
     const status = existingQ.data;
     return (
       <main className="join">
@@ -342,7 +364,9 @@ export function Join() {
                     <h3>{p.name}</h3>
                     <div className="join-price">{planPrice(p)}</div>
                     <p className="muted">{p.description ?? (p.perks.join(' · ') || 'Membership')}</p>
-                    <Button variant="primary" disabled={busy} onClick={() => choose(p.id)}>Choose {p.name}</Button>
+                    {takesPayment && !isFreePlan(p) && !canPayOnline(p)
+                      ? <p className="muted small">This one cannot be paid for online. Ask {gym.name} to sign you up.</p>
+                      : <Button variant="primary" disabled={busy} onClick={() => choose(p)}>Choose {p.name}</Button>}
                   </article>
                 ))}
               </div>
@@ -352,9 +376,41 @@ export function Join() {
           </div>
         )}
 
+        {step === 'pay' && chosen && (
+          <div>
+            <h2>Payment</h2>
+            <div className="join-pay-summary">
+              <h3>{chosen.name}</h3>
+              <div className="join-price">{payTermsText(chosen)}</div>
+              {under18 && <p className="muted small">Because {d.firstName || 'this member'} is under 18, {d.guardianName || 'a parent or guardian'} agrees and pays.</p>}
+            </div>
+            {payment ? (
+              <PayForm
+                session={payment} gymId={gym.gymId} planId={chosen.id} busy={busy} onBusy={setBusy}
+                onBack={() => { setPayment(null); go('plan'); }}
+                onDone={(status) => finishJoin({ planName: chosen.name, gymId: gym.gymId, confirming: status === 'pending' })}
+              />
+            ) : (
+              <form onSubmit={submitPayer} noValidate>
+                {under18 && (
+                  <Field label="Parent or guardian email" htmlFor="join-payer-email" hint="Their receipts and payment reminders go here.">
+                    <Input id="join-payer-email" type="email" autoComplete="email" value={payer.email} onChange={(e) => setPayer({ email: e.target.value })} />
+                  </Field>
+                )}
+                {alertBox}
+                <div className="join-nav">
+                  <Button onClick={() => go('plan')} disabled={busy}>Back</Button>
+                  <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Setting up…' : 'Continue to payment'}</Button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
+
         {step === 'done' && joined && (
           <div className="join-done">
-            <h2>{joined.planName} is active</h2>
+            <h2>{joined.confirming ? 'Payment received' : `${joined.planName} is active`}</h2>
+            {joined.confirming && <p>Your {joined.planName} membership switches on as soon as the bank confirms the payment. This usually takes a minute. Please do not pay again.</p>}
             <p>Welcome to {gym.name}, {d.firstName || 'and thanks for joining'}.</p>
             {docs && docs.length > 0 && <p className="muted">A signed copy of what you agreed is on its way to your email. If it does not arrive in a few minutes, check your spam folder or ask {gym.name}.</p>}
             <LinkButton variant="primary" href={`${siteUrl('member.html')}?gym_id=${encodeURIComponent(joined.gymId)}`}>Open the member app</LinkButton>

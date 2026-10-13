@@ -1,5 +1,6 @@
 import { siteUrl } from '../app/site';
 import { supabase } from './client';
+import { edgeErrorMessage } from './edge';
 import type { Json } from './database.types';
 import { BLOCKING_STATUSES, looksLikeExistingAccount, type JoinDocument, type JoinPlan, type JoinQuestion } from '../join/calc';
 
@@ -118,4 +119,48 @@ export async function joinWithPlan(slug: string, planId: string): Promise<{ plan
   if (error) throw new Error(error.message);
   const r = obj(data);
   return { planName: str(r.plan_name) || 'Membership', gymId: str(r.gym_id) };
+}
+
+// ---- Paying to join (Stripe) ----
+
+/** 'stripe' when this gym takes the first payment on the sign-up page, otherwise 'off' (joining works as it always did). */
+export async function getPaymentMode(slug: string): Promise<'stripe' | 'off'> {
+  const { data, error } = await supabase.rpc('get_gym_payment_mode', { p_gym_slug: slug });
+  if (error) throw new Error(error.message);
+  return data === 'stripe' ? 'stripe' : 'off';
+}
+
+export interface PaymentSession {
+  publishableKey: string;
+  stripeAccount: string;
+  clientSecret: string;
+  subscriptionId: string;
+  dueTodayPence: number;
+  amountPence: number;
+  interval: string;
+  nextPaymentDate: string;
+  wording: string;
+  under18: boolean;
+}
+
+async function callJoin(body: Record<string, unknown>): Promise<Record<string, Json | undefined>> {
+  const { data, error } = await supabase.functions.invoke('stripe-join', { body });
+  if (error) throw new Error(await edgeErrorMessage(error, 'The payment service did not answer. Please try again.'));
+  return obj(data as Json);
+}
+
+/** Sets up the payment for this plan (and creates the pending membership). A person under 18 passes their parent or guardian. */
+export async function preparePayment(gymId: string, planId: string, guardian: { name: string; email: string } | null): Promise<PaymentSession> {
+  const r = await callJoin({ action: 'prepare', gym_id: gymId, plan_id: planId, ...(guardian ? { guardian } : {}) });
+  return {
+    publishableKey: str(r.publishable_key), stripeAccount: str(r.stripe_account), clientSecret: str(r.client_secret), subscriptionId: str(r.subscription_id),
+    dueTodayPence: Number(r.amount_due_pence) || 0, amountPence: Number(r.amount_pence) || 0, interval: str(r.interval), nextPaymentDate: str(r.next_payment_date),
+    wording: str(r.wording), under18: r.under18 === true,
+  };
+}
+
+/** After the card form worked: the server asks Stripe, and only then turns the membership on. 'pending' means Stripe has not confirmed yet. */
+export async function finishPayment(gymId: string, planId: string, subscriptionId: string): Promise<'active' | 'pending'> {
+  const r = await callJoin({ action: 'finish', gym_id: gymId, plan_id: planId, subscription_id: subscriptionId });
+  return r.status === 'active' ? 'active' : 'pending';
 }

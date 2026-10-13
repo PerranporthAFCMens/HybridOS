@@ -23,3 +23,8 @@
 .join-doc h3 { margin: 0 0 6px; }
 .join-q { margin: 10px 0; }
 .join-q-text { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.join-due { margin: 0 0 12px; }
+.join-card { min-height: 120px; margin-bottom: 12px; }
+.join-agree { margin: 12px 0; font-size: 14px; }
+.join-pay-summary { padding: 12px 14px; border: 1px solid var(--hybrid-line); border-radius: 12px; margin-bottom: 12px; }
+.join-pay-summary h3 { margin: 0 0 4px; }

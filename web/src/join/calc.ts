@@ -24,19 +24,21 @@ export const EMPTY_DETAILS: JoinDetails = {
   emergencyName: '', emergencyPhone: '', emergencyRelationship: '', guardianName: '', guardianPhone: '',
 };
 
-export type StepId = 'account' | 'about' | 'address' | 'emergency' | 'guardian' | 'sign' | 'plan' | 'done';
+export type StepId = 'account' | 'about' | 'address' | 'emergency' | 'guardian' | 'sign' | 'plan' | 'pay' | 'done';
 
 export const STEP_TITLES: Record<StepId, string> = {
   account: 'Your account', about: 'About you', address: 'Your address', emergency: 'Emergency contact',
-  guardian: 'Parent or guardian', sign: 'Read and sign', plan: 'Choose your membership', done: 'Welcome',
+  guardian: 'Parent or guardian', sign: 'Read and sign', plan: 'Choose your membership', pay: 'Payment', done: 'Welcome',
 };
 
-/** The steps this person goes through. Guardian only under 18; reading and signing only when the gym has documents. */
-export function stepsFor(opts: { under18: boolean; hasDocuments: boolean }): StepId[] {
+/** The steps this person goes through. Guardian only under 18; reading and signing only when the gym has documents; payment only when the gym takes it here. */
+export function stepsFor(opts: { under18: boolean; hasDocuments: boolean; takesPayment?: boolean }): StepId[] {
   const steps: StepId[] = ['account', 'about', 'address', 'emergency'];
   if (opts.under18) steps.push('guardian');
   if (opts.hasDocuments) steps.push('sign');
-  steps.push('plan', 'done');
+  steps.push('plan');
+  if (opts.takesPayment) steps.push('pay');
+  steps.push('done');
   return steps;
 }
 
@@ -136,6 +138,39 @@ export interface JoinPlan {
 export function planPrice(p: Pick<JoinPlan, 'pricePence' | 'interval'>): string {
   const amount = `£${(p.pricePence / 100).toFixed(2)}`;
   return p.interval === 'one_off' ? amount : `${amount} / ${p.interval}`;
+}
+
+// ---- Paying ----
+
+const PAYABLE_INTERVALS = ['weekly', 'monthly', 'quarterly', 'annual'];
+const EVERY: Record<string, string> = { weekly: 'week', monthly: 'month', quarterly: '3 months', annual: 'year' };
+
+export const moneyText = (pence: number): string => `£${(Math.max(0, pence) / 100).toFixed(2)}`;
+
+/** A free plan is joined without a card, as it always was. */
+export const isFreePlan = (p: Pick<JoinPlan, 'pricePence'>): boolean => p.pricePence <= 0;
+
+/** Can this plan be paid for on the sign-up page? Paid, and repeating (one-off passes are not subscriptions). */
+export function canPayOnline(p: Pick<JoinPlan, 'pricePence' | 'interval'>): boolean {
+  return p.pricePence > 0 && PAYABLE_INTERVALS.includes(p.interval);
+}
+
+/** "£59.00 today, then £59.00 every month" */
+export function payTermsText(p: Pick<JoinPlan, 'pricePence' | 'interval'>): string {
+  return `${moneyText(p.pricePence)} today, then ${moneyText(p.pricePence)} every ${EVERY[p.interval] ?? 'period'}`;
+}
+
+/** A person under 18 has a parent or guardian pay; they need a name and an email address. Anyone else pays themselves. */
+export function checkPayer(under18: boolean, guardianName: string, guardianEmail: string): string | null {
+  if (!under18) return null;
+  if (guardianName.trim().length < 2) return "Enter your parent or guardian's name.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail.trim())) return "Enter your parent or guardian's email address.";
+  return null;
+}
+
+/** The page may not let someone pay until they have ticked the agreement shown to them. */
+export function checkAgreed(agreed: boolean): string | null {
+  return agreed ? null : 'Tick the box to say you agree before paying.';
 }
 
 // ---- Reading and signing ----
