@@ -199,6 +199,7 @@ begin
   );
 end $$;
 
+drop function public.stripe_membership_state(uuid);
 drop function public.staff_end_membership(uuid, date, text);
 drop function public.staff_release_from_term(uuid, text);
 drop function public.apply_plan_terms_to_members(uuid, text);

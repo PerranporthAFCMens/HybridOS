@@ -12,6 +12,7 @@
 --                                                      is the same or better for the member (shorter or equal term and notice)
 --   (part 2, 20261015091000_plan_terms_functions.sql) request_membership_cancel and get_my_membership_options use the member's own terms, else the gym-wide rule
 --   (part 2) get_public_gym_join_options and stripe_join_context carry the plan's terms so they are shown before paying
+--   stripe_membership_state(membership)                what the Stripe function needs to stop or schedule billing (service role only)
 -- Changing a plan's terms later changes nothing for existing members unless the gym passes them on (and only if better).
 -- Rollback: supabase/rollback/20261015_drop_plan_terms.sql. Check: supabase/verification/20261015_plan_terms_check.sql.
 
@@ -134,3 +135,23 @@ end $$;
 
 revoke all on function public.staff_end_membership(uuid, date, text), public.staff_release_from_term(uuid, text), public.apply_plan_terms_to_members(uuid, text) from public, anon, authenticated, service_role;
 grant execute on function public.staff_end_membership(uuid, date, text), public.staff_release_from_term(uuid, text), public.apply_plan_terms_to_members(uuid, text) to authenticated;
+
+-- For the Stripe function that makes Stripe match this database (stop or schedule billing when a membership ends). Service role only.
+create function public.stripe_membership_state(p_membership_id uuid) returns jsonb
+  language plpgsql stable security definer set search_path = ''
+as $$
+declare m public.memberships; a public.gym_stripe_accounts%rowtype; v_eff date; v_qs text;
+begin
+  select * into m from public.memberships where id = p_membership_id;
+  if not found then return jsonb_build_object('ok', false, 'reason', 'Membership not found'); end if;
+  select * into a from public.gym_stripe_accounts where gym_id = m.gym_id;
+  select q.effective_on, q.status into v_eff, v_qs from public.membership_requests q
+   where q.membership_id = m.id and q.kind = 'cancel' and q.status in ('approved', 'applied') order by q.effective_on limit 1;
+  return jsonb_build_object(
+    'ok', true, 'today', private.gym_today(),
+    'membership', jsonb_build_object('id', m.id, 'gym_id', m.gym_id, 'status', m.status, 'payment_provider', m.payment_provider, 'provider_subscription_id', m.provider_subscription_id, 'ends_on', m.ends_on),
+    'account', case when a.gym_id is null then null else jsonb_build_object('stripe_account_id', a.stripe_account_id, 'environment', a.environment) end,
+    'cancel', case when v_eff is null then null else jsonb_build_object('effective_on', v_eff, 'status', v_qs) end);
+end $$;
+revoke all on function public.stripe_membership_state(uuid) from public, anon, authenticated, service_role;
+grant execute on function public.stripe_membership_state(uuid) to service_role;

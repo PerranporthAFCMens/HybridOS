@@ -145,6 +145,12 @@ select pt.check('...the member keeps the better terms', (select term_months || '
 insert into public.memberships(gym_id, user_id, plan_id, status, starts_on) values (pt.gym_a(), pt.u('m6'), pt.plan(3), 'active', pt.today());
 select pt.check('a new joiner on that plan gets the new, longer terms', (select term_months || ':' || notice_days from public.memberships where user_id = pt.u('m6')), '24:90');
 
+-- ---------- what the Stripe function is told ----------
+select pt.check('the Stripe state shows a staff-dated ending as waiting', (public.stripe_membership_state((select id from public.memberships where user_id = pt.u('m5')))) #>> '{cancel,status}', 'approved');
+select pt.check('...and an ended membership as cancelled', (public.stripe_membership_state((select id from public.memberships where user_id = pt.u('m3')))) #>> '{membership,status}', 'cancelled');
+select pt.check('...and a member with nothing waiting has no cancel', (public.stripe_membership_state((select id from public.memberships where user_id = pt.u('m6')))) -> 'cancel' = 'null'::jsonb, true);
+select pt.check('a signed-in person cannot ask Stripe''s question', pt.q(pt.u('admin_a'), format($s$select public.stripe_membership_state(%L)::text$s$, (select id from public.memberships where user_id = pt.u('m5')))) like 'ERROR:%permission denied%', true);
+
 -- ---------- who can read the log ----------
 select pt.check('an admin reads the staff actions', pt.q(pt.u('admin_a'), format($s$select count(*) > 0 from public.membership_staff_actions where gym_id = %L$s$, pt.gym_a())), 'true');
 select pt.check('a member reads none', pt.q(pt.u('m1'), format($s$select count(*) from public.membership_staff_actions where gym_id = %L$s$, pt.gym_a())), '0');

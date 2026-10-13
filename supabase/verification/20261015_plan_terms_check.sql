@@ -24,6 +24,11 @@ select 'the three staff functions can be run by signed-in people (they check own
              and not has_function_privilege('anon', 'public.apply_plan_terms_to_members(uuid, text)', 'execute')
              and not has_function_privilege('service_role', 'public.staff_end_membership(uuid, date, text)', 'execute') then 'ok' else 'WRONG' end
 union all
+select 'only the Stripe service can ask what Stripe should do about a membership',
+       case when has_function_privilege('service_role', 'public.stripe_membership_state(uuid)', 'execute')
+             and not has_function_privilege('authenticated', 'public.stripe_membership_state(uuid)', 'execute')
+             and not has_function_privilege('anon', 'public.stripe_membership_state(uuid)', 'execute') then 'ok' else 'WRONG' end
+union all
 select 'cancelling uses the member''s own notice and term',
        case when pg_get_functiondef('public.request_membership_cancel(uuid, text)'::regprocedure) like '%m.notice_days%'
              and pg_get_functiondef('public.request_membership_cancel(uuid, text)'::regprocedure) like '%m.term_months%'
