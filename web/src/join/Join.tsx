@@ -259,8 +259,8 @@ export function Join() {
         {step === 'account' && checkEmail && (
           <form onSubmit={submitCode} noValidate>
             <h2>Check your email</h2>
-            <p>We sent a 6-digit code to <b>{acct.email}</b>. Type it in here to confirm your email address and carry on.</p>
-            <Field label="6-digit code" htmlFor="join-code">
+            <p>We sent a code to <b>{acct.email}</b>. Type it in here to confirm your email address and carry on.</p>
+            <Field label="Code from the email" htmlFor="join-code">
               <Input id="join-code" inputMode="numeric" autoComplete="one-time-code" maxLength={12} value={code} onChange={(e) => setCode(e.target.value)} />
             </Field>
             {alertBox}
