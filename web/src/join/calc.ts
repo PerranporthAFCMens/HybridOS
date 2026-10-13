@@ -132,6 +132,9 @@ export interface JoinPlan {
   pricePence: number;
   interval: string;
   perks: string[];
+  /** The plan's own terms (or the gym's rule), shown before joining. Null when the gym has set none. */
+  minTermMonths: number | null;
+  noticeDays: number | null;
 }
 
 /** "£59.00 / monthly", or just the price for a one-off. */

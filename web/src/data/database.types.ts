@@ -1378,6 +1378,8 @@ export type Database = {
           is_public: boolean
           joining_fee_pence: number
           members_can_switch_to: boolean
+          min_term_months: number | null
+          notice_days: number | null
           name: string
           price_pence: number
           trial_days: number
@@ -1398,6 +1400,8 @@ export type Database = {
           is_public?: boolean
           joining_fee_pence?: number
           members_can_switch_to?: boolean
+          min_term_months?: number | null
+          notice_days?: number | null
           name: string
           price_pence: number
           trial_days?: number
@@ -1418,6 +1422,8 @@ export type Database = {
           is_public?: boolean
           joining_fee_pence?: number
           members_can_switch_to?: boolean
+          min_term_months?: number | null
+          notice_days?: number | null
           name?: string
           price_pence?: number
           trial_days?: number
@@ -1648,6 +1654,7 @@ export type Database = {
           gym_id: string
           id: string
           member_id: string | null
+          notice_days: number | null
           payment_provider:
             | Database["public"]["Enums"]["payment_provider"]
             | null
@@ -1660,6 +1667,7 @@ export type Database = {
           provider_subscription_id: string | null
           starts_on: string | null
           status: Database["public"]["Enums"]["membership_status"]
+          term_months: number | null
           updated_at: string
           user_id: string | null
         }
@@ -1669,6 +1677,7 @@ export type Database = {
           gym_id: string
           id?: string
           member_id?: string | null
+          notice_days?: number | null
           payment_provider?:
             | Database["public"]["Enums"]["payment_provider"]
             | null
@@ -1681,6 +1690,7 @@ export type Database = {
           provider_subscription_id?: string | null
           starts_on?: string | null
           status?: Database["public"]["Enums"]["membership_status"]
+          term_months?: number | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1690,6 +1700,7 @@ export type Database = {
           gym_id?: string
           id?: string
           member_id?: string | null
+          notice_days?: number | null
           payment_provider?:
             | Database["public"]["Enums"]["payment_provider"]
             | null
@@ -1702,6 +1713,7 @@ export type Database = {
           provider_subscription_id?: string | null
           starts_on?: string | null
           status?: Database["public"]["Enums"]["membership_status"]
+          term_months?: number | null
           updated_at?: string
           user_id?: string | null
         }
@@ -3939,6 +3951,9 @@ export type Database = {
       request_membership_change: { Args: { p_membership_id: string; p_to_plan_id: string }; Returns: string }
       request_membership_pause: { Args: { p_ends_on: string; p_membership_id: string; p_reason?: string; p_starts_on: string }; Returns: string }
       withdraw_membership_request: { Args: { p_request_id: string }; Returns: undefined }
+      staff_end_membership: { Args: { p_last_day: string | null; p_membership_id: string; p_reason: string }; Returns: string }
+      staff_release_from_term: { Args: { p_membership_id: string; p_reason: string }; Returns: undefined }
+      apply_plan_terms_to_members: { Args: { p_plan_id: string; p_reason: string }; Returns: number }
       member_book_class: { Args: { p_session_id: string }; Returns: Json }
       member_cancel_class: { Args: { p_session_id: string }; Returns: Json }
       member_class_schedule: {
@@ -4042,7 +4057,7 @@ export type Database = {
         | "paused"
         | "cancelled"
         | "expired"
-      payment_provider: "gocardless" | "manual" | "other"
+      payment_provider: "gocardless" | "manual" | "other" | "stripe"
       payment_state:
         | "pending"
         | "submitted"
@@ -4193,7 +4208,7 @@ export const Constants = {
         "cancelled",
         "expired",
       ],
-      payment_provider: ["gocardless", "manual", "other"],
+      payment_provider: ["gocardless", "manual", "other", "stripe"],
       payment_state: [
         "pending",
         "submitted",

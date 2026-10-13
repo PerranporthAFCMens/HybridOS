@@ -11,6 +11,7 @@ import {
   EMPTY_DETAILS, STEP_TITLES, answersPayload, canPayOnline, checkAbout, checkAccount, checkAddress, checkEmergency, checkGuardian, checkPayer, checkSign, isFreePlan, isUnder18, payTermsText, planPrice, stepsFor, toRpcArgs,
   type Answers, type JoinDetails, type JoinPlan, type StepId,
 } from './calc';
+import { termsSentence } from '../plans/terms';
 import { PayForm } from './PayForm';
 import { SignaturePad } from './SignaturePad';
 import './join.css';
@@ -364,6 +365,7 @@ export function Join() {
                     <h3>{p.name}</h3>
                     <div className="join-price">{planPrice(p)}</div>
                     <p className="muted">{p.description ?? (p.perks.join(' · ') || 'Membership')}</p>
+                    {termsSentence(p.minTermMonths, p.noticeDays) && <p className="muted small">{termsSentence(p.minTermMonths, p.noticeDays)}</p>}
                     {takesPayment && !isFreePlan(p) && !canPayOnline(p)
                       ? <p className="muted small">This one cannot be paid for online. Ask {gym.name} to sign you up.</p>
                       : <Button variant="primary" disabled={busy} onClick={() => choose(p)}>Choose {p.name}</Button>}
@@ -382,6 +384,7 @@ export function Join() {
             <div className="join-pay-summary">
               <h3>{chosen.name}</h3>
               <div className="join-price">{payTermsText(chosen)}</div>
+              {termsSentence(chosen.minTermMonths, chosen.noticeDays) && <p className="muted small">{termsSentence(chosen.minTermMonths, chosen.noticeDays)}</p>}
               {under18 && <p className="muted small">Because {d.firstName || 'this member'} is under 18, {d.guardianName || 'a parent or guardian'} agrees and pays.</p>}
             </div>
             {payment ? (

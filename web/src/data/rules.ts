@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { syncStripe } from './terms';
 import type { Database, Json } from './database.types';
 
 export type RulesRow = Database['public']['Tables']['membership_rules']['Row'];
@@ -16,7 +17,7 @@ export async function saveRules(gymId: string, userId: string, row: Omit<RulesRo
 }
 
 export interface RequestRow {
-  id: string; kind: string; status: string; userId: string; effectiveOn: string; untilOn: string | null; fromPlanId: string | null; toPlanId: string | null;
+  id: string; membershipId: string; kind: string; status: string; userId: string; effectiveOn: string; untilOn: string | null; fromPlanId: string | null; toPlanId: string | null;
   reason: string | null; feePence: number; requestedAt: string; decidedAt: string | null; decisionNote: string | null; direction: string;
 }
 
@@ -25,22 +26,27 @@ export async function listRequests(gymId: string): Promise<RequestRow[]> {
   const since = new Date(Date.now() - 60 * 86400000).toISOString();
   const { data, error } = await supabase
     .from('membership_requests')
-    .select('id, kind, status, user_id, effective_on, until_on, from_plan_id, to_plan_id, reason, fee_pence, requested_at, decided_at, decision_note, rules_snapshot')
+    .select('id, membership_id, kind, status, user_id, effective_on, until_on, from_plan_id, to_plan_id, reason, fee_pence, requested_at, decided_at, decision_note, rules_snapshot')
     .eq('gym_id', gymId)
     .or(`status.eq.pending,status.eq.approved,requested_at.gte.${since}`)
     .order('requested_at', { ascending: false })
     .limit(200);
   if (error) throw error;
   return (data ?? []).map((r) => ({
-    id: r.id, kind: r.kind, status: r.status, userId: r.user_id, effectiveOn: r.effective_on, untilOn: r.until_on, fromPlanId: r.from_plan_id, toPlanId: r.to_plan_id,
+    id: r.id, membershipId: r.membership_id, kind: r.kind, status: r.status, userId: r.user_id, effectiveOn: r.effective_on, untilOn: r.until_on, fromPlanId: r.from_plan_id, toPlanId: r.to_plan_id,
     reason: r.reason, feePence: r.fee_pence, requestedAt: r.requested_at, decidedAt: r.decided_at, decisionNote: r.decision_note,
     direction: String((r.rules_snapshot as { direction?: unknown } | null)?.direction ?? ''),
   }));
 }
 
-export async function decideRequest(id: string, approve: boolean, note: string): Promise<void> {
+/**
+ * Approve or decline. When the request is about leaving, Stripe is then told to match (stop billing, or take a scheduled stop back).
+ * Returns words for the gym when Stripe could not be told, or null when all is well.
+ */
+export async function decideRequest(id: string, approve: boolean, note: string, request: Pick<RequestRow, 'membershipId' | 'kind'>): Promise<string | null> {
   const { error } = await supabase.rpc('decide_membership_request', { p_request_id: id, p_approve: approve, p_note: note.trim() || undefined });
   if (error) throw new Error(error.message);
+  return request.kind === 'cancel' ? await syncStripe(request.membershipId) : null;
 }
 
 /** What this member may do, as the database works it out. */
@@ -58,6 +64,7 @@ export async function askToPause(membershipId: string, startsOn: string, endsOn:
 export async function askToCancel(membershipId: string, reason: string): Promise<void> {
   const { error } = await supabase.rpc('request_membership_cancel', { p_membership_id: membershipId, p_reason: reason || undefined });
   if (error) throw new Error(error.message);
+  await syncStripe(membershipId); // a cancellation that needs no approval is booked straight away; Stripe is told to stop on that day
 }
 
 export async function askToChange(membershipId: string, toPlanId: string): Promise<void> {
@@ -65,7 +72,8 @@ export async function askToChange(membershipId: string, toPlanId: string): Promi
   if (error) throw new Error(error.message);
 }
 
-export async function withdrawRequest(id: string): Promise<void> {
+export async function withdrawRequest(id: string, membershipId: string): Promise<void> {
   const { error } = await supabase.rpc('withdraw_membership_request', { p_request_id: id });
   if (error) throw new Error(error.message);
+  await syncStripe(membershipId); // taking back a booked leaving date takes the scheduled stop off Stripe
 }

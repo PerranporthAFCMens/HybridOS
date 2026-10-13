@@ -22,6 +22,7 @@ export function Requests() {
       return { rows, names, plans: new Map(plans.map((p) => [p.id, p.name])) };
     },
   });
+  const [warning, setWarning] = useState<string | null>(null);
   const waiting = q.data?.rows.filter((r) => r.status === 'pending') ?? [];
   const recent = q.data?.rows.filter((r) => r.status !== 'pending') ?? [];
   return (
@@ -33,6 +34,7 @@ export function Requests() {
           <div className="muted">Pause, cancel and plan change requests from members.</div>
         </div>
       </header>
+      {warning && <div className="msg error" role="alert">{warning}</div>}
       {q.isError && <Card><Empty>Could not load requests. Refresh to try again.</Empty></Card>}
       {q.isPending && <Card><Empty>Loading…</Empty></Card>}
       {q.isSuccess && (
@@ -41,7 +43,7 @@ export function Requests() {
             <h3>Waiting for you</h3>
             {waiting.length === 0 ? <Empty>Nothing is waiting.</Empty> : (
               <ul className="req-list">
-                {waiting.map((r) => <Item key={r.id} r={r} name={q.data.names.get(r.userId) ?? 'Member'} plans={q.data.plans} decide />)}
+                {waiting.map((r) => <Item key={r.id} r={r} name={q.data.names.get(r.userId) ?? 'Member'} plans={q.data.plans} decide onWarn={setWarning} />)}
               </ul>
             )}
           </Card>
@@ -59,14 +61,17 @@ export function Requests() {
   );
 }
 
-function Item({ r, name, plans, decide }: { r: RequestRow; name: string; plans: Map<string, string>; decide?: boolean }) {
+function Item({ r, name, plans, decide, onWarn }: { r: RequestRow; name: string; plans: Map<string, string>; decide?: boolean; onWarn?: (m: string | null) => void }) {
   const { gym } = useReadyAuth();
   const qc = useQueryClient();
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const go = useMutation({
-    mutationFn: (approve: boolean) => decideRequest(r.id, approve, note),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['membership-requests', gym.gymId] }),
+    mutationFn: (approve: boolean) => decideRequest(r.id, approve, note, r),
+    onSuccess: (stripeProblem) => {
+      onWarn?.(stripeProblem ? `Saved. But if ${name} pays by card through HybridOne, Stripe could not be told about it (${stripeProblem}). Check their subscription in Stripe.` : null);
+      return qc.invalidateQueries({ queryKey: ['membership-requests', gym.gymId] });
+    },
     onError: (e) => setError(e.message),
   });
   return (

@@ -1,4 +1,5 @@
 import type { PlanDetail, PlanInput } from '../data/plans';
+import { MAX_NOTICE_DAYS, MAX_TERM_MONTHS, parseWhole } from './terms';
 
 export const INTERVALS = [
   ['monthly', 'Monthly'],
@@ -30,11 +31,14 @@ export interface PlanForm {
   includesPt: boolean;
   isPublic: boolean;
   canSwitchTo: boolean;
+  /** Months and days as typed. Blank means use the gym-wide setting. */
+  minTerm: string;
+  notice: string;
 }
 
 export const emptyForm: PlanForm = {
   name: '', price: '', interval: 'monthly', accessType: 'hybrid', joiningFee: '0', classesPerWeek: '', description: '',
-  includesOpenGym: true, includesClasses: true, includesPt: false, isPublic: true, canSwitchTo: false,
+  includesOpenGym: true, includesClasses: true, includesPt: false, isPublic: true, canSwitchTo: false, minTerm: '', notice: '',
 };
 
 export function poundsText(pence: number): string {
@@ -47,6 +51,7 @@ export function formFromPlan(p: PlanDetail): PlanForm {
     joiningFee: poundsText(p.joiningFeeInPence), classesPerWeek: p.classesPerWeek === null ? '' : String(p.classesPerWeek),
     description: p.description ?? '', includesOpenGym: p.includesOpenGym, includesClasses: p.includesClasses,
     includesPt: p.includesPt, isPublic: p.isPublic, canSwitchTo: p.canSwitchTo,
+    minTerm: p.minTermMonths === null ? '' : String(p.minTermMonths), notice: p.noticeDays === null ? '' : String(p.noticeDays),
   };
 }
 
@@ -74,12 +79,16 @@ export function validatePlan(form: PlanForm): PlanCheck {
     if (!Number.isInteger(n) || n < 0) return { ok: false, message: 'Classes per week must be a whole number, or blank for unlimited.' };
     classesPerWeek = n;
   }
+  const minTermMonths = parseWhole(form.minTerm, 0, MAX_TERM_MONTHS);
+  if (minTermMonths === 'bad') return { ok: false, message: `The minimum term must be a whole number of months from 0 to ${MAX_TERM_MONTHS}, or blank to use your gym-wide setting.` };
+  const noticeDays = parseWhole(form.notice, 0, MAX_NOTICE_DAYS);
+  if (noticeDays === 'bad') return { ok: false, message: `The notice must be a whole number of days from 0 to ${MAX_NOTICE_DAYS}, or blank to use your gym-wide setting.` };
   return {
     ok: true,
     input: {
       name, description: form.description.trim() || null, priceInPence: price, interval: form.interval, accessType: form.accessType,
       joiningFeeInPence: joining, classesPerWeek, includesOpenGym: form.includesOpenGym, includesClasses: form.includesClasses,
-      includesPt: form.includesPt, isPublic: form.isPublic, canSwitchTo: form.canSwitchTo,
+      includesPt: form.includesPt, isPublic: form.isPublic, canSwitchTo: form.canSwitchTo, minTermMonths, noticeDays,
     },
   };
 }

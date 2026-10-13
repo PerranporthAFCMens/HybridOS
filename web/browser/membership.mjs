@@ -103,10 +103,12 @@ for (const [name, viewport] of Object.entries(sizes)) {
   process.env.MOCK_ROLE = 'member';
   {
     const rpcs = [];
+    const syncs = [];
     let opts = options();
     const { ctx, page, errors } = await signedInPage(browser, viewport);
     await mockSupabase(page, async ({ route, path, select, body }) => {
       if (path.endsWith('/rpc/get_my_membership_options')) return reply(route, opts);
+      if (path.endsWith('/functions/v1/stripe-membership-sync')) { syncs.push(body); return reply(route, { ok: true, action: 'none' }); }
       if (path.endsWith('/rpc/request_membership_pause') || path.endsWith('/rpc/request_membership_cancel') || path.endsWith('/rpc/request_membership_change') || path.endsWith('/rpc/withdraw_membership_request')) {
         rpcs.push({ fn: path.split('/').pop(), body });
         if (path.endsWith('request_membership_pause')) opts = options({ requests: [{ id: 'r1', kind: 'pause', status: 'pending', effective_on: body.p_starts_on, until_on: body.p_ends_on, to_plan_id: null, fee_pence: 500, requested_at: new Date().toISOString(), decision_note: null }] });
@@ -145,6 +147,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     await page.getByRole('button', { name: 'Withdraw Pause request' }).click();
     await c.has('withdrawn', page.getByText('Request withdrawn.'));
     c.ok('withdraw asked the database', rpcs[1]?.fn === 'withdraw_membership_request' && rpcs[1].body.p_request_id === 'r1');
+    c.ok('and Stripe was asked to match (a taken-back leaving date must not stay scheduled)', syncs.length === 1 && syncs[0].membership_id === 'm1');
 
     await page.getByRole('button', { name: 'Change my plan' }).click();
     await page.getByRole('button', { name: 'Choose All Access' }).click();
@@ -161,6 +164,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     await page.getByRole('button', { name: 'Ask the gym to cancel' }).click();
     await c.has('cancel sent', page.getByText('Sent. The gym will be in touch.'));
     c.ok('exact cancel request', rpcs[3]?.fn === 'request_membership_cancel' && rpcs[3].body.p_reason === 'Cost');
+    c.ok('Stripe was asked to match after the cancel request too', syncs.length === 2 && syncs[1].membership_id === 'm1');
 
     opts = options({ pause: { ...options().pause, enabled: false, allowed: false }, cancel: { ...options().cancel, enabled: false, allowed: false }, change: { allowed: false, reason: '', approval: 'admin', plans: [] } });
     await page.reload();
