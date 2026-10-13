@@ -4,6 +4,7 @@
 import { FIELDS, blankSets, describeTarget, readTarget, toDbSet, type SetValues, type Tracking } from '../train/calc';
 import { guessTracking } from '../train/activities';
 import { isPercent, percentError } from '../train/percent';
+import { isRepsTarget, repsError } from '../train/reps';
 
 export const BLOCK_TYPES = ['warmup', 'standard', 'strength', 'circuit', 'amrap', 'emom', 'for_time', 'intervals', 'finisher', 'cooldown', 'custom'] as const;
 export const TRACKING = ['strength', 'reps', 'time', 'distance', 'calories', 'intervals', 'instruction'] as const;
@@ -99,12 +100,15 @@ export function validateWorkout(f: WorkoutForm, blocks: BlockForm[]): WorkoutChe
       const kept = cleanSets(a.tracking, a.sets);
       for (const row of kept) {
         // A weight typed as a percentage is checked as one; the rest of the row is checked as numbers as usual.
-        const { weight, ...rest } = row;
+        const { weight, reps, ...rest } = row;
         if (isPercent(weight)) {
           const bad = percentError(weight ?? '');
           if (bad) return { ok: false, message: `${name}: ${bad}` };
         }
-        const r = toDbSet(asTracking(a.tracking), isPercent(weight) ? rest : row);
+        // Reps may be a range (8-12) or max; they are checked here and left out of the number check below.
+        const badReps = repsError(reps);
+        if (badReps) return { ok: false, message: `${name}: ${badReps}` };
+        const r = toDbSet(asTracking(a.tracking), { ...rest, ...(weight !== undefined && !isPercent(weight) ? { weight } : {}), ...(reps !== undefined && !isRepsTarget(reps) ? { reps } : {}) });
         if (r.error) return { ok: false, message: `${name}: ${r.error}` };
       }
       const display = kept.length ? describeTarget(asTracking(a.tracking), kept) : a.prescription.trim();

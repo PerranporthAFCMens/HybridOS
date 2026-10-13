@@ -11,6 +11,7 @@ const snapshot = {
     { position: 0, activity_name: 'Back Squat', tracking_type: 'strength', prescription: { display: '3 sets: 5 × 80%', sets: [{ reps: '5', weight: '80%' }, { reps: '5', weight: '80%' }, { reps: '5', weight: '80%' }] } },
     { position: 1, activity_name: 'Overhead Press', tracking_type: 'strength', prescription: { display: '5 × 70% / 3 × 80', sets: [{ reps: '5', weight: '70%' }, { reps: '3', weight: '80' }] } },
     { position: 2, activity_name: 'Bench Press', tracking_type: 'strength', prescription: { display: '5 × 75%', sets: [{ reps: '5', weight: '75%' }] } },
+    { position: 3, activity_name: 'Push-up', tracking_type: 'reps', prescription: { display: 'max reps / 8–12 reps', sets: [{ reps: 'max' }, { reps: '8-12' }] } },
   ] }],
 };
 const assignment = { id: 'a1', title: 'Squat day', source: 'pt', status: 'todo', scheduled_for: null, due_at: null, workout_snapshot: snapshot, focus_tags: [] };
@@ -81,6 +82,12 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await region('Bench Press').getByRole('radio', { name: 'As set' }).click();
   c.ok('with no best the weight box is empty and the reps are in', (await page.getByLabel('Bench Press set 1 Weight').inputValue()) === '' && (await page.getByLabel('Bench Press set 1 Reps').inputValue()) === '5');
   await page.getByLabel('Bench Press set 1 Weight').fill('60');
+
+  // Reps that are a range or "max": shown as set, never filled in for the member
+  c.ok('a "max" and a range are worded for the member', (await region('Push-up').textContent()).includes('Suggested: max reps / 8–12 reps'));
+  await region('Push-up').getByRole('radio', { name: 'As set' }).click();
+  c.ok('"As set" leaves the reps for the member to fill in', (await page.getByLabel('Push-up set 1 Reps').inputValue()) === '' && (await page.getByLabel('Push-up set 2 Reps').inputValue()) === '');
+  await page.getByLabel('Push-up set 1 Reps').fill('23');
 
   await page.getByRole('button', { name: 'Save Back Squat' }).click();
   await c.has('saving works', region('Back Squat').getByText('Saved', { exact: true }));

@@ -141,8 +141,8 @@ function EditorForm({ template, initialBlocks, w, onClose, onSaved }: { template
                   {a.prescription && <div className="muted small">Earlier wording: {a.prescription}. Fill in the sets below to replace it.</div>}
                   {tracking !== 'instruction' && (
                     <>
-                      <SetGrid name={label} tracking={tracking} percent sets={a.sets} onChange={(i, f, v) => setAct(bi, ai, { sets: a.sets.map((x, j) => (j === i ? { ...x, [f]: v } : x)) })} onRemove={(i) => setAct(bi, ai, { sets: a.sets.filter((_, j) => j !== i) })} />
-                      {tracking === 'strength' && <div className="muted small">Weight: type kilos, or a percentage of the member's best like 80%. Their app turns it into kilos from their heaviest lift for this exercise.</div>}
+                      <SetGrid name={label} tracking={tracking} plan sets={a.sets} onChange={(i, f, v) => setAct(bi, ai, { sets: a.sets.map((x, j) => (j === i ? { ...x, [f]: v } : x)) })} onRemove={(i) => setAct(bi, ai, { sets: a.sets.filter((_, j) => j !== i) })} />
+                      {tracking === 'strength' && <div className="muted small">Weight: type kilos, or a percentage of the member's best like 80% (their app turns it into kilos from their heaviest lift for this exercise). Reps: a number, a range like 8-12, or max.</div>}
                       <Button aria-label={`Add a set to ${label}`} onClick={() => setAct(bi, ai, { sets: [...a.sets, { ...(a.sets[a.sets.length - 1] ?? {}) }] })}>+ Set (same as the last)</Button>
                     </>
                   )}

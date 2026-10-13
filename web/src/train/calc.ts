@@ -1,6 +1,8 @@
 // Pure rules for the member's Train screens: reading what a coach sent, the boxes each kind of exercise needs,
 // turning what the member typed into database rows, and what to say about last time. No database in here.
 
+import { parseRepsTarget, repsText } from './reps';
+
 export type Tracking = 'strength' | 'reps' | 'time' | 'distance' | 'calories' | 'intervals' | 'instruction';
 
 export interface PlannedActivity { key: string; name: string; tracking: Tracking; plan: string; note: string; block: string; target: SetValues[] }
@@ -181,14 +183,15 @@ export function fromDbSet(tracking: Tracking, r: StoredSet): SetValues {
   return out;
 }
 
-/** "10 × 24 kg" (reps, then weight) style words for one set. */
+/** "10 × 24 kg" (reps, then weight) style words for one set. A range reads "8–12" and "max" reads "max reps". */
 export function setText(tracking: Tracking, v: SetValues): string {
   const parts: string[] = [];
   const side = asSide(v.side);
   const tail = side ? ` (${side})` : '';
+  const reps = v.reps ? (parseRepsTarget(v.reps)?.kind === 'max' ? 'max reps' : repsText(v.reps)) : '';
   // A weight typed as a percentage ("80%") or already worded ("80% (80 kg)") is shown as it is; a plain number is kilos.
-  if (tracking === 'strength') return [v.reps ? `${v.reps}` : '', v.weight ? (v.weight.includes('%') ? v.weight : `${v.weight} kg`) : ''].filter(Boolean).join(' × ') + tail;
-  if (v.reps) parts.push(`${v.reps} ${tracking === 'intervals' ? 'rounds' : 'reps'}`);
+  if (tracking === 'strength') return [reps, v.weight ? (v.weight.includes('%') ? v.weight : `${v.weight} kg`) : ''].filter(Boolean).join(' × ') + tail;
+  if (reps) parts.push(parseRepsTarget(v.reps)?.kind === 'max' ? 'max reps' : `${reps} ${tracking === 'intervals' ? 'rounds' : 'reps'}`);
   if (v.time) parts.push(v.time);
   if (v.distance) parts.push(`${v.distance} km`);
   if (v.calories) parts.push(`${v.calories} cal`);

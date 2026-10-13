@@ -27,7 +27,7 @@ function TimePicker({ label, value, onChange }: { label: string; value: string; 
  * The boxes for one exercise's sets: one row per set, the boxes that kind of exercise needs. The member's logger and the
  * coach's builder both use it, so a target the coach sets lands in exactly the boxes the member fills in.
  */
-export function SetGrid({ name, tracking, sets, onChange, onRemove, sided, onSide, percent }: {
+export function SetGrid({ name, tracking, sets, onChange, onRemove, sided, onSide, plan }: {
   name: string;
   tracking: Tracking;
   sets: SetValues[];
@@ -36,8 +36,8 @@ export function SetGrid({ name, tracking, sets, onChange, onRemove, sided, onSid
   /** Left / right buttons under each set, for the member's logger. */
   sided?: boolean;
   onSide?: (index: number, side: string) => void;
-  /** The coach's builder: the weight box also takes a percentage of the member's best, like 80%. */
-  percent?: boolean;
+  /** The coach's builder: the boxes take targets. Weight can be a percentage of the member's best (80%); reps can be a range (8-12) or max. */
+  plan?: boolean;
 }) {
   const fields = FIELDS[tracking];
   return (
@@ -47,10 +47,11 @@ export function SetGrid({ name, tracking, sets, onChange, onRemove, sided, onSid
           <div className="tr-set">
             <span className="muted tr-n">{i + 1}</span>
             {fields.map((f) => {
-              const pct = percent && f.id === 'weight';
+              const pct = plan && f.id === 'weight';
+              const repsPlan = plan && f.id === 'reps';
               if (f.id === 'time') return <TimePicker key={f.id} label={`${name} set ${i + 1} Time`} value={s.time ?? ''} onChange={(text) => onChange(i, 'time', text)} />;
               return (
-              <Input key={f.id} className="tr-box" inputMode={pct ? 'text' : 'decimal'} aria-label={`${name} set ${i + 1} ${f.hint}`} placeholder={pct ? 'kg or %' : f.label}
+              <Input key={f.id} className="tr-box" inputMode={pct || repsPlan ? 'text' : 'decimal'} aria-label={`${name} set ${i + 1} ${f.hint}`} placeholder={pct ? 'kg or %' : repsPlan ? 'reps or 8-12' : f.label}
                 value={s[f.id] ?? ''} onChange={(e) => onChange(i, f.id, e.target.value)} />
               );
             })}

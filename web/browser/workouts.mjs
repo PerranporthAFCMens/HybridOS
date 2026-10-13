@@ -94,6 +94,12 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('a badly typed percentage is refused, naming the exercise', page.getByText('Back squat: "abc%" is not a percentage from 1% to 150%. Type something like 80%, or a weight in kg.'));
   c.ok('and nothing is written for it', writes.length === 0);
   await page.getByLabel('Back squat set 2 Weight').fill('80%');
+  c.ok('the reps box says it takes a number, a range or max', (await page.getByLabel('Back squat set 2 Reps').getAttribute('placeholder')) === 'reps or 8-12' && (await page.getByText(/Reps: a number, a range like 8-12, or max\./).count()) >= 1);
+  await page.getByLabel('Back squat set 2 Reps').fill('12-8');
+  await page.getByRole('button', { name: 'Save workout' }).click();
+  await c.has('a range the wrong way round is refused, naming the exercise', page.getByText('Back squat: "12-8" is not a range of reps. Type it like 8-12, with the smaller number first.'));
+  c.ok('and nothing is written for it', writes.length === 0);
+  await page.getByLabel('Back squat set 2 Reps').fill('8-12');
   c.ok('unsaved changes disable assign and publish', (await page.getByRole('button', { name: 'Assign to member' }).isDisabled()) && (await page.getByRole('button', { name: 'Publish as WOD' }).isDisabled()));
   await page.getByLabel('Workout name').fill(' ');
   await page.getByRole('button', { name: 'Save workout' }).click();
@@ -107,7 +113,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const nb = writes.filter((w) => w.table === 'workout_template_blocks' && w.method === 'POST');
   c.ok('the block is written again with its rounds', nb.length === 1 && nb[0].body.rounds === 4 && nb[0].body.position === 0 && nb[0].body.title === 'Main lift' && nb[0].body.template_id === 't-leg');
   const na = writes.find((w) => w.table === 'workout_template_activities' && w.method === 'POST');
-  c.ok('activities written with the set boxes, the kept extra key and the earlier wording where no sets were set', na && na.body.length === 2 && na.body[0].prescription.display === '5 × 85 kg / 5 × 80%' && JSON.stringify(na.body[0].prescription.sets) === '[{"reps":"5","weight":"85"},{"reps":"5","weight":"80%"}]' && na.body[0].prescription.target === 'RPE 8' && na.body[0].block_id === 'blk-new-1' && na.body[1].position === 1 && na.body[1].prescription.display === '3 x 12' && !('sets' in na.body[1].prescription));
+  c.ok('activities written with the set boxes, the kept extra key and the earlier wording where no sets were set', na && na.body.length === 2 && na.body[0].prescription.display === '5 × 85 kg / 8–12 × 80%' && JSON.stringify(na.body[0].prescription.sets) === '[{"reps":"5","weight":"85"},{"reps":"8-12","weight":"80%"}]' && na.body[0].prescription.target === 'RPE 8' && na.body[0].block_id === 'blk-new-1' && na.body[1].position === 1 && na.body[1].prescription.display === '3 x 12' && !('sets' in na.body[1].prescription));
   const del = writes.filter((w) => w.method === 'DELETE');
   c.ok('old block removed, scoped, and it is the LAST write', del.length === 1 && del[0].table === 'workout_template_blocks' && del[0].query.template_id === 'eq.t-leg' && del[0].query.id === 'in.(blk-old)' && writes[writes.length - 1] === del[0]);
   c.ok('assign enabled again after saving', !(await page.getByRole('button', { name: 'Assign to member' }).isDisabled()));
