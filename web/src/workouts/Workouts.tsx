@@ -10,7 +10,8 @@ import { ExercisePicker } from '../train/ExercisePicker';
 import { SetGrid } from '../train/SetGrid';
 import type { Tracking } from '../train/calc';
 import { Modal } from '../ui/Modal';
-import { TRACKING, addExercise, emptyWorkout, hasChanged, moveItem, trackingLabel, validateWodDate, validateWorkout, type BlockForm, type WorkoutForm } from './calc';
+import { TRACKING, addExercise, defaultScores, emptyWorkout, formScores, hasChanged, moveItem, trackingLabel, validateWodDate, validateWorkout, type BlockForm, type WorkoutForm } from './calc';
+import { ScoresEditor } from './ScoresEditor';
 import { useTemplates, useWorkoutWrites } from './useWorkouts';
 import '../members/members.css';
 import './workouts.css';
@@ -137,9 +138,10 @@ function EditorForm({ template, initialBlocks, w, onClose, onSaved }: { template
                       <Button aria-label={`Remove ${label}`} onClick={() => setBlock(bi, { activities: b.activities.filter((_, j) => j !== ai) })}>Remove</Button>
                     </div>
                   </div>
-                  <Field label="Record" htmlFor={`wk-a${a.key}-t`}><Select id={`wk-a${a.key}-t`} value={a.tracking} onChange={(e) => setAct(bi, ai, { tracking: e.target.value })}>{TRACKING.map((t) => <option key={t} value={t}>{trackingLabel(t)}</option>)}</Select></Field>
+                  <Field label="Record" htmlFor={`wk-a${a.key}-t`}><Select id={`wk-a${a.key}-t`} value={a.tracking} onChange={(e) => setAct(bi, ai, { tracking: e.target.value, ...(e.target.value === 'scores' && formScores(a.extra).length === 0 ? { extra: { ...a.extra, scores: defaultScores() } } : {}) })}>{TRACKING.map((t) => <option key={t} value={t}>{trackingLabel(t)}</option>)}</Select></Field>
                   {a.prescription && <div className="muted small">Earlier wording: {a.prescription}. Fill in the sets below to replace it.</div>}
-                  {tracking !== 'instruction' && (
+                  {tracking === 'scores' && <ScoresEditor name={label} scores={formScores(a.extra)} onChange={(scores) => setAct(bi, ai, { extra: { ...a.extra, scores } })} />}
+                  {tracking !== 'instruction' && tracking !== 'scores' && (
                     <>
                       <SetGrid name={label} tracking={tracking} plan sets={a.sets} onChange={(i, f, v) => setAct(bi, ai, { sets: a.sets.map((x, j) => (j === i ? { ...x, [f]: v } : x)) })} onRemove={(i) => setAct(bi, ai, { sets: a.sets.filter((_, j) => j !== i) })} />
                       {tracking === 'strength' && <div className="muted small">Weight: type kilos, or a percentage of the member's best like 80% (their app turns it into kilos from their heaviest lift for this exercise). Reps: a number, a range like 8-12, or max.</div>}

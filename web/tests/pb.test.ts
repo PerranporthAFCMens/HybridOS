@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { DbSet } from '../src/train/calc';
 import { candidatesFor, comparable, fmtDist, isBetter, manualCandidate, pbValueText, wonMessage, wonText } from '../src/train/pb';
 
-const set = (p: Partial<DbSet>): DbSet => ({ weight_kg: null, reps: null, duration_seconds: null, distance_m: null, calories: null, side: null, ...p });
+const set = (p: Partial<DbSet>): DbSet => ({ weight_kg: null, reps: null, duration_seconds: null, distance_m: null, calories: null, side: null, custom_value: null, custom_unit: null, ...p });
 
 describe('candidates', () => {
   it('strength: the heaviest weight, else the most reps', () => {

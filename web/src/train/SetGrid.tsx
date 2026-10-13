@@ -1,6 +1,6 @@
 import './shared.css';
 import { Input, Select } from '../ui/Field';
-import { FIELDS, SIDES, joinDuration, splitDuration, type SetValues, type Tracking } from './calc';
+import { FIELDS, SIDES, joinDuration, scoreFields, splitDuration, type ScoreDef, type SetValues, type Tracking } from './calc';
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i);
 const SIXTY = Array.from({ length: 60 }, (_, i) => i);
@@ -27,9 +27,11 @@ function TimePicker({ label, value, onChange }: { label: string; value: string; 
  * The boxes for one exercise's sets: one row per set, the boxes that kind of exercise needs. The member's logger and the
  * coach's builder both use it, so a target the coach sets lands in exactly the boxes the member fills in.
  */
-export function SetGrid({ name, tracking, sets, onChange, onRemove, sided, onSide, plan }: {
+export function SetGrid({ name, tracking, sets, onChange, onRemove, sided, onSide, plan, scores }: {
   name: string;
   tracking: Tracking;
+  /** For an exercise scored two ways: the two scores the coach set, one box each, labelled with the score's name. */
+  scores?: ScoreDef[];
   sets: SetValues[];
   onChange: (index: number, field: string, value: string) => void;
   onRemove: (index: number) => void;
@@ -39,7 +41,7 @@ export function SetGrid({ name, tracking, sets, onChange, onRemove, sided, onSid
   /** The coach's builder: the boxes take targets. Weight can be a percentage of the member's best (80%); reps can be a range (8-12) or max. */
   plan?: boolean;
 }) {
-  const fields = FIELDS[tracking];
+  const fields = tracking === 'scores' ? scoreFields(scores ?? []) : FIELDS[tracking];
   return (
     <div className="tr-sets">
       {sets.map((s, i) => (
@@ -49,11 +51,15 @@ export function SetGrid({ name, tracking, sets, onChange, onRemove, sided, onSid
             {fields.map((f) => {
               const pct = plan && f.id === 'weight';
               const repsPlan = plan && f.id === 'reps';
-              if (f.id === 'time') return <TimePicker key={f.id} label={`${name} set ${i + 1} Time`} value={s.time ?? ''} onChange={(text) => onChange(i, 'time', text)} />;
-              return (
-              <Input key={f.id} className="tr-box" inputMode={pct || repsPlan ? 'text' : 'decimal'} aria-label={`${name} set ${i + 1} ${f.hint}`} placeholder={pct ? 'kg or %' : repsPlan ? 'reps or 8-12' : f.label}
-                value={s[f.id] ?? ''} onChange={(e) => onChange(i, f.id, e.target.value)} />
-              );
+              // Two scores: each box says which score it is (the name stays visible once a number is in it).
+              const scored = tracking === 'scores';
+              const box = f.id === 'time'
+                ? <TimePicker key={f.id} label={`${name} set ${i + 1} ${scored ? f.hint : 'Time'}`} value={s.time ?? ''} onChange={(text) => onChange(i, 'time', text)} />
+                : (
+                  <Input key={f.id} className="tr-box" inputMode={pct || repsPlan ? 'text' : 'decimal'} aria-label={`${name} set ${i + 1} ${f.hint}`} placeholder={pct ? 'kg or %' : repsPlan ? 'reps or 8-12' : f.label}
+                    value={s[f.id] ?? ''} onChange={(e) => onChange(i, f.id, e.target.value)} />
+                );
+              return scored ? <div className="tr-score" key={f.id}><span className="muted small">{f.hint}</span>{box}</div> : box;
             })}
             {sets.length > 1 && <button type="button" className="tr-del" aria-label={`Remove set ${i + 1} from ${name}`} onClick={() => onRemove(i)}>✕</button>}
           </div>

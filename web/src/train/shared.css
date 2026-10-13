@@ -4,6 +4,8 @@
 .tr-n { width: 20px; text-align: center; flex: none; }
 .tr-set .tr-box { flex: 1; min-width: 0; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
 .tr-set-wrap { display: grid; gap: 6px; }
+.tr-score { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.tr-score .tr-box { width: 100%; }
 .tr-time { flex: 1; min-width: 0; display: flex; gap: 6px; }
 .tr-time select { flex: 1; min-width: 0; padding-left: 8px; padding-right: 6px; text-align: center; }
 .tr-side { display: flex; gap: 6px; margin-left: 28px; }

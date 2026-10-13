@@ -1,17 +1,26 @@
 // Pure rules behind the Workout builder: what a workout is made of, what a valid one looks like, and the
 // snapshot that is copied to a member when a coach assigns it. A coach sees a name and a list of exercises with their
 // set boxes; the blocks, type, tags and minutes underneath are kept for workouts that already have them.
-import { FIELDS, blankSets, describeTarget, readTarget, toDbSet, type SetValues, type Tracking } from '../train/calc';
+import { FIELDS, blankSets, checkScores, describeTarget, readScores, readTarget, scoreSummary, toDbSet, type ScoreDef, type SetValues, type Tracking } from '../train/calc';
 import { guessTracking } from '../train/activities';
 import { isPercent, percentError } from '../train/percent';
 import { isRepsTarget, repsError } from '../train/reps';
 
 export const BLOCK_TYPES = ['warmup', 'standard', 'strength', 'circuit', 'amrap', 'emom', 'for_time', 'intervals', 'finisher', 'cooldown', 'custom'] as const;
-export const TRACKING = ['strength', 'reps', 'time', 'distance', 'calories', 'intervals', 'instruction'] as const;
+export const TRACKING = ['strength', 'reps', 'time', 'distance', 'calories', 'intervals', 'instruction', 'scores'] as const;
 export const WORKOUT_TYPES = ['strength', 'cardio', 'conditioning', 'hybrid', 'mobility', 'recovery', 'custom'] as const;
 
 export const blockLabel = (t: string) => (t === 'for_time' ? 'For time' : t === 'amrap' ? 'AMRAP' : t === 'emom' ? 'EMOM' : t.charAt(0).toUpperCase() + t.slice(1));
-export const trackingLabel = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+export const trackingLabel = (t: string) => (t === 'scores' ? 'Two scores (like rounds and reps)' : t.charAt(0).toUpperCase() + t.slice(1));
+
+/** The two scores a new "two scores" exercise starts with: the usual AMRAP result. */
+export const defaultScores = (): ScoreDef[] => [{ name: 'Rounds', kind: 'rounds' }, { name: 'Reps', kind: 'reps' }];
+
+/** The scores on an exercise as typed in the form (kept as written until the workout is saved and checked). */
+export function formScores(extra: Record<string, unknown>): { name: string; kind: string }[] {
+  const raw = extra.scores;
+  return Array.isArray(raw) ? (raw as unknown[]).map((r) => ({ name: typeof (r as { name?: unknown })?.name === 'string' ? (r as { name: string }).name : '', kind: typeof (r as { kind?: unknown })?.kind === 'string' ? (r as { kind: string }).kind : '' })) : [];
+}
 
 /** `prescription` is only the earlier free-text wording, kept until the coach enters sets. */
 export interface ActivityForm { key: string; id: string | null; name: string; tracking: string; prescription: string; sets: SetValues[]; notes: string; activityType: string; extra: Record<string, unknown> }
@@ -111,17 +120,29 @@ export function validateWorkout(f: WorkoutForm, blocks: BlockForm[]): WorkoutChe
         const r = toDbSet(asTracking(a.tracking), { ...rest, ...(weight !== undefined && !isPercent(weight) ? { weight } : {}), ...(reps !== undefined && !isRepsTarget(reps) ? { reps } : {}) });
         if (r.error) return { ok: false, message: `${name}: ${r.error}` };
       }
-      const display = kept.length ? describeTarget(asTracking(a.tracking), kept) : a.prescription.trim();
+      // An exercise scored two ways keeps its two scores (named, and a kind each); any other exercise drops scores left over from an earlier choice.
+      const extraNoScores = { ...a.extra };
+      delete extraNoScores.scores;
+      let scoresPart: Record<string, unknown> = {};
+      let display = kept.length ? describeTarget(asTracking(a.tracking), kept) : a.prescription.trim();
+      if (a.tracking === 'scores') {
+        const typed = formScores(a.extra);
+        const bad = checkScores(typed);
+        if (bad) return { ok: false, message: `${name}: ${bad}` };
+        const scores = readScores(typed);
+        scoresPart = { scores };
+        display = scoreSummary(scores);
+      }
       target?.activities.push({
         name, activityType: a.activityType || 'exercise', tracking: a.tracking,
-        prescription: { ...a.extra, display, ...(kept.length ? { sets: kept } : {}) }, notes: a.notes.trim() || null,
+        prescription: { ...extraNoScores, display, ...scoresPart, ...(kept.length ? { sets: kept } : {}) }, notes: a.notes.trim() || null,
       });
     }
   }
   return { ok: true, input: { title, description: f.description.trim() || null, workoutType: f.type, focusTags: tags, estimatedMinutes: minutes, visibility: f.visibility }, blocks: out };
 }
 
-const TRACKINGS: readonly string[] = ['strength', 'reps', 'time', 'distance', 'calories', 'intervals', 'instruction'];
+const TRACKINGS: readonly string[] = ['strength', 'reps', 'time', 'distance', 'calories', 'intervals', 'instruction', 'scores'];
 const asTracking = (t: string): Tracking => (TRACKINGS.includes(t) ? (t as Tracking) : 'strength');
 
 /** The set rows a coach filled in, keeping only the boxes that kind of exercise uses. Blank rows are dropped. */

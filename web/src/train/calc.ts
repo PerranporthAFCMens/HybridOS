@@ -3,9 +3,9 @@
 
 import { parseRepsTarget, repsText } from './reps';
 
-export type Tracking = 'strength' | 'reps' | 'time' | 'distance' | 'calories' | 'intervals' | 'instruction';
+export type Tracking = 'strength' | 'reps' | 'time' | 'distance' | 'calories' | 'intervals' | 'instruction' | 'scores';
 
-export interface PlannedActivity { key: string; name: string; tracking: Tracking; plan: string; note: string; block: string; target: SetValues[] }
+export interface PlannedActivity { key: string; name: string; tracking: Tracking; plan: string; note: string; block: string; target: SetValues[]; scores: ScoreDef[] }
 
 /**
  * What the database accepts for an exercise's type: strength, time, distance, calories or custom. A reps-only exercise is a
@@ -17,7 +17,7 @@ export function dbTracking(t: Tracking): 'strength' | 'time' | 'distance' | 'cal
   return 'custom';
 }
 
-const TRACKINGS: Tracking[] = ['strength', 'reps', 'time', 'distance', 'calories', 'intervals', 'instruction'];
+const TRACKINGS: Tracking[] = ['strength', 'reps', 'time', 'distance', 'calories', 'intervals', 'instruction', 'scores'];
 const asTracking = (v: unknown): Tracking => (TRACKINGS.includes(v as Tracking) ? (v as Tracking) : 'strength');
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
 
@@ -40,7 +40,7 @@ export function readSnapshot(raw: unknown): { title: string; activities: Planned
         const p = a.prescription && typeof a.prescription === 'object' && !Array.isArray(a.prescription) ? (a.prescription as Record<string, unknown>) : {};
         const tracking = asTracking(a.tracking_type);
         const target = readTarget(p.sets);
-        activities.push({ key: `a${bi}-${ai}`, name, tracking, plan: str(p.display) || describeTarget(tracking, target), note: str(a.notes), block: str(b.title), target });
+        activities.push({ key: `a${bi}-${ai}`, name, tracking, plan: str(p.display) || describeTarget(tracking, target), note: str(a.notes), block: str(b.title), target, scores: tracking === 'scores' ? readScores(p.scores) : [] });
       });
   });
   return { title: str(snap.title), activities };
@@ -52,7 +52,47 @@ export function coachNote(raw: unknown): string {
   return typeof snap.coach_note === 'string' ? snap.coach_note.trim() : '';
 }
 
-export type Field = 'weight' | 'reps' | 'time' | 'distance' | 'calories';
+export type Field = 'weight' | 'reps' | 'rounds' | 'time' | 'distance' | 'calories';
+
+// Two scores on one exercise (an AMRAP scored in rounds and reps, a for-time scored in time and reps...). The coach names each score and
+// says what kind of number it is; the member fills in one box per score. Each kind has its own column in the saved set, so nothing needs
+// changing in the database (rounds is kept in the set's spare "custom value").
+export type ScoreKind = 'rounds' | 'reps' | 'time' | 'weight' | 'distance' | 'calories';
+export interface ScoreDef { name: string; kind: ScoreKind }
+export const SCORE_KINDS: [ScoreKind, string][] = [['rounds', 'Rounds'], ['reps', 'Reps'], ['time', 'Time'], ['weight', 'Weight (kg)'], ['distance', 'Distance (km)'], ['calories', 'Calories']];
+const SCORE_KIND_IDS: string[] = SCORE_KINDS.map(([k]) => k);
+
+/** The two scores saved with an exercise. Anything unreadable, a repeated kind or a third score is dropped, never a crash. */
+export function readScores(raw: unknown): ScoreDef[] {
+  if (!Array.isArray(raw)) return [];
+  const out: ScoreDef[] = [];
+  for (const r of raw as unknown[]) {
+    if (!r || typeof r !== 'object' || Array.isArray(r)) continue;
+    const name = str((r as Record<string, unknown>).name).trim();
+    const kind = (r as Record<string, unknown>).kind;
+    if (!name || typeof kind !== 'string' || !SCORE_KIND_IDS.includes(kind) || out.some((x) => x.kind === kind)) continue;
+    out.push({ name: name.slice(0, 40), kind: kind as ScoreKind });
+    if (out.length === 2) break;
+  }
+  return out;
+}
+
+/** One box per score, in the order the coach gave them: the score's name is the box's label. */
+export function scoreFields(scores: ScoreDef[]): { id: Field; label: string; hint: string }[] {
+  return scores.map((sc) => ({ id: sc.kind, label: sc.name, hint: sc.name }));
+}
+
+/** An error in words when the two scores are not usable, or null. */
+export function checkScores(scores: { name: string; kind: string }[]): string | null {
+  if (scores.length !== 2) return 'Give both scores a name and a kind.';
+  if (scores.some((x) => !x.name.trim() || x.name.trim().length > 40)) return 'Give both scores a name (up to 40 characters).';
+  if (scores.some((x) => !SCORE_KIND_IDS.includes(x.kind))) return 'Choose what kind of number each score is.';
+  if (scores[0]?.kind === scores[1]?.kind) return 'The two scores must be different kinds (for example rounds and reps).';
+  return null;
+}
+
+/** "Score: Rounds and Reps", the words on the member's screen above the boxes. */
+export const scoreSummary = (scores: ScoreDef[]): string => (scores.length ? `Record ${scores.map((x) => x.name).join(' and ')}` : '');
 export const FIELDS: Record<Tracking, { id: Field; label: string; hint: string }[]> = {
   strength: [{ id: 'reps', label: 'reps', hint: 'Reps' }, { id: 'weight', label: 'kg', hint: 'Weight' }],
   reps: [{ id: 'reps', label: 'reps', hint: 'Reps' }],
@@ -61,6 +101,7 @@ export const FIELDS: Record<Tracking, { id: Field; label: string; hint: string }
   calories: [{ id: 'calories', label: 'cal', hint: 'Calories' }],
   intervals: [{ id: 'reps', label: 'rounds', hint: 'Rounds' }, { id: 'time', label: 'time', hint: 'Time, like 1:00' }],
   instruction: [],
+  scores: [],
 };
 
 export type Side = 'left' | 'right' | 'both';
@@ -69,7 +110,7 @@ const asSide = (v: unknown): Side | null => (v === 'left' || v === 'right' || v 
 
 export type SetValues = Partial<Record<Field, string>> & { side?: string };
 
-const FIELD_IDS: Field[] = ['weight', 'reps', 'time', 'distance', 'calories'];
+const FIELD_IDS: Field[] = ['weight', 'reps', 'rounds', 'time', 'distance', 'calories'];
 
 /** The numbers a coach set, one row per set. Unreadable rows and empty boxes are dropped, never a crash. */
 export function readTarget(raw: unknown): SetValues[] {
@@ -97,7 +138,7 @@ export function describeTarget(tracking: Tracking, sets: SetValues[]): string {
   return texts.join(' / ');
 }
 
-export const blankSets = (tracking: Tracking, n = 3): SetValues[] => (tracking === 'instruction' ? [] : Array.from({ length: n }, () => ({})));
+export const blankSets = (tracking: Tracking, n = 3): SetValues[] => (tracking === 'instruction' ? [] : Array.from({ length: tracking === 'scores' ? 1 : n }, () => ({})));
 
 /**
  * A time as typed, to seconds: "12:30" (minutes and seconds), "1:05:00" (hours, minutes and seconds), or a bare "90" which is
@@ -141,14 +182,20 @@ const num = (text: string | undefined): number | null => {
   return Number.isFinite(n) && n >= 0 ? n : null;
 };
 
-export interface DbSet { weight_kg: number | null; reps: number | null; duration_seconds: number | null; distance_m: number | null; calories: number | null; side: Side | null }
+export interface DbSet { weight_kg: number | null; reps: number | null; duration_seconds: number | null; distance_m: number | null; calories: number | null; side: Side | null; custom_value: number | null; custom_unit: string | null }
+
+/** Every box a set can have, for an exercise scored two ways (which boxes are used depends on the scores the coach chose). */
+const ALL_FIELDS: Field[] = ['rounds', 'reps', 'weight', 'time', 'distance', 'calories'];
+/** A set saved for a two-score exercise carries this mark in its custom unit, so it can be told apart later. */
+export const SCORE_MARK = 'score';
+export const ROUNDS_MARK = 'rounds';
 
 /** One typed set as database columns. Null when nothing was entered; `error` names a box that cannot be read. */
 export function toDbSet(tracking: Tracking, v: SetValues): { row: DbSet | null; error: string | null } {
-  const used = FIELDS[tracking].map((f) => f.id);
+  const used = tracking === 'scores' ? ALL_FIELDS : FIELDS[tracking].map((f) => f.id);
   const entered = used.filter((id) => (v[id] ?? '').trim() !== '');
   if (entered.length === 0) return { row: null, error: null };
-  const row: DbSet = { weight_kg: null, reps: null, duration_seconds: null, distance_m: null, calories: null, side: asSide(v.side) };
+  const row: DbSet = { weight_kg: null, reps: null, duration_seconds: null, distance_m: null, calories: null, side: asSide(v.side), custom_value: null, custom_unit: tracking === 'scores' ? SCORE_MARK : null };
   for (const id of entered) {
     const raw = v[id] ?? '';
     if (id === 'time') {
@@ -160,6 +207,7 @@ export function toDbSet(tracking: Tracking, v: SetValues): { row: DbSet | null; 
       if (n === null) return { row: null, error: `"${raw}" is not a number.` };
       if (id === 'weight') row.weight_kg = n;
       else if (id === 'reps') row.reps = Math.round(n);
+      else if (id === 'rounds') { row.custom_value = Math.round(n); row.custom_unit = ROUNDS_MARK; }
       else if (id === 'distance') row.distance_m = Math.round(n * 1000);
       else row.calories = Math.round(n);
     }
@@ -171,7 +219,8 @@ export function toDbSet(tracking: Tracking, v: SetValues): { row: DbSet | null; 
 export type StoredSet = Partial<Omit<DbSet, 'side'>> & { side?: string | null };
 export function fromDbSet(tracking: Tracking, r: StoredSet): SetValues {
   const out: SetValues = {};
-  for (const f of FIELDS[tracking]) {
+  for (const f of tracking === 'scores' ? ALL_FIELDS.map((id) => ({ id })) : FIELDS[tracking]) {
+    if (f.id === 'rounds' && r.custom_value != null && r.custom_unit === ROUNDS_MARK) out.rounds = String(r.custom_value);
     if (f.id === 'weight' && r.weight_kg != null) out.weight = String(r.weight_kg);
     if (f.id === 'reps' && r.reps != null) out.reps = String(r.reps);
     if (f.id === 'time' && r.duration_seconds != null) out.time = formatDuration(r.duration_seconds);
@@ -191,6 +240,16 @@ export function setText(tracking: Tracking, v: SetValues): string {
   const reps = v.reps ? (parseRepsTarget(v.reps)?.kind === 'max' ? 'max reps' : repsText(v.reps)) : '';
   // A weight typed as a percentage ("80%") or already worded ("80% (80 kg)") is shown as it is; a plain number is kilos.
   if (tracking === 'strength') return [reps, v.weight ? (v.weight.includes('%') ? v.weight : `${v.weight} kg`) : ''].filter(Boolean).join(' × ') + tail;
+  // Two scores on one exercise read as "5 rounds · 12 reps", whichever two kinds were chosen.
+  if (tracking === 'scores') {
+    if (v.rounds) parts.push(`${v.rounds} rounds`);
+    if (v.reps) parts.push(`${v.reps} reps`);
+    if (v.weight) parts.push(`${v.weight} kg`);
+    if (v.time) parts.push(v.time);
+    if (v.distance) parts.push(`${v.distance} km`);
+    if (v.calories) parts.push(`${v.calories} cal`);
+    return parts.join(' · ') + tail;
+  }
   if (reps) parts.push(parseRepsTarget(v.reps)?.kind === 'max' ? 'max reps' : `${reps} ${tracking === 'intervals' ? 'rounds' : 'reps'}`);
   if (v.time) parts.push(v.time);
   if (v.distance) parts.push(`${v.distance} km`);
