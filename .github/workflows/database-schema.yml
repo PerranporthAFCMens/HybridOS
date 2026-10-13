@@ -44,10 +44,10 @@ jobs:
             select count(*) into v_triggers from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace tn on tn.oid=c.relnamespace join pg_proc p on p.oid=t.tgfoid join pg_namespace fn on fn.oid=p.pronamespace where not t.tgisinternal and (tn.nspname in ('public','private') or fn.nspname in ('public','private'));
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
-            if v_tables<>86 then raise exception 'Expected 86 app tables, got %',v_tables; end if;
-            if v_functions<>141 then raise exception 'Expected 141 committed app functions, got %',v_functions; end if;
-            if v_policies<>206 then raise exception 'Expected 206 app/storage policies, got %',v_policies; end if;
-            if v_triggers<>36 then raise exception 'Expected 36 app-related triggers, got %',v_triggers; end if;
+            if v_tables<>87 then raise exception 'Expected 87 app tables, got %',v_tables; end if;
+            if v_functions<>146 then raise exception 'Expected 146 committed app functions, got %',v_functions; end if;
+            if v_policies<>207 then raise exception 'Expected 207 app/storage policies, got %',v_policies; end if;
+            if v_triggers<>37 then raise exception 'Expected 37 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
             if exists(select 1 from public.profiles) then raise exception 'Baseline must not contain live profile rows'; end if;
@@ -98,6 +98,8 @@ jobs:
           if diff -q /tmp/rules_after_migration.txt /tmp/rules_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
           if psql "$DB_URL" -X -At -c "select count(*) from information_schema.tables where table_schema='public' and table_name in ('membership_rules','membership_requests')" | grep -qv '^0$'; then echo 'Rollback left a table behind'; exit 1; fi
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          # The plan terms migration (part 2) replaces two of these functions, so put its versions back too.
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261015091000_plan_terms_functions.sql
           snap /tmp/rules_after_reapply.txt
           if diff -u /tmp/rules_after_migration.txt /tmp/rules_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Community broadcasts verification, persona tests and rollback
@@ -269,6 +271,7 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           # The card-details migration changes what this one created (it drops four columns), so put that back too.
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261014120000_no_card_details.sql
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261015091000_plan_terms_functions.sql
           snap /tmp/sjp_after_reapply.txt
           if diff -u /tmp/sjp_after_migration.txt /tmp/sjp_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: No card details verification and rollback
@@ -288,6 +291,26 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           snap /tmp/ncd_after_reapply.txt
           if diff -u /tmp/ncd_after_migration.txt /tmp/ncd_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: Plan terms verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG1=supabase/migrations/20261015090000_plan_terms.sql
+          MIG2=supabase/migrations/20261015091000_plan_terms_functions.sql
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261015_plan_terms_check.sql > /tmp/pt_check.txt
+          cat /tmp/pt_check.txt
+          if grep -v ' | ok$' /tmp/pt_check.txt; then echo 'A plan terms check is not ok'; exit 1; fi
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/plan_terms.sql
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/pt_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261015_drop_plan_terms.sql
+          snap /tmp/pt_after_rollback.txt
+          if diff -q /tmp/pt_after_migration.txt /tmp/pt_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG1"
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG2"
+          snap /tmp/pt_after_reapply.txt
+          if diff -u /tmp/pt_after_migration.txt /tmp/pt_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Admin invite signed-in only verification and rollback
         shell: bash
         run: |
