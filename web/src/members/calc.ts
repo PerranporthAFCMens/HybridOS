@@ -98,11 +98,6 @@ export function validateLifecycle(joined: string, attrition: string): string | n
   return null;
 }
 
-export function paymentHint(payment: 'manual' | 'gocardless'): string {
-  return payment === 'gocardless'
-    ? 'Creates the HybridOne membership now and leaves payment pending until a GoCardless mandate/subscription is linked.'
-    : 'Manual mode lets the gym use HybridOne before GoCardless is connected.';
-}
 
 /** "3 members are missing details", "1 member is missing details". */
 export function missingSummary(n: number): string {

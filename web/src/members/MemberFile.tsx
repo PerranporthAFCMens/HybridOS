@@ -8,15 +8,15 @@ import { fileBase, save } from '../reports/download';
 import { fetchSignedCopy, signedPaths } from './signedCopy';
 import { Button } from '../ui/Button';
 import { Empty } from '../ui/Card';
-import { DateInput, Field, FieldRow, Select } from '../ui/Field';
+import { DateInput, Field, FieldRow } from '../ui/Field';
 import { money } from '../today/calc';
-import { dateInputValue, initials, isTeam, ROLE_LABEL, formatDate, formatRegistered, labelStatus, nameOf, paymentHint, validateLifecycle } from './calc';
+import { dateInputValue, initials, isTeam, ROLE_LABEL, formatDate, formatRegistered, labelStatus, nameOf, validateLifecycle } from './calc';
 import { MemberAgreements } from './MemberAgreements';
 import { EndMembership } from './EndMembership';
 import { MemberDetailsCard } from './MemberDetailsCard';
 import { MemberTraining } from './MemberTraining';
 import { NotFinancial } from './NotFinancial';
-import { useMemberDirectory, useMemberMemberships, useMemberWrites, usePlans } from './useMembers';
+import { useMemberDirectory, useMemberMemberships, useMemberWrites } from './useMembers';
 import '../staff/staff.css';
 import './members.css';
 
@@ -42,9 +42,7 @@ function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string })
   const name = nameOf(member);
   const team = isTeam(member);
   const memberships = useMemberMemberships(gymId, member.userId);
-  const plans = usePlans(gymId);
   const writes = useMemberWrites(gymId, member.userId);
-  const activePlans = (plans.data ?? []).filter((p) => p.isActive);
 
   // The file as a PDF to download, and the signed copy emailed to the person on request.
   const { gym } = useReadyAuth();
@@ -93,12 +91,7 @@ function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string })
   const [attrition, setAttrition] = useState(member.attritionOn ?? '');
   const [lifecycleMsg, setLifecycleMsg] = useState<Message>(null);
 
-  const [planId, setPlanId] = useState('');
-  const [startsOn, setStartsOn] = useState(new Date().toISOString().slice(0, 10));
-  const [status, setStatus] = useState<'active' | 'pending' | 'paused'>('active');
-  const [payment, setPayment] = useState<'manual' | 'gocardless'>('manual');
-  const [assignMsg, setAssignMsg] = useState<Message>(null);
-  const chosenPlan = planId || activePlans[0]?.id || '';
+  const [statusMsg, setStatusMsg] = useState<Message>(null);
 
   const saveLifecycle = () => {
     const problem = validateLifecycle(joined, attrition);
@@ -112,27 +105,12 @@ function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string })
     );
   };
 
-  const assign = () => {
-    if (!chosenPlan) return setAssignMsg({ text: 'Create an active membership plan first.', tone: 'error' });
-    writes.assign.mutate(
-      { planId: chosenPlan, status, startsOn: startsOn || null, payment },
-      {
-        onSuccess: () =>
-          setAssignMsg({
-            text: payment === 'gocardless' ? 'Membership created and ready for future GoCardless setup.' : 'Membership assigned.',
-            tone: 'good',
-          }),
-        onError: (e) => setAssignMsg({ text: e.message, tone: 'error' }),
-      },
-    );
-  };
-
   const changeStatus = (membershipId: string, next: 'active' | 'paused' | 'cancelled') =>
     writes.setStatus.mutate(
       { membershipId, status: next },
       {
-        onSuccess: () => setAssignMsg({ text: 'Membership updated.', tone: 'good' }),
-        onError: (e) => setAssignMsg({ text: e.message, tone: 'error' }),
+        onSuccess: () => setStatusMsg({ text: 'Membership updated.', tone: 'good' }),
+        onError: (e) => setStatusMsg({ text: e.message, tone: 'error' }),
       },
     );
 
@@ -162,7 +140,7 @@ function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string })
         </div>
       )}
       <div className="file-msg"><Msg m={fileMsg} /></div>
-      {team && <div className="notice">This is a team login. Give them a membership below so they see the member app like any member (classes, workouts and so on).</div>}
+      {team && <div className="notice">This is a team login. To see the member app like any member (classes, workouts and so on), they join through your sign-up link.</div>}
 
       <div className="file-strip">
         <div><small>Plan</small><b>{latest ? latest.planName || 'Membership' : 'None'}</b></div>
@@ -204,47 +182,11 @@ function MemberFileBody({ member, gymId }: { member: MemberRow; gymId: string })
             </div>
           ))
         ) : (
-          <Empty>No membership assigned yet.</Empty>
+          <Empty>No membership yet. A person joins through your sign-up link.</Empty>
         )}
+        <div className="assign-msg"><Msg m={statusMsg} /></div>
       </section>
 
-      <section className="record-section">
-      <h3>Assign membership</h3>
-      <Field label="Membership plan" htmlFor="planSelect">
-        <Select id="planSelect" value={chosenPlan} onChange={(e) => setPlanId(e.target.value)}>
-          {activePlans.length ? (
-            activePlans.map((p) => (
-              <option key={p.id} value={p.id}>{p.name} — {money(p.priceInPence)} / {p.interval}</option>
-            ))
-          ) : (
-            <option value="">No active plans</option>
-          )}
-        </Select>
-      </Field>
-      <FieldRow>
-        <Field label="Start date" htmlFor="startDate">
-          <DateInput id="startDate" value={startsOn} onChange={(e) => setStartsOn(e.target.value)} />
-        </Field>
-        <Field label="Status" htmlFor="statusSelect">
-          <Select id="statusSelect" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="paused">Paused</option>
-          </Select>
-        </Field>
-      </FieldRow>
-      <Field label="Payment method" htmlFor="paymentSelect">
-        <Select id="paymentSelect" value={payment} onChange={(e) => setPayment(e.target.value as typeof payment)}>
-          <option value="manual">Manual / recorded outside HybridOne</option>
-          <option value="gocardless">GoCardless ready — connect later</option>
-        </Select>
-      </Field>
-      <div className="notice">{paymentHint(payment)}</div>
-      <div className="assign-msg"><Msg m={assignMsg} /></div>
-      <Button variant="primary" className="wide-btn" onClick={assign} disabled={writes.assign.isPending}>
-        {writes.assign.isPending ? 'Assigning…' : 'Assign membership'}
-      </Button>
-      </section>
         </div>
         <div>
           <MemberAgreements gymId={gymId} userId={member.userId} name={name} />

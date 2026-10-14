@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   daysAgo, availableLetters, dateInputValue, filterAndSort, initials, jumpLetter, labelStatus, nameOf, nameParts,
-  paymentHint, summaryText, validateLifecycle, isTeam, showOnly, missingList, missingSummary, addressText, phoneText, emergencyText, dobText, checkDetailsDraft, draftFromDetails,
+  summaryText, validateLifecycle, isTeam, showOnly, missingList, missingSummary, addressText, phoneText, emergencyText, dobText, checkDetailsDraft, draftFromDetails,
 } from '../src/members/calc';
 import type { MemberRow } from '../src/data/members';
 
@@ -67,11 +67,9 @@ describe('record forms', () => {
     expect(validateLifecycle('2026-05-01', '')).toBeNull();
     expect(validateLifecycle('2026-05-01', '2026-05-01')).toBeNull();
   });
-  it('formats a date input value and payment hints', () => {
+  it('formats a date input value', () => {
     expect(dateInputValue('2026-03-09T00:00:00')).toBe('2026-03-09');
     expect(dateInputValue(null)).toBe('');
-    expect(paymentHint('manual')).toMatch(/Manual mode/);
-    expect(paymentHint('gocardless')).toMatch(/GoCardless mandate/);
   });
 });
 
