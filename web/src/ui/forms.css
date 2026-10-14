@@ -46,3 +46,5 @@ select.ctl { width: 100%; }
 .ctl-eye { position: absolute; top: 0; right: 0; width: 48px; height: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; padding: 0; color: inherit; opacity: .7; cursor: pointer; }
 .ctl-eye:hover, .ctl-eye[aria-pressed='true'] { opacity: 1; }
 .ctl-eye:focus-visible { outline: 2px solid var(--hybrid-pulse); outline-offset: -4px; border-radius: 8px; }
+
+.field-error { margin-top: 5px; font-size: 13px; color: var(--hybrid-danger, #ff7b7b); }

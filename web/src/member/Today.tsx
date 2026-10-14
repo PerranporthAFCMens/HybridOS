@@ -5,6 +5,8 @@ import { londonParts } from '../classes/calc';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { getMyBirthday, getProfileNames } from '../data/profile';
 import { loadDoor } from '../data/door';
+import { getReadyStatus } from '../data/join';
+import { needsFinishing } from '../join/calc';
 import { loadMyHomeSettings } from '../data/memberView';
 import { listMyPbs, listRecentSessions } from '../data/train';
 import { DEFAULT_CTA, DEFAULT_LAYOUT } from '../memberview/calc';
@@ -46,6 +48,8 @@ export function Today() {
   const home = settings.data ?? { layout: DEFAULT_LAYOUT, cta: DEFAULT_CTA };
   const tiles = settings.isPending ? [] : home.layout.filter((t) => t.visible);
   const door = useQuery({ queryKey: ['m-door', gym.gymId], queryFn: () => loadDoor(gym.gymId), select: (v) => (v && v.enabled && v.code ? v : null) });
+  // Under Quick join, what is left to do after paying. Nothing at a gym on the full journey, or if this cannot be read.
+  const ready = useQuery({ queryKey: ['ready', gym.gymId], queryFn: () => getReadyStatus(gym.gymId), retry: false });
   const pbs = useQuery({ queryKey: ['m-pbs', gym.gymId, userId], queryFn: () => listMyPbs(userId, gym.gymId) });
   const sessions = useQuery({ queryKey: ['m-sessions', gym.gymId, userId], queryFn: () => listRecentSessions(userId, gym.gymId) });
   const year = Number(d.today.slice(0, 4));
@@ -159,6 +163,14 @@ export function Today() {
         <section className="mem-card mem-hero"><div className="mem-big">Glad you are here</div><div className="muted">Your classes, training and PT will show here as they are set up.</div></section>
       )}
 
+      {needsFinishing(ready.data ?? null) && (
+        <section className="mem-card" aria-label="Finish setting up">
+          <span className="mem-eyebrow">Finish setting up</span>
+          <div className="mem-big">{ready.data?.held ? 'Your door code is waiting' : 'A few things left'}</div>
+          <div className="muted">{ready.data?.held ? 'It appears here when you have finished the list. It takes about two minutes.' : 'It takes about two minutes.'}</div>
+          <Link className="btn primary" to="/m/finish">Finish now</Link>
+        </section>
+      )}
       {door.data && <DoorCard label={door.data.label ?? ''} code={door.data.code ?? ''} note={door.data.note ?? ''} />}
       {hero.kind !== 'workout' && due && (
         <section className="mem-card" aria-label="Today's workout">
