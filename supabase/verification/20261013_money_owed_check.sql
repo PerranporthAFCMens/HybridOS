@@ -34,4 +34,4 @@ union all
 select 'the public function list is unchanged (nothing new is callable by someone not signed in)',
        case when not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                               where n.nspname = 'public' and p.prosecdef and has_function_privilege('anon', p.oid, 'execute')
-                                and p.proname not in ('get_access_invite', 'get_public_gym_brand', 'get_public_gym_join_options')) then 'ok' else 'ANOTHER ONE IS PUBLIC' end;
+                                and p.proname not in ('get_access_invite', 'get_public_gym_brand', 'get_public_gym_join_options', 'get_public_gym_join_style')) then 'ok' else 'ANOTHER ONE IS PUBLIC' end;

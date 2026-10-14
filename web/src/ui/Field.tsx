@@ -58,12 +58,12 @@ export function Checkbox({ label, checked, onChange, disabled }: { label: string
 }
 
 /** A labelled form row. `htmlFor` must match the box's id so the label is tappable and readable by screen readers. */
-export function Field({ label, htmlFor, hint, children }: { label: string; htmlFor: string; hint?: string; children: ReactNode }) {
+export function Field({ label, htmlFor, hint, error, children }: { label: string; htmlFor: string; hint?: string; error?: string | null; children: ReactNode }) {
   return (
     <div className="field">
       <label htmlFor={htmlFor}>{label}</label>
       {children}
-      {hint && <div className="muted small">{hint}</div>}
+      {error ? <div className="field-error" role="alert">{error}</div> : hint ? <div className="muted small">{hint}</div> : null}
     </div>
   );
 }

@@ -28,3 +28,29 @@
 .join-agree { margin: 12px 0; font-size: 14px; }
 .join-pay-summary { padding: 12px 14px; border: 1px solid var(--hybrid-line); border-radius: 12px; margin-bottom: 12px; }
 .join-pay-summary h3 { margin: 0 0 4px; }
+
+/* ---- Quick join ---- */
+.qj-bar { height: 4px; border-radius: 2px; background: var(--hybrid-line); overflow: hidden; margin: 6px 0 4px; }
+.qj-bar > i { display: block; height: 100%; background: var(--hybrid-pulse); }
+.qj-meta { display: flex; justify-content: space-between; font-size: 13px; }
+.qj-chosen { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid var(--hybrid-line); border-radius: 12px; margin-bottom: 12px; font-size: 14px; }
+.join-plan .qj-badge { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--hybrid-pulse); color: #0b1020; vertical-align: middle; }
+.qj-later { margin-top: 16px; padding: 14px; border: 1px dashed var(--hybrid-line-strong); border-radius: 12px; }
+.qj-later h3 { margin: 0 0 6px; font-size: 15px; }
+.qj-later ul { margin: 0 0 6px; padding-left: 20px; }
+.qj-code { font-size: 28px; font-weight: 800; letter-spacing: .3em; text-align: center; }
+.qj-welcome { text-align: center; margin-bottom: 12px; }
+.qj-welcome h2 { font-size: 26px; margin: 8px 0 4px; }
+.qj-tick { display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--hybrid-pulse); color: #0b1020; }
+.qj-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.qj-item { border-top: 1px solid var(--hybrid-line); }
+.qj-item > button { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 14px; width: 100%; min-height: 56px; padding: 10px 0; cursor: pointer; }
+.qj-item > button:focus-visible { outline: 2px solid var(--hybrid-pulse); outline-offset: 2px; }
+.qj-circle { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--hybrid-line-strong); display: grid; place-items: center; }
+.qj-item.done .qj-circle { background: var(--hybrid-pulse); border-color: var(--hybrid-pulse); color: #0b1020; }
+.qj-item .qj-what { flex: 1; min-width: 0; }
+.qj-item .qj-what b { display: block; }
+.qj-form { padding: 0 0 14px 40px; }
+@media (max-width: 480px) { .qj-form { padding-left: 0; } }
+.qj-lock { display: flex; gap: 14px; align-items: center; margin-top: 14px; padding: 14px; border: 1px dashed var(--hybrid-line-strong); border-radius: 12px; }
+.qj-perks { margin: 4px 0 8px; padding-left: 18px; font-size: 14px; }

@@ -2,18 +2,18 @@ import { siteUrl } from '../app/site';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { confirmWithCode, createAccount, resendCode, currentUserId, getJoinGym, getPaymentMode, getSignupDocuments, joinWithPlan, myMembershipAt, preparePayment, saveJoinDetails, sendSignedCopies, signDocuments, signInToJoin, type PaymentSession } from '../data/join';
-import { publicPdfUrl } from '../data/signup';
+import { confirmWithCode, createAccount, resendCode, currentUserId, getJoinGym, getJoinStyle, getPaymentMode, getSignupDocuments, joinWithPlan, myMembershipAt, preparePayment, saveJoinDetails, signInToJoin, type PaymentSession } from '../data/join';
 import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { Checkbox, DateInput, Field, FieldRow, Input, PasswordInput, Select } from '../ui/Field';
+import { DateInput, Field, FieldRow, Input, PasswordInput } from '../ui/Field';
 import {
-  EMPTY_DETAILS, STEP_TITLES, answersPayload, canPayOnline, checkAbout, checkAccount, checkAddress, checkCode, cleanCode, checkEmergency, checkGuardian, checkPayer, checkSign, isFreePlan, isUnder18, payTermsText, planPrice, stepsFor, toRpcArgs,
-  type Answers, type JoinDetails, type JoinPlan, type StepId,
+  EMPTY_DETAILS, STEP_TITLES, canPayOnline, checkAbout, checkAccount, checkAddress, checkCode, cleanCode, checkEmergency, checkGuardian, checkPayer, isFreePlan, isUnder18, payTermsText, planPrice, stepsFor, toRpcArgs,
+  type JoinDetails, type JoinPlan, type StepId,
 } from './calc';
 import { termsSentence } from '../plans/terms';
 import { PayForm } from './PayForm';
-import { SignaturePad } from './SignaturePad';
+import { QuickJoin } from './QuickJoin';
+import { SignForm } from './SignForm';
 import './join.css';
 
 const draftKey = (slug: string) => `hybrid-join-draft-${slug}`;
@@ -44,15 +44,13 @@ export function Join() {
   const { slug = '' } = useParams();
   const now = useMemo(() => new Date(), []);
   const gymQ = useQuery({ queryKey: ['join-gym', slug], queryFn: () => getJoinGym(slug), enabled: !!slug, retry: false });
+  // Which journey the gym chose. If this cannot be read, the full journey below carries on as it always did.
+  const styleQ = useQuery({ queryKey: ['join-style', slug], queryFn: () => getJoinStyle(slug), enabled: !!slug, retry: false });
   const [userId, setUserId] = useState<string | null | undefined>(undefined);
   const [step, setStep] = useState<StepId>('account');
   const [d, setD] = useState<JoinDetails>(() => loadDraft(slug));
   const [mode, setMode] = useState<'signup' | 'signin'>('signup');
   const [acct, setAcct] = useState({ email: '', password: '', confirm: '' });
-  const [ticked, setTicked] = useState<Record<string, boolean>>({});
-  const [answers, setAnswers] = useState<Answers>({});
-  const [signName, setSignName] = useState('');
-  const [signature, setSignature] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ text: string; good: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
@@ -178,15 +176,6 @@ export function Join() {
     e.preventDefault();
     void run(checkGuardian(d), saveAll);
   };
-  const submitSign = (e: FormEvent) => {
-    e.preventDefault();
-    if (!docs) return;
-    void run(checkSign({ docs, answers, ticked, name: signName, hasInk: !!signature }), async () => {
-      const signatureId = await signDocuments(slug, signName, signature ?? '', answersPayload(docs, answers));
-      void sendSignedCopies(signatureId);
-      next();
-    });
-  };
   const finishJoin = (r: { planName: string; gymId: string; confirming?: boolean }) => {
     try {
       sessionStorage.removeItem(draftKey(slug));
@@ -214,8 +203,9 @@ export function Join() {
     });
   };
 
-  if (gymQ.isLoading || userId === undefined) return <div className="center muted">Loading…</div>;
+  if (gymQ.isLoading || styleQ.isLoading || userId === undefined) return <div className="center muted">Loading…</div>;
   if (gymQ.isError || !gym) return <div className="center">This sign-up link is not valid. Ask your gym for a new one.</div>;
+  if (styleQ.data?.style === 'quick') return <QuickJoin slug={slug} gym={gym} style={styleQ.data} />;
   if (userId && (existingQ.isLoading || modeQ.isLoading)) return <div className="center muted">Loading…</div>;
   // A pending membership at a gym that takes payment here is an unfinished payment: they may carry on and pay.
   if (userId && existingQ.data && !(existingQ.data === 'pending' && takesPayment) && step !== 'done') {
@@ -342,51 +332,10 @@ export function Join() {
         )}
 
         {step === 'sign' && (
-          <form onSubmit={submitSign} noValidate>
+          <div>
             <h2>Read and sign</h2>
-            {!docs ? <p className="muted">Loading…</p> : (
-              <>
-                <p className="muted">
-                  {under18 ? 'You are under 18, so your parent or guardian reads and signs. ' : ''}
-                  Read {docs.length === 1 ? 'this document' : 'these documents'}, answer any questions, then sign once at the bottom. You will be emailed a copy.
-                </p>
-                {docs.map((doc) => (
-                  <section key={doc.id} className="join-doc" aria-label={doc.title}>
-                    <h3>{doc.title}</h3>
-                    {doc.source === 'pdf' && doc.filePath
-                      ? <p><a href={publicPdfUrl(doc.filePath)} target="_blank" rel="noreferrer">Open the PDF to read it ({doc.fileName ?? 'document.pdf'})</a></p>
-                      : <div className="join-terms" tabIndex={0}>{doc.body}</div>}
-                    {doc.questions.map((q) => {
-                      const a = answers[q.id] ?? { yes: null, text: '' };
-                      const set = (patch: Partial<typeof a>) => setAnswers({ ...answers, [q.id]: { ...a, ...patch } });
-                      return (
-                        <div key={q.id} className="join-q">
-                          <div className="join-q-text">{q.prompt}{q.required ? '' : ' (optional)'}</div>
-                          {q.answerType === 'yes_no' && (
-                            <Select aria-label={q.prompt} value={a.yes === null ? '' : a.yes ? 'yes' : 'no'} onChange={(e) => set({ yes: e.target.value === '' ? null : e.target.value === 'yes' })}>
-                              <option value="">Choose…</option>
-                              <option value="yes">Yes</option>
-                              <option value="no">No</option>
-                            </Select>
-                          )}
-                          {(q.answerType === 'text' || (q.detailsIfYes && a.yes === true)) && (
-                            <Input aria-label={q.answerType === 'text' ? q.prompt : `Details: ${q.prompt}`} placeholder={q.answerType === 'text' ? '' : 'Please give details'} value={a.text} onChange={(e) => set({ text: e.target.value })} />
-                          )}
-                        </div>
-                      );
-                    })}
-                    <Checkbox label={doc.acceptance} checked={!!ticked[doc.id]} onChange={(v) => setTicked({ ...ticked, [doc.id]: v })} />
-                  </section>
-                ))}
-                <Field label={under18 ? "Parent or guardian's full name" : 'Your full name'} htmlFor="join-sign-name">
-                  <Input id="join-sign-name" autoComplete="name" value={signName} onChange={(e) => setSignName(e.target.value)} />
-                </Field>
-                <SignaturePad onChange={setSignature} label={under18 ? 'Parent or guardian signature' : 'Your signature'} />
-              </>
-            )}
-            {alertBox}
-            {nav('Sign and continue')}
-          </form>
+            {!docs ? <p className="muted">Loading…</p> : <SignForm slug={slug} docs={docs} under18={under18} onSigned={next} onBack={back} />}
+          </div>
         )}
 
         {step === 'plan' && (
