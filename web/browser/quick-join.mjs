@@ -41,14 +41,14 @@ const FAKE_STRIPE = () => {
 
 const newState = () => ({
   style: 'quick', mode: 'stripe', memberships: [], docs: true, otp: [], verified: [], accept: false, basics: null, prepared: null, finished: [],
-  joined: null, modeAskedSignedOut: 0, otpUrl: '', emergency: null, address: null, signed: null, finalised: null, done: new Set(), dob: '1990-04-12', doorOn: true,
+  joined: null, signFirst: false, modeAskedSignedOut: 0, otpUrl: '', emergency: null, address: null, signed: null, finalised: null, done: new Set(), dob: '1990-04-12', doorOn: true,
 });
 
 /** Mock everything Quick join talks to. The checklist answers from `state.done`, so saving something ticks it off. */
 async function wire(page, state) {
   await mockSupabase(page, async ({ route, path, body }) => {
     if (path.endsWith('/rpc/get_public_gym_join_options')) return reply(route, { gym_id: GYM, gym_name: 'Puffin Performance', logo_url: null, plans: PLANS });
-    if (path.endsWith('/rpc/get_public_gym_join_style')) return reply(route, { join_style: state.style, ask_address: 'optional', ask_emergency: 'required', ask_documents: 'required' });
+    if (path.endsWith('/rpc/get_public_gym_join_style')) return reply(route, { join_style: state.style, ask_address: 'optional', ask_emergency: 'required', ask_documents: 'required', sign_before_paying: state.signFirst });
     if (path.endsWith('/rpc/get_public_gym_signup_documents')) return reply(route, state.docs ? DOCS : []);
     if (path.endsWith('/rpc/get_gym_payment_mode')) {
       // As in the real database: only a signed-in person may ask (a signed-out visitor is sent the anonymous key, not a user's token).
@@ -60,6 +60,8 @@ async function wire(page, state) {
     if (path.endsWith('/rpc/join_public_gym_with_membership')) { state.joined = body; return reply(route, { ok: true, gym_id: GYM, plan_name: 'Starter' }); }
     if (path.endsWith('/functions/v1/stripe-join')) {
       if (body.action === 'prepare') {
+        // As in the real database: a gym that wants the waiver signed before paying refuses to set up payment until it is.
+        if (state.signFirst && !state.done.has('documents')) return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ error: 'Complete your details before joining: signature on the terms and waiver' }) });
         state.prepared = body;
         return reply(route, { ok: true, publishable_key: 'pk_test_abc', stripe_account: 'acct_123', client_secret: 'pi_1_secret_x', subscription_id: 'sub_1', amount_due_pence: 5900, amount_pence: 5900, interval: 'monthly', next_payment_date: '2026-11-14', wording: WORDING, under18: !!body.guardian });
       }
@@ -290,6 +292,51 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('and is told it cannot be paid for online, before anything is saved', passPage.getByRole('alert').filter({ hasText: 'cannot be paid for online' }));
   c.ok('nothing was saved or joined', pstate.basics === null && pstate.joined === null);
   await pass.close();
+
+  // ---- A gym that wants the terms and waiver signed before paying ----
+  const first = await browser.newContext({ viewport });
+  await serveApp(first);
+  await first.addInitScript(FAKE_STRIPE);
+  const firstPage = await first.newPage();
+  firstPage.setDefaultTimeout(10000);
+  const sstate = newState();
+  sstate.signFirst = true;
+  sstate.accept = true;
+  await wire(firstPage, sstate);
+  await firstPage.goto(`${base}/join/puffin`);
+  await c.has('with signing first there are five steps, from the first screen', firstPage.getByText('Step 1 of 5', { exact: true }));
+  await firstPage.getByRole('button', { name: 'Choose Hybrid' }).click();
+  await firstPage.getByLabel('Email', { exact: true }).fill('lee@example.test');
+  await firstPage.getByRole('button', { name: 'Send me a code', exact: true }).click();
+  await firstPage.getByLabel('Code from the email', { exact: true }).fill('44444444');
+  await c.has('the basics come first', firstPage.getByRole('heading', { name: 'Just the basics' }));
+  await c.has('it says what is next: reading and signing', firstPage.getByText('Next you will read and sign the terms and waiver.'));
+  c.ok('and the waiver is not left until after paying', (await firstPage.getByText('Answer a few health questions and sign the waiver').count()) === 0);
+  await firstPage.getByLabel('First name', { exact: true }).fill('Lee');
+  await firstPage.getByLabel('Last name', { exact: true }).fill('Penrose');
+  await firstPage.getByLabel('Date of birth', { exact: true }).fill('1990-04-12');
+  await firstPage.getByLabel('Mobile number', { exact: true }).fill('07700 900123');
+  await firstPage.getByRole('button', { name: 'Continue', exact: true }).click();
+  await c.has('then read and sign, before any payment', firstPage.getByRole('heading', { name: 'Read and sign' }));
+  await c.has('step 4 of 5', firstPage.getByText('Step 4 of 5', { exact: true }));
+  c.ok('no payment was set up yet', sstate.prepared === null);
+  c.ok('layout (sign before paying)', (await firstPage.evaluate(layoutProblems)).length === 0);
+  await firstPage.getByRole('button', { name: 'Sign and continue to payment' }).click();
+  await c.has('signing without answering is refused', firstPage.getByRole('alert').filter({ hasText: 'Do you have a heart condition?' }));
+  await firstPage.getByLabel('Do you have a heart condition?', { exact: true }).selectOption('no');
+  await firstPage.getByLabel('I have read the waiver and accept the risk.').check();
+  await firstPage.getByLabel('Your full name', { exact: true }).fill('Lee Penrose');
+  await draw(firstPage);
+  await firstPage.getByRole('button', { name: 'Sign and continue to payment' }).click();
+  await c.has('signing leads to agree and pay', firstPage.getByRole('heading', { name: 'Agree and pay' }));
+  c.ok('the signature was saved before payment', sstate.signed?.p_signer_name === 'Lee Penrose');
+  await firstPage.getByRole('button', { name: 'Continue to payment' }).click();
+  await c.has('and now the card form can be set up', firstPage.getByText('fake card form'));
+  await firstPage.getByLabel(WORDING).check();
+  await firstPage.getByRole('button', { name: 'Pay £59.00 and join' }).click();
+  await c.has('paying makes them a member', firstPage.getByRole('heading', { name: "You're in, Lee" }));
+  await c.has('the waiver is already ticked off the list', firstPage.getByRole('img', { name: '1 of 3 done' }));
+  await first.close();
   await free.ctx.close();
 
   // ---- The member app brings them back to the list, and shows nothing at a gym on the full journey ----

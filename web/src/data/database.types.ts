@@ -1534,6 +1534,7 @@ export type Database = {
           hold_door_code: boolean
           join_style: string
           quick_since: string | null
+          sign_before_paying: boolean
           updated_at: string
           updated_by: string | null
         }

@@ -181,6 +181,22 @@ select pt.check('required address holds the door code too', pt.set_style('admin_
 select pt.check('...m4 is held until the address is in', pt.sees_code(pt.u('m4')), '0');
 select pt.check('...and m3 who gave an address is not', pt.sees_code(pt.u('m3')), '1');
 
+-- ---------- a gym that wants the terms and waiver signed before paying ----------
+update public.member_details set phone = '+447700900124' where user_id = pt.u('m4');
+update public.profiles set first_name = 'Kit', last_name = 'Jones', date_of_birth = '1990-01-01' where id = pt.u('m4');
+select pt.check('by default the waiver is not needed before paying', pt.gaps(pt.u('m4')), '');
+select pt.check('...and the sign-up page is told so', (public.get_public_gym_join_style('tr-a'))->>'sign_before_paying', 'false');
+update public.gym_join_settings set sign_before_paying = true where gym_id = pt.gym_a();
+select pt.check('the sign-up page is told to ask for the signature first', (public.get_public_gym_join_style('tr-a'))->>'sign_before_paying', 'true');
+select pt.check('someone who has not signed cannot join or pay yet', pt.gaps(pt.u('m4')), 'signature on the terms and waiver');
+select pt.check('someone who has signed can', pt.gaps(pt.u('m3')), '');
+insert into public.member_signatures(gym_id, user_id, signer_name, signature_png, waiver_document_id)
+values (pt.gym_a(), pt.u('m4'), 'Kit Jones', 'data:image/png;base64,AAAA', 'e0000000-0000-4000-8000-000000000001');
+select pt.check('...and signing clears it', pt.gaps(pt.u('m4')), '');
+select pt.check('changing the other choices keeps this one', (pt.set_style('admin_a', 'quick', 'optional', 'required', 'required', true) like 'ERROR:%')::text || ':' || (select sign_before_paying::text from public.gym_join_settings where gym_id = pt.gym_a()), 'false:true');
+delete from public.member_signatures where user_id = pt.u('m4');
+update public.gym_join_settings set sign_before_paying = false where gym_id = pt.gym_a();
+
 -- ---------- switching back to full join ----------
 update public.member_details set phone = '+447700900124' where user_id = pt.u('m4');
 update public.profiles set first_name = 'Kit', last_name = 'Jones', date_of_birth = '1990-01-01' where id = pt.u('m4');

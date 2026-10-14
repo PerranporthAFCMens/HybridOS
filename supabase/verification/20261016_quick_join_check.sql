@@ -45,5 +45,10 @@ select 'the door code is held back by a restrictive policy, and the existing pol
              and exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'gym_access_settings'
                            and policyname = 'access settings readable by active members' and qual not like '%member_may_see_door_code%') then 'ok' else 'MISSING' end
 union all
+select 'a gym can ask for the signature before paying, and it is off by default',
+       case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'gym_join_settings' and column_name = 'sign_before_paying' and column_default = 'false')
+             and pg_get_functiondef('private.member_gaps(uuid, uuid)'::regprocedure) like '%sign_before_paying%'
+             and pg_get_functiondef('public.get_public_gym_join_style(text)'::regprocedure) like '%sign_before_paying%' then 'ok' else 'MISSING' end
+union all
 select 'the join check knows about Quick join',
        case when pg_get_functiondef('private.member_gaps(uuid, uuid)'::regprocedure) like '%quick%' then 'ok' else 'MISSING' end;

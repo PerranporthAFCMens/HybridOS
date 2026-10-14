@@ -243,17 +243,21 @@ export const BLOCKING_STATUSES = ['active', 'paused', 'pending'] as const;
 
 // ---- Quick join: pay first, finish later ----
 
-export type QuickStepId = 'plan' | 'email' | 'basics' | 'pay' | 'done';
+export type QuickStepId = 'plan' | 'email' | 'basics' | 'sign' | 'pay' | 'done';
 
 export const QUICK_TITLES: Record<QuickStepId, string> = {
-  plan: 'Choose your membership', email: 'Your email', basics: 'About you', pay: 'Agree and pay', done: 'Welcome',
+  plan: 'Choose your membership', email: 'Your email', basics: 'About you', sign: 'Read and sign', pay: 'Agree and pay', done: 'Welcome',
 };
 
-/** The screens before someone is a member: plan, email (skipped when already signed in), the basics, and paying (skipped for a free plan). */
-export function quickStepsFor(o: { signedIn: boolean; paying: boolean }): QuickStepId[] {
+/**
+ * The screens before someone is a member: plan, email (skipped when already signed in), the basics, reading and signing (only for a gym
+ * that wants the terms and waiver signed before paying, and has some), and paying (skipped for a free plan).
+ */
+export function quickStepsFor(o: { signedIn: boolean; paying: boolean; signing?: boolean }): QuickStepId[] {
   const steps: QuickStepId[] = ['plan'];
   if (!o.signedIn) steps.push('email');
   steps.push('basics');
+  if (o.signing) steps.push('sign');
   if (o.paying) steps.push('pay');
   steps.push('done');
   return steps;

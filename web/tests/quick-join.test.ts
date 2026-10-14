@@ -15,6 +15,11 @@ describe('Quick join steps', () => {
     expect(quickStepsFor({ signedIn: true, paying: true })).toEqual(['plan', 'basics', 'pay', 'done']);
     expect(quickStepsFor({ signedIn: false, paying: false })).toEqual(['plan', 'email', 'basics', 'done']);
   });
+  it('adds reading and signing before payment for a gym that asks for it', () => {
+    expect(quickStepsFor({ signedIn: false, paying: true, signing: true })).toEqual(['plan', 'email', 'basics', 'sign', 'pay', 'done']);
+    expect(quickStepsFor({ signedIn: true, paying: false, signing: true })).toEqual(['plan', 'basics', 'sign', 'done']);
+    expect(quickProgress(quickStepsFor({ signedIn: false, paying: true, signing: true }), 'sign')).toBe('Step 4 of 5');
+  });
   it('counts only the screens before the welcome', () => {
     const steps = quickStepsFor({ signedIn: false, paying: true });
     expect(quickProgress(steps, 'plan')).toBe('Step 1 of 4');

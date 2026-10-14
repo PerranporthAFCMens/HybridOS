@@ -6,7 +6,7 @@
 -- signed waiver become a short checklist after paying, and the gym can hold the door code until the checklist is done.
 --
 -- What this adds
---   public.gym_join_settings            one row per gym, written only by save_join_settings. A gym with no row is "full", which is
+--   public.gym_join_settings            one row per gym, written only by save_join_settings (sign_before_paying is set by the owner's settings screen, part 4). A gym with no row is "full", which is
 --                                       exactly how joining works today. The ask_* choices below apply to Quick join only.
 --   private.join_settings_for(gym)      the settings for a gym, or the defaults when it has no row
 --   private.member_gaps(user, gym)      changed: for a "full" gym it behaves as before; for a "quick" gym it asks only for the basics
@@ -55,7 +55,9 @@ create table public.gym_join_settings (
   hold_door_code boolean not null default true,
   quick_since timestamptz,
   updated_at timestamptz not null default now(),
-  updated_by uuid references auth.users(id)
+  updated_by uuid references auth.users(id),
+  -- true: the terms and waiver are read and signed before paying (the database refuses to take payment until they are); false: after paying
+  sign_before_paying boolean not null default false
 );
 
 alter table public.gym_join_settings enable row level security;
@@ -68,7 +70,7 @@ create policy "join settings readable by the team" on public.gym_join_settings f
 -- The settings for a gym; a gym with no row is "full", with the usual choices.
 create function private.join_settings_for(p_gym uuid) returns public.gym_join_settings language sql stable security definer set search_path to '' as
 $$ select coalesce((select s from public.gym_join_settings s where s.gym_id = p_gym),
-                   (select row(p_gym, 'full', 'optional', 'required', 'required', true, null, now(), null)::public.gym_join_settings)) $$;
+                   (select row(p_gym, 'full', 'optional', 'required', 'required', true, null, now(), null, false)::public.gym_join_settings)) $$;
 revoke all on function private.join_settings_for(uuid) from public, anon, authenticated, service_role;
 
 -- ---------------------------------------------------------------------------------------------------------------
@@ -102,6 +104,18 @@ begin
   if s.join_style = 'quick' then
     if v_minor and (coalesce(d.guardian_name, '') = '' or coalesce(d.guardian_phone, '') = '') then
       gaps := array_append(gaps, 'parent or guardian');
+    end if;
+    -- A gym that wants the terms and waiver signed before paying: joining and paying are refused until they are.
+    if s.sign_before_paying and exists (
+      select 1 from public.gym_signup_documents gd
+      where gd.gym_id = p_gym_id and gd.is_current
+        and not exists (
+          select 1 from public.member_signatures sg
+          where sg.gym_id = p_gym_id and sg.user_id = p_user_id
+            and (sg.terms_document_id = gd.id or sg.waiver_document_id = gd.id)
+        )
+    ) then
+      gaps := array_append(gaps, 'signature on the terms and waiver');
     end if;
     return gaps;
   end if;
@@ -436,7 +450,7 @@ begin
   select id into v_gym from public.gyms where slug = p_gym_slug;
   if v_gym is null then return null; end if;
   s := private.join_settings_for(v_gym);
-  return jsonb_build_object('join_style', s.join_style, 'ask_address', s.ask_address, 'ask_emergency', s.ask_emergency, 'ask_documents', s.ask_documents);
+  return jsonb_build_object('join_style', s.join_style, 'ask_address', s.ask_address, 'ask_emergency', s.ask_emergency, 'ask_documents', s.ask_documents, 'sign_before_paying', s.sign_before_paying);
 end$$;
 revoke all on function public.get_public_gym_join_style(text) from public;
 grant execute on function public.get_public_gym_join_style(text) to anon, authenticated;
