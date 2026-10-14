@@ -150,7 +150,7 @@ end$$;
 -- ---------------------------------------------------------------------------------------------------------------
 -- The checklist after joining
 -- ---------------------------------------------------------------------------------------------------------------
--- A json list of {key, label, required, done}. An item the gym switched off is left out; the signature is left out when the
+-- A json list of {key, label, required, done}, in the order the member does them: terms and waiver, emergency contact, address. An item the gym switched off is left out; the signature is left out when the
 -- gym has no current terms or waiver.
 create function private.member_ready_items(p_user_id uuid, p_gym_id uuid) returns jsonb
 language plpgsql stable security definer set search_path to 'public', 'private', 'pg_temp' as $$
@@ -163,12 +163,6 @@ declare
 begin
   select * into d from public.member_details where user_id = p_user_id;
   s := private.join_settings_for(p_gym_id);
-
-  if s.ask_emergency <> 'off' then
-    items := items || jsonb_build_array(jsonb_build_object(
-      'key', 'emergency', 'label', 'Emergency contact', 'required', s.ask_emergency = 'required',
-      'done', d.emergency_name is not null and d.emergency_phone is not null and d.emergency_relationship is not null));
-  end if;
 
   select exists (select 1 from public.gym_signup_documents gd where gd.gym_id = p_gym_id and gd.is_current) into v_has_docs;
   if v_has_docs then
@@ -183,6 +177,12 @@ begin
     ) into v_unsigned;
     items := items || jsonb_build_array(jsonb_build_object(
       'key', 'documents', 'label', 'Health questions and waiver', 'required', s.ask_documents = 'required', 'done', not v_unsigned));
+  end if;
+
+  if s.ask_emergency <> 'off' then
+    items := items || jsonb_build_array(jsonb_build_object(
+      'key', 'emergency', 'label', 'Emergency contact', 'required', s.ask_emergency = 'required',
+      'done', d.emergency_name is not null and d.emergency_phone is not null and d.emergency_relationship is not null));
   end if;
 
   if s.ask_address <> 'off' then
