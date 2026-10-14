@@ -68,11 +68,14 @@ export function QuickJoin({ slug, gym, style }: { slug: string; gym: JoinGym; st
   }, []);
 
   const existingQ = useQuery({ queryKey: ['quick-existing', gym.gymId, userId], queryFn: () => myMembershipAt(gym.gymId, userId ?? ''), enabled: !!userId, retry: false });
-  const modeQ = useQuery({ queryKey: ['quick-mode', slug], queryFn: () => getPaymentMode(slug), retry: false });
+  // Whether this gym takes payment here can only be asked once signed in (the database refuses a signed-out question). Until then the
+  // journey is shown with its payment step, and the answer is known by the time the basics are saved.
+  const modeQ = useQuery({ queryKey: ['quick-mode', slug, userId], queryFn: () => getPaymentMode(slug), enabled: !!userId, retry: false });
   const docsQ = useQuery({ queryKey: ['quick-docs', slug], queryFn: () => getSignupDocuments(slug), retry: false });
   const takesPayment = modeQ.data === 'stripe';
+  const wantsPayment = userId ? takesPayment : true;
   const under18 = isUnder18(d.dob, now);
-  const paying = takesPayment && !(chosen && isFreePlan(chosen));
+  const paying = wantsPayment && !(chosen && isFreePlan(chosen));
   const signedIn = !!userId;
   const steps = quickStepsFor({ signedIn: hadAccount, paying });
   const at = steps.indexOf(step);
@@ -107,7 +110,7 @@ export function QuickJoin({ slug, gym, style }: { slug: string; gym: JoinGym; st
     setChosen(p);
     setPayment(null);
     write(planKey(slug), p.id);
-    const list = quickStepsFor({ signedIn: hadAccount, paying: takesPayment && !isFreePlan(p) });
+    const list = quickStepsFor({ signedIn: hadAccount, paying: wantsPayment && !isFreePlan(p) });
     go(after('plan', list));
   };
 
@@ -162,6 +165,8 @@ export function QuickJoin({ slug, gym, style }: { slug: string; gym: JoinGym; st
     const found = basicsErrors(d, now);
     setErrors(found);
     if (Object.keys(found).length > 0 || !chosen) return;
+    // A one-off pass cannot be paid for on this page; say so before anything is saved.
+    if (takesPayment && !isFreePlan(chosen) && !canPayOnline(chosen)) return setMsg({ text: `${chosen.name} cannot be paid for online. Ask ${gym.name} to sign you up, or choose another membership.`, good: false });
     void run(async () => {
       await saveBasics(toBasicsArgs(d, now));
       if (paying) return go('pay');

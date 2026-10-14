@@ -7,6 +7,7 @@ const GYM = '33333333-3333-4333-8333-333333333333';
 const PLANS = [
   { id: 'plan-1', name: 'Hybrid', description: null, price_pence: 5900, billing_interval: 'monthly', includes_open_gym: true, includes_classes: true, classes_per_week: 3, includes_pt: false, min_term_months: 6, notice_days: 14 },
   { id: 'plan-free', name: 'Starter', description: 'Try us out', price_pence: 0, billing_interval: 'monthly' },
+  { id: 'plan-pass', name: 'Day pass', description: 'One visit', price_pence: 800, billing_interval: 'one_off' },
 ];
 const WORDING = 'I want the Hybrid membership at Puffin Performance to start today. I agree that Puffin Performance can charge this card £59.00 today.';
 const DOCS = [
@@ -40,7 +41,7 @@ const FAKE_STRIPE = () => {
 
 const newState = () => ({
   style: 'quick', mode: 'stripe', memberships: [], docs: true, otp: [], verified: [], accept: false, basics: null, prepared: null, finished: [],
-  joined: null, otpUrl: '', emergency: null, address: null, signed: null, finalised: null, done: new Set(), dob: '1990-04-12', doorOn: true,
+  joined: null, modeAskedSignedOut: 0, otpUrl: '', emergency: null, address: null, signed: null, finalised: null, done: new Set(), dob: '1990-04-12', doorOn: true,
 });
 
 /** Mock everything Quick join talks to. The checklist answers from `state.done`, so saving something ticks it off. */
@@ -49,7 +50,11 @@ async function wire(page, state) {
     if (path.endsWith('/rpc/get_public_gym_join_options')) return reply(route, { gym_id: GYM, gym_name: 'Puffin Performance', logo_url: null, plans: PLANS });
     if (path.endsWith('/rpc/get_public_gym_join_style')) return reply(route, { join_style: state.style, ask_address: 'optional', ask_emergency: 'required', ask_documents: 'required' });
     if (path.endsWith('/rpc/get_public_gym_signup_documents')) return reply(route, state.docs ? DOCS : []);
-    if (path.endsWith('/rpc/get_gym_payment_mode')) return reply(route, state.mode);
+    if (path.endsWith('/rpc/get_gym_payment_mode')) {
+      // As in the real database: only a signed-in person may ask (a signed-out visitor is sent the anonymous key, not a user's token).
+      if (!(route.request().headers().authorization ?? '').includes('x.y.z')) { state.modeAskedSignedOut += 1; return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ code: 'P0001', message: 'Sign in first' }) }); }
+      return reply(route, state.mode);
+    }
     if (path.endsWith('/rpc/save_my_basics')) { state.basics = body; return reply(route, { ok: true }); }
     if (path.endsWith('/memberships')) return reply(route, state.memberships);
     if (path.endsWith('/rpc/join_public_gym_with_membership')) { state.joined = body; return reply(route, { ok: true, gym_id: GYM, plan_name: 'Starter' }); }
@@ -132,6 +137,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await fill('Email', 'sam@example.test');
   await press('Send me a code');
   await c.has('a code is sent to the address', page.getByText('sam@example.test', { exact: true }));
+  c.ok('the payment question is not asked while signed out (the database refuses it)', state.modeAskedSignedOut === 0);
   c.ok('asking for it creates the account if it is new, and says which gym', state.otp[0]?.email === 'sam@example.test' && state.otp[0]?.create_user === true && state.otp[0]?.data?.gym_slug === 'puffin');
   c.ok('and the link back names the gym and its id, so the email can carry the gym name', decodeURIComponent(state.otpUrl).includes(`gym=puffin&gym_id=${GYM}`));
   c.ok('layout (code)', (await page.evaluate(layoutProblems)).length === 0);
@@ -228,6 +234,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await wire(free.page, fstate);
   await free.page.goto(`${base}/join/puffin`);
   await c.has('a signed-in person skips the email step: step 1 of 3 (plan, basics, pay)', free.page.getByText('Step 1 of 3', { exact: true }));
+  await c.has('a one-off pass says it cannot be paid for online', free.page.getByText('This one cannot be paid for online'));
+  c.ok('and has no choose button', (await free.page.getByRole('button', { name: 'Choose Day pass' }).count()) === 0);
   await free.page.getByRole('button', { name: 'Choose Starter' }).click();
   await c.has('they go straight to the basics', free.page.getByRole('heading', { name: 'Just the basics' }));
   await c.has('and a free plan has no payment step: step 2 of 2', free.page.getByText('Step 2 of 2', { exact: true }));
@@ -259,6 +267,29 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('a gym that did not choose Quick join still starts with the account', fullPage.getByRole('heading', { name: 'Create your account' }));
   c.ok('and has the password box', (await fullPage.getByLabel('Password', { exact: true }).count()) === 1);
   await full.close();
+
+  // A one-off pass picked before signing in (the page cannot know yet that this gym takes payment) is stopped once it does
+  const pass = await browser.newContext({ viewport });
+  await serveApp(pass);
+  const passPage = await pass.newPage();
+  passPage.setDefaultTimeout(10000);
+  const pstate = newState();
+  pstate.accept = true;
+  await wire(passPage, pstate);
+  await passPage.goto(`${base}/join/puffin`);
+  await passPage.getByRole('button', { name: 'Choose Day pass' }).click();
+  await passPage.getByLabel('Email', { exact: true }).fill('pat@example.test');
+  await passPage.getByRole('button', { name: 'Send me a code', exact: true }).click();
+  await passPage.getByLabel('Code from the email', { exact: true }).fill('33333333');
+  await c.has('a person who chose a one-off pass before signing in reaches the basics', passPage.getByRole('heading', { name: 'Just the basics' }));
+  await passPage.getByLabel('First name', { exact: true }).fill('Pat');
+  await passPage.getByLabel('Last name', { exact: true }).fill('Penrose');
+  await passPage.getByLabel('Date of birth', { exact: true }).fill('1990-04-12');
+  await passPage.getByLabel('Mobile number', { exact: true }).fill('07700 900123');
+  await passPage.getByRole('button', { name: 'Continue to payment' }).click();
+  await c.has('and is told it cannot be paid for online, before anything is saved', passPage.getByRole('alert').filter({ hasText: 'cannot be paid for online' }));
+  c.ok('nothing was saved or joined', pstate.basics === null && pstate.joined === null);
+  await pass.close();
   await free.ctx.close();
 
   // ---- The member app brings them back to the list, and shows nothing at a gym on the full journey ----
