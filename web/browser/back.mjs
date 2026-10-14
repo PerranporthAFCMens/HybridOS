@@ -12,6 +12,21 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.goto(`${base}/today`);
   await c.has('today loads', page.getByRole('navigation', { name: 'Main' }));
   c.ok('no Back on a sidebar page', (await back.count()) === 0);
+  // One short menu, the same as the old admin shell; pages that used to have their own line sit under it as tabs
+  const menu = page.getByRole('navigation', { name: 'Main' });
+  c.ok('the menu is the short list', (await menu.getByRole('link').allInnerTexts()).map((t) => t.trim()).join('|') === 'Today|Members|Classes and workouts|Messages and community|Reports|Settings and staff|Preview as member|Preview as staff');
+  await page.goto(`${base}/plans`);
+  await c.has('plans loads', page.getByRole('heading', { name: 'Membership plans', level: 1 }));
+  c.ok('Membership plans lights up Members', (await menu.getByRole('link', { name: 'Members' }).getAttribute('class')) === 'active');
+  c.ok('and shows the Members tabs', (await page.getByRole('navigation', { name: 'Members' }).getByRole('link').allInnerTexts()).join('|') === 'Members|Membership plans');
+  await page.goto(`${base}/training`);
+  await c.has('training loads', page.getByRole('heading', { name: 'Client training', level: 1 }));
+  c.ok('Client training lights up Classes and workouts', (await menu.getByRole('link', { name: 'Classes and workouts' }).getAttribute('class')) === 'active');
+  await page.getByRole('navigation', { name: 'Classes and workouts' }).getByRole('link', { name: 'Workout builder' }).click();
+  await c.has('a tab opens its page', page.getByRole('heading', { name: 'Workout builder', level: 1 }));
+  await page.goto(`${base}/door`);
+  c.ok('Door access lights up Settings and staff', (await menu.getByRole('link', { name: 'Settings and staff' }).getAttribute('class')) === 'active');
+  await page.goto(`${base}/today`);
   await page.goto(`${base}/settings`);
   await c.has('settings loads', page.getByRole('heading', { name: 'Settings', level: 1 }));
   c.ok('no Back on Settings', (await back.count()) === 0);

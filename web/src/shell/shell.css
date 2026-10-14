@@ -16,9 +16,10 @@
 .side .gym-wordmark { display: block; height: 26px; width: auto; max-width: 100%; margin-bottom: 6px; filter: brightness(0) invert(1); }
 .nav { display: grid; gap: 6px; }
 .nav a {
-  display: flex; align-items: center; min-height: 44px; padding: 12px; border-radius: var(--hybrid-control-radius);
+  display: flex; align-items: center; gap: 11px; min-height: 44px; padding: 12px; border-radius: var(--hybrid-control-radius);
   color: var(--hybrid-muted); text-decoration: none; font-weight: 500;
 }
+.nav .nav-icon { flex: 0 0 20px; width: 20px; height: 20px; }
 .nav a:hover { background: var(--hybrid-raised); color: #fff; }
 .nav a.active { background: var(--hybrid-panel); color: #fff; }
 .nav .section { margin: 10px 12px 2px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--hybrid-muted); font-family: var(--hybrid-mono); }
@@ -51,3 +52,9 @@
 .back-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; margin-bottom: 4px; background: none; border: 0; color: var(--hybrid-muted); font: inherit; cursor: pointer; }
 .back-link:hover { color: var(--hybrid-ink); }
 .back-link:focus-visible { outline: 2px solid var(--hybrid-pulse, #6b7cff); outline-offset: 2px; }
+
+/* Tabs along the top of a page whose menu line has more than one page (Members: plans; Classes: workout builder, client training; Messages: communications). */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; }
+.tabs a { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--hybrid-line, rgba(255,255,255,.12)); color: var(--hybrid-muted); text-decoration: none; font-size: 14px; font-weight: 500; }
+.tabs a:hover { color: #fff; background: var(--hybrid-raised); }
+.tabs a.active { color: #fff; background: var(--hybrid-panel); border-color: rgba(255,255,255,.3); font-weight: 600; }
