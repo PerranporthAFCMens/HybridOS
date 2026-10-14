@@ -17,8 +17,10 @@ const classWorkouts = [
   { session_id: 'c1', title: 'Hybrid benchmark', workout_snapshot: snapshot, class_sessions: { name: 'Hybrid 6pm', starts_at: hrs(-3) } },
   { session_id: 'c2', title: 'Old one', workout_snapshot: snapshot, class_sessions: { name: 'Hybrid last month', starts_at: hrs(-24 * 30) } },
 ];
-const gymToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
-const block = { id: 'blk1', name: 'Hybrid Uppers', starts_on: gymToday, weeks: 6 };
+// The block starts on the gym's date (UK time) of the class that was 3 hours ago, so the class is in week 1 at any time of day
+// (using "today" would put it before the block for the first 3 hours of each UK day).
+const gymDateOf = (iso) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date(iso));
+const block = { id: 'blk1', name: 'Hybrid Uppers', starts_on: gymDateOf(hrs(-3)), weeks: 6 };
 
 function layoutProblems() {
   const problems = [];

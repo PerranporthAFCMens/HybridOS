@@ -71,10 +71,10 @@ insert into public.membership_plans(id,gym_id,name,price_pence,billing_interval,
  ('c0000000-0000-4000-8000-000000000005',pt.gym_b(),'B plan',2000,'monthly',true);
 -- m1 joined long ago; m2 joined today; m3 joined long ago (kept for the approval tests); mb is in the other gym
 insert into public.memberships(id,gym_id,user_id,plan_id,status,starts_on,created_at) values
- ('d0000000-0000-4000-8000-000000000001',pt.gym_a(),pt.u('m1'),'c0000000-0000-4000-8000-000000000001','active',current_date-400,now()-interval '400 days'),
- ('d0000000-0000-4000-8000-000000000002',pt.gym_a(),pt.u('m2'),'c0000000-0000-4000-8000-000000000001','active',current_date,now()),
- ('d0000000-0000-4000-8000-000000000003',pt.gym_a(),pt.u('m3'),'c0000000-0000-4000-8000-000000000001','active',current_date-400,now()-interval '400 days'),
- ('d0000000-0000-4000-8000-000000000009',pt.gym_b(),pt.u('mb'),'c0000000-0000-4000-8000-000000000005','active',current_date-100,now()-interval '100 days');
+ ('d0000000-0000-4000-8000-000000000001',pt.gym_a(),pt.u('m1'),'c0000000-0000-4000-8000-000000000001','active',private.gym_today()-400,now()-interval '400 days'),
+ ('d0000000-0000-4000-8000-000000000002',pt.gym_a(),pt.u('m2'),'c0000000-0000-4000-8000-000000000001','active',private.gym_today(),now()),
+ ('d0000000-0000-4000-8000-000000000003',pt.gym_a(),pt.u('m3'),'c0000000-0000-4000-8000-000000000001','active',private.gym_today()-400,now()-interval '400 days'),
+ ('d0000000-0000-4000-8000-000000000009',pt.gym_b(),pt.u('mb'),'c0000000-0000-4000-8000-000000000005','active',private.gym_today()-100,now()-interval '100 days');
 
 create function pt.mid(n int) returns uuid language sql as $$ select ('d0000000-0000-4000-8000-00000000000'||n)::uuid $$;
 create function pt.opt(uid uuid, path text) returns text language sql as $$ select pt.q(uid, format('select (public.get_my_membership_options(%L)) #>> %L', pt.gym_a(), path)) $$;
