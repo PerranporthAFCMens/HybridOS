@@ -40,11 +40,18 @@ let allOk = true;
 for (const [name, viewport] of Object.entries(sizes)) {
   const writes = [];
   const fnCalls = [];
+  const welcomeCalls = [];
+  let welcomeFails = false;
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, async ({ route, path, method, body, url }) => {
     if (path.includes('/functions/v1/admin-create-staff-with-level')) {
       fnCalls.push(body);
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ user_id: 'new-user', temp_password: 'Temp-Pass-123' }) });
+      return true;
+    }
+    if (path.includes('/functions/v1/notify-staff-welcome')) {
+      welcomeCalls.push(body);
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(welcomeFails ? { ok: true, emailed: false, email_error: 'Email is not configured.' } : { ok: true, emailed: true }) });
       return true;
     }
     const table = ['gym_members', 'staff_profiles', 'staff_working_hours', 'staff_capabilities'].find((t) => path.endsWith(`/${t}`));
@@ -139,7 +146,23 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.getByRole('button', { name: 'Create login' }).click();
   await c.has('temporary password shown', page.getByLabel('Temporary password').getByText('Temp-Pass-123'));
   c.ok('create call exact', fnCalls.length === 1 && fnCalls[0].email === 'pat@example.com' && fnCalls[0].gym_id === GYM && fnCalls[0].access_level_id === LEVEL);
+  c.ok('the new person is emailed a welcome, for this gym and this person', welcomeCalls.length === 1 && welcomeCalls[0].gym_id === GYM && welcomeCalls[0].user_id === 'new-user');
+  await c.has('the owner is told the welcome went, with the link to the staff app', dialog.getByText('We have emailed Pat New a welcome with the link to the staff app.'));
+  await c.has('and that the password is not in the email', dialog.getByText(/it is not in the email/));
   await page.getByRole('button', { name: 'Done' }).click();
+  await c.has('the page says so too', page.getByRole('status').getByText(/Pat New added\. We have emailed Pat New/));
+
+  // A welcome that cannot be sent is reported, and the login still stands
+  welcomeFails = true;
+  await page.getByRole('button', { name: 'Add staff login' }).click();
+  await dialog.getByLabel('Name').fill('Quinn Late');
+  await dialog.getByLabel('Email').fill('quinn@example.com');
+  await dialog.getByLabel('Access level').selectOption(LEVEL);
+  await dialog.getByRole('button', { name: 'Create login' }).click();
+  await c.has('temporary password still shown', page.getByLabel('Temporary password').getByText('Temp-Pass-123'));
+  await c.has('the failed welcome is reported with where to sign in', dialog.getByText(/The welcome email did not go \(Email is not configured\.\)\. Tell Quinn Late to sign in at hybridone\.co\.uk\/login\./));
+  await page.getByRole('button', { name: 'Done' }).click();
+  welcomeFails = false;
 
   // Remove asks first
   writes.length = 0;

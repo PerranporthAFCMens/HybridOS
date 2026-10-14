@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
+import { notifyStaffWelcome, welcomeNote } from '../data/notify';
 import type { StaffData } from '../data/staff';
 import { StepError } from '../data/staff';
 import { Button } from '../ui/Button';
@@ -31,6 +32,7 @@ export function StaffEditor({ data, person, onClose, onDone }: { data: StaffData
   const [form, setForm] = useState<StaffForm>(() => (person && saved ? formFromStaff(person.name, person.email, saved) : emptyStaffForm()));
   const [problem, setProblem] = useState('');
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [welcome, setWelcome] = useState('');
   const set = <K extends keyof StaffForm>(k: K, v: StaffForm[K]) => setForm((f) => ({ ...f, [k]: v }));
   const setDay = (weekday: number, patch: Partial<StaffForm['hours'][number]>) => setForm((f) => ({ ...f, hours: { ...f.hours, [weekday]: { ...(f.hours[weekday] ?? { on: false, start: '09:00', end: '17:00' }), ...patch } } }));
   const setQual = (id: string, patch: Partial<{ on: boolean; expires: string }>) => setForm((f) => ({ ...f, quals: { ...f.quals, [id]: { on: false, expires: '', ...f.quals[id], ...patch } } }));
@@ -61,11 +63,14 @@ export function StaffEditor({ data, person, onClose, onDone }: { data: StaffData
         hoursToWrite: changedHours(saved?.hours ?? [], check.values.hours),
         qualChanges: diffQuals(saved?.quals ?? [], check.values.quals),
       });
+      // A new person is welcomed by email with the link to the staff app. The login is already made, so a failed email is only reported.
+      const note = person ? '' : welcomeNote(await notifyStaffWelcome(gym.gymId, userId), form.name.trim());
       if (password) {
+        setWelcome(note);
         setTempPassword(password);
         return;
       }
-      onDone(person ? `${person.name} saved.` : `${form.name.trim()} added.`);
+      onDone(person ? `${person.name} saved.` : `${form.name.trim()} added. ${note}`.trim());
     } catch (e) {
       setProblem(e instanceof StepError || e instanceof Error ? e.message : 'Could not save. Please try again.');
     }
@@ -73,11 +78,12 @@ export function StaffEditor({ data, person, onClose, onDone }: { data: StaffData
 
   if (tempPassword) {
     return (
-      <Modal title="Login created" onClose={() => onDone(`${form.name.trim()} added.`)}>
+      <Modal title="Login created" onClose={() => onDone(`${form.name.trim()} added. ${welcome}`.trim())}>
         <SectionTitle title="Login created" />
-        <p>Give {form.name.trim()} this temporary password. They should change it the first time they sign in.</p>
+        {welcome && <p>{welcome}</p>}
+        <p>Give {form.name.trim()} this temporary password (it is not in the email). They should change it the first time they sign in.</p>
         <p className="temp-password" aria-label="Temporary password">{tempPassword}</p>
-        <Button variant="primary" className="wide-btn" onClick={() => onDone(`${form.name.trim()} added.`)}>Done</Button>
+        <Button variant="primary" className="wide-btn" onClick={() => onDone(`${form.name.trim()} added. ${welcome}`.trim())}>Done</Button>
       </Modal>
     );
   }
