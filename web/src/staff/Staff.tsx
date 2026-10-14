@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
 import type { StaffData } from '../data/staff';
 import { links } from '../shell/legacy';
+import { notifyStaffWelcome, welcomeNote } from '../data/notify';
 import { Button, LinkButton } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
 import { StaffEditor } from './StaffEditor';
@@ -21,6 +22,14 @@ export function Staff() {
   const d = q.data;
   const now = new Date();
 
+  // "Send the welcome again": a new link when the first one has run out, or the email went astray.
+  const [sending, setSending] = useState<string | null>(null);
+  const sendWelcome = (m: TeamRow) => {
+    setMessage('');
+    setSending(m.userId);
+    void notifyStaffWelcome(gym.gymId, m.userId, true).then((r) => setMessage(welcomeNote(r, m.name))).finally(() => setSending(null));
+  };
+
   const remove = (m: TeamRow) =>
     writes.remove.mutate(m.userId, {
       onSuccess: () => { setRemoving(null); setMessage(`${m.name} no longer has access to ${gym.gymName}. Their HybridOne login stays.`); },
@@ -34,8 +43,10 @@ export function Staff() {
           <div className="eyebrow">Settings and staff</div>
           <h1>Staff</h1>
           <div className="muted">The people who run {gym.gymName}: their access, hours and qualifications.</div>
+          <div className="muted small">Staff and coaches use the staff app. Anyone who should run the whole gym (a senior manager, say) is added as an admin under Owners and admins, and gets the full admin panel.</div>
         </div>
         <div className="staff-top">
+          <LinkButton href={links.owners}>Owners and admins</LinkButton>
           <LinkButton href={links.settings}>Settings</LinkButton>
           <Button variant="primary" onClick={() => { setMessage(''); setEditing('new'); }}>Add staff login</Button>
         </div>
@@ -58,7 +69,7 @@ export function Staff() {
             <ul className="team-list">
               {d.team.map((m) => (
                 <TeamItem key={m.userId} m={m} d={d} now={now} confirming={removing === m.userId} busy={writes.remove.isPending}
-                  onEdit={() => { setMessage(''); setEditing(m); }} onAskRemove={() => setRemoving(m.userId)} onCancelRemove={() => setRemoving(null)} onRemove={() => remove(m)} />
+                  onEdit={() => { setMessage(''); setEditing(m); }} sendingWelcome={sending === m.userId} onSendWelcome={() => sendWelcome(m)} onAskRemove={() => setRemoving(m.userId)} onCancelRemove={() => setRemoving(null)} onRemove={() => remove(m)} />
               ))}
             </ul>
           </Card>
@@ -70,8 +81,8 @@ export function Staff() {
   );
 }
 
-function TeamItem({ m, d, now, confirming, busy, onEdit, onAskRemove, onCancelRemove, onRemove }: {
-  m: TeamRow; d: StaffData; now: Date; confirming: boolean; busy: boolean; onEdit: () => void; onAskRemove: () => void; onCancelRemove: () => void; onRemove: () => void;
+function TeamItem({ m, d, now, confirming, busy, sendingWelcome, onEdit, onSendWelcome, onAskRemove, onCancelRemove, onRemove }: {
+  m: TeamRow; d: StaffData; now: Date; confirming: boolean; busy: boolean; sendingWelcome: boolean; onEdit: () => void; onSendWelcome: () => void; onAskRemove: () => void; onCancelRemove: () => void; onRemove: () => void;
 }) {
   const operational = isOperational(m.role);
   const active = isActiveMember(m);
@@ -101,6 +112,7 @@ function TeamItem({ m, d, now, confirming, busy, onEdit, onAskRemove, onCancelRe
         {operational && active && !confirming && (
           <>
             <Button aria-label={`Edit ${m.name}`} onClick={onEdit}>Edit</Button>
+            <Button aria-label={`Send the welcome email again to ${m.name}`} disabled={sendingWelcome} onClick={onSendWelcome}>{sendingWelcome ? 'Sending…' : 'Send welcome'}</Button>
             <Button aria-label={`Remove ${m.name}`} onClick={onAskRemove}>Remove</Button>
           </>
         )}

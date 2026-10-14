@@ -1,10 +1,15 @@
 // notify-staff-welcome: emails a new team member to welcome them and give them the link to the staff app.
 //
 // The owner's or admin's own sign-in (JWT) calls it right after adding the login:
-//   { gym_id: '...', user_id: '...' }
-// The caller must be an active owner or admin of that gym, and the person must have been made staff or coach in that gym in the
-// last 15 minutes, so this cannot be used to send anyone an email out of the blue. The email never contains a password: a new
-// login's temporary password is shown to the owner on screen, to pass on. A failed email changes nothing else.
+//   { gym_id: '...', user_id: '...' }                   right after adding the login
+//   { gym_id: '...', user_id: '...', resend: true }      "send the welcome again" (a link expired, or an email went astray)
+// The caller must be an active owner or admin of that gym and the person must be staff or coach there. For the first send they must
+// have been added in the last 15 minutes, so this cannot be used to email anyone out of the blue.
+//
+// A person who has never signed in gets a one-time "Choose your password" link (the same kind as "Forgot password?"), made here
+// with the service role and put straight into the email: it is never returned to the caller or shown on screen, and no password
+// exists anywhere for anyone to read. Someone who has signed in before keeps their password and is just welcomed with the sign-in
+// link. A failed email changes nothing else.
 //
 // One file on purpose, so it can be pasted into the Supabase dashboard's function editor as well as deployed with the CLI.
 // The wording at the top has no Deno-only code and is unit tested (web/tests/staffwelcome.test.ts).
@@ -28,14 +33,21 @@ const para = (s: string) => `<p style="margin:0 0 12px;line-height:1.55">${s}</p
 
 const shell = (gymName: string, heading: string, inner: string, link: string, button: string) => `<!doctype html><html><body style="margin:0;background:#f5f7fb;font-family:Inter,Arial,sans-serif;color:#101828"><div style="max-width:560px;margin:0 auto;padding:28px 18px"><div style="background:#fff;border-radius:14px;padding:26px 24px;border:1px solid #e4e7ec"><div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#667085">${escapeHtml(gymName)}</div><h1 style="margin:10px 0 12px;font-size:21px;line-height:1.25">${escapeHtml(heading)}</h1>${inner}<p style="margin:22px 0 4px"><a href="${escapeHtml(link)}" style="display:inline-block;background:#101828;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600">${escapeHtml(button)}</a></p></div><p style="font-size:12px;color:#667085;margin:14px 6px">You are getting this because ${escapeHtml(gymName)} added you to its team on HybridOne.</p></div></body></html>`
 
-/** Welcome to the team, with the way in. */
-export function welcomeMail(o: { gymName: string; adderName: string; firstName: string; role: string; email: string; link: string }): Mail {
+/**
+ * Welcome to the team, with the way in. With `passwordLink` (a person who has never signed in) the button is "Choose your
+ * password" and takes them straight to a page where they set one; without it the button opens the staff app sign-in.
+ */
+export function welcomeMail(o: { gymName: string; adderName: string; firstName: string; role: string; email: string; link: string; passwordLink?: string | null }): Mail {
   const hi = o.firstName ? `Hi ${o.firstName},` : 'Hi,'
   const who = o.adderName ? `${o.adderName} has` : 'Your gym has'
   const intro = `${who} added you to the team at ${o.gymName} as ${roleWords(o.role)}. The staff app is where you will find your timetable and your working hours.`
-  const how = `To sign in, open the link below and enter this email address: ${o.email}. If you were given a temporary password, use it. If not, choose "Email me a sign-in link" and we will send you one. You can pick your own password at any time with "Forgot password?".`
-  const html = shell(o.gymName, `Welcome to the team at ${o.gymName}`, para(escapeHtml(hi)) + para(escapeHtml(intro)) + para(escapeHtml(how)), o.link, 'Open the staff app')
-  const text = `${hi}\n\n${intro}\n\n${how}\n\nOpen the staff app: ${o.link}\n\n${o.gymName}`
+  const how = o.passwordLink
+    ? `First, choose your password with the button below. The link works once, and only for a short time. If it has stopped working, open the sign-in page, enter ${o.email} and choose "Forgot password?" for a new one. After that, you sign in at ${o.link}.`
+    : `To sign in, open the link below and enter this email address: ${o.email}, with your usual password. If you do not remember it, choose "Forgot password?", or choose "Email me a sign-in link" and we will send you one.`
+  const button = o.passwordLink ? 'Choose your password' : 'Open the staff app'
+  const buttonLink = o.passwordLink || o.link
+  const html = shell(o.gymName, `Welcome to the team at ${o.gymName}`, para(escapeHtml(hi)) + para(escapeHtml(intro)) + para(escapeHtml(how)), buttonLink, button)
+  const text = `${hi}\n\n${intro}\n\n${how}\n\n${button}: ${buttonLink}\n\n${o.gymName}`
   return { subject: `Welcome to the team at ${o.gymName}`.replace(/[\r\n]+/g, ' ').slice(0, 200), html, text }
 }
 
@@ -77,7 +89,8 @@ async function handle(req: Request): Promise<Response> {
     const callerId = u.user.id
 
     stage = 'read_request'
-    const body = (await req.json().catch(() => ({}))) as { gym_id?: unknown; user_id?: unknown }
+    const body = (await req.json().catch(() => ({}))) as { gym_id?: unknown; user_id?: unknown; resend?: unknown }
+    const resend = body.resend === true
     const gymId = str(body.gym_id)
     const userId = str(body.user_id)
     if (!gymId || !userId) return reply(400, { error: 'gym_id and user_id are required' })
@@ -91,7 +104,7 @@ async function handle(req: Request): Promise<Response> {
     const { data: person, error: personError } = await admin.from('gym_members').select('role,is_active,access_status,created_at,updated_at').eq('gym_id', gymId).eq('user_id', userId).limit(1).maybeSingle()
     if (personError) return reply(500, { error: `Could not read the team member: ${personError.message}`, stage })
     if (!person || !['staff', 'coach'].includes(String(person.role)) || person.is_active !== true) return reply(404, { error: 'That person is not on this gym\'s team.', stage })
-    if (!recent(person.created_at) && !recent(person.updated_at)) return reply(400, { error: 'That person was added too long ago to send a welcome now.', stage })
+    if (!resend && !recent(person.created_at) && !recent(person.updated_at)) return reply(400, { error: 'That person was added too long ago to send a welcome now.', stage })
 
     stage = 'load_context'
     const [gymQ, commsQ, callerQ, personQ, target] = await Promise.all([
@@ -110,21 +123,31 @@ async function handle(req: Request): Promise<Response> {
     if (!to) return reply(200, { ok: true, emailed: false, email_error: 'That person has no email address.' })
     if (!resendKey) return reply(200, { ok: true, emailed: false, email_error: 'Email is not configured.' })
 
-    stage = 'send_email'
+    // Someone who has never signed in is sent a one-time link to choose their password (the same kind as "Forgot password?").
+    // It goes only into their own email. If it cannot be made they are sent the ordinary welcome, which still gets them in.
+    stage = 'password_link'
     const link = `${site}/login?gym_id=${encodeURIComponent(gymId)}`
-    const mail = welcomeMail({ gymName, adderName, firstName, role: String(person.role), email: to, link })
+    let passwordLink: string | null = null
+    if (!target.data?.user?.last_sign_in_at) {
+      const made = await admin.auth.admin.generateLink({ type: 'recovery', email: to, options: { redirectTo: `${site}/auth-return.html?mode=recovery` } })
+      passwordLink = made.error ? null : made.data?.properties?.action_link ?? null
+    }
+
+    stage = 'send_email'
+    const mail = welcomeMail({ gymName, adderName, firstName, role: String(person.role), email: to, link, passwordLink })
     const from = comms.sender_domain_status === 'verified' && str(comms.sender_email) ? str(comms.sender_email).toLowerCase() : DEFAULT_FROM
     const fromName = (str(comms.sender_name) || gymName).replace(/[<>"\r\n]/g, '')
     const payload: Record<string, unknown> = { from: `${fromName} <${from}>`, to: [to], subject: mail.subject, html: mail.html, text: mail.text }
     const rt = str(comms.reply_to_email)
     if (rt) payload.reply_to = [rt]
-    const day = new Date().toISOString().slice(0, 10)
+    // One send per person per minute: a double click is answered once, while a later "send again" really sends.
+    const minute = new Date().toISOString().slice(0, 16)
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resendKey}`, 'Idempotency-Key': `staff-welcome-${gymId}-${userId}-${day}`.slice(0, 250) },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resendKey}`, 'Idempotency-Key': `staff-welcome-${gymId}-${userId}-${minute}`.slice(0, 250) },
       body: JSON.stringify(payload),
     })
-    if (res.ok) return reply(200, { ok: true, emailed: true })
+    if (res.ok) return reply(200, { ok: true, emailed: true, set_password: passwordLink !== null })
     return reply(200, { ok: true, emailed: false, email_error: `Resend ${res.status}: ${(await res.text()).slice(0, 300)}` })
   } catch (e) {
     return reply(500, { error: e instanceof Error ? e.message : 'Something went wrong', stage })

@@ -8,7 +8,6 @@
 .team-actions .confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; max-width: 340px; }
 .day-row, .qual-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 104px) minmax(0, 104px); gap: 8px; align-items: center; padding: 3px 0; }
 .qual-row { grid-template-columns: minmax(0, 1fr) minmax(0, 170px); }
-.temp-password { font-family: var(--hybrid-mono); font-size: 22px; color: var(--hybrid-ink); padding: 12px 14px; border: 1px dashed var(--hybrid-line-strong); border-radius: 10px; overflow-wrap: anywhere; }
 
 .settings-list { list-style: none; margin: 0; padding: 0; }
 .settings-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--hybrid-line-strong); }
