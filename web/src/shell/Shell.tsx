@@ -2,6 +2,8 @@ import { siteUrl } from '../app/site';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { MENU, SETTINGS_GROUP, groupFor, tabsFor } from './menu';
+import { Icon } from './icons';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { getProfileNames } from '../data/profile';
 import { Button } from '../ui/Button';
@@ -10,7 +12,7 @@ import { gymLogo } from './gymBrand';
 import './shell.css';
 
 /** The pages in the sidebar. Every other page was opened from one of them, so it gets a Back link. */
-const TOP_PAGES = ['/today', '/members', '/plans', '/classes', '/workouts', '/training', '/reports', '/community', '/communications', '/settings'];
+const TOP_PAGES = [...MENU.flatMap((g) => g.pages.map((p) => p.to)), SETTINGS_GROUP.to];
 
 function BackLink() {
   const { pathname } = useLocation();
@@ -29,6 +31,9 @@ export function Shell() {
   const auth = useReadyAuth();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
+  const { pathname } = useLocation();
+  const group = groupFor(pathname);
+  const tabs = tabsFor(pathname);
   const logo = gymLogo(auth.gym.gymId, auth.gym.logoUrl);
   const profile = useQuery({ queryKey: ['profile', auth.userId], queryFn: () => getProfileNames(auth.userId) });
   return (
@@ -51,19 +56,12 @@ export function Shell() {
           </div>
         </div>
         <nav className="nav" aria-label="Main">
-          <NavLink to="/today" onClick={close}>Today</NavLink>
-          <NavLink to="/members" onClick={close}>Members</NavLink>
-          <NavLink to="/plans" onClick={close}>Membership plans</NavLink>
-          <NavLink to="/classes" onClick={close}>Classes and workouts</NavLink>
-          <NavLink to="/workouts" onClick={close}>Workout builder</NavLink>
-          <NavLink to="/training" onClick={close}>Client training</NavLink>
-          <NavLink to="/reports" onClick={close}>Reports</NavLink>
-          <NavLink to="/community" onClick={close}>Community</NavLink>
-          <NavLink to="/communications" onClick={close}>Communications</NavLink>
-          <NavLink to="/settings" onClick={close}>Settings and staff</NavLink>
+          {[...MENU, SETTINGS_GROUP].map((g) => (
+            <NavLink key={g.key} to={g.to} className={group?.key === g.key ? 'active' : ''} onClick={close}><Icon name={g.icon} /><span>{g.label}</span></NavLink>
+          ))}
           <div className="section">Preview</div>
-          <NavLink to="/m/today" onClick={close}>Preview as member</NavLink>
-          <a href={`${siteUrl('staff.html')}?view=staff`}>Preview as staff</a>
+          <NavLink to="/m/today" onClick={close}><Icon name="profile" /><span>Preview as member</span></NavLink>
+          <a href={`${siteUrl('staff.html')}?view=staff`}><Icon name="staff" /><span>Preview as staff</span></a>
         </nav>
         <div className="account">
           <div className="who" title={auth.email}>
@@ -81,6 +79,11 @@ export function Shell() {
       </aside>
       <main className="main">
         <BackLink />
+        {tabs.length > 0 && (
+          <nav className="tabs" aria-label={group?.label}>
+            {tabs.map((t) => <NavLink key={t.to} to={t.to}>{t.label}</NavLink>)}
+          </nav>
+        )}
         <Outlet />
         </main>
     </div>
