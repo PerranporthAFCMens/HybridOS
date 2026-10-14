@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  assignMembership,
   listMemberDirectory,
   listMemberMemberships,
   setMembershipStatus,
@@ -71,11 +70,6 @@ export function useMemberWrites(gymId: string, userId: string) {
     }),
     setStatus: useMutation({
       mutationFn: (v: { membershipId: string; status: 'active' | 'paused' | 'cancelled' }) => setMembershipStatus({ gymId, ...v }),
-      onSuccess: refresh,
-    }),
-    assign: useMutation({
-      mutationFn: (v: { planId: string; status: 'active' | 'pending' | 'paused'; startsOn: string | null; payment: 'manual' | 'gocardless' }) =>
-        assignMembership({ gymId, userId, ...v }),
       onSuccess: refresh,
     }),
   };

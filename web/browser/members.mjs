@@ -1,10 +1,9 @@
 // Browser gate: the Members screen, signed in as an owner, at phone and desktop width.
 // Supabase is mocked at the network layer. Besides what is on screen, this captures every write
-// (lifecycle dates, membership status changes, assign membership) and checks its exact request.
+// (lifecycle dates, membership status changes) and checks its exact request.
 import { PDFDocument } from 'pdf-lib';
-import { GYM, USER, base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
+import { GYM, base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
 
-const today = new Date().toISOString().slice(0, 10);
 const ADA = '33333333-3333-4333-8333-333333333333';
 const BOB = '44444444-4444-4444-8444-444444444444';
 const CAT = '55555555-5555-4555-8555-555555555555';
@@ -107,8 +106,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('members only', (await page.locator('.member-text b').allTextContents()).join('|') === 'Ada Zane|Bob Adams|Cat Young');
   await page.getByLabel('Show', { exact: true }).selectOption('all');
   await page.locator('.member-row', { hasText: 'Pat Boss' }).click();
-  await c.has('a team record explains itself and can be given a plan', page.getByText(/This is a team login/));
-  c.ok('no member lifecycle dates for the team', (await page.getByText('Customer lifecycle').count()) === 0 && (await page.getByRole('button', { name: 'Assign membership' }).count()) === 1);
+  await c.has('a team record explains itself', page.getByText(/This is a team login/));
+  c.ok('no member lifecycle dates for the team', (await page.getByText('Customer lifecycle').count()) === 0 && (await page.getByRole('button', { name: 'Assign membership' }).count()) === 0);
   await page.getByRole('button', { name: '‹ Back' }).click();
   await page.locator('.member-row').first().waitFor();
 
@@ -169,7 +168,6 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('sent for this gym and this member, in the form the database wants', !!sent && sent.body.p_gym_id === GYM && sent.body.p_user_id === ADA && sent.body.p_first_name === 'Adaline' && sent.body.p_phone === '+447700900999' && sent.body.p_postcode === 'PL28 8AB' && sent.body.p_date_of_birth === '2001-03-14' && sent.body.p_emergency_phone === '+447700900456');
   c.ok('the form closes after saving', (await dialog.getByRole('button', { name: 'Save details' }).count()) === 0);
   writes.length = 0;
-  c.ok('plan option', (await dialog.locator('option', { hasText: 'Hybrid Monthly — £45.00 / monthly' }).count()) === 1);
   if (shots) await page.screenshot({ path: `${shots}/member-record-${name}.png` });
 
   // iPhone date boxes have a wide built-in minimum width. Fake that here and check the boxes
@@ -241,16 +239,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const synced = writes.find((w) => w.path.endsWith('/functions/v1/stripe-membership-sync'));
   c.ok('Stripe was told to match, for that membership only', synced && synced.body.membership_id === 'm2');
 
-  // Assign a membership
-  await dialog.getByRole('button', { name: 'Assign membership' }).click();
-  await c.has('assigned', dialog.getByText('Membership assigned.'));
-  const assign = writes.find((w) => w.method === 'POST' && w.path.endsWith('/memberships'));
-  c.ok('assign write body', assign && assign.body.gym_id === GYM && assign.body.user_id === ADA && assign.body.plan_id === 'p1' && assign.body.status === 'active' && assign.body.starts_on === today && assign.body.payment_provider === 'manual' && assign.body.payment_status === 'confirmed');
-  c.ok('signed-in user is not used as the member', assign && assign.body.user_id !== USER);
-
-  // GoCardless wording and pending payment
-  await dialog.getByLabel('Payment method').selectOption('gocardless');
-  await c.has('gocardless hint', dialog.getByText(/leaves payment pending until a GoCardless/));
+  // There is no way to assign a membership by hand: people join through the sign-up link and pay
+  c.ok('no assign-membership box, and no GoCardless wording anywhere on the record', (await dialog.getByText('Assign membership').count()) === 0 && (await dialog.getByLabel('Payment method').count()) === 0 && (await dialog.getByText(/GoCardless/i).count()) === 0);
 
   const overflowModal = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
   c.ok('no horizontal overflow (record)', !overflowModal);

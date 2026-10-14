@@ -153,22 +153,3 @@ export async function setMembershipStatus(args: {
   if (error) throw error;
 }
 
-export async function assignMembership(args: {
-  gymId: string;
-  userId: string;
-  planId: string;
-  status: 'active' | 'pending' | 'paused';
-  startsOn: string | null;
-  payment: 'manual' | 'gocardless';
-}): Promise<void> {
-  const { error } = await supabase.from('memberships').insert({
-    gym_id: args.gymId,
-    user_id: args.userId,
-    plan_id: args.planId,
-    status: args.status,
-    starts_on: args.startsOn,
-    payment_provider: args.payment,
-    payment_status: args.payment === 'gocardless' ? 'pending' : 'confirmed',
-  });
-  if (error) throw error;
-}
