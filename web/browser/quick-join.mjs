@@ -1,5 +1,5 @@
 // Browser gate: Quick join, the pay-first sign-up. A gym that chose it sends people through plan, email code (no password), the basics,
-// and agree-and-pay; the emergency contact, waiver and address are a checklist afterwards, and the door code is held until it is done.
+// and agree-and-pay; the emergency contact, waiver and address are a checklist afterwards, and the door code is shown in the member app, never on this page.
 // Mocked network and a faked Stripe card form only: no real account, no real card, nothing leaves the machine.
 import { base, launch, mockSupabase, reply, runChecks, serveApp, session, signedInPage, sizes } from './mock.mjs';
 
@@ -192,8 +192,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('the server confirmed the payment', state.finished.length === 1 && state.finished[0].subscription_id === 'sub_1');
   await c.has('the checklist follows', page.getByRole('heading', { name: 'Get ready for your first visit' }));
   await c.has('nothing is done yet', page.getByRole('img', { name: '0 of 3 done' }));
-  await c.has('the door code is held back', page.getByText('Appears here when the things above are done.'));
-  c.ok('so no code is on the page', (await page.getByText('4821').count()) === 0 && (await page.getByRole('button', { name: 'Tap to reveal' }).count()) === 0);
+  c.ok('no door code or door card on the sign-up page', (await page.getByRole('region', { name: 'Door access' }).count()) === 0 && (await page.getByText('4821').count()) === 0 && (await page.getByText('Your door code').count()) === 0);
   c.ok('layout (welcome)', (await page.evaluate(layoutProblems)).length === 0);
 
   c.ok('the list is in order: terms and waiver, emergency contact, address', JSON.stringify(await page.locator('.qj-item b').allInnerTexts()) === JSON.stringify(['Health questions and waiver', 'Emergency contact', 'Your address']));
@@ -208,7 +207,6 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await press('Sign');
   await c.has('signing ticks it off', page.getByRole('img', { name: '1 of 3 done' }));
   c.ok('the signature was saved and the signed copies asked for', state.signed?.p_gym_slug === 'puffin' && state.signed?.p_signer_name === 'Sam Penrose' && state.finalised?.signature_id === 'sig-1');
-  c.ok('the door code is still held until the emergency contact is in', (await page.getByText('Appears here when the things above are done.').count()) === 1);
   await c.has('the emergency contact is offered next', page.getByRole('button', { name: 'Start with emergency contact' }));
 
   await press('Start with emergency contact');
@@ -220,7 +218,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await press('Save');
   await c.has('saving it ticks it off', page.getByRole('img', { name: '2 of 3 done' }));
   c.ok('and sent what the database wants', state.emergency?.p_name === 'Alex Penrose' && state.emergency?.p_phone === '+447700900124' && state.emergency?.p_relationship === 'Partner');
-  await c.has('with the required things done, the door code is released', page.getByRole('button', { name: 'Tap to reveal' }));
+  c.ok('even with the required things done, the sign-up page shows no door code (it is in the app)', (await page.getByRole('region', { name: 'Door access' }).count()) === 0 && (await page.getByRole('button', { name: 'Tap to reveal' }).count()) === 0);
   await c.has('the address is optional but can still be added', page.getByText('30 seconds · optional'));
   await page.getByRole('button', { name: /Your address/ }).click();
   await fill('Address line 1', '1 Cliff Road');

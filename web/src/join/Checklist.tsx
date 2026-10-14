@@ -1,8 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getReadyStatus, getSignupDocuments, myBirthday, saveAddress, saveEmergency } from '../data/join';
-import { loadDoor } from '../data/door';
-import { DoorCard } from '../member/HomeTiles';
 import { Button } from '../ui/Button';
 import { Field, FieldRow, Input } from '../ui/Field';
 import {
@@ -15,7 +13,7 @@ const TITLES: Record<ReadyKey, string> = { emergency: 'Emergency contact', docum
 
 /**
  * The short list a new member works through after paying under Quick join: emergency contact, health questions and waiver, address.
- * It is also the member's way back to anything left undone, and it shows the door code once the gym will release it.
+ * It is also the member's way back to anything left undone. The door code is shown in the member app, not here.
  */
 export function Checklist({ gymId, slug, onChanged }: { gymId: string; slug: string; onChanged?: () => void }) {
   const qc = useQueryClient();
@@ -24,7 +22,6 @@ export function Checklist({ gymId, slug, onChanged }: { gymId: string; slug: str
   const wantsDocs = !!status?.items.some((i) => i.key === 'documents');
   const docsQ = useQuery({ queryKey: ['join-docs', slug, 'checklist'], queryFn: () => getSignupDocuments(slug), enabled: wantsDocs, retry: false });
   const birthdayQ = useQuery({ queryKey: ['my-birthday'], queryFn: myBirthday, enabled: wantsDocs, retry: false });
-  const doorQ = useQuery({ queryKey: ['ready-door', gymId, status?.held], queryFn: () => loadDoor(gymId), enabled: !!status && !status.held, retry: false });
   const [open, setOpen] = useState<ReadyKey | null>(null);
 
   if (statusQ.isPending) return <p className="muted">Loading…</p>;
@@ -38,7 +35,6 @@ export function Checklist({ gymId, slug, onChanged }: { gymId: string; slug: str
     await qc.invalidateQueries({ queryKey: ['ready', gymId] });
     onChanged?.();
   };
-  const door = doorQ.data && doorQ.data.enabled && doorQ.data.code ? doorQ.data : null;
 
   return (
     <section aria-label="Get ready for your first visit">
@@ -71,14 +67,6 @@ export function Checklist({ gymId, slug, onChanged }: { gymId: string; slug: str
         ))}
       </ul>
       {next && open === null && <p><Button variant="primary" onClick={() => setOpen(next.key)}>{`Start with ${TITLES[next.key].toLowerCase()}`}</Button></p>}
-      {status.held ? (
-        <div className="qj-lock">
-          <span aria-hidden="true">🔒</span>
-          <span><b>Your door code</b><br /><span className="muted">Appears here when the {total === 1 ? 'thing' : 'things'} above {total === 1 ? 'is' : 'are'} done.</span></span>
-        </div>
-      ) : door ? (
-        <DoorCard label={door.label ?? ''} code={door.code ?? ''} note={door.note ?? ''} />
-      ) : null}
     </section>
   );
 }
