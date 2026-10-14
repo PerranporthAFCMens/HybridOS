@@ -31,8 +31,6 @@ export function StaffEditor({ data, person, onClose, onDone }: { data: StaffData
     : null;
   const [form, setForm] = useState<StaffForm>(() => (person && saved ? formFromStaff(person.name, person.email, saved) : emptyStaffForm()));
   const [problem, setProblem] = useState('');
-  const [tempPassword, setTempPassword] = useState<string | null>(null);
-  const [welcome, setWelcome] = useState('');
   const set = <K extends keyof StaffForm>(k: K, v: StaffForm[K]) => setForm((f) => ({ ...f, [k]: v }));
   const setDay = (weekday: number, patch: Partial<StaffForm['hours'][number]>) => setForm((f) => ({ ...f, hours: { ...f.hours, [weekday]: { ...(f.hours[weekday] ?? { on: false, start: '09:00', end: '17:00' }), ...patch } } }));
   const setQual = (id: string, patch: Partial<{ on: boolean; expires: string }>) => setForm((f) => ({ ...f, quals: { ...f.quals, [id]: { on: false, expires: '', ...f.quals[id], ...patch } } }));
@@ -45,11 +43,9 @@ export function StaffEditor({ data, person, onClose, onDone }: { data: StaffData
     if (!check.ok) return setProblem(check.message);
     try {
       let userId = person?.userId ?? '';
-      let password: string | null = null;
       if (!person) {
         const created = await writes.create.mutateAsync({ name: form.name.trim(), email: form.email.trim(), role: form.role, accessLevelId: form.accessLevelId });
         userId = created.userId;
-        password = created.tempPassword;
       }
       await writes.save.mutateAsync({
         gymId: gym.gymId,
@@ -63,30 +59,13 @@ export function StaffEditor({ data, person, onClose, onDone }: { data: StaffData
         hoursToWrite: changedHours(saved?.hours ?? [], check.values.hours),
         qualChanges: diffQuals(saved?.quals ?? [], check.values.quals),
       });
-      // A new person is welcomed by email with the link to the staff app. The login is already made, so a failed email is only reported.
+      // A new person is welcomed by email: a link to choose their own password and the way into the staff app. The login is already made, so a failed email is only reported.
       const note = person ? '' : welcomeNote(await notifyStaffWelcome(gym.gymId, userId), form.name.trim());
-      if (password) {
-        setWelcome(note);
-        setTempPassword(password);
-        return;
-      }
       onDone(person ? `${person.name} saved.` : `${form.name.trim()} added. ${note}`.trim());
     } catch (e) {
       setProblem(e instanceof StepError || e instanceof Error ? e.message : 'Could not save. Please try again.');
     }
   };
-
-  if (tempPassword) {
-    return (
-      <Modal title="Login created" onClose={() => onDone(`${form.name.trim()} added. ${welcome}`.trim())}>
-        <SectionTitle title="Login created" />
-        {welcome && <p>{welcome}</p>}
-        <p>Give {form.name.trim()} this temporary password (it is not in the email). They should change it the first time they sign in.</p>
-        <p className="temp-password" aria-label="Temporary password">{tempPassword}</p>
-        <Button variant="primary" className="wide-btn" onClick={() => onDone(`${form.name.trim()} added. ${welcome}`.trim())}>Done</Button>
-      </Modal>
-    );
-  }
 
   return (
     <Modal title={hoursOnly ? `Hours and qualifications: ${person?.name ?? ''}` : person ? `Edit ${person.name}` : 'Add staff login'} onClose={onClose}>

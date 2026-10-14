@@ -110,17 +110,18 @@ export async function saveStaff(a: SaveStaffArgs): Promise<void> {
 export interface NewLogin { name: string; email: string; role: 'staff' | 'coach'; accessLevelId: string }
 
 /**
- * Creates a staff login with the live "admin-create-staff-with-level" function (the same call the old
- * page makes). It may hand back a temporary password, which the owner passes on.
+ * Creates a staff login with the live "admin-create-staff-with-level" function (the copy in the repository is
+ * supabase/functions/admin-create-staff-with-level). A new login has no password anyone can see: the person chooses their own from
+ * the link in the welcome email. `existing` is true when they already had a HybridOne login (they keep their password).
  */
-export async function createStaffLogin(gymId: string, n: NewLogin): Promise<{ userId: string; tempPassword: string | null }> {
+export async function createStaffLogin(gymId: string, n: NewLogin): Promise<{ userId: string; existing: boolean }> {
   const { data, error } = await supabase.functions.invoke('admin-create-staff-with-level', {
     body: { gym_id: gymId, email: n.email, display_name: n.name, role: n.role, access_level_id: n.accessLevelId },
   });
   if (error) throw new Error(await edgeErrorMessage(error, 'Could not create the staff login.'));
-  const j = (data ?? {}) as { user_id?: string; temp_password?: string; error?: string };
+  const j = (data ?? {}) as { user_id?: string; existing_user?: boolean; error?: string };
   if (!j.user_id) throw new Error(j.error || 'Could not create the staff login.');
-  return { userId: j.user_id, tempPassword: j.temp_password ?? null };
+  return { userId: j.user_id, existing: j.existing_user === true };
 }
 
 /** Stops a staff member's access to this gym. Their HybridOne login stays. */

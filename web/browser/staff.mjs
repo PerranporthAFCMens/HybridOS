@@ -46,12 +46,12 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await mockSupabase(page, async ({ route, path, method, body, url }) => {
     if (path.includes('/functions/v1/admin-create-staff-with-level')) {
       fnCalls.push(body);
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ user_id: 'new-user', temp_password: 'Temp-Pass-123' }) });
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ user_id: 'new-user', existing_user: false }) });
       return true;
     }
     if (path.includes('/functions/v1/notify-staff-welcome')) {
       welcomeCalls.push(body);
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(welcomeFails ? { ok: true, emailed: false, email_error: 'Email is not configured.' } : { ok: true, emailed: true }) });
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(welcomeFails ? { ok: true, emailed: false, email_error: 'Email is not configured.' } : { ok: true, emailed: true, set_password: true }) });
       return true;
     }
     const table = ['gym_members', 'staff_profiles', 'staff_working_hours', 'staff_capabilities'].find((t) => path.endsWith(`/${t}`));
@@ -136,7 +136,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('the qualification is written for the owner', ownerQual && JSON.stringify(ownerQual.body) === JSON.stringify([{ gym_id: GYM, user_id: '44444444-4444-4444-8444-444444444444', capability_id: 'cap-pt', qualified: true, expires_on: null }]));
   c.ok('no role, access level, job title, pay or removal is written for an owner', !writes.some((w) => w.what === 'gym_members' || w.what === 'assign_staff_access_level' || w.what === 'staff_profiles' || w.method === 'DELETE'));
 
-  // Add a login: temporary password shown
+  await c.has('says where a senior manager is added, with a link', page.getByRole('link', { name: 'Owners and admins' }));
+
+  // Add a login: the owner is told the choose-a-password email went
   await page.getByRole('button', { name: 'Add staff login' }).click();
   await dialog.getByRole('button', { name: 'Create login' }).click();
   c.ok('empty new login refused, no call made', fnCalls.length === 0);
@@ -144,13 +146,10 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.getByLabel('Email').fill('pat@example.com');
   await dialog.getByLabel('Access level').selectOption(LEVEL);
   await dialog.getByRole('button', { name: 'Create login' }).click();
-  await c.has('temporary password shown', page.getByLabel('Temporary password').getByText('Temp-Pass-123'));
+  await c.has('the owner is told the link to choose a password went, and the form closes', page.getByRole('status').getByText('Pat New added. We have emailed Pat New a link to choose their password and sign in to the staff app.'));
   c.ok('create call exact', fnCalls.length === 1 && fnCalls[0].email === 'pat@example.com' && fnCalls[0].gym_id === GYM && fnCalls[0].access_level_id === LEVEL);
-  c.ok('the new person is emailed a welcome, for this gym and this person', welcomeCalls.length === 1 && welcomeCalls[0].gym_id === GYM && welcomeCalls[0].user_id === 'new-user');
-  await c.has('the owner is told the welcome went, with the link to the staff app', dialog.getByText('We have emailed Pat New a welcome with the link to the staff app.'));
-  await c.has('and that the password is not in the email', dialog.getByText(/it is not in the email/));
-  await page.getByRole('button', { name: 'Done' }).click();
-  await c.has('the page says so too', page.getByRole('status').getByText(/Pat New added\. We have emailed Pat New/));
+  c.ok('the new person is emailed, for this gym and this person, and it is not a resend', welcomeCalls.length === 1 && welcomeCalls[0].gym_id === GYM && welcomeCalls[0].user_id === 'new-user' && welcomeCalls[0].resend === undefined);
+  c.ok('no password is shown anywhere', (await page.getByText(/temporary password/i).count()) === 0 && (await page.getByLabel('Temporary password').count()) === 0);
 
   // A welcome that cannot be sent is reported, and the login still stands
   welcomeFails = true;
@@ -159,10 +158,15 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.getByLabel('Email').fill('quinn@example.com');
   await dialog.getByLabel('Access level').selectOption(LEVEL);
   await dialog.getByRole('button', { name: 'Create login' }).click();
-  await c.has('temporary password still shown', page.getByLabel('Temporary password').getByText('Temp-Pass-123'));
-  await c.has('the failed welcome is reported with where to sign in', dialog.getByText(/The welcome email did not go \(Email is not configured\.\)\. Tell Quinn Late to sign in at hybridone\.co\.uk\/login\./));
-  await page.getByRole('button', { name: 'Done' }).click();
+  await c.has('the failed welcome is reported with how they can still get in', page.getByRole('status').getByText(/The welcome email did not go \(Email is not configured\.\)\. Quinn Late can sign in at hybridone\.co\.uk\/login and choose "Forgot password\?" to set a password\./));
   welcomeFails = false;
+
+  // Send the welcome again, from the team list
+  welcomeCalls.length = 0;
+  await page.getByRole('button', { name: 'Send the welcome email again to Sam Coach' }).click();
+  await c.has('the owner is told it went', page.getByRole('status').getByText('We have emailed Sam Coach a link to choose their password and sign in to the staff app.'));
+  c.ok('the resend is for this person and marked as a resend', welcomeCalls.length === 1 && welcomeCalls[0].gym_id === GYM && welcomeCalls[0].user_id === USER_A && welcomeCalls[0].resend === true);
+  c.ok('owners are not offered it', (await page.getByRole('button', { name: /Send the welcome email again to Owner/i }).count()) === 0);
 
   // Remove asks first
   writes.length = 0;
