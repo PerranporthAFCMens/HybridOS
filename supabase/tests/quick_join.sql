@@ -163,7 +163,7 @@ select pt.check('a bad postcode is refused', pt.q(pt.u('m3'), $s$select public.s
 
 -- ---------- the team's list of people who have paid but not finished ----------
 select pt.check('the team sees people who have not finished', pt.q(pt.u('staff_a'), format($s$select count(*)::text from public.get_unfinished_members(%L) where user_id = %L$s$, pt.gym_a(), pt.u('m4'))), '1');
-select pt.check('...with what is missing', pt.q(pt.u('staff_a'), format($s$select array_to_string(missing, ', ') from public.get_unfinished_members(%L) where user_id = %L$s$, pt.gym_a(), pt.u('m4'))), 'emergency contact, health questions and waiver');
+select pt.check('...with what is missing', pt.q(pt.u('staff_a'), format($s$select array_to_string(missing, ', ') from public.get_unfinished_members(%L) where user_id = %L$s$, pt.gym_a(), pt.u('m4'))), 'health questions and waiver, emergency contact');
 select pt.check('...but not people who have finished', pt.q(pt.u('admin_a'), format($s$select count(*)::text from public.get_unfinished_members(%L) where user_id = %L$s$, pt.gym_a(), pt.u('m3'))), '0');
 select pt.check('...nor people who joined before Quick join', pt.q(pt.u('admin_a'), format($s$select count(*)::text from public.get_unfinished_members(%L) where user_id = %L$s$, pt.gym_a(), pt.u('m1'))), '0');
 select pt.check('a member cannot see the list', pt.q(pt.u('m1'), format($s$select count(*)::text from public.get_unfinished_members(%L)$s$, pt.gym_a())), 'ERROR:Not allowed');

@@ -55,8 +55,8 @@ describe('Quick join basics', () => {
 
 describe('the checklist after paying', () => {
   const items: ReadyItem[] = [
-    { key: 'emergency', label: 'Emergency contact', required: true, done: false },
     { key: 'documents', label: 'Health questions and waiver', required: true, done: true },
+    { key: 'emergency', label: 'Emergency contact', required: true, done: false },
     { key: 'address', label: 'Your address', required: false, done: false },
   ];
   it('reads what the database sends', () => {
@@ -64,6 +64,14 @@ describe('the checklist after paying', () => {
     expect(s).toEqual({ style: 'quick', ready: false, held: true, items: [{ key: 'emergency', label: 'Emergency contact', required: true, done: false }] });
     expect(parseReady(null)).toBeNull();
     expect(parseReady([])).toBeNull();
+  });
+  it('puts the terms and waiver first, then the emergency contact, then the address', () => {
+    const s = parseReady({ style: 'quick', ready: false, held: false, items: [
+      { key: 'address', label: 'Your address', required: false, done: false },
+      { key: 'emergency', label: 'Emergency contact', required: true, done: false },
+      { key: 'documents', label: 'Health questions and waiver', required: true, done: false },
+    ] });
+    expect(s?.items.map((i) => i.key)).toEqual(['documents', 'emergency', 'address']);
   });
   it('counts what is done and picks the next thing, required first', () => {
     expect(readyCounts(items)).toEqual({ done: 1, total: 3 });

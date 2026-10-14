@@ -70,8 +70,8 @@ async function wire(page, state) {
     }
     if (path.endsWith('/rpc/get_my_ready_status')) {
       const items = [
-        { key: 'emergency', label: 'Emergency contact', required: true, done: state.done.has('emergency') },
         { key: 'documents', label: 'Health questions and waiver', required: true, done: state.done.has('documents') },
+        { key: 'emergency', label: 'Emergency contact', required: true, done: state.done.has('emergency') },
         { key: 'address', label: 'Your address', required: false, done: state.done.has('address') },
       ];
       const ready = items.every((i) => i.done || !i.required);
@@ -196,19 +196,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('so no code is on the page', (await page.getByText('4821').count()) === 0 && (await page.getByRole('button', { name: 'Tap to reveal' }).count()) === 0);
   c.ok('layout (welcome)', (await page.evaluate(layoutProblems)).length === 0);
 
-  await press('Start with emergency contact');
-  await press('Save');
-  await c.has('an empty emergency contact is refused', alert.filter({ hasText: 'emergency contact' }));
-  await fill('Their name', 'Alex Penrose');
-  await fill('Their phone number', '07700 900124');
-  await fill('How they are related to you', 'Partner');
-  await press('Save');
-  await c.has('saving it ticks it off', page.getByRole('img', { name: '1 of 3 done' }));
-  c.ok('and sent what the database wants', state.emergency?.p_name === 'Alex Penrose' && state.emergency?.p_phone === '+447700900124' && state.emergency?.p_relationship === 'Partner');
-  c.ok('the door code is still held', (await page.getByText('Appears here when the things above are done.').count()) === 1);
-
-  await page.getByRole('button', { name: /Health questions and waiver/ }).click();
-  await c.has('the waiver opens in place', page.getByText('I accept the risks of training.'));
+  c.ok('the list is in order: terms and waiver, emergency contact, address', JSON.stringify(await page.locator('.qj-item b').allInnerTexts()) === JSON.stringify(['Health questions and waiver', 'Emergency contact', 'Your address']));
+  await press('Start with health questions and waiver');
+  await c.has('the waiver opens in place, first', page.getByText('I accept the risks of training.'));
   await press('Sign');
   await c.has('signing without answering is refused', alert.filter({ hasText: 'Do you have a heart condition?' }));
   await page.getByLabel('Do you have a heart condition?', { exact: true }).selectOption('no');
@@ -216,8 +206,20 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await fill('Your full name', 'Sam Penrose');
   await draw(page);
   await press('Sign');
-  await c.has('signing ticks it off', page.getByRole('img', { name: '2 of 3 done' }));
+  await c.has('signing ticks it off', page.getByRole('img', { name: '1 of 3 done' }));
   c.ok('the signature was saved and the signed copies asked for', state.signed?.p_gym_slug === 'puffin' && state.signed?.p_signer_name === 'Sam Penrose' && state.finalised?.signature_id === 'sig-1');
+  c.ok('the door code is still held until the emergency contact is in', (await page.getByText('Appears here when the things above are done.').count()) === 1);
+  await c.has('the emergency contact is offered next', page.getByRole('button', { name: 'Start with emergency contact' }));
+
+  await press('Start with emergency contact');
+  await press('Save');
+  await c.has('an empty emergency contact is refused', alert.filter({ hasText: 'emergency contact' }));
+  await fill('Their name', 'Alex Penrose');
+  await fill('Their phone number', '07700 900124');
+  await fill('How they are related to you', 'Partner');
+  await press('Save');
+  await c.has('saving it ticks it off', page.getByRole('img', { name: '2 of 3 done' }));
+  c.ok('and sent what the database wants', state.emergency?.p_name === 'Alex Penrose' && state.emergency?.p_phone === '+447700900124' && state.emergency?.p_relationship === 'Partner');
   await c.has('with the required things done, the door code is released', page.getByRole('button', { name: 'Tap to reveal' }));
   await c.has('the address is optional but can still be added', page.getByText('30 seconds · optional'));
   await page.getByRole('button', { name: /Your address/ }).click();

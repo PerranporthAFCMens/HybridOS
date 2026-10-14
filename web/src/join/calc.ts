@@ -318,6 +318,9 @@ export const READY_TIME: Record<ReadyKey, string> = {
 
 const isKey = (k: unknown): k is ReadyKey => k === 'emergency' || k === 'documents' || k === 'address';
 
+/** The order the member does them in: the terms and waiver first, then the emergency contact, then the address. */
+const READY_ORDER: ReadyKey[] = ['documents', 'emergency', 'address'];
+
 /** The answer of get_my_ready_status, or null when it is not one (a gym on the full journey has nothing to finish). */
 export function parseReady(data: unknown): ReadyStatus | null {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
@@ -328,6 +331,7 @@ export function parseReady(data: unknown): ReadyStatus | null {
         return isKey(i.key) ? [{ key: i.key, label: String(i.label ?? ''), required: i.required === true, done: i.done === true }] : [];
       })
     : [];
+  items.sort((a, b) => READY_ORDER.indexOf(a.key) - READY_ORDER.indexOf(b.key));
   return { style: r.style === 'quick' ? 'quick' : 'full', ready: r.ready === true, held: r.held === true, items };
 }
 
