@@ -181,13 +181,13 @@ export async function finishPayment(gymId: string, planId: string, subscriptionI
 
 // ---- Quick join: pay first, finish later ----
 
-export interface JoinStyle { style: 'quick' | 'full'; askAddress: string; askEmergency: string; askDocuments: string }
+export interface JoinStyle { style: 'quick' | 'full'; askAddress: string; askEmergency: string; askDocuments: string; signBeforePaying: boolean }
 
 /** Which sign-up journey this gym uses, and what it asks for afterwards. Anything unexpected (or a database without Quick join yet) is the full journey, as it always was. */
 export async function getJoinStyle(slug: string): Promise<JoinStyle> {
   const { data, error } = await supabase.rpc('get_public_gym_join_style', { p_gym_slug: slug });
   const r = error ? {} : obj(data);
-  return { style: r.join_style === 'quick' ? 'quick' : 'full', askAddress: str(r.ask_address) || 'optional', askEmergency: str(r.ask_emergency) || 'required', askDocuments: str(r.ask_documents) || 'required' };
+  return { style: r.join_style === 'quick' ? 'quick' : 'full', askAddress: str(r.ask_address) || 'optional', askEmergency: str(r.ask_emergency) || 'required', askDocuments: str(r.ask_documents) || 'required', signBeforePaying: r.sign_before_paying === true };
 }
 
 /** Emails a sign-in code. A new address gets an account; an existing one just signs in. No password either way. */

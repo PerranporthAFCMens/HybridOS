@@ -15,6 +15,7 @@ import {
   type BasicsField, type JoinDetails, type JoinPlan, type QuickStepId,
 } from './calc';
 import { Checklist } from './Checklist';
+import { SignForm } from './SignForm';
 import { PayForm } from './PayForm';
 import './join.css';
 
@@ -74,10 +75,12 @@ export function QuickJoin({ slug, gym, style }: { slug: string; gym: JoinGym; st
   const docsQ = useQuery({ queryKey: ['quick-docs', slug], queryFn: () => getSignupDocuments(slug), retry: false });
   const takesPayment = modeQ.data === 'stripe';
   const wantsPayment = userId ? takesPayment : true;
+  // A gym that wants the terms and waiver signed before paying adds a reading-and-signing screen, if it has any documents.
+  const signing = style.signBeforePaying && (docsQ.data?.length ?? 0) > 0;
   const under18 = isUnder18(d.dob, now);
   const paying = wantsPayment && !(chosen && isFreePlan(chosen));
   const signedIn = !!userId;
-  const steps = quickStepsFor({ signedIn: hadAccount, paying });
+  const steps = quickStepsFor({ signedIn: hadAccount, paying, signing });
   const at = steps.indexOf(step);
 
   const set = (patch: Partial<JoinDetails>) => {
@@ -110,7 +113,7 @@ export function QuickJoin({ slug, gym, style }: { slug: string; gym: JoinGym; st
     setChosen(p);
     setPayment(null);
     write(planKey(slug), p.id);
-    const list = quickStepsFor({ signedIn: hadAccount, paying: wantsPayment && !isFreePlan(p) });
+    const list = quickStepsFor({ signedIn: hadAccount, paying: wantsPayment && !isFreePlan(p), signing });
     go(after('plan', list));
   };
 
@@ -169,11 +172,15 @@ export function QuickJoin({ slug, gym, style }: { slug: string; gym: JoinGym; st
     if (takesPayment && !isFreePlan(chosen) && !canPayOnline(chosen)) return setMsg({ text: `${chosen.name} cannot be paid for online. Ask ${gym.name} to sign you up, or choose another membership.`, good: false });
     void run(async () => {
       await saveBasics(toBasicsArgs(d, now));
-      if (paying) return go('pay');
-      // A free plan (or a gym that does not take payment here) joins straight away.
-      const r = await joinWithPlan(slug, chosen.id);
-      finishJoin({ planName: r.planName || chosen.name, confirming: false });
+      if (signing) return go('sign');
+      await afterBasics(chosen);
     });
+  };
+  // After the basics (and the signature, when it comes first): pay, or join straight away on a free plan or at a gym that does not take payment here.
+  const afterBasics = async (plan: JoinPlan) => {
+    if (paying) return go('pay');
+    const r = await joinWithPlan(slug, plan.id);
+    finishJoin({ planName: r.planName || plan.name, confirming: false });
   };
 
   // ---- Pay ----
@@ -194,7 +201,7 @@ export function QuickJoin({ slug, gym, style }: { slug: string; gym: JoinGym; st
     </header>
   );
 
-  if (userId === undefined || (signedIn && existingQ.isLoading) || modeQ.isLoading) return <div className="center muted">Loading…</div>;
+  if (userId === undefined || (signedIn && existingQ.isLoading) || modeQ.isLoading || docsQ.isLoading) return <div className="center muted">Loading…</div>;
 
   // Someone who already has a membership here is never shown the join steps. A pending one at a gym that takes payment is an unfinished payment.
   if (signedIn && existingQ.data && !(existingQ.data === 'pending' && takesPayment) && step !== 'done') {
@@ -230,7 +237,7 @@ export function QuickJoin({ slug, gym, style }: { slug: string; gym: JoinGym; st
   // What comes after paying, in the gym's own terms.
   const later: string[] = [];
   if (style.askEmergency !== 'off') later.push('Add an emergency contact');
-  if (docsQ.data && docsQ.data.length > 0) later.push('Answer a few health questions and sign the waiver');
+  if (docsQ.data && docsQ.data.length > 0 && !signing) later.push('Answer a few health questions and sign the waiver');
   if (style.askAddress !== 'off') later.push('Add your address');
 
   return (
@@ -295,7 +302,7 @@ export function QuickJoin({ slug, gym, style }: { slug: string; gym: JoinGym; st
           <form onSubmit={submitBasics} noValidate>
             {chosenLine}
             <h2>Just the basics</h2>
-            <p className="muted">{later.length > 0 ? 'The rest can wait until after you have joined.' : 'This is all we need.'}</p>
+            <p className="muted">{signing ? `Next you will read and sign the terms and waiver.${later.length > 0 ? ' The rest can wait until after you have joined.' : ''}` : later.length > 0 ? 'The rest can wait until after you have joined.' : 'This is all we need.'}</p>
             <FieldRow>
               <Field label="First name" htmlFor="join-first" error={errors.firstName}><Input id="join-first" autoComplete="given-name" value={d.firstName} onChange={(e) => set({ firstName: e.target.value })} /></Field>
               <Field label="Last name" htmlFor="join-last" error={errors.lastName}><Input id="join-last" autoComplete="family-name" value={d.lastName} onChange={(e) => set({ lastName: e.target.value })} /></Field>
@@ -313,15 +320,25 @@ export function QuickJoin({ slug, gym, style }: { slug: string; gym: JoinGym; st
               <div className="qj-later">
                 <h3>After you {paying ? 'pay' : 'join'}, you will:</h3>
                 <ul>{later.map((l) => <li key={l}>{l}</li>)}</ul>
-                <p className="muted small">Takes about two minutes.{style.askEmergency !== 'optional' || docsQ.data?.length ? ' Your door code switches on when it is done.' : ''}</p>
+                <p className="muted small">Takes about two minutes.</p>
               </div>
             )}
             {alertBox}
             <div className="join-nav">
               <Button onClick={back} disabled={busy}>Back</Button>
-              <Button variant="primary" type="submit" disabled={busy || !chosen}>{busy ? 'Saving…' : paying ? 'Continue to payment' : 'Join'}</Button>
+              <Button variant="primary" type="submit" disabled={busy || !chosen}>{busy ? 'Saving…' : signing ? 'Continue' : paying ? 'Continue to payment' : 'Join'}</Button>
             </div>
           </form>
+        )}
+
+        {step === 'sign' && chosen && (
+          <div>
+            {chosenLine}
+            <h2>Read and sign</h2>
+            {!docsQ.data ? <p className="muted">Loading…</p> : (
+              <SignForm slug={slug} docs={docsQ.data} under18={under18} submitLabel={paying ? 'Sign and continue to payment' : 'Sign and join'} backDisabled={busy} onBack={back} onSigned={() => { void run(() => afterBasics(chosen)); }} />
+            )}
+          </div>
         )}
 
         {step === 'pay' && chosen && (
