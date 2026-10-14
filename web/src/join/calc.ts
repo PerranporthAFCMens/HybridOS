@@ -240,3 +240,99 @@ export function looksLikeExistingAccount(error: { message?: string } | null | un
 
 /** Memberships that mean "you are already a member here": they are not offered the plan list again. */
 export const BLOCKING_STATUSES = ['active', 'paused', 'pending'] as const;
+
+// ---- Quick join: pay first, finish later ----
+
+export type QuickStepId = 'plan' | 'email' | 'basics' | 'pay' | 'done';
+
+export const QUICK_TITLES: Record<QuickStepId, string> = {
+  plan: 'Choose your membership', email: 'Your email', basics: 'About you', pay: 'Agree and pay', done: 'Welcome',
+};
+
+/** The screens before someone is a member: plan, email (skipped when already signed in), the basics, and paying (skipped for a free plan). */
+export function quickStepsFor(o: { signedIn: boolean; paying: boolean }): QuickStepId[] {
+  const steps: QuickStepId[] = ['plan'];
+  if (!o.signedIn) steps.push('email');
+  steps.push('basics');
+  if (o.paying) steps.push('pay');
+  steps.push('done');
+  return steps;
+}
+
+/** "Step 2 of 4" for the screens before the welcome. */
+export function quickProgress(steps: QuickStepId[], step: QuickStepId): string {
+  const total = steps.length - 1;
+  return `Step ${Math.min(Math.max(steps.indexOf(step), 0) + 1, total)} of ${total}`;
+}
+
+export function checkEmail(email: string): string | null {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? null : 'Enter a valid email address.';
+}
+
+export type BasicsField = 'firstName' | 'lastName' | 'dob' | 'phone' | 'guardianName' | 'guardianPhone';
+
+/** What is wrong with each box, so the message can sit next to it. Name, date of birth and mobile, plus a parent or guardian under 18. */
+export function basicsErrors(d: JoinDetails, now: Date): Partial<Record<BasicsField, string>> {
+  const e: Partial<Record<BasicsField, string>> = {};
+  const first = name(d.firstName, 'your first name');
+  const last = name(d.lastName, 'your last name');
+  const dob = checkBirthday(d.dob, now);
+  if (first) e.firstName = first;
+  if (last) e.lastName = last;
+  if (dob) e.dob = dob;
+  if (!normalisePhone(d.phone)) e.phone = 'Enter a valid mobile number, for example 07700 900123.';
+  if (isUnder18(d.dob, now)) {
+    const g = name(d.guardianName, "your parent or guardian's name");
+    if (g) e.guardianName = g;
+    if (!normalisePhone(d.guardianPhone)) e.guardianPhone = 'Enter a valid phone number for your parent or guardian.';
+  }
+  return e;
+}
+
+/** What is sent to save_my_basics. Guardian details are sent only for under-18s. */
+export function toBasicsArgs(d: JoinDetails, now: Date) {
+  const under = isUnder18(d.dob, now);
+  return {
+    p_first_name: d.firstName.trim(),
+    p_last_name: d.lastName.trim(),
+    p_date_of_birth: d.dob,
+    p_phone: normalisePhone(d.phone),
+    p_guardian_name: under ? d.guardianName.trim() : '',
+    p_guardian_phone: under ? normalisePhone(d.guardianPhone) : '',
+  };
+}
+
+export type ReadyKey = 'emergency' | 'documents' | 'address';
+export interface ReadyItem { key: ReadyKey; label: string; required: boolean; done: boolean }
+export interface ReadyStatus { style: 'quick' | 'full'; ready: boolean; held: boolean; items: ReadyItem[] }
+
+export const READY_TIME: Record<ReadyKey, string> = {
+  emergency: '30 seconds',
+  documents: '1 minute · you sign once',
+  address: '30 seconds',
+};
+
+const isKey = (k: unknown): k is ReadyKey => k === 'emergency' || k === 'documents' || k === 'address';
+
+/** The answer of get_my_ready_status, or null when it is not one (a gym on the full journey has nothing to finish). */
+export function parseReady(data: unknown): ReadyStatus | null {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+  const r = data as Record<string, unknown>;
+  const items = Array.isArray(r.items)
+    ? r.items.flatMap((x): ReadyItem[] => {
+        const i = (x && typeof x === 'object' ? x : {}) as Record<string, unknown>;
+        return isKey(i.key) ? [{ key: i.key, label: String(i.label ?? ''), required: i.required === true, done: i.done === true }] : [];
+      })
+    : [];
+  return { style: r.style === 'quick' ? 'quick' : 'full', ready: r.ready === true, held: r.held === true, items };
+}
+
+export const readyCounts = (items: ReadyItem[]): { done: number; total: number } => ({ done: items.filter((i) => i.done).length, total: items.length });
+
+/** Something the person still has to do: required items first, then the optional ones. */
+export function firstToDo(items: ReadyItem[]): ReadyItem | null {
+  return items.find((i) => !i.done && i.required) ?? items.find((i) => !i.done) ?? null;
+}
+
+/** The checklist is worth showing in the member app: a Quick join gym, and something still to do. */
+export const needsFinishing = (s: ReadyStatus | null): boolean => !!s && s.style === 'quick' && s.items.some((i) => !i.done);

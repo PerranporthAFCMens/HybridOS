@@ -2,7 +2,7 @@ import { siteUrl } from '../app/site';
 import { supabase } from './client';
 import { edgeErrorMessage } from './edge';
 import type { Json } from './database.types';
-import { BLOCKING_STATUSES, looksLikeExistingAccount, type JoinDocument, type JoinPlan, type JoinQuestion } from '../join/calc';
+import { BLOCKING_STATUSES, looksLikeExistingAccount, parseReady, type JoinDocument, type JoinPlan, type JoinQuestion, type ReadyStatus } from '../join/calc';
 
 const obj = (v: Json | null): Record<string, Json | undefined> => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
 const str = (v: Json | undefined): string => (typeof v === 'string' ? v : '');
@@ -177,4 +177,67 @@ export async function preparePayment(gymId: string, planId: string, guardian: { 
 export async function finishPayment(gymId: string, planId: string, subscriptionId: string): Promise<'active' | 'pending'> {
   const r = await callJoin({ action: 'finish', gym_id: gymId, plan_id: planId, subscription_id: subscriptionId });
   return r.status === 'active' ? 'active' : 'pending';
+}
+
+// ---- Quick join: pay first, finish later ----
+
+export interface JoinStyle { style: 'quick' | 'full'; askAddress: string; askEmergency: string; askDocuments: string }
+
+/** Which sign-up journey this gym uses, and what it asks for afterwards. Anything unexpected (or a database without Quick join yet) is the full journey, as it always was. */
+export async function getJoinStyle(slug: string): Promise<JoinStyle> {
+  const { data, error } = await supabase.rpc('get_public_gym_join_style', { p_gym_slug: slug });
+  const r = error ? {} : obj(data);
+  return { style: r.join_style === 'quick' ? 'quick' : 'full', askAddress: str(r.ask_address) || 'optional', askEmergency: str(r.ask_emergency) || 'required', askDocuments: str(r.ask_documents) || 'required' };
+}
+
+/** Emails a sign-in code. A new address gets an account; an existing one just signs in. No password either way. */
+export async function emailMeACode(email: string, slug: string, gymId: string): Promise<void> {
+  const back = new URL(siteUrl(`join/${encodeURIComponent(slug)}`), window.location.origin);
+  back.searchParams.set('gym', slug);
+  back.searchParams.set('gym_id', gymId);
+  const { error } = await supabase.auth.signInWithOtp({
+    email: email.trim().toLowerCase(),
+    options: { shouldCreateUser: true, emailRedirectTo: back.toString(), data: { signup_type: 'member', gym_slug: slug } },
+  });
+  if (error) throw new Error(error.message);
+}
+
+type BasicsArgs = { p_first_name: string; p_last_name: string; p_date_of_birth: string; p_phone: string; p_guardian_name: string; p_guardian_phone: string };
+
+/** Name, date of birth, mobile and (under 18) parent or guardian: what is needed before paying. The database checks them all again. */
+export async function saveBasics(args: BasicsArgs): Promise<void> {
+  const { error } = await supabase.rpc('save_my_basics', args);
+  if (error) throw new Error(error.message);
+}
+
+export async function saveEmergency(name: string, phone: string, relationship: string): Promise<void> {
+  const { error } = await supabase.rpc('save_my_emergency', { p_name: name, p_phone: phone, p_relationship: relationship });
+  if (error) throw new Error(error.message);
+}
+
+export async function saveAddress(line1: string, line2: string, town: string, postcode: string): Promise<void> {
+  const { error } = await supabase.rpc('save_my_address', { p_line1: line1, p_line2: line2, p_town: town, p_postcode: postcode });
+  if (error) throw new Error(error.message);
+}
+
+/** What this member still has to do at the gym, and whether the door code is being held until then. Null when they are not a member. */
+export async function getReadyStatus(gymId: string): Promise<ReadyStatus | null> {
+  const { data, error } = await supabase.rpc('get_my_ready_status', { p_gym_id: gymId });
+  if (error) throw new Error(error.message);
+  return parseReady(data);
+}
+
+/** The signed-in member's own date of birth (it is private), to know whether a parent or guardian signs. */
+export async function myBirthday(): Promise<string | null> {
+  const { data, error } = await supabase.rpc('get_my_private_profile');
+  if (error) throw new Error(error.message);
+  const v = obj(data).date_of_birth;
+  return typeof v === 'string' ? v : null;
+}
+
+/** The web address name of a gym the signed-in person belongs to (the sign-up documents are asked for by it). */
+export async function getGymSlug(gymId: string): Promise<string> {
+  const { data, error } = await supabase.from('gyms').select('slug').eq('id', gymId).single();
+  if (error) throw new Error(error.message);
+  return data.slug;
 }
