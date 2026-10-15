@@ -82,7 +82,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
 
   await page.getByRole('button', { name: 'Reset order' }).click();
   c.ok('reset restores the default order here only', (await order())[0] === 'next_classes' && writes.length === 1);
-  c.ok('old member preview link kept', (await page.getByRole('link', { name: 'View as member', exact: true }).getAttribute('href')).includes('member.html'));
+  c.ok('View as member opens the new member app', (await page.getByRole('link', { name: 'View as member', exact: true }).getAttribute('href')).includes('m/today'));
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;
   await ctx.close();
