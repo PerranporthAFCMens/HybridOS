@@ -10,6 +10,7 @@ name: HybridOne Auth journey browser
 # 9 October release exact-SHA trigger (so every required check starts from the release commit itself).
 # 11 October release exact-SHA trigger (same reason).
 # 14 October release exact-SHA trigger (same reason).
+# 15 October release exact-SHA trigger (same reason).
 
 on:
   workflow_dispatch:
