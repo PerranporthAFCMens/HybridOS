@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { completeWorkout, getMyAssignment, listLastTimes, listMyPbs, markStarted, removeExercise, saveExercise, type LastTime } from '../data/train';
+import { completeWorkout, getMyAssignment, getMySession, listLastTimes, listMyPbs, markStarted, removeExercise, saveExercise, type LastTime, type SessionExercise } from '../data/train';
 import { getMyClassWorkout } from '../data/classWorkouts';
 import { Button } from '../ui/Button';
 import { pbKey, wonMessage, type Won } from './pb';
@@ -43,12 +43,14 @@ function Reasons({ act, onPatch }: { act: Act; onPatch: (p: Partial<Act>) => voi
 
 /** Open a coach's workout, a class workout (start your own blank one), fill in the numbers, finish. */
 export function Player() {
-  const { id = 'new', sessionId } = useParams();
+  const { id = 'new', sessionId, againId } = useParams();
   const { gym, userId } = useReadyAuth();
   const isClass = !!sessionId;
-  const isNew = id === 'new' && !isClass;
-  const plan = useQuery({ queryKey: ['m-assignment', gym.gymId, id], queryFn: () => getMyAssignment(userId, gym.gymId, id), enabled: !isNew && !isClass });
+  const isAgain = !!againId;
+  const isNew = id === 'new' && !isClass && !isAgain;
+  const plan = useQuery({ queryKey: ['m-assignment', gym.gymId, id], queryFn: () => getMyAssignment(userId, gym.gymId, id), enabled: !isNew && !isClass && !isAgain });
   const cls = useQuery({ queryKey: ['m-class-workout', gym.gymId, userId, sessionId], queryFn: () => getMyClassWorkout(userId, gym.gymId, sessionId ?? ''), enabled: isClass });
+  const copy = useQuery({ queryKey: ['m-session', gym.gymId, userId, againId], queryFn: () => getMySession(userId, gym.gymId, againId ?? ''), enabled: isAgain });
   const last = useQuery({ queryKey: ['m-last', gym.gymId, userId], queryFn: () => listLastTimes(userId, gym.gymId) });
   const [again, setAgain] = useState(false);
   if (isClass) {
@@ -66,27 +68,42 @@ export function Player() {
     if (last.isPending) return <div className="mem-screen"><div className="mem-card muted">Loading…</div></div>;
     return <Logger key={`class-${sessionId}`} id={`class-${sessionId}`} classSessionId={sessionId} title={cls.data.title} snapshot={cls.data.snapshot} source="" last={last.data ?? new Map()} />;
   }
+  if (isAgain) {
+    if (copy.isPending || last.isPending) return <div className="mem-screen"><div className="mem-card muted">Loading…</div></div>;
+    if (copy.isError || !copy.data) return <div className="mem-screen"><h1 className="mem-title">Workout not found</h1><div className="mem-card muted">It may have been removed. <Link to="/m/train">Back to Workouts</Link></div></div>;
+    return <Logger key={`again-${againId}`} id={`again-${againId}`} title={copy.data.title} snapshot={null} source="" last={last.data ?? new Map()} seed={copy.data.exercises} />;
+  }
   if (!isNew && plan.isPending) return <div className="mem-screen"><div className="mem-card muted">Loading…</div></div>;
   if (!isNew && (plan.isError || !plan.data)) return <div className="mem-screen"><h1 className="mem-title">Workout not found</h1><div className="mem-card muted">It may have been finished or removed. <Link to="/m/train">Back to Train</Link></div></div>;
   if (last.isPending) return <div className="mem-screen"><div className="mem-card muted">Loading…</div></div>;
   return <Logger key={id} id={id} title={plan.data?.title ?? ''} snapshot={plan.data?.snapshot ?? null} source={plan.data?.source ?? ''} last={last.data ?? new Map()} />;
 }
 
-function Logger({ id, classSessionId, title, snapshot, source, last }: { id: string; classSessionId?: string; title: string; snapshot: unknown; source: string; last: Map<string, LastTime> }) {
+function Logger({ id, classSessionId, title, snapshot, source, last, seed }: { id: string; classSessionId?: string; title: string; snapshot: unknown; source: string; last: Map<string, LastTime>; seed?: SessionExercise[] }) {
   const { gym, userId } = useReadyAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const isClass = !!classSessionId;
   const isNew = id === 'new';
+  const isAgain = !!seed;
   // Only a workout a coach assigned has an assignment to mark started and finished; a class workout is the member's own record.
-  const assigned = !isNew && !isClass;
+  const assigned = !isNew && !isClass && !isAgain;
   const key = draftKey(gym.gymId, id);
   const initial = useMemo<Draft>(() => {
     const saved = readDraft(key);
     if (saved) return saved;
+    // "Do it again": the same exercises with the numbers from last time as a starting point, to change to today's.
+    if (seed) {
+      const copied: Act[] = seed.map((x, i) => {
+        // An exercise scored two ways keeps its name but not its score boxes, so it starts blank.
+        const tracking: Tracking = x.tracking === 'scores' ? 'reps' : x.tracking;
+        return { key: `again${i}`, name: x.name, originalName: x.name, tracking, sets: x.tracking === 'scores' || x.sets.length === 0 ? blankSets(tracking) : x.sets, done: false, skipped: false, note: '', plan: '', planNote: '', block: '', target: [] };
+      });
+      return { acts: copied, rpe: '', notes: '' };
+    }
     const acts: Act[] = readSnapshot(snapshot).activities.map((a) => ({ key: a.key, name: a.name, originalName: a.name, tracking: a.tracking, sets: blankSets(a.tracking), done: false, skipped: false, note: '', plan: a.plan, planNote: a.note, block: a.block, target: a.target, scores: a.scores }));
     return { acts, rpe: '', notes: '' };
-  }, [key, snapshot]);
+  }, [key, snapshot, seed]);
   const [acts, setActs] = useState<Act[]>(initial.acts);
   const [rpe, setRpe] = useState(initial.rpe);
   const [notes, setNotes] = useState(initial.notes);
@@ -237,6 +254,7 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
         <Link to="/m/train" className="mem-back">‹ Workouts</Link>
         <h1 className="mem-title">{title || 'My workout'}</h1>
         {source && !isNew && !isClass && <div className="mem-hi">From your coach. These are suggestions: change, swap or skip anything.</div>}
+        {isAgain && <div className="mem-hi">Copied from {title}, with the numbers from last time. Change them to today's, then finish.</div>}
         {isClass && <div className="mem-hi">From your class. Fill in what you did: change, swap or leave out anything. It is saved to your own history.</div>}
       </div>
 
