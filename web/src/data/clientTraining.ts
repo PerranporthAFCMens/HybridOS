@@ -26,7 +26,7 @@ const PROFILE_COLS = 'id, display_name, first_name, last_name';
 type ProfileRow = { id: string; display_name: string | null; first_name: string | null; last_name: string | null };
 const nameFrom = (p: ProfileRow | undefined): string => p?.display_name?.trim() || [p?.first_name, p?.last_name].filter(Boolean).join(' ').trim() || 'Someone';
 
-async function names(ids: string[]): Promise<Map<string, string>> {
+export async function names(ids: string[]): Promise<Map<string, string>> {
   const unique = [...new Set(ids)];
   if (unique.length === 0) return new Map();
   const { data, error } = await supabase.from('profiles').select(PROFILE_COLS).in('id', unique);
