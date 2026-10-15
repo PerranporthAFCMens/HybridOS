@@ -7,7 +7,7 @@
     {key:'community-group',label:'Messages and community',icon:'community',href:'./community'},
     {key:'reporting',label:'Reports',icon:'reporting',href:'./reports'},
     {key:'settings-group',label:'Settings and staff',icon:'admin',href:'./settings'},
-    {key:'member-view',label:'Preview as member',icon:'profile',href:'./member.html?view=member',section:'Preview'},
+    {key:'member-view',label:'Preview as member',icon:'profile',href:'./m/today',section:'Preview'},
     {key:'staff-view',label:'Preview as staff',icon:'staff',href:'./staff.html?view=staff'},
     {key:'sign-out',label:'Sign out',icon:'profile',href:'./sign-out.html',section:'Account'}
   ];

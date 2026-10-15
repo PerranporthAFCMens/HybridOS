@@ -94,9 +94,9 @@ RENDER_BASELINE={
  'admin-shell.css':'ec3d5ab0faee0b01d383fbea29183e604430a53e',
  'admin-frame.css':'4af4cf23fa071d5fb4324bac9a12929428ee316b',
  'admin-embed.js':'73920d3e75684542819929736e15613d1d95c24e',
- 'admin-frame.js':'4675c057801dcf4138a35cc3ac69f97c98aee496',
+ 'admin-frame.js':'610348eb46119ba1d2e860aef209b4d537bcca4d',
  'app-stability.js':'661d84d7129dad37a84978f940b5995625bf1c75',
- 'shared-admin-nav.js':'51759cce2d19dbc21f28f1c3cd06ea4ceaedc8fe',
+ 'shared-admin-nav.js':'05ee13d6eaed0222abea41a8aee019302512c86c',
 }
 def git_blob_sha(path):
  import hashlib
@@ -251,7 +251,7 @@ for x in ('supabase.auth.signOut()',"location.replace('./login.html')",'Signing 
  if x not in sign_out:problems.append(f'sign-out.html: reliable sign out flow missing: {x}')
 if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: duplicate Member memberships tab returned')
 
-for x in ('classes-group','settings-group','community-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member experience',"section:'Preview'","href:'./member.html?view=member'",'Door access'):
+for x in ('classes-group','settings-group','community-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member experience',"section:'Preview'","href:'./m/today'",'Door access'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: consolidated admin navigation missing: {x}')
 for page_name in ('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
