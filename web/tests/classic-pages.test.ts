@@ -89,3 +89,12 @@ describe('member.html happy birthday', () => {
     expect(html).toContain("$('app').classList.remove('hidden');try{birthdayHello(profile,name)}catch(e)");
   });
 });
+
+describe('classic member app "New workout" button', () => {
+  it('opens the new workout screen instead of the old pop-up logger', () => {
+    const html = read('member.html');
+    const fn = between(html, 'function openWorkout(){', '\nwindow.HybridWorkoutLoggerCtx');
+    expect(fn).toContain('./m/train/new');
+    expect(fn).not.toContain('HybridWorkoutLogger');
+  });
+});
