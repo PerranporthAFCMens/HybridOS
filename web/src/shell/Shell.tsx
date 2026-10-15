@@ -61,7 +61,7 @@ export function Shell() {
           ))}
           <div className="section">Preview</div>
           <NavLink to="/m/today" onClick={close}><Icon name="profile" /><span>Preview as member</span></NavLink>
-          <a href={`${siteUrl('staff.html')}?view=staff`}><Icon name="staff" /><span>Preview as staff</span></a>
+          <NavLink to="/s/today" onClick={close}><Icon name="staff" /><span>Preview as staff</span></NavLink>
         </nav>
         <div className="account">
           <div className="who" title={auth.email}>

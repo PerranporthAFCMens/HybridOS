@@ -22,7 +22,7 @@ import { Community } from '../community/Community';
 import { Review } from '../training/Review';
 import { Comms } from '../comms/Comms';
 import { Workouts } from '../workouts/Workouts';
-import { homeFor } from '../auth/access';
+import { homeFor, isPrivileged } from '../auth/access';
 import { MemberShell } from '../member/MemberShell';
 import { MemberCommunity } from '../member/MemberCommunity';
 import { Today as MemberToday } from '../member/Today';
@@ -41,6 +41,9 @@ import { SignupProcess } from '../signup/SignupProcess';
 import { Privacy } from '../members/Privacy';
 import { Join } from '../join/Join';
 import { Finish } from '../member/Finish';
+import { StaffShell } from '../staffapp/StaffShell';
+import { StaffDay, StaffTimetable } from '../staffapp/StaffDay';
+import { StaffMe } from '../staffapp/StaffMe';
 import { BASENAME } from './site';
 
 function Leave({ to }: { to: string }) {
@@ -65,6 +68,8 @@ function Gate({ children }: { children: ReactNode }) {
     case 'ready': {
       // The new member app opens for anyone signed in to a gym; real members are still sent to the classic app until the cutover.
       if (pathname.startsWith('/m/')) return <>{children}</>;
+      // The staff app opens for the team (and for owners and admins previewing it); members are sent to their own app.
+      if (pathname.startsWith('/s/')) return isPrivileged(auth.gym.role) ? <>{children}</> : <Leave to={homeFor(auth.gym.role, auth.gym.gymId) as string} />;
       const home = homeFor(auth.gym.role, auth.gym.gymId);
       return home === 'admin' ? <>{children}</> : <Leave to={home} />;
     }
@@ -93,6 +98,12 @@ function Main() {
             <Route path="/m/membership" element={<Membership />} />
             <Route path="/m/finish" element={<Finish />} />
             <Route path="/m/*" element={<Navigate to="/m/today" replace />} />
+          </Route>
+          <Route element={<StaffShell />}>
+            <Route path="/s/today" element={<StaffDay />} />
+            <Route path="/s/timetable" element={<StaffTimetable />} />
+            <Route path="/s/me" element={<StaffMe />} />
+            <Route path="/s/*" element={<Navigate to="/s/today" replace />} />
           </Route>
           <Route element={<Shell />}>
             <Route path="/today" element={<Today />} />

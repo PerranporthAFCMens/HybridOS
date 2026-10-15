@@ -29,6 +29,9 @@ const handle = async ({ route, url, path, select }) => {
   if (path.endsWith('/membership_plans')) return reply(route, [{ id: 'p1', name: 'Hybrid Monthly with a long plan name', price_pence: 4500, billing_interval: 'monthly', access_type: 'hybrid', is_active: true, description: 'Everything included, with a longer description to wrap over a few lines on a narrow phone screen', joining_fee_pence: 1000, classes_per_week: null, includes_open_gym: true, includes_classes: true, includes_pt: false, is_public: true }]);
   if (path.endsWith('/channels')) return reply(route, [{ id: 'c1', name: 'general', description: 'Everyone' }]);
   if (path.endsWith('/rpc/get_class_calendar')) return reply(route, [{ session_id: 's1', name: 'Strength and conditioning with a long name', starts_at: at(7, 30), ends_at: at(8, 30), booked_count: 9, capacity: 12, is_cancelled: false, spaces_left: 3, description: '', availability_note: '', bookable_for_me: true, my_booking_status: '', reserved_capacity: 0, reserved_eligible: false, reserved_plan_names: [], reserved_release_minutes_before: 0 }]);
+  if (path.endsWith('/staff_access')) return reply(route, [{ permissions: { mark_attendance: true, view_timetable: true } }], 1);
+  if (path.endsWith('/class_session_staff')) return reply(route, [{ session_id: 's1', assignment_role: 'Coach', is_lead: true, class_sessions: { id: 's1', name: 'Strength and conditioning with a long name', starts_at: at(23, 0), ends_at: at(23, 59), capacity: 12, is_cancelled: false } }]);
+  if (path.endsWith('/class_bookings')) return reply(route, [{ id: 'bk1', user_id: ADA, status: 'booked', booked_at: at(6) }, { id: 'bk2', user_id: 'b', status: 'attended', booked_at: at(6, 5) }]);
   return false;
 };
 
@@ -57,6 +60,10 @@ const STATES = {
   workouts: async (page) => { await page.goto(`${base}/workouts`); await page.getByText('No workouts yet. Build your first one.').waitFor(); },
   'workout editor': async (page) => { await page.goto(`${base}/workouts`); await page.getByRole('button', { name: 'New workout' }).click(); await page.getByLabel('Workout name').waitFor(); },
   'report builder': async (page) => { await page.goto(`${base}/reports`); await page.getByRole('tab', { name: 'Report builder', exact: true }).click(); await page.getByLabel('Look at').waitFor(); },
+  'staff day': async (page) => { await page.goto(`${base}/s/today`); await page.getByText('Next up').waitFor(); },
+  'staff roster': async (page) => { await page.goto(`${base}/s/today`); await page.getByRole('button', { name: 'See who is booked' }).click(); await page.getByRole('button', { name: /^Attended: / }).waitFor(); },
+  'staff timetable': async (page) => { await page.goto(`${base}/s/timetable`); await page.getByRole('heading', { name: 'Gym timetable' }).waitFor(); await page.getByText('Strength and conditioning').first().waitFor(); },
+  'staff me': async (page) => { await page.goto(`${base}/s/me`); await page.getByRole('button', { name: 'Sign out' }).waitFor(); },
   'member today': async (page) => { await page.goto(`${base}/m/today`); await page.getByRole('heading', { name: 'Ready for your next class?' }).waitFor(); },
   'member classes': async (page) => { await page.goto(`${base}/m/classes`); await page.getByText('No classes on this day.').waitFor(); },
   'member train': async (page) => { await page.goto(`${base}/m/train`); await page.getByRole('button', { name: 'Start my own workout' }).or(page.getByRole('link', { name: 'Start my own workout' })).waitFor(); },

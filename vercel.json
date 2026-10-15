@@ -50,6 +50,10 @@
       "destination": "/next/index.html"
     },
     {
+      "source": "/s/:path*",
+      "destination": "/next/index.html"
+    },
+    {
       "source": "/m/:path*",
       "destination": "/next/index.html"
     }
