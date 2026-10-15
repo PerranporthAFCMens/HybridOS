@@ -72,11 +72,15 @@ export function QuickJoin({ slug, gym, style }: { slug: string; gym: JoinGym; st
   // Whether this gym takes payment here can only be asked once signed in (the database refuses a signed-out question). Until then the
   // journey is shown with its payment step, and the answer is known by the time the basics are saved.
   const modeQ = useQuery({ queryKey: ['quick-mode', slug, userId], queryFn: () => getPaymentMode(slug), enabled: !!userId, retry: false });
-  const docsQ = useQuery({ queryKey: ['quick-docs', slug], queryFn: () => getSignupDocuments(slug), retry: false });
+  // The database lets only a signed-in person read the documents, so they are asked for once signed in. Asking while signed out was refused,
+  // which made a gym that wants the waiver signed first look as if it had none, and the signing screen was skipped.
+  const docsQ = useQuery({ queryKey: ['quick-docs', slug, userId], queryFn: () => getSignupDocuments(slug), enabled: !!userId, retry: false });
   const takesPayment = modeQ.data === 'stripe';
   const wantsPayment = userId ? takesPayment : true;
   // A gym that wants the terms and waiver signed before paying adds a reading-and-signing screen, if it has any documents.
-  const signing = style.signBeforePaying && (docsQ.data?.length ?? 0) > 0;
+  // Until they are signed in we cannot see the documents, so a gym set to sign first is taken to have some (the steps then do not change after sign-in).
+  // If they cannot be read after sign-in, or there are none, the screen is left out.
+  const signing = style.signBeforePaying && (docsQ.data ? docsQ.data.length > 0 : !docsQ.isError);
   const under18 = isUnder18(d.dob, now);
   const paying = wantsPayment && !(chosen && isFreePlan(chosen));
   const signedIn = !!userId;
