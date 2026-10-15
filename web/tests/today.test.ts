@@ -102,6 +102,6 @@ describe('homeFor', () => {
     expect(homeFor('owner', 'g')).toBe('admin');
     expect(homeFor('admin', 'g')).toBe('admin');
     expect(homeFor('coach', 'g')).toBe('/staff.html?gym_id=g');
-    expect(homeFor('member', 'g')).toBe('/member.html?gym_id=g');
+    expect(homeFor('member', 'g')).toBe('/m/today');
   });
 });

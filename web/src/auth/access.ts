@@ -28,9 +28,9 @@ export function resolveAccess(role: GymRole, membership: MembershipRow | null, t
   return 'ended';
 }
 
-/** Where each role lands. Only owners and admins use the new Admin shell; others go to their own (old) app. */
+/** Where each role lands. Owners and admins use the new Admin shell, members the new member app; staff and coaches still go to the old staff app. */
 export function homeFor(role: GymRole, gymId: string): 'admin' | string {
   if (role === 'owner' || role === 'admin') return 'admin';
-  const page = role === 'staff' || role === 'coach' ? 'staff.html' : 'member.html';
-  return `${siteUrl(page)}?gym_id=${encodeURIComponent(gymId)}`;
+  if (role === 'staff' || role === 'coach') return `${siteUrl('staff.html')}?gym_id=${encodeURIComponent(gymId)}`;
+  return siteUrl('m/today');
 }

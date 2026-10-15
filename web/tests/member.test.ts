@@ -133,3 +133,12 @@ describe('birthdays', () => {
     expect(birthdayKey('u1', 2026)).toBe('hybrid-birthday-u1-2026');
   });
 });
+
+describe('Strava display', () => {
+  it('shows short distances in metres and long ones in kilometres', async () => {
+    const { distance } = await import('../src/member/calc');
+    expect(distance(850)).toBe('850 m');
+    expect(distance(5020)).toBe('5.02 km');
+    expect(distance(0)).toBe('0 m');
+  });
+});

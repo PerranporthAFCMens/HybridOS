@@ -122,3 +122,9 @@ export function isBirthdayToday(dateOfBirth: string | null, now: Date): boolean 
   const day = Number(m[2]) === 2 && Number(m[3]) === 29 && !leap ? 28 : Number(m[3]);
   return Number(m[2]) === mo && day === d;
 }
+
+/** Distance from metres: "850 m" under a kilometre, otherwise "5.02 km". */
+export const distance = (m: number): string => (m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${Math.round(m || 0)} m`);
+
+/** "Thu 15 Oct, 07:04" in UK time. */
+export const stamp = (iso: string): string => `${dayLabel(dayOf(iso))}, ${timeOf(iso)}`;
