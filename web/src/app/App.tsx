@@ -31,6 +31,7 @@ import { MemberClasses } from '../member/MemberClasses';
 import { Me } from '../member/Me';
 import { Train } from '../train/Train';
 import { Player } from '../train/Player';
+import { TrainSession } from '../train/TrainSession';
 import { TrainDone } from '../train/TrainDone';
 import { Leaderboard } from '../train/Leaderboard';
 import { Pbs } from '../train/Pbs';
@@ -95,6 +96,8 @@ function Main() {
             <Route path="/m/train/pt" element={<Pt />} />
             <Route path="/m/train/done/:id" element={<TrainDone />} />
             <Route path="/m/train/class/:sessionId" element={<Player />} />
+            <Route path="/m/train/session/:sessionId" element={<TrainSession />} />
+            <Route path="/m/train/again/:againId" element={<Player />} />
             <Route path="/m/train/:id" element={<Player />} />
             <Route path="/m/community" element={<MemberCommunity />} />
             <Route path="/m/groups" element={<GroupList />} />

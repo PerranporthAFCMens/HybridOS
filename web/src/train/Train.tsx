@@ -139,7 +139,11 @@ export function Train() {
             <div className="mem-row"><b>{s.title}</b><span className="mem-tag">Set by your coach</span></div>
             <div className="mem-row"><span className="muted small">{dayLabel(dayOf(s.performedAt))}</span>{s.feedbackNew ? <span className="mem-tag new">New feedback</span> : s.feedbackCount > 0 ? <span className="muted small">Feedback read</span> : null}</div>
           </Link>
-        ) : <div className="mem-line" key={s.id}><b>{s.title}</b><span className="muted small">{dayLabel(dayOf(s.performedAt))}</span></div>)}
+        ) : (
+          <Link key={s.id} to={`/m/train/session/${s.id}`} className="mem-line tr-open" aria-label={`${s.title}, ${dayLabel(dayOf(s.performedAt))}`}>
+            <b>{s.title}</b><span className="muted small">{dayLabel(dayOf(s.performedAt))} ›</span>
+          </Link>
+        ))}
       </section>
     </div>
   );

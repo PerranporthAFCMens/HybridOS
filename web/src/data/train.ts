@@ -1,6 +1,6 @@
 import { supabase } from './client';
 import type { Json } from './database.types';
-import { dbTracking, type DbSet, type StoredSet, type Tracking } from '../train/calc';
+import { ROUNDS_MARK, SCORE_MARK, dbTracking, fromDbSet, type DbSet, type SetValues, type StoredSet, type Tracking } from '../train/calc';
 import { candidatesFor, isBetter, pbKey, wonText, type PbCandidate, type StoredPb, type Won } from '../train/pb';
 
 export interface AssignmentRow { id: string; title: string; source: string; status: string; scheduledFor: string | null; dueAt: string | null; snapshot: Json; focusTags: string[] }
@@ -229,4 +229,27 @@ export async function savePbs(userId: string, gymId: string, candidates: PbCandi
 export async function deletePb(id: string): Promise<void> {
   const { error } = await supabase.from('personal_bests').delete().eq('id', id);
   if (error) throw error;
+}
+
+export interface SessionExercise { name: string; tracking: Tracking; note: string | null; sets: SetValues[] }
+export interface SessionDetail { id: string; title: string; performedAt: string; notes: string | null; exercises: SessionExercise[] }
+
+/** One of the member's own finished workouts, with every exercise and the numbers they recorded. */
+export async function getMySession(userId: string, gymId: string, sessionId: string): Promise<SessionDetail | null> {
+  const s = await supabase.from('workout_sessions').select('id, title, performed_at, notes').eq('id', sessionId).eq('user_id', userId).eq('gym_id', gymId).maybeSingle();
+  if (s.error) throw s.error;
+  if (!s.data) return null;
+  const e = await supabase.from('workout_entries').select('id, exercise_name, tracking_type, notes, position').eq('session_id', sessionId).order('position');
+  if (e.error) throw e.error;
+  const entries = e.data ?? [];
+  const st = entries.length ? await supabase.from('workout_sets').select('entry_id, set_number, reps, weight_kg, duration_seconds, distance_m, calories, custom_value, custom_unit, side').in('entry_id', entries.map((x) => x.id)).order('set_number') : { data: [], error: null };
+  if (st.error) throw st.error;
+  const exercises = entries.map((x): SessionExercise => {
+    const rows = (st.data ?? []).filter((r) => r.entry_id === x.id);
+    // An exercise scored two ways was saved as "custom" with its sets marked; its two score names are not kept, so it is shown as it was saved.
+    const twoScores = x.tracking_type === 'custom' && rows.some((r) => r.custom_unit === SCORE_MARK || r.custom_unit === ROUNDS_MARK);
+    const tracking = (twoScores ? 'scores' : ['strength', 'reps', 'time', 'distance', 'calories', 'intervals'].includes(x.tracking_type) ? x.tracking_type : 'strength') as Tracking;
+    return { name: x.exercise_name, tracking, note: x.notes, sets: rows.map((r) => fromDbSet(tracking, r)) };
+  });
+  return { id: s.data.id, title: s.data.title ?? 'Workout', performedAt: s.data.performed_at, notes: s.data.notes, exercises };
 }

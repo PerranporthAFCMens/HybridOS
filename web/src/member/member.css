@@ -113,3 +113,7 @@
 .tr-rank { width: 24px; text-align: center; font-weight: 800; color: var(--hybrid-muted); flex: none; }
 .tr-bname { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .tr-block-head { margin-top: 10px; }
+
+/* A past workout in the Recent list: the whole row opens it. */
+.tr-open { min-height: 44px; color: inherit; text-decoration: none; }
+.tr-open b { overflow-wrap: anywhere; }
