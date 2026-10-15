@@ -160,6 +160,15 @@ export function cleanSets(tracking: string, sets: SetValues[]): SetValues[] {
   return out;
 }
 
+/** A copy of a workout's sections with nothing saved yet: no ids, so saving it makes a brand new workout and leaves the original alone. */
+export const withoutIds = (blocks: BlockForm[]): BlockForm[] => blocks.map((b) => ({ ...b, id: null, activities: b.activities.map((a) => ({ ...a, id: null })) }));
+
+/** The name for a workout saved as new: the one typed, or "<name> (copy)" when it was left the same as the original. */
+export function nameForCopy(typed: string, original: string): string {
+  const t = typed.trim();
+  return t === original.trim() ? `${t} (copy)`.slice(0, 120) : t;
+}
+
 export const hasChanged = (a: unknown, b: unknown) => JSON.stringify(a) !== JSON.stringify(b);
 
 export interface SnapshotBlock { id: string; title: string; block_type: string; position: number; rounds: number | null; instructions: string | null; activities: { block_id: string; activity_name: string; activity_type: string; tracking_type: string; position: number; prescription: unknown; notes: string | null }[] }

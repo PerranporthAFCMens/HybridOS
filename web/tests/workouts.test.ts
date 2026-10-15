@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addExercise, buildSnapshot, cleanSets, emptyWorkout, moveItem, newActivity, newBlock, parseTags, readPrescription, validateWodDate, validateWorkout, type BlockForm } from '../src/workouts/calc';
+import { addExercise, buildSnapshot, cleanSets, emptyWorkout, moveItem, newActivity, newBlock, parseTags, readPrescription, validateWodDate, validateWorkout, type BlockForm, nameForCopy, withoutIds } from '../src/workouts/calc';
 
 const goodBlock = (): BlockForm => ({ ...newBlock(), activities: [{ ...newActivity(), name: ' Back squat ', prescription: ' 4 x 6 ', notes: ' cue ' }] });
 const goodForm = { ...emptyWorkout, type: 'strength', title: ' Leg Day ', tags: 'Legs, Strength, legs ,', minutes: '50' };
@@ -97,3 +97,18 @@ describe('helpers', () => {
   });
 });
 
+describe('saving a workout as a new one', () => {
+  const blocks = [{ key: 'k1', id: 'b1', title: 'Main', blockType: 'standard', rounds: '', instructions: '', activities: [{ key: 'k2', id: 'a1', name: 'Back squat', tracking: 'strength', prescription: '', sets: [{ reps: '5' }], notes: '', activityType: 'exercise', extra: {} }] }];
+  it('a copy of the sections has no ids, so saving it makes a new workout', () => {
+    const c = withoutIds(blocks);
+    expect(c[0]?.id).toBeNull();
+    expect(c[0]?.activities[0]?.id).toBeNull();
+    expect(c[0]?.activities[0]?.name).toBe('Back squat');
+    expect(blocks[0]?.id).toBe('b1');
+  });
+  it('keeps the name typed, or adds (copy) when it is left the same', () => {
+    expect(nameForCopy('Leg Day B', 'Leg Day')).toBe('Leg Day B');
+    expect(nameForCopy(' Leg Day ', 'Leg Day')).toBe('Leg Day (copy)');
+    expect(nameForCopy('x'.repeat(120), 'x'.repeat(120))).toHaveLength(120);
+  });
+});

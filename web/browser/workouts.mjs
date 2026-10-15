@@ -252,6 +252,31 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('new activity exact', nn && nn.body.length === 2 && nn.body[0].activity_name === 'Sled push' && nn.body[0].tracking_type === 'distance' && nn.body[0].prescription.display === '0.05 km' && JSON.stringify(nn.body[0].prescription.sets) === '[{"distance":"0.05"}]' && !('scores' in nn.body[0].prescription));
   c.ok('the two-score exercise keeps both scores (name and kind) and has no sets', nn && nn.body[1].activity_name === 'AMRAP 12' && nn.body[1].tracking_type === 'scores' && JSON.stringify(nn.body[1].prescription.scores) === '[{"name":"Rounds completed","kind":"rounds"},{"name":"Finish time","kind":"time"}]' && nn.body[1].prescription.display === 'Record Rounds completed and Finish time' && !('sets' in nn.body[1].prescription));
   c.ok('nothing is deleted for a brand new workout', !writes.some((w) => w.method === 'DELETE'));
+  // Save as new, and Duplicate: the original workout is never changed
+  writes.length = 0;
+  await page.goto(`${base}/workouts`);
+  await page.getByRole('button', { name: 'Open Leg Day' }).click();
+  await c.has('the editor opens for a saved workout', page.getByLabel('Workout name'));
+  c.ok('Save as new workout is offered next to Save workout', (await page.getByRole('button', { name: 'Save as new workout' }).count()) === 1 && (await page.getByRole('button', { name: 'Save workout' }).count()) === 1);
+  await page.getByLabel('Workout name').fill('Leg Day B');
+  await page.getByRole('button', { name: 'Save as new workout' }).click();
+  await c.has('it says a new workout was made and the original is unchanged', page.getByText('Saved as a new workout. The original is unchanged.'));
+  c.ok('a new workout is inserted and the old one is not changed or have anything removed', writes.some((w) => w.table === 'workout_templates' && w.method === 'POST' && w.body.title === 'Leg Day B') && !writes.some((w) => w.table === 'workout_templates' && w.method === 'PATCH') && !writes.some((w) => w.method === 'DELETE'));
+  c.ok('its sections and exercises belong to the new workout', writes.filter((w) => w.table === 'workout_template_blocks' && w.method === 'POST').length === 1 && writes.filter((w) => w.table === 'workout_template_blocks' && w.method === 'POST').every((w) => w.body.template_id === 't-new'));
+  writes.length = 0;
+  await page.getByRole('button', { name: 'Save as new workout' }).click();
+  await c.has('saving as new again with the name unchanged adds (copy)', page.getByText('Saved as a new workout. The original is unchanged.'));
+  c.ok('and the name box shows it', (await page.getByLabel('Workout name').inputValue()) === 'Leg Day B (copy)' && writes.some((w) => w.table === 'workout_templates' && w.method === 'POST' && w.body.title === 'Leg Day B (copy)'));
+  await page.goto(`${base}/workouts`);
+  writes.length = 0;
+  await page.getByRole('button', { name: 'Duplicate Leg Day' }).click();
+  await c.has('a duplicate opens as a new, unsaved workout named (copy)', page.getByRole('heading', { name: 'New workout' }));
+  c.ok('with the exercises filled in and nothing written yet', (await page.getByLabel('Workout name').inputValue()) === 'Leg Day (copy)' && (await page.getByRole('button', { name: 'Remove Back squat' }).count()) === 1 && writes.length === 0);
+  c.ok('and no Save as new button, since it is not saved yet', (await page.getByRole('button', { name: 'Save as new workout' }).count()) === 0);
+  await page.getByRole('button', { name: 'Save workout' }).click();
+  await c.has('saving makes the copy', page.getByText('Workout saved.'));
+  c.ok('as a new workout, leaving Leg Day alone', writes.some((w) => w.table === 'workout_templates' && w.method === 'POST' && w.body.title === 'Leg Day (copy)') && !writes.some((w) => w.table === 'workout_templates' && w.method === 'PATCH') && !writes.some((w) => w.method === 'DELETE'));
+
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;
   await ctx.close();
