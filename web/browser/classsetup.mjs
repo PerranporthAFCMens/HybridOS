@@ -116,6 +116,13 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.getByLabel('Default duration (minutes)').fill('30');
   await dialog.getByLabel('Default capacity').fill('8');
   await dialog.getByLabel('Drop-in price (£)').fill('');
+  // Ticking a room starts "How many" at the room's full size (Studio A holds 20); equipment starts at 1
+  await dialog.getByLabel(/^Studio A ·/).click();
+  c.ok('a room starts at its full size', (await dialog.getByLabel('How many Studio A').inputValue()) === '20');
+  await dialog.getByLabel(/^Spin bike ·/).click();
+  c.ok('equipment starts at 1, even when it has a count', (await dialog.getByLabel('How many Spin bike').inputValue()) === '1');
+  await dialog.getByLabel(/^Spin bike ·/).click();
+  await dialog.getByLabel(/^Studio A ·/).click();
   await dialog.getByLabel(/^Sled ·/).click();
   await dialog.getByLabel('How many Sled').fill('4');
   await dialog.getByRole('button', { name: 'Save class type' }).click();

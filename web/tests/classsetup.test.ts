@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { diffRequirements, emptyTypeForm, formFromType, levelLabel, needsText, typeFacts, validateType } from '../src/classsetup/calc';
+import { defaultQuantity, diffRequirements, emptyTypeForm, formFromType, levelLabel, needsText, typeFacts, validateType } from '../src/classsetup/calc';
 import type { ClassTypeFull, RequirementRow, SetupData } from '../src/data/classSetup';
 
 const type = (over: Partial<ClassTypeFull> = {}): ClassTypeFull => ({ id: 't1', name: 'Spin', description: 'Indoor cycling', level: 'beginner', durationMinutes: 45, defaultCapacity: 12, dropInPence: 800, isActive: true, ...over });
@@ -67,5 +67,16 @@ describe('words', () => {
     const f = formFromType(type(), data.requirements);
     expect(f).toMatchObject({ name: 'Spin', duration: '45', capacity: '12', dropIn: '8.00', level: 'beginner', description: 'Indoor cycling', capabilityIds: ['cap'], resources: { studio: '1', bike: '12' } });
     expect(formFromType(type({ dropInPence: null }), []).dropIn).toBe('');
+  });
+});
+
+describe('defaultQuantity', () => {
+  it('starts a room at its full size', () => {
+    expect(defaultQuantity({ type: 'room', capacity: 30 })).toBe('30');
+  });
+  it('starts a room with no size, and any equipment, at 1', () => {
+    expect(defaultQuantity({ type: 'room', capacity: null })).toBe('1');
+    expect(defaultQuantity({ type: 'equipment', capacity: 12 })).toBe('1');
+    expect(defaultQuantity({ type: 'equipment', capacity: null })).toBe('1');
   });
 });

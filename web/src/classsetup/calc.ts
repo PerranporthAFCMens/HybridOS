@@ -21,6 +21,14 @@ export interface TypeForm {
   resources: Record<string, string>;
 }
 
+/**
+ * What "How many" starts at when a room or piece of equipment is ticked. A room with a size starts at its full size, because a class
+ * that needs the studio normally fills it (the owner can lower it to let two classes share the room). Anything else starts at 1.
+ */
+export function defaultQuantity(r: { type: string; capacity: number | null }): string {
+  return r.type === 'room' && r.capacity && r.capacity > 0 ? String(r.capacity) : '1';
+}
+
 export const emptyTypeForm: TypeForm = { name: '', level: 'all_levels', duration: '60', capacity: '20', dropIn: '5.00', description: '', capabilityIds: [], resources: {} };
 
 export function formFromType(t: ClassTypeFull, reqs: RequirementRow[]): TypeForm {
