@@ -98,10 +98,11 @@ describe('classes and greeting', () => {
 });
 
 describe('homeFor', () => {
-  it('keeps owners and admins in the new Admin shell and sends others to their app', () => {
-    expect(homeFor('owner', 'g')).toBe('admin');
-    expect(homeFor('admin', 'g')).toBe('admin');
-    expect(homeFor('coach', 'g')).toBe('/staff.html?gym_id=g');
-    expect(homeFor('member', 'g')).toBe('/m/today');
+  it('keeps owners and admins in the new Admin shell and sends staff to the staff app and members to theirs', () => {
+    expect(homeFor('owner')).toBe('admin');
+    expect(homeFor('admin')).toBe('admin');
+    expect(homeFor('coach')).toBe('/s/today');
+    expect(homeFor('staff')).toBe('/s/today');
+    expect(homeFor('member')).toBe('/m/today');
   });
 });
