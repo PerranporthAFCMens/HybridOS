@@ -34,6 +34,7 @@ import { TrainDone } from '../train/TrainDone';
 import { Leaderboard } from '../train/Leaderboard';
 import { Pbs } from '../train/Pbs';
 import { Pt } from '../member/Pt';
+import { GroupDetail, GroupList, JoinGroup } from '../groups/Groups';
 import { Membership } from '../member/Membership';
 import { Rules } from '../membership/Rules';
 import { Requests } from '../membership/Requests';
@@ -90,6 +91,9 @@ function Main() {
             <Route path="/m/train/class/:sessionId" element={<Player />} />
             <Route path="/m/train/:id" element={<Player />} />
             <Route path="/m/community" element={<MemberCommunity />} />
+            <Route path="/m/groups" element={<GroupList />} />
+            <Route path="/m/groups/join" element={<JoinGroup />} />
+            <Route path="/m/groups/:id" element={<GroupDetail />} />
             <Route path="/m/me" element={<Me />} />
             <Route path="/m/membership" element={<Membership />} />
             <Route path="/m/finish" element={<Finish />} />
