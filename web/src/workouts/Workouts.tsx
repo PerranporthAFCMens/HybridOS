@@ -10,7 +10,7 @@ import { ExercisePicker } from '../train/ExercisePicker';
 import { SetGrid } from '../train/SetGrid';
 import type { Tracking } from '../train/calc';
 import { Modal } from '../ui/Modal';
-import { TRACKING, addExercise, defaultScores, emptyWorkout, formScores, hasChanged, moveItem, trackingLabel, validateWodDate, validateWorkout, type BlockForm, type WorkoutForm } from './calc';
+import { TRACKING, addExercise, defaultScores, emptyWorkout, formScores, hasChanged, moveItem, nameForCopy, trackingLabel, validateWodDate, validateWorkout, withoutIds, type BlockForm, type WorkoutForm } from './calc';
 import { ScoresEditor } from './ScoresEditor';
 import { useTemplates, useWorkoutWrites } from './useWorkouts';
 import '../members/members.css';
@@ -21,7 +21,7 @@ type Note = { text: string; good: boolean } | null;
 export function Workouts() {
   const { gym } = useReadyAuth();
   const q = useTemplates(gym.gymId);
-  const [open, setOpen] = useState<{ t: TemplateRow | null } | null>(null);
+  const [open, setOpen] = useState<{ t: TemplateRow | null; copy?: boolean } | null>(null);
   const [note, setNote] = useState<Note>(null);
   return (
     <>
@@ -47,36 +47,40 @@ export function Workouts() {
                   <b>{t.title}</b>
                   {(t.focusTags.length > 0 || t.estimatedMinutes) && <div className="muted small">{[t.focusTags.join(' · '), t.estimatedMinutes ? `${t.estimatedMinutes} min` : ''].filter(Boolean).join(' · ')}</div>}
                 </div>
-                <div className="team-actions"><Button aria-label={`Open ${t.title}`} onClick={() => { setNote(null); setOpen({ t }); }}>Open</Button></div>
+                <div className="team-actions">
+                  <Button aria-label={`Open ${t.title}`} onClick={() => { setNote(null); setOpen({ t }); }}>Open</Button>
+                  <Button aria-label={`Duplicate ${t.title}`} onClick={() => { setNote(null); setOpen({ t, copy: true }); }}>Duplicate</Button>
+                </div>
               </li>
             ))}
           </ul>
         </Card>
       )}
-      {open && <Editor key={open.t?.id ?? 'new'} template={open.t} onClose={(n) => { setOpen(null); if (n) setNote(n); }} />}
+      {open && <Editor key={`${open.t?.id ?? 'new'}${open.copy ? '-copy' : ''}`} template={open.t} copy={open.copy} onClose={(n) => { setOpen(null); if (n) setNote(n); }} />}
     </>
   );
 }
 
 /** Build or edit a workout. `onSaved` lets another screen (a class) use the workout the moment it is saved. */
-export function Editor({ template, onClose, onSaved }: { template: TemplateRow | null; onClose: (n?: Note) => void; onSaved?: (t: TemplateRow) => void }) {
+export function Editor({ template, copy, onClose, onSaved }: { template: TemplateRow | null; copy?: boolean; onClose: (n?: Note) => void; onSaved?: (t: TemplateRow) => void }) {
   const { gym, userId } = useReadyAuth();
   const w = useWorkoutWrites(gym.gymId, userId);
   const loaded = useQuery({ queryKey: ['workout-blocks', template?.id], queryFn: () => loadBlocks(template?.id ?? ''), enabled: !!template, gcTime: 0 });
   if (template && loaded.isPending) return <Card><Empty>Loading the workout…</Empty></Card>;
   if (template && loaded.isError) return <Card><Empty>Could not load this workout. Go back and try again.</Empty><Button onClick={() => onClose()}>Back to the library</Button></Card>;
-  return <EditorForm template={template} initialBlocks={loaded.data ?? []} w={w} onClose={onClose} onSaved={onSaved} />;
+  return <EditorForm template={template} copy={copy} initialBlocks={copy ? withoutIds(loaded.data ?? []) : loaded.data ?? []} w={w} onClose={onClose} onSaved={onSaved} />;
 }
 
-function EditorForm({ template, initialBlocks, w, onClose, onSaved }: { template: TemplateRow | null; initialBlocks: BlockForm[]; w: ReturnType<typeof useWorkoutWrites>; onClose: (n?: Note) => void; onSaved?: (t: TemplateRow) => void }) {
+function EditorForm({ template, copy, initialBlocks, w, onClose, onSaved }: { template: TemplateRow | null; copy?: boolean; initialBlocks: BlockForm[]; w: ReturnType<typeof useWorkoutWrites>; onClose: (n?: Note) => void; onSaved?: (t: TemplateRow) => void }) {
   const startForm: WorkoutForm = template
-    ? { title: template.title, type: template.workoutType, tags: template.focusTags.join(', '), minutes: template.estimatedMinutes === null ? '' : String(template.estimatedMinutes), description: template.description ?? '', visibility: template.visibility }
+    ? { title: copy ? `${template.title} (copy)` : template.title, type: template.workoutType, tags: template.focusTags.join(', '), minutes: template.estimatedMinutes === null ? '' : String(template.estimatedMinutes), description: template.description ?? '', visibility: template.visibility }
     : emptyWorkout;
-  const [saved, setSaved] = useState({ form: startForm, blocks: initialBlocks });
+  // A duplicate starts as an unsaved new workout, so nothing is written until Save is pressed.
+  const [saved, setSaved] = useState(copy ? { form: emptyWorkout, blocks: [] as BlockForm[] } : { form: startForm, blocks: initialBlocks });
   const [form, setForm] = useState<WorkoutForm>(startForm);
   const [blocks, setBlocks] = useState<BlockForm[]>(initialBlocks);
-  const [id, setId] = useState<string | null>(template?.id ?? null);
-  const [current, setCurrent] = useState<TemplateRow | null>(template);
+  const [id, setId] = useState<string | null>(copy ? null : template?.id ?? null);
+  const [current, setCurrent] = useState<TemplateRow | null>(copy ? null : template);
   const [note, setNote] = useState<Note>(null);
   const [dialog, setDialog] = useState<'assign' | 'wod' | null>(null);
   const [asking, setAsking] = useState(false);
@@ -86,24 +90,28 @@ function EditorForm({ template, initialBlocks, w, onClose, onSaved }: { template
   const setBlock = (bi: number, patch: Partial<BlockForm>) => { setNote(null); setBlocks((l) => l.map((b, i) => (i === bi ? { ...b, ...patch } : b))); };
   const setAct = (bi: number, ai: number, patch: Partial<BlockForm['activities'][number]>) => { setNote(null); setBlocks((l) => l.map((b, i) => (i === bi ? { ...b, activities: b.activities.map((a, j) => (j === ai ? { ...a, ...patch } : a)) } : b))); };
 
-  const save = () => {
-    const c = validateWorkout(form, blocks);
+  // Save changes to this workout, or (`asNew`) keep the original as it is and save what is on screen as a separate new workout.
+  const persist = (asNew: boolean) => {
+    const f: WorkoutForm = asNew ? { ...form, title: nameForCopy(form.title, current?.title ?? '') } : form;
+    const c = validateWorkout(f, blocks);
     if (!c.ok) return setNote({ text: c.message, good: false });
     setNote(null);
-    w.save.mutate({ id, input: c.input, blocks: c.blocks }, {
+    w.save.mutate({ id: asNew ? null : id, input: c.input, blocks: c.blocks }, {
       onSuccess: async (newId) => {
         const fresh = await loadBlocks(newId);
         setId(newId);
+        setForm(f);
         setBlocks(fresh);
-        setSaved({ form, blocks: fresh });
+        setSaved({ form: f, blocks: fresh });
         const savedRow: TemplateRow = { id: newId, title: c.input.title, description: c.input.description, workoutType: c.input.workoutType, focusTags: c.input.focusTags, estimatedMinutes: c.input.estimatedMinutes, visibility: c.input.visibility === 'gym' ? 'gym' : 'private' };
         setCurrent(savedRow);
         onSaved?.(savedRow);
-        setNote({ text: 'Workout saved.', good: true });
+        setNote({ text: asNew ? 'Saved as a new workout. The original is unchanged.' : 'Workout saved.', good: true });
       },
-      onError: (e) => setNote({ text: `${e.message} Your changes are still here; press Save workout to try again.`, good: false }),
+      onError: (e) => setNote({ text: `${e.message} Your changes are still here; press ${asNew ? 'Save as new workout' : 'Save workout'} to try again.`, good: false }),
     });
   };
+  const save = () => persist(false);
   const archive = () => {
     if (!id) return;
     setAsking(false);
@@ -170,6 +178,7 @@ function EditorForm({ template, initialBlocks, w, onClose, onSaved }: { template
       {id && dirty && <p className="muted small">You have unsaved changes. Save the workout before assigning it or publishing it.</p>}
       <div className="membership-actions wk-actions">
         <Button variant="primary" disabled={w.save.isPending} onClick={save}>{w.save.isPending ? 'Saving…' : 'Save workout'}</Button>
+        {id && <Button disabled={w.save.isPending} onClick={() => persist(true)}>Save as new workout</Button>}
         <Button disabled={!usable} onClick={() => setDialog('assign')}>Assign to member</Button>
         <Button disabled={!usable} onClick={() => setDialog('wod')}>Publish as WOD</Button>
         {id && <Button onClick={() => { setNote(null); setAsking(true); }}>Archive</Button>}
