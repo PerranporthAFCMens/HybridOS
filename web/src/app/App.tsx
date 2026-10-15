@@ -41,6 +41,7 @@ import { SignupProcess } from '../signup/SignupProcess';
 import { Privacy } from '../members/Privacy';
 import { Join } from '../join/Join';
 import { Finish } from '../member/Finish';
+import { Strava } from '../member/Strava';
 import { BASENAME } from './site';
 
 function Leave({ to }: { to: string }) {
@@ -92,6 +93,7 @@ function Main() {
             <Route path="/m/me" element={<Me />} />
             <Route path="/m/membership" element={<Membership />} />
             <Route path="/m/finish" element={<Finish />} />
+            <Route path="/m/strava" element={<Strava />} />
             <Route path="/m/*" element={<Navigate to="/m/today" replace />} />
           </Route>
           <Route element={<Shell />}>
