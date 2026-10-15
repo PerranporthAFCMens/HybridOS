@@ -6,7 +6,7 @@ import { Button, LinkButton } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
 import { Checkbox, Field, FieldRow, Input, Select, Textarea } from '../ui/Field';
 import { Modal } from '../ui/Modal';
-import { LEVELS, emptyTypeForm, formFromType, levelLabel, needsText, typeFacts, validateType, type TypeForm } from './calc';
+import { LEVELS, defaultQuantity, emptyTypeForm, formFromType, levelLabel, needsText, typeFacts, validateType, type TypeForm } from './calc';
 import { useClassSetup, useClassSetupWrites } from './useClassSetup';
 import '../members/members.css';
 import './classsetup.css';
@@ -174,7 +174,7 @@ function TypeEditor({ type, data, saving, onClose, onSave }: {
                 checked={on}
                 onChange={(v) => setForm((f) => ({
                   ...f,
-                  resources: v ? { ...f.resources, [r.id]: '1' } : Object.fromEntries(Object.entries(f.resources).filter(([id]) => id !== r.id)),
+                  resources: v ? { ...f.resources, [r.id]: defaultQuantity(r) } : Object.fromEntries(Object.entries(f.resources).filter(([id]) => id !== r.id)),
                 }))}
               />
               {on && (
