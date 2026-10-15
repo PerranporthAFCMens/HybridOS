@@ -44,9 +44,9 @@ jobs:
             select count(*) into v_triggers from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace tn on tn.oid=c.relnamespace join pg_proc p on p.oid=t.tgfoid join pg_namespace fn on fn.oid=p.pronamespace where not t.tgisinternal and (tn.nspname in ('public','private') or fn.nspname in ('public','private'));
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
-            if v_tables<>88 then raise exception 'Expected 88 app tables, got %',v_tables; end if;
-            if v_functions<>157 then raise exception 'Expected 157 committed app functions, got %',v_functions; end if;
-            if v_policies<>209 then raise exception 'Expected 209 app/storage policies, got %',v_policies; end if;
+            if v_tables<>90 then raise exception 'Expected 90 app tables, got %',v_tables; end if;
+            if v_functions<>158 then raise exception 'Expected 158 committed app functions, got %',v_functions; end if;
+            if v_policies<>215 then raise exception 'Expected 215 app/storage policies, got %',v_policies; end if;
             if v_triggers<>37 then raise exception 'Expected 37 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
@@ -144,6 +144,8 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           # Dropping and recreating the replies table loses what a LATER migration did to it (it limits the service role to reading), so put that back too.
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261012160000_training_notify_service_access.sql
+          # ...and the own-clients rule on the replies table (part 2 of the PT clients change).
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261016121000_pt_clients_replies.sql
           snap /tmp/tl_after_reapply.txt
           if diff -u /tmp/tl_after_migration.txt /tmp/tl_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Training email service access verification and rollback
@@ -364,6 +366,28 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           snap /tmp/ai_after_reapply.txt
           if diff -u /tmp/ai_after_migration.txt /tmp/ai_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: PT clients verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261016120000_pt_clients.sql
+          MIG2=supabase/migrations/20261016121000_pt_clients_replies.sql
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261016_pt_clients_check.sql > /tmp/ptc_check.txt
+          cat /tmp/ptc_check.txt
+          if grep -v ' | ok$' /tmp/ptc_check.txt; then echo 'A PT clients verification check is not ok'; exit 1; fi
+          # owner, admin, staff, coach, members and another gym's people, run as the authenticated role; rolls itself back
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/pt_clients.sql
+          # the rollback removes everything it added, and applying both parts again restores the same catalog
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/ptc_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_pt_clients.sql
+          snap /tmp/ptc_after_rollback.txt
+          if diff -q /tmp/ptc_after_migration.txt /tmp/ptc_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG2"
+          snap /tmp/ptc_after_reapply.txt
+          if diff -u /tmp/ptc_after_migration.txt /tmp/ptc_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Prove the rollback file restores the pre-migration state exactly
         shell: bash
         run: |
