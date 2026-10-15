@@ -72,8 +72,8 @@ function Gate({ children }: { children: ReactNode }) {
       // The new member app opens for anyone signed in to a gym; real members are still sent to the classic app until the cutover.
       if (pathname.startsWith('/m/')) return <>{children}</>;
       // The staff app opens for the team (and for owners and admins previewing it); members are sent to their own app.
-      if (pathname.startsWith('/s/')) return isPrivileged(auth.gym.role) ? <>{children}</> : <Leave to={homeFor(auth.gym.role, auth.gym.gymId) as string} />;
-      const home = homeFor(auth.gym.role, auth.gym.gymId);
+      if (pathname.startsWith('/s/')) return isPrivileged(auth.gym.role) ? <>{children}</> : <Leave to={homeFor(auth.gym.role) as string} />;
+      const home = homeFor(auth.gym.role);
       return home === 'admin' ? <>{children}</> : <Leave to={home} />;
     }
   }

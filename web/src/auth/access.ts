@@ -29,7 +29,7 @@ export function resolveAccess(role: GymRole, membership: MembershipRow | null, t
 }
 
 /** Where each role lands. Owners and admins use the new Admin shell, staff and coaches the new staff app (/s/), members the new member app. */
-export function homeFor(role: GymRole, gymId: string): 'admin' | string {
+export function homeFor(role: GymRole): 'admin' | string {
   if (role === 'owner' || role === 'admin') return 'admin';
   if (role === 'staff' || role === 'coach') return siteUrl('s/today');
   return siteUrl('m/today');

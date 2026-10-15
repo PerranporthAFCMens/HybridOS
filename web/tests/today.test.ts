@@ -99,10 +99,10 @@ describe('classes and greeting', () => {
 
 describe('homeFor', () => {
   it('keeps owners and admins in the new Admin shell and sends staff to the staff app and members to theirs', () => {
-    expect(homeFor('owner', 'g')).toBe('admin');
-    expect(homeFor('admin', 'g')).toBe('admin');
-    expect(homeFor('coach', 'g')).toBe('/s/today');
-    expect(homeFor('staff', 'g')).toBe('/s/today');
-    expect(homeFor('member', 'g')).toBe('/m/today');
+    expect(homeFor('owner')).toBe('admin');
+    expect(homeFor('admin')).toBe('admin');
+    expect(homeFor('coach')).toBe('/s/today');
+    expect(homeFor('staff')).toBe('/s/today');
+    expect(homeFor('member')).toBe('/m/today');
   });
 });
