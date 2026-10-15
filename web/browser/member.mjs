@@ -128,7 +128,7 @@ for (const role of ['member', 'owner']) {
     c.ok('layout (workouts)', (await page.evaluate(layoutProblems)).length === 0);
     await page.getByRole('navigation', { name: 'Member' }).getByRole('link', { name: 'Me' }).click();
     await c.has('me page shows the plan', page.getByLabel('Membership').getByText('Classes Monthly'));
-    c.ok('and the classic app link', (await page.getByRole('link', { name: 'Open the classic app' }).getAttribute('href')).includes('member.html?gym_id='));
+    c.ok('and the classic app link', (await page.getByRole('link', { name: 'Open the classic app' }).getAttribute('href')).includes('member.html?classic=1&gym_id='));
     c.ok('layout (me)', (await page.evaluate(layoutProblems)).length === 0);
     await c.has('the person\'s own signed documents are on their page', page.getByLabel('Your signed documents').getByText(/Tuesday 6 October 2026 at 10:00:00 BST/));
     const [mine] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download my signed copy' }).click()]);

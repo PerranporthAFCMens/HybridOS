@@ -57,6 +57,8 @@ as $$
   end
 $$;
 revoke all on function private.is_my_pt_client(uuid, uuid) from public, anon, authenticated, service_role;
+-- Row rules run as the signed-in person, so they need to be able to call it (like private.has_gym_role); it is in the private schema, so the app cannot call it as an API.
+grant execute on function private.is_my_pt_client(uuid, uuid) to authenticated;
 
 -- pt_clients: owners and admins manage everyone's; a PT reads and manages their own rows, for active members of the gym.
 create policy "pt clients read" on public.pt_clients for select to authenticated

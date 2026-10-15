@@ -19,9 +19,9 @@ select 'nothing is open to anonymous visitors',
        case when not has_table_privilege('anon', 'public.pt_clients', 'select')
              and not has_table_privilege('anon', 'public.gym_pt_settings', 'select') then 'ok' else 'OPEN' end
 union all
-select 'the rule function cannot be called directly from the app',
-       case when not has_function_privilege('authenticated', 'private.is_my_pt_client(uuid,uuid)', 'execute')
-             and not has_function_privilege('anon', 'private.is_my_pt_client(uuid,uuid)', 'execute') then 'ok' else 'CALLABLE' end
+select 'the rule function can be used by the row rules but not by visitors',
+       case when has_function_privilege('authenticated', 'private.is_my_pt_client(uuid,uuid)', 'execute')
+             and not has_function_privilege('anon', 'private.is_my_pt_client(uuid,uuid)', 'execute') then 'ok' else 'WRONG' end
 union all
 select 'every staff rule on member workouts now asks the rule function',
        case when (select count(*) from pg_policies where schemaname = 'public' and qual like '%is_my_pt_client%'

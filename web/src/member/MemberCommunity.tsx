@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import type { CommunityData } from '../data/community';
 import { Button } from '../ui/Button';
@@ -46,6 +47,7 @@ export function MemberCommunity() {
   return (
     <div className="mem-screen">
       <h1 className="mem-title">Community</h1>
+      <div className="muted small">Training with friends? <Link to="/m/groups">Training groups</Link></div>
       <div className="mem-actions" role="tablist" aria-label="Community">
         {tab('feed', 'Feed')}
         {tab('broadcasts', broadcasts.length > 0 ? `Broadcasts · ${broadcasts.length}` : 'Broadcasts')}

@@ -8,6 +8,7 @@ import { MemberFile } from '../members/MemberFile';
 import { Plans } from '../plans/Plans';
 import { Classes } from '../classes/Classes';
 import { Reports } from '../reports/Reports';
+import { Estate } from '../estate/Estate';
 import { ClassSetup } from '../classsetup/ClassSetup';
 import { Lifts } from '../lifts/Lifts';
 import { Payments } from '../payments/Payments';
@@ -34,6 +35,7 @@ import { TrainDone } from '../train/TrainDone';
 import { Leaderboard } from '../train/Leaderboard';
 import { Pbs } from '../train/Pbs';
 import { Pt } from '../member/Pt';
+import { GroupDetail, GroupList, JoinGroup } from '../groups/Groups';
 import { Membership } from '../member/Membership';
 import { Rules } from '../membership/Rules';
 import { Requests } from '../membership/Requests';
@@ -44,6 +46,7 @@ import { Finish } from '../member/Finish';
 import { StaffShell } from '../staffapp/StaffShell';
 import { StaffDay, StaffTimetable } from '../staffapp/StaffDay';
 import { StaffMe } from '../staffapp/StaffMe';
+import { Strava } from '../member/Strava';
 import { BASENAME } from './site';
 
 function Leave({ to }: { to: string }) {
@@ -94,9 +97,13 @@ function Main() {
             <Route path="/m/train/class/:sessionId" element={<Player />} />
             <Route path="/m/train/:id" element={<Player />} />
             <Route path="/m/community" element={<MemberCommunity />} />
+            <Route path="/m/groups" element={<GroupList />} />
+            <Route path="/m/groups/join" element={<JoinGroup />} />
+            <Route path="/m/groups/:id" element={<GroupDetail />} />
             <Route path="/m/me" element={<Me />} />
             <Route path="/m/membership" element={<Membership />} />
             <Route path="/m/finish" element={<Finish />} />
+            <Route path="/m/strava" element={<Strava />} />
             <Route path="/m/*" element={<Navigate to="/m/today" replace />} />
           </Route>
           <Route element={<StaffShell />}>
@@ -112,6 +119,7 @@ function Main() {
             <Route path="/plans" element={<Plans />} />
             <Route path="/classes" element={<Classes />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/estate" element={<Estate />} />
             <Route path="/staff" element={<Staff />} />
             <Route path="/rooms" element={<Rooms />} />
             <Route path="/access" element={<Access />} />
