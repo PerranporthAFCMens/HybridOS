@@ -1,4 +1,5 @@
 import { siteUrl } from '../app/site';
+import { runsEstate } from '../estate/calc';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -59,6 +60,7 @@ export function Shell() {
           {[...MENU, SETTINGS_GROUP].map((g) => (
             <NavLink key={g.key} to={g.to} className={group?.key === g.key ? 'active' : ''} onClick={close}><Icon name={g.icon} /><span>{g.label}</span></NavLink>
           ))}
+          {runsEstate(auth.gyms) && <NavLink to="/estate" onClick={close}><Icon name="reporting" /><span>Estate</span></NavLink>}
           <div className="section">Preview</div>
           <NavLink to="/m/today" onClick={close}><Icon name="profile" /><span>Preview as member</span></NavLink>
           <a href={`${siteUrl('staff.html')}?view=staff`}><Icon name="staff" /><span>Preview as staff</span></a>
