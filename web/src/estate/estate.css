@@ -1,0 +1,10 @@
+.est-total { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 12px; }
+.est-total > div { min-width: 0; display: grid; gap: 2px; }
+.est-total span, .est-fig dt { font-size: 12px; color: var(--hybrid-muted); overflow-wrap: anywhere; }
+.est-total b { font-size: 22px; overflow-wrap: anywhere; }
+.est-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; margin: 12px 0; }
+.est-grid > * { min-width: 0; }
+.est-fig { display: grid; gap: 6px; margin: 8px 0 12px; }
+.est-fig > div { display: flex; justify-content: space-between; gap: 12px; }
+.est-fig dd { margin: 0; font-weight: 600; }
+@media (max-width: 899px) { .est-total { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
