@@ -41,7 +41,7 @@ const FAKE_STRIPE = () => {
 
 const newState = () => ({
   style: 'quick', mode: 'stripe', memberships: [], docs: true, otp: [], verified: [], accept: false, basics: null, prepared: null, finished: [],
-  joined: null, signFirst: false, modeAskedSignedOut: 0, otpUrl: '', emergency: null, address: null, signed: null, finalised: null, done: new Set(), dob: '1990-04-12', doorOn: true,
+  joined: null, signFirst: false, modeAskedSignedOut: 0, docsAskedSignedOut: 0, otpUrl: '', emergency: null, address: null, signed: null, finalised: null, done: new Set(), dob: '1990-04-12', doorOn: true,
 });
 
 /** Mock everything Quick join talks to. The checklist answers from `state.done`, so saving something ticks it off. */
@@ -49,7 +49,11 @@ async function wire(page, state) {
   await mockSupabase(page, async ({ route, path, body }) => {
     if (path.endsWith('/rpc/get_public_gym_join_options')) return reply(route, { gym_id: GYM, gym_name: 'Puffin Performance', logo_url: null, plans: PLANS });
     if (path.endsWith('/rpc/get_public_gym_join_style')) return reply(route, { join_style: state.style, ask_address: 'optional', ask_emergency: 'required', ask_documents: 'required', sign_before_paying: state.signFirst });
-    if (path.endsWith('/rpc/get_public_gym_signup_documents')) return reply(route, state.docs ? DOCS : []);
+    if (path.endsWith('/rpc/get_public_gym_signup_documents')) {
+      // As in the real database: the documents can only be read by a signed-in person (execute is revoked from the anonymous role).
+      if (!(route.request().headers().authorization ?? '').includes('x.y.z')) { state.docsAskedSignedOut += 1; await route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ code: '42501', message: 'permission denied for function get_public_gym_signup_documents' }) }); return true; }
+      return reply(route, state.docs ? DOCS : []);
+    }
     if (path.endsWith('/rpc/get_gym_payment_mode')) {
       // As in the real database: only a signed-in person may ask (a signed-out visitor is sent the anonymous key, not a user's token).
       if (!(route.request().headers().authorization ?? '').includes('x.y.z')) { state.modeAskedSignedOut += 1; return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ code: 'P0001', message: 'Sign in first' }) }); }
@@ -310,6 +314,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await firstPage.getByRole('button', { name: 'Send me a code', exact: true }).click();
   await firstPage.getByLabel('Code from the email', { exact: true }).fill('44444444');
   await c.has('the basics come first', firstPage.getByRole('heading', { name: 'Just the basics' }));
+  c.ok('the documents are not asked for while signed out (the database refuses them), so the signing screen is still there', sstate.docsAskedSignedOut === 0);
   await c.has('it says what is next: reading and signing', firstPage.getByText('Next you will read and sign the terms and waiver.'));
   c.ok('and the waiver is not left until after paying', (await firstPage.getByText('Answer a few health questions and sign the waiver').count()) === 0);
   await firstPage.getByLabel('First name', { exact: true }).fill('Lee');
