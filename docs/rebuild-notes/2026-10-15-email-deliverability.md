@@ -15,7 +15,7 @@
 ## Changed in this PR (`supabase/functions/send-auth-email`)
 - Friendlier default wording for sign-up, sign-in and invite emails. Gym-specific templates saved in the database still win over these defaults.
 - A proper plain-text version is now sent alongside the HTML.
-- Default sender is `hello@hybridone.co.uk` when a gym has not saved its own sender.
+- Default sender stays `noreply@hybridone.co.uk` (the email smoke check requires it). Change the sender per gym in Communications.
 - `lang="en"` on the HTML.
 
 ## Not changed

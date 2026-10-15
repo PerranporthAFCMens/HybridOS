@@ -41,7 +41,7 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const HOOK_SECRET_RAW = Deno.env.get('SEND_EMAIL_HOOK_SECRET') ?? ''
-const DEFAULT_FROM = 'hello@hybridone.co.uk'
+const DEFAULT_FROM = 'noreply@hybridone.co.uk'
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
