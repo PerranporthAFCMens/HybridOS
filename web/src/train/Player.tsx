@@ -13,7 +13,7 @@ import { Checkbox, Input, Select } from '../ui/Field';
 import { SetGrid } from './SetGrid';
 import { REASONS, assignmentNote, blankSets, buildResult, fromDbSet, hasEntered, prepareFinish, readSnapshot, resultJson, setText, type PlayedActivity, type ScoreDef, type SetValues, type Tracking } from './calc';
 
-interface Act extends PlayedActivity { key: string; plan: string; planNote: string; block: string; target: SetValues[]; scores?: ScoreDef[]; entryId?: string; savedText?: string }
+interface Act extends PlayedActivity { key: string; plan: string; planNote: string; block: string; target: SetValues[]; scores?: ScoreDef[]; entryId?: string; savedSets?: string[] }
 interface Draft { acts: Act[]; rpe: string; notes: string; sessionId?: string | null }
 
 const draftKey = (gymId: string, id: string) => `hybrid-train-draft:${gymId}:${id}`;
@@ -154,7 +154,7 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
     try {
       const res = await saveExercise({ gymId: gym.gymId, userId, sessionId, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length, assignmentId: assigned ? id : null, classSessionId: classSessionId ?? null }, entry);
       setSessionId(res.sessionId);
-      patch(a.key, { entryId: res.entryId, savedText: a.sets.map((s) => setText(a.tracking, s)).filter(Boolean).join(', ') });
+      patch(a.key, { entryId: res.entryId, savedSets: a.sets.map((s) => setText(a.tracking, s)).filter(Boolean) });
       setWon((w) => [...w, ...res.won]);
       if (res.pbError) setPbIssue(res.pbError);
       return true;
@@ -172,7 +172,7 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
     setSaving(a.key);
     try {
       await removeExercise(a.entryId);
-      patch(a.key, { entryId: undefined, savedText: undefined });
+      patch(a.key, { entryId: undefined, savedSets: undefined });
     } catch (e) {
       setCardError((m) => ({ ...m, [a.key]: e instanceof Error ? e.message : 'Could not change that exercise.' }));
     } finally {
@@ -267,9 +267,15 @@ function Logger({ id, classSessionId, title, snapshot, source, last }: { id: str
             {a.skipped ? <div className="muted">Not this time. That is fine.</div> : a.entryId ? (
               <div className="tr-saved">
                 <span className="tr-ok">Saved</span>
-                {a.savedText && <div className="muted">{a.savedText}</div>}
-                <Button disabled={saving === a.key} onClick={() => void change(a)} aria-label={`Change ${a.name}`}>Change</Button>
-                {isOwn(a) && <Button disabled={saving === a.key} onClick={() => void drop(a)} aria-label={`Remove ${a.name}`}>Remove</Button>}
+                {a.savedSets && a.savedSets.length > 0 && (
+                  <ol className="tr-saved-sets" aria-label={`Sets saved for ${a.name}`}>
+                    {a.savedSets.map((t, i) => <li key={i}><span className="tr-n">{i + 1}</span>{t}</li>)}
+                  </ol>
+                )}
+                <div className="tr-saved-actions">
+                  <Button disabled={saving === a.key} onClick={() => void change(a)} aria-label={`Change ${a.name}`}>Change</Button>
+                  {isOwn(a) && <Button disabled={saving === a.key} onClick={() => void drop(a)} aria-label={`Remove ${a.name}`}>Remove</Button>}
+                </div>
               </div>
             ) : a.tracking === 'instruction' ? (
               <Checkbox label="Done" checked={a.done} onChange={(v) => patch(a.key, { done: v })} />

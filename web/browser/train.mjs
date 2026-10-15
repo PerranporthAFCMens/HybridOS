@@ -123,6 +123,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('an exercise can be saved on its own', page.getByRole('region', { name: 'Dumbbell row' }).getByText('Saved', { exact: true }));
   c.ok('that wrote the workout and the exercise straight away', writes.filter((w) => w.startsWith('session ')).length === 1 && writes.filter((w) => w.startsWith('entry ')).length === 1 && writes.some((w) => w.startsWith('sets ')));
   c.ok('the saved numbers are shown', (await page.getByRole('region', { name: 'Dumbbell row' }).textContent()).includes('10 × 24 kg'));
+  c.ok('each saved set is on its own line, numbered', (await page.getByRole('region', { name: 'Dumbbell row' }).getByRole('list', { name: 'Sets saved for Dumbbell row' }).getByRole('listitem').count()) === 3);
   await page.getByRole('button', { name: 'Swap Overhead press' }).click();
   await page.getByLabel('Swap Overhead press for').fill('Landmine press');
   await page.getByLabel('Landmine press set 1 Weight').fill('30');
