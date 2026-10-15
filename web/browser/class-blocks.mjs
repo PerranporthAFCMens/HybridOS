@@ -5,7 +5,8 @@ import { GYM, USER, base, launch, mockSupabase, reply, runChecks, shots, signedI
 
 const pad = (n) => String(n).padStart(2, '0');
 const keyOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const today = new Date();
+// The gym's day is UK time; the machine running the check may be on UTC, a different day for the hour after 23:00 in summer.
+const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/London' }));
 const todayKey = keyOf(today);
 const dayKey = (offset) => keyOf(new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset));
 const londonFormat = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
