@@ -69,6 +69,8 @@ insert into public.membership_plans(id,gym_id,name,price_pence,billing_interval)
 insert into public.memberships(id,gym_id,user_id,plan_id,status,starts_on) values
  ('d0000000-0000-4000-8000-000000000001',pt.gym_a(),pt.u('m1'),'c0000000-0000-4000-8000-000000000001','active',current_date-30),
  ('d0000000-0000-4000-8000-000000000002',pt.gym_a(),pt.u('m2'),'c0000000-0000-4000-8000-000000000001','active',current_date-30);
+-- A PT sees and sets workouts only for their own clients (20261016120000_pt_clients.sql): both PT logins here are m1's PTs.
+insert into public.pt_clients(gym_id,staff_user_id,client_user_id) values (pt.gym_a(),pt.u('coach_a'),pt.u('m1')),(pt.gym_a(),pt.u('staff_a'),pt.u('m1'));
 
 -- ---------- assigning: a coach gives m1 a workout, with no day ----------
 select pt.check('a coach can assign a workout with no date', pt.q(pt.u('coach_a'), format('insert into public.workout_assignments(id, gym_id, member_user_id, assigned_by, source, title) values (%L, %L, %L, %L, %L, %L) returning status', pt.asg(), pt.gym_a(), pt.u('m1'), pt.u('coach_a'), 'pt', 'Lower body strength')), 'todo');
