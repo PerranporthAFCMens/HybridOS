@@ -19,9 +19,10 @@ export function MemberClasses() {
       <div className="mem-days" role="group" aria-label="Choose a day">
         {strip.map((s) => {
           const has = d.classes.data.some((c) => dayOf(c.startsAt) === s.key);
+          const booked = d.classes.data.some((c) => c.isBooked && dayOf(c.startsAt) === s.key);
           return (
-            <button key={s.key} type="button" className={`mem-day${day === s.key ? ' on' : ''}`} aria-pressed={day === s.key} aria-label={`${dayLabel(s.key)}${has ? '' : ', no classes'}`} onClick={() => setDay(s.key)}>
-              <span>{s.weekday}</span><b>{s.num}</b><i className={has ? 'dot' : 'dot off'} aria-hidden="true" />
+            <button key={s.key} type="button" className={`mem-day${day === s.key ? ' on' : ''}${booked ? ' booked' : ''}`} aria-pressed={day === s.key} aria-label={`${dayLabel(s.key)}${booked ? ', you have a class booked' : has ? '' : ', no classes'}`} onClick={() => setDay(s.key)}>
+              <span>{s.weekday}</span><b>{s.num}</b><i className={booked ? 'dot booked' : has ? 'dot' : 'dot off'} aria-hidden="true" />
             </button>
           );
         })}
