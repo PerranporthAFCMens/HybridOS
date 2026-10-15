@@ -100,7 +100,7 @@ function Editor({ saved }: { saved: MemberViewSaved }) {
         <div className="membership-actions">
           <Button variant="primary" disabled={save.isPending} onClick={submit}>{save.isPending ? 'Saving…' : 'Save member view'}</Button>
           <Button onClick={() => { setNote({ text: 'Order reset here only. Press Save member view to publish it.', good: true }); setLayout(DEFAULT_LAYOUT.map((t) => ({ ...t }))); }}>Reset order</Button>
-          <LinkButton href={`${siteUrl('member.html')}?view=member`}>View as member</LinkButton>
+          <LinkButton href={siteUrl('m/today')}>View as member</LinkButton>
         </div>
       </Card>
 

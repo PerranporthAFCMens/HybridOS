@@ -39,19 +39,19 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await back.click();
   await c.has('with no history, Back goes to Settings', page.getByRole('heading', { name: 'Settings', level: 1 }));
   const newAppErrors = errors.length;
-  // Opening the old admin address goes straight to the new app; a specific old page still opens
+  // Opening the old admin address goes straight to the new app (default); ?next=0 opts out; a specific old page still opens
   await page.goto(`${base}/admin.html`);
-  await page.waitForTimeout(500);
-  c.ok('off by default: admin.html stays on the old frame', !page.url().endsWith('/today'));
-  await page.goto(`${base}/admin.html?next=1`);
   await page.waitForURL(/\/today$/);
-  c.ok('admin.html opens the new app', page.url().endsWith('/today'));
+  c.ok('admin.html opens the new app by default', page.url().endsWith('/today'));
   await page.goto(`${base}/admin.html?view=index.html`);
   await page.waitForURL(/\/today$/);
   c.ok('so does the plain dashboard view', page.url().endsWith('/today'));
   await page.goto(`${base}/admin.html?next=0`);
   await page.waitForTimeout(500);
-  c.ok('next=0 turns it off again', !page.url().endsWith('/today'));
+  c.ok('next=0 stays on the old frame', !page.url().endsWith('/today'));
+  await page.goto(`${base}/admin.html?next=1`);
+  await page.waitForURL(/\/today$/);
+  c.ok('next=1 turns the new app back on', page.url().endsWith('/today'));
   await page.goto(`${base}/admin.html?view=gym-layout.html`);
   await page.waitForTimeout(500);
   c.ok('another old page is not redirected', page.url().includes('/admin.html?view=gym-layout.html'));
