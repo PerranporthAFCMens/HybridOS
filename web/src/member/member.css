@@ -33,6 +33,9 @@
 .mem-day.on b { color: #0b1020; }
 .mem-day .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .mem-day .dot.off { background: transparent; }
+.mem-day.booked { border-color: var(--hybrid-volt, #c8ff3d); box-shadow: inset 0 0 0 1px var(--hybrid-volt, #c8ff3d); }
+.mem-day .dot.booked { width: 16px; border-radius: 3px; background: var(--hybrid-volt, #c8ff3d); }
+.mem-day.on .dot.booked { background: #0b1020; }
 .mem-day:focus-visible, .mem-tabs a:focus-visible { outline: 2px solid var(--hybrid-pulse, #6b7cff); outline-offset: 2px; }
 .mem-list-head { font-size: 13px; color: var(--hybrid-muted); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
 .mem-class { display: flex; align-items: center; gap: 12px; background: var(--hybrid-panel); border: 1px solid var(--hybrid-line); border-radius: 14px; padding: 12px; }
