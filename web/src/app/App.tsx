@@ -8,6 +8,7 @@ import { MemberFile } from '../members/MemberFile';
 import { Plans } from '../plans/Plans';
 import { Classes } from '../classes/Classes';
 import { Reports } from '../reports/Reports';
+import { Estate } from '../estate/Estate';
 import { ClassSetup } from '../classsetup/ClassSetup';
 import { Lifts } from '../lifts/Lifts';
 import { Payments } from '../payments/Payments';
@@ -110,6 +111,7 @@ function Main() {
             <Route path="/plans" element={<Plans />} />
             <Route path="/classes" element={<Classes />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/estate" element={<Estate />} />
             <Route path="/staff" element={<Staff />} />
             <Route path="/rooms" element={<Rooms />} />
             <Route path="/access" element={<Access />} />
