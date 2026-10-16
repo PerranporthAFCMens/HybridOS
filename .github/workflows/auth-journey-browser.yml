@@ -49,7 +49,6 @@ jobs:
         run: echo "HYBRID_BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Wait for exact public Pages revision
-        if: false # TEMPORARY for a branch trial run; removed before the PR
         env:
           PAGES_URL: https://perranporthafcmens.github.io/HybridOS/
         run: python3 scripts/runtime_pages_check.py
