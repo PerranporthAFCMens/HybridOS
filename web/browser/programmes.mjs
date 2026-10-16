@@ -123,6 +123,16 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('and it says where you are: step 2', (await steps.getByText('● You are here').count()) === 1 && (await steps.locator('li').count()) === 4);
   c.ok('a class outside these weeks is not offered', (await page.getByRole('button', { name: 'Far away class' }).count()) === 0);
 
+  // Step 2: schedule a new class from here (opens the timetable's own form, repeating for the programme's weeks)
+  writes.length = 0;
+  await page.getByRole('button', { name: 'Schedule a new class' }).click();
+  const sched = page.getByRole('dialog');
+  await c.has('the add-class form opens here', sched.getByLabel('Class name'));
+  c.ok('it starts on the programme start day, repeating weekly for its 6 weeks', (await sched.getByLabel('Date').inputValue()) === gymToday && (await sched.getByLabel('Repeat weekly').isChecked()) && (await sched.getByLabel('Number of weeks').inputValue()) === '6');
+  c.ok('layout (schedule form)', (await page.evaluate(layoutProblems)).length === 0);
+  await sched.getByRole('button', { name: 'Close' }).first().click();
+  c.ok('closing writes nothing', (await sched.count()) === 0 && writes.length === 0);
+
   // Step 2: pick by name and days
   writes.length = 0;
   await page.getByRole('button', { name: 'Morning HIIT', exact: true }).click();

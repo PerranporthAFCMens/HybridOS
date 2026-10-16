@@ -13,7 +13,7 @@ import {
 import { useActivePlans, useClassTypes, useCreateClass, useCreateSeries, useSchedulingRules, useScheduleCheck, useSeriesCheck, useStaffOptions, useUpdateClass } from './useClasses';
 
 /** Add a class to the timetable. `onSaved` receives the class's start so the timetable can jump to its week. */
-export function ClassForm({ onClose, onSaved, initial, editing }: { onClose: () => void; onSaved: (startsAt: Date) => void; /** Date (yyyy-mm-dd) and start time (HH:MM) to open with, e.g. from a tap on the calendar. */ initial?: { date: string; start: string }; /** A saved class to change instead of adding a new one. Its class type stays as it is. */ editing?: EditableClass }) {
+export function ClassForm({ onClose, onSaved, initial, editing }: { onClose: () => void; onSaved: (startsAt: Date, name: string) => void; /** Date (yyyy-mm-dd) and start time (HH:MM) to open with, e.g. from a tap on the calendar; a programme also opens it repeating for its weeks. */ initial?: { date: string; start?: string; repeat?: boolean; weeks?: string }; /** A saved class to change instead of adding a new one. Its class type stays as it is. */ editing?: EditableClass }) {
   const { gym } = useReadyAuth();
   const staff = useStaffOptions(gym.gymId);
   const plans = useActivePlans(gym.gymId);
@@ -84,7 +84,7 @@ export function ClassForm({ onClose, onSaved, initial, editing }: { onClose: () 
           onSuccess: (results) => {
             const failed = results.filter((r) => !r.ok);
             if (failed.length === 0) {
-              onSaved(new Date(included[0]?.startsAt ?? startsAt));
+              onSaved(new Date(included[0]?.startsAt ?? startsAt), rest.name);
               return;
             }
             // Weeks that did save are skipped from now on, so pressing Save again retries only the failed ones.
@@ -100,7 +100,7 @@ export function ClassForm({ onClose, onSaved, initial, editing }: { onClose: () 
       return;
     }
     const single = { ...rest, startsAt, endsAt, classTypeId: typeId, staffIds: ordered.map((p) => p.userId), reservedPlanIds: pickedPlans, overrideReason: overrideReason ?? null };
-    const handlers = { onSuccess: (v: { ok: boolean; errors: string[] }) => (v.ok ? onSaved(new Date(startsAt)) : setProblems(v.errors.length ? v.errors : [editing ? 'The change could not be saved.' : 'The class could not be scheduled.'])), onError: (e: Error) => setProblems([e.message]) };
+    const handlers = { onSuccess: (v: { ok: boolean; errors: string[] }) => (v.ok ? onSaved(new Date(startsAt), rest.name) : setProblems(v.errors.length ? v.errors : [editing ? 'The change could not be saved.' : 'The class could not be scheduled.'])), onError: (e: Error) => setProblems([e.message]) };
     if (editing) update.mutate(single, handlers);
     else create.mutate(single, handlers);
   };

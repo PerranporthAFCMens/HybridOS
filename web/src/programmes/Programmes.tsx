@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ClassForm } from '../classes/ClassForm';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { getBlocksOfClasses, type ClassBlock } from '../data/classBlocks';
 import { Button } from '../ui/Button';
@@ -112,6 +113,8 @@ function ProgrammePage({ block, onGone }: { block: ClassBlock; onGone: () => voi
   const [form, setForm] = useState({ name: block.name, startsOn: block.startsOn, weeks: String(block.weeks) });
   const [note, setNote] = useState<{ text: string; good: boolean } | null>(null);
   const [asking, setAsking] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
+  const qc = useQueryClient();
   const dirtyDetails = form.name !== block.name || form.startsOn !== block.startsOn || form.weeks !== String(block.weeks);
   const missing = classes.filter((c) => c.inBlock && c.workout === 'none');
   const inBlock = classes.filter((c) => c.inBlock).length;
@@ -152,10 +155,11 @@ function ProgrammePage({ block, onGone }: { block: ClassBlock; onGone: () => voi
 
       <Card>
         <SectionTitle title="2 Pick the classes" />
-        <p className="muted small">A programme uses classes already on the timetable. Choose a class and the days it runs, and every match in these weeks is added.</p>
+        <p className="muted small">Choose a class already on the timetable and the days it runs, and every match in these weeks is added. Not there yet? Schedule it here.</p>
         {q.isPending && <p className="muted small">Loading classes…</p>}
         {q.isError && <p className="muted small">Could not load the classes. Go back and open the programme again.</p>}
-        {q.data && names.length === 0 && <p className="muted small">There are no classes on the timetable in these weeks yet. Add them from Add class on the Timetable, then come back.</p>}
+        <div className="team-actions"><Button variant={names.length === 0 ? 'primary' : 'secondary'} onClick={() => setScheduling(true)}>Schedule a new class</Button></div>
+        {q.data && names.length === 0 && <p className="muted small">There are no classes on the timetable in these weeks yet. Schedule one above, or add them on the Timetable.</p>}
         {names.length > 0 && (
           <>
             <p className="prog-label">Which class</p>
@@ -178,6 +182,20 @@ function ProgrammePage({ block, onGone }: { block: ClassBlock; onGone: () => voi
           </>
         )}
       </Card>
+
+      {scheduling && (
+        <ClassForm
+          initial={{ date: block.startsOn, repeat: true, weeks: String(Math.min(52, Math.max(2, block.weeks))) }}
+          onClose={() => setScheduling(false)}
+          onSaved={(_at, savedName) => {
+            setScheduling(false);
+            void qc.invalidateQueries({ queryKey: ['block-classes', gym.gymId] });
+            setName(savedName);
+            setDays(null);
+            setNote({ text: `${savedName} is on the timetable. Check the days below and add it to ${block.name}.`, good: true });
+          }}
+        />
+      )}
 
       <Card>
         <SectionTitle title="3 Add the workouts" />
