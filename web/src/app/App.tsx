@@ -7,6 +7,7 @@ import { Members } from '../members/Members';
 import { MemberFile } from '../members/MemberFile';
 import { Plans } from '../plans/Plans';
 import { Classes } from '../classes/Classes';
+import { Programmes } from '../programmes/Programmes';
 import { Reports } from '../reports/Reports';
 import { Estate } from '../estate/Estate';
 import { ClassSetup } from '../classsetup/ClassSetup';
@@ -126,6 +127,7 @@ function Main() {
             <Route path="/members/:userId" element={<MemberFile />} />
             <Route path="/plans" element={<Plans />} />
             <Route path="/classes" element={<Classes />} />
+            <Route path="/programmes" element={<Programmes />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/estate" element={<Estate />} />
             <Route path="/staff" element={<Staff />} />

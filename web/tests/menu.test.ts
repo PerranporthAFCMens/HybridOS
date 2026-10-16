@@ -22,7 +22,7 @@ describe('side menu', () => {
 
   it('shows tabs only on the main page of a line that has more than one page', () => {
     expect(tabsFor('/plans').map((t) => t.label)).toEqual(['Members', 'Membership plans']);
-    expect(tabsFor('/classes').map((t) => t.label)).toEqual(['Classes', 'Workout builder', 'Movements', 'Client training']);
+    expect(tabsFor('/classes').map((t) => t.label)).toEqual(['Timetable', 'Programmes', 'Workout builder', 'Movements', 'Client training']);
     expect(tabsFor('/communications').map((t) => t.label)).toEqual(['Community', 'Communications']);
     expect(tabsFor('/today')).toEqual([]);
     expect(tabsFor('/members/abc')).toEqual([]);

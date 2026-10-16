@@ -46,6 +46,7 @@ const STATES = {
   classes: async (page) => { await page.goto(`${base}/classes`); await page.getByRole('button', { name: 'List', exact: true }).click(); await page.getByRole('heading', { name: /Strength and conditioning/ }).waitFor(); },
   'class calendar': async (page) => { await page.goto(`${base}/classes`); await page.getByRole('button', { name: 'Day', exact: true }).click(); await page.getByRole('button', { name: /^Add a class on .* at 09:00$/ }).waitFor(); },
   'class form': async (page) => { await page.goto(`${base}/classes`); await page.getByRole('button', { name: 'Add class' }).click(); await page.getByRole('dialog').getByLabel('Class name').waitFor(); },
+  programmes: async (page) => { await page.goto(`${base}/programmes`); await page.getByRole('heading', { name: 'Programmes', level: 1 }).waitFor(); },
   'member record': async (page) => { await page.goto(`${base}/members`); await page.locator('.member-row').first().click(); await page.getByText('Customer lifecycle').waitFor(); await page.getByRole('heading', { name: /Hybrid Monthly/ }).waitFor(); },
   settings: async (page) => { await page.goto(`${base}/settings`); await page.getByRole('heading', { name: 'Settings', level: 1 }).waitFor(); },
   staff: async (page) => { await page.goto(`${base}/staff`); await page.getByText('No team accounts yet.').waitFor(); },
