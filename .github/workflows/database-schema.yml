@@ -422,10 +422,13 @@ jobs:
           # the rollback removes everything it added, and applying the migration again restores the same catalog
           snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
           snap /tmp/mv_after_migration.txt
+          # the workout level migration (20261016160000) points at movements, so it comes off first and goes back on last
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_workout_level_and_movement_link.sql
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_movement_library.sql
           snap /tmp/mv_after_rollback.txt
           if diff -q /tmp/mv_after_migration.txt /tmp/mv_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261016160000_workout_level_and_movement_link.sql
           snap /tmp/mv_after_reapply.txt
           if diff -u /tmp/mv_after_migration.txt /tmp/mv_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Workout level and movement link verification, persona tests and rollback
