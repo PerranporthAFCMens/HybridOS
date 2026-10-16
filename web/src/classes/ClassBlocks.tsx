@@ -3,7 +3,7 @@ import { useReadyAuth } from '../auth/AuthProvider';
 import type { BlockClass, ClassBlock } from '../data/classBlocks';
 import { Button } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
-import { Checkbox, DateInput, Field, Input } from '../ui/Field';
+import { Checkbox, DateInput, Field, Input, Select } from '../ui/Field';
 import { Modal } from '../ui/Modal';
 import { BlockBenchmarks } from './BlockBenchmarks';
 import { blockLabel, blockLastDay, blockState, groupByWeek, validateBlock } from './blocks';
@@ -85,7 +85,12 @@ function BlockDetail({ block, onGone }: { block: ClassBlock; onGone: () => void 
   const [form, setForm] = useState({ name: block.name, startsOn: block.startsOn, weeks: String(block.weeks) });
   const [note, setNote] = useState<{ text: string; good: boolean } | null>(null);
   const [asking, setAsking] = useState(false);
+  const [which, setWhich] = useState('');
   const classes = q.data ?? [];
+  const names = [...new Set(classes.map((c) => c.session.name))].sort((a, b) => a.localeCompare(b));
+  // The filter only changes what is shown and what the tick buttons touch; ticks on hidden classes are kept.
+  const shown = which && names.includes(which) ? classes.filter((c) => c.session.name === which) : classes;
+  const filtered = shown.length !== classes.length;
   const was = new Set(classes.filter((c) => c.inBlock).map((c) => c.session.session_id));
   // The ticks start as what is in the block now; once the coach changes one they are the coach's.
   const chosen = picked ?? was;
@@ -93,7 +98,7 @@ function BlockDetail({ block, onGone }: { block: ClassBlock; onGone: () => void 
   const remove = [...was].filter((id) => !chosen.has(id));
   const dirtyClasses = add.length > 0 || remove.length > 0;
   const toggle = (id: string, on: boolean) => { setNote(null); setPicked((p) => { const n = new Set(p ?? was); if (on) n.add(id); else n.delete(id); return n; }); };
-  const weeksOf = groupByWeek(block.startsOn, block.weeks, classes.map((c) => ({ ...c, startsAt: c.session.starts_at })));
+  const weeksOf = groupByWeek(block.startsOn, block.weeks, shown.map((c) => ({ ...c, startsAt: c.session.starts_at })));
   const dirtyDetails = form.name !== block.name || form.startsOn !== block.startsOn || form.weeks !== String(block.weeks);
 
   const saveClasses = () => {
@@ -125,9 +130,17 @@ function BlockDetail({ block, onGone }: { block: ClassBlock; onGone: () => void 
       {q.data?.length === 0 && <p className="muted small">There are no classes on the timetable in these weeks yet. Add them from Add class, then come back.</p>}
       {q.data && q.data.length > 0 && (
         <>
+          {names.length > 1 && (
+            <Field label="Show" htmlFor="bd-which">
+              <Select id="bd-which" value={which} onChange={(e) => setWhich(e.target.value)}>
+                <option value="">All classes</option>
+                {names.map((n) => <option key={n} value={n}>{n}</option>)}
+              </Select>
+            </Field>
+          )}
           <div className="cw-actions">
-            <Button onClick={() => { setNote(null); setPicked(new Set(classes.map((c) => c.session.session_id))); }}>Tick every class</Button>
-            <Button onClick={() => { setNote(null); setPicked(new Set()); }}>Untick all</Button>
+            <Button onClick={() => { setNote(null); setPicked(new Set([...chosen, ...shown.map((c) => c.session.session_id)])); }}>{filtered ? `Tick these ${shown.length}` : 'Tick every class'}</Button>
+            <Button onClick={() => { const hide = new Set(shown.map((c) => c.session.session_id)); setNote(null); setPicked(new Set([...chosen].filter((id) => !hide.has(id)))); }}>{filtered ? `Untick these ${shown.length}` : 'Untick all'}</Button>
           </div>
           {weeksOf.map((wk) => (
             <div className="block-week" key={wk.week}>
