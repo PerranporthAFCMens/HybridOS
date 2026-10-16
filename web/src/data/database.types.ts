@@ -3148,6 +3148,7 @@ export type Database = {
           exercise_name: string
           gym_id: string
           id: string
+          movement_id: string | null
           notes: string | null
           position: number
           session_id: string
@@ -3160,6 +3161,7 @@ export type Database = {
           exercise_name: string
           gym_id: string
           id?: string
+          movement_id?: string | null
           notes?: string | null
           position?: number
           session_id: string
@@ -3172,6 +3174,7 @@ export type Database = {
           exercise_name?: string
           gym_id?: string
           id?: string
+          movement_id?: string | null
           notes?: string | null
           position?: number
           session_id?: string
@@ -3201,6 +3204,7 @@ export type Database = {
           created_at: string
           gym_id: string
           id: string
+          level: string | null
           notes: string | null
           performed_at: string
           title: string | null
@@ -3213,6 +3217,7 @@ export type Database = {
           created_at?: string
           gym_id: string
           id?: string
+          level?: string | null
           notes?: string | null
           performed_at?: string
           title?: string | null
@@ -3225,6 +3230,7 @@ export type Database = {
           created_at?: string
           gym_id?: string
           id?: string
+          level?: string | null
           notes?: string | null
           performed_at?: string
           title?: string | null
