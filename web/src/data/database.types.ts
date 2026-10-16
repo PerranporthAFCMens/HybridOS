@@ -599,6 +599,14 @@ export type Database = {
         }
         Relationships: []
       }
+      block_benchmarks: {
+        Row: { better: string; block_id: string; created_at: string; created_by: string | null; gym_id: string; id: string; movement_id: string; test_end_on: string; test_start_on: string }
+        Insert: { better?: string; block_id: string; created_at?: string; created_by?: string | null; gym_id: string; id?: string; movement_id: string; test_end_on: string; test_start_on: string }
+        Update: { better?: string; block_id?: string; created_at?: string; created_by?: string | null; gym_id?: string; id?: string; movement_id?: string; test_end_on?: string; test_start_on?: string }
+        Relationships: [
+          { foreignKeyName: "block_benchmarks_movement_id_fkey"; columns: ["movement_id"]; isOneToOne: false; referencedRelation: "movements"; referencedColumns: ["id"] },
+        ]
+      }
       class_blocks: {
         Row: {
           created_at: string
