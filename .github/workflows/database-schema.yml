@@ -44,10 +44,10 @@ jobs:
             select count(*) into v_triggers from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace tn on tn.oid=c.relnamespace join pg_proc p on p.oid=t.tgfoid join pg_namespace fn on fn.oid=p.pronamespace where not t.tgisinternal and (tn.nspname in ('public','private') or fn.nspname in ('public','private'));
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
-            if v_tables<>90 then raise exception 'Expected 90 app tables, got %',v_tables; end if;
-            if v_functions<>158 then raise exception 'Expected 158 committed app functions, got %',v_functions; end if;
-            if v_policies<>215 then raise exception 'Expected 215 app/storage policies, got %',v_policies; end if;
-            if v_triggers<>37 then raise exception 'Expected 37 app-related triggers, got %',v_triggers; end if;
+            if v_tables<>91 then raise exception 'Expected 91 app tables, got %',v_tables; end if;
+            if v_functions<>165 then raise exception 'Expected 165 committed app functions, got %',v_functions; end if;
+            if v_policies<>217 then raise exception 'Expected 217 app/storage policies, got %',v_policies; end if;
+            if v_triggers<>39 then raise exception 'Expected 39 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
             if exists(select 1 from public.profiles) then raise exception 'Baseline must not contain live profile rows'; end if;
@@ -388,6 +388,26 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG2"
           snap /tmp/ptc_after_reapply.txt
           if diff -u /tmp/ptc_after_migration.txt /tmp/ptc_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: Class waitlist verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261016140000_class_waitlist.sql
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261016_class_waitlist_check.sql > /tmp/wl_check.txt
+          cat /tmp/wl_check.txt
+          if grep -v ' | ok$' /tmp/wl_check.txt; then echo 'A class waitlist verification check is not ok'; exit 1; fi
+          # members, owner, admin and another gym's people, run as the authenticated role; rolls itself back
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/class_waitlist.sql
+          # the rollback removes everything it added, and applying the migration again restores the same catalog
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/wl_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_class_waitlist.sql
+          snap /tmp/wl_after_rollback.txt
+          if diff -q /tmp/wl_after_migration.txt /tmp/wl_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/wl_after_reapply.txt
+          if diff -u /tmp/wl_after_migration.txt /tmp/wl_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Prove the rollback file restores the pre-migration state exactly
         shell: bash
         run: |
@@ -395,8 +415,9 @@ jobs:
           DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
           MIG=supabase/migrations/20261005120000_membership_status_enforcement.sql
           # join_public_gym_with_membership is redefined again by the later member details migration (20261011090000), so its body
-          # legitimately differs between "without 20261005" and "after the 20261005 rollback". Everything else must match exactly.
-          snap() { psql "$DB_URL" -X -q -v skip='join_public_gym_with_membership(text,uuid)' -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          # legitimately differs between "without 20261005" and "after the 20261005 rollback". The same goes for the two booking functions, which the
+          # class waitlist migration (20261016140000) redefines. Everything else must match exactly.
+          snap() { psql "$DB_URL" -X -q -v skip='join_public_gym_with_membership(text,uuid);member_book_class(uuid);book_class_session(uuid)' -f supabase/tests/catalog_snapshot.sql > "$1"; }
           snap /tmp/snap_after_migration.txt
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261005_restore_pre_membership_status.sql
           snap /tmp/snap_after_rollback.txt
