@@ -62,6 +62,7 @@ declare got text; extra text;
   --   get_class_calendar, member_class_schedule, get_member_home_settings, get_my_membership_options, get_my_training_groups
   --                                             what a member sees of their own gym, scoped to the caller
   --   get_gym_payment_mode                      whether the gym takes payment when someone joins ('stripe' or 'off'), by gym slug, for a signed-in person
+  --   get_block_benchmark_results              one block's benchmark results for coaches, only when the owner has switched it on; checked inside (owner, admin, staff or coach of the gym), returns nothing for a member
   --   get_lift_leaderboard                      the ranked heaviest lifts for a ticked exercise, for active members of the gym; checked inside, returns nothing otherwise; leaves out anyone whose choice is hidden
   --   get_my_private_profile                    the caller's own date of birth and gender
   --   get_public_gym_join_options / _terms / get_public_gym_signup_documents
@@ -69,7 +70,7 @@ declare got text; extra text;
   --   get_my_ready_status, get_public_gym_join_style
   --                                             the caller's own checklist at a gym they belong to; and which questions a gym asks when someone joins (public by design, by gym slug)
   --   create_gym_for_current_user               anyone signed in can start their own NEW gym and becomes its owner; it gives no access to any existing gym
-  allowed text[] := array['get_access_invite', 'get_admin_invite', 'get_class_calendar', 'get_gym_payment_mode', 'get_lift_leaderboard', 'get_member_home_settings', 'get_my_membership_options', 'get_my_private_profile', 'get_my_training_groups', 'member_class_schedule',
+  allowed text[] := array['get_access_invite', 'get_admin_invite', 'get_block_benchmark_results', 'get_class_calendar', 'get_gym_payment_mode', 'get_lift_leaderboard', 'get_member_home_settings', 'get_my_membership_options', 'get_my_private_profile', 'get_my_training_groups', 'member_class_schedule',
                           'get_public_gym_join_options', 'get_public_gym_join_terms', 'get_public_gym_signup_documents', 'create_gym_for_current_user', 'get_my_ready_status', 'get_public_gym_join_style'];
 begin
   select string_agg(distinct fn, ', ' order by fn) into got from guard_calls where outcome = 'went through';
