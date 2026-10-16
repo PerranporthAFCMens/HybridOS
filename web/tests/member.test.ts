@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ClassRow, MyPlan, PtRow } from '../src/data/member';
-import { ptMinutes, ptPastTag, splitPt, addDay, chooseHero, dayLabel, dayOf, dayStrip, flagsFor, goalMessage, spaceText, suggestions, timeOf, weekStartInstant, whenWords } from '../src/member/calc';
+import { ptMinutes, ptPastTag, splitPt, addDay, chooseHero, dayLabel, dayOf, dayStrip, flagsFor, goalMessage, spaceText, ordinal, minutesLeft, waitlistText, suggestions, timeOf, weekStartInstant, whenWords } from '../src/member/calc';
 
 const cls = (id: string, startsAt: string, patch: Partial<ClassRow> = {}): ClassRow => ({ sessionId: id, name: id, description: '', startsAt, endsAt: new Date(new Date(startsAt).getTime() + 3600000).toISOString(), capacity: 10, bookedCount: 0, availableSpaces: 5, isBooked: false, ...patch });
 const pt = (id: string, startsAt: string, status = 'scheduled'): PtRow => ({ id, startsAt, endsAt: new Date(new Date(startsAt).getTime() + 3600000).toISOString(), status });
@@ -24,6 +24,26 @@ describe('days', () => {
   it('a strip of days', () => {
     const s = dayStrip('2026-10-08', 3);
     expect(s.map((d) => `${d.weekday} ${d.num}`)).toEqual(['Today 8', 'Fri 9', 'Sat 10']);
+  });
+});
+
+describe('waitlist words', () => {
+  const at = new Date('2026-10-08T10:00:00Z').getTime();
+  it('ordinals', () => {
+    expect([1, 2, 3, 4, 11, 12, 13, 21, 22, 101, 111].map(ordinal)).toEqual(['1st', '2nd', '3rd', '4th', '11th', '12th', '13th', '21st', '22nd', '101st', '111th']);
+  });
+  it('minutes left round up and stop at zero', () => {
+    expect(minutesLeft('2026-10-08T10:12:10Z', at)).toBe(13);
+    expect(minutesLeft('2026-10-08T10:15:00Z', at)).toBe(15);
+    expect(minutesLeft('2026-10-08T09:59:00Z', at)).toBe(0);
+    expect(minutesLeft(null, at)).toBe(0);
+  });
+  it('line for waiting and offered', () => {
+    expect(waitlistText({ status: 'waiting', position: 2, offerExpiresAt: null }, at)).toBe("You're 2nd in line");
+    expect(waitlistText({ status: 'waiting', position: null, offerExpiresAt: null }, at)).toBe("You're on the waitlist");
+    expect(waitlistText({ status: 'offered', position: null, offerExpiresAt: '2026-10-08T10:01:00Z' }, at)).toBe('A place is held for you: 1 minute left');
+    expect(waitlistText({ status: 'offered', position: null, offerExpiresAt: '2026-10-08T10:07:00Z' }, at)).toBe('A place is held for you: 7 minutes left');
+    expect(waitlistText({ status: 'offered', position: null, offerExpiresAt: '2026-10-08T09:00:00Z' }, at)).toBe('Your held place has run out');
   });
 });
 
