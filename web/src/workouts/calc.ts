@@ -47,8 +47,7 @@ export function readPrescription(raw: unknown): { display: string; sets: SetValu
 }
 
 /** Add an exercise to a workout: it joins the last block, starting one if there is none. */
-export function addExercise(blocks: BlockForm[], name: string): BlockForm[] {
-  const tracking = guessTracking(name);
+export function addExercise(blocks: BlockForm[], name: string, tracking: Tracking = guessTracking(name)): BlockForm[] {
   const act = { ...newActivity(), name, tracking, sets: blankSets(tracking, 1) };
   const last = blocks[blocks.length - 1];
   if (!last) return [{ ...newBlock(), activities: [act] }];

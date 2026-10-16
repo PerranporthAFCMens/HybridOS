@@ -2183,6 +2183,18 @@ export type Database = {
           },
         ]
       }
+      movements: {
+        Row: { created_at: string; created_by: string | null; cue: string | null; default_tracking: string; gym_id: string; id: string; is_active: boolean; key: string; name: string; updated_at: string; video_url: string | null }
+        Insert: { created_at?: string; created_by?: string | null; cue?: string | null; default_tracking?: string; gym_id: string; id?: string; is_active?: boolean; name: string; updated_at?: string; video_url?: string | null }
+        Update: { created_at?: string; created_by?: string | null; cue?: string | null; default_tracking?: string; gym_id?: string; id?: string; is_active?: boolean; name?: string; updated_at?: string; video_url?: string | null }
+        Relationships: []
+      }
+      movement_levels: {
+        Row: { gym_id: string; level: string; movement_id: string; notes: string | null; prescription: Json; updated_at: string }
+        Insert: { gym_id: string; level: string; movement_id: string; notes?: string | null; prescription?: Json; updated_at?: string }
+        Update: { gym_id?: string; level?: string; movement_id?: string; notes?: string | null; prescription?: Json; updated_at?: string }
+        Relationships: []
+      }
       resources: {
         Row: {
           allow_overlap: boolean
