@@ -13,3 +13,6 @@ The old-page assertions on classes.html, staff.html and member.html (scoped help
 
 ## Not changed
 The reset, magic-link, one-gym and sign-up steps further down the workflow.
+
+## Follow-up (first run on dev)
+The first real run got through sign-in, the gym chooser and the gym name, then failed because the account name loads after the page (and the test account may show its email name, "delivered"). The check now waits for the name and accepts either.
