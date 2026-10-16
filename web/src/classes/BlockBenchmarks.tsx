@@ -1,12 +1,16 @@
 import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
 import type { ClassBlock } from '../data/classBlocks';
 import { useMovements } from '../movements/useMovements';
 import { Button } from '../ui/Button';
-import { DateInput, Field, Select } from '../ui/Field';
-import { betterText, defaultBetter, defaultTestDays, isBetter, validateBenchmark, type Better } from './benchmarks';
+import { Checkbox, DateInput, Field, Select } from '../ui/Field';
+import { getCoachesSeeResults, setCoachesSeeResults } from '../data/benchmarkSettings';
+import { CoachBenchmarkResults } from './CoachBenchmarkResults';
+import { betterText, canSwitchCoachView, defaultBetter, defaultTestDays, isBetter, validateBenchmark, type Better } from './benchmarks';
 import { useBenchmarkWrites, useBlockBenchmarks } from './useBenchmarks';
 
+const todayDay = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
 const dateText = (day: string) => new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${day}T12:00:00Z`));
 
 /**
@@ -18,6 +22,12 @@ export function BlockBenchmarks({ block }: { block: ClassBlock }) {
   const q = useBlockBenchmarks(gym.gymId, block.id);
   const movements = useMovements(gym.gymId);
   const w = useBenchmarkWrites(gym.gymId, userId, block.id);
+  const qc = useQueryClient();
+  const see = useQuery({ queryKey: ['coach-see-results', gym.gymId], queryFn: () => getCoachesSeeResults(gym.gymId) });
+  const switchSee = useMutation({
+    mutationFn: (on: boolean) => setCoachesSeeResults(gym.gymId, on),
+    onSettled: () => Promise.all([qc.invalidateQueries({ queryKey: ['coach-see-results'] }), qc.invalidateQueries({ queryKey: ['m-coach-see-results'] }), qc.invalidateQueries({ queryKey: ['coach-benchmark-results'] })]),
+  });
   const days = defaultTestDays(block);
   const [form, setForm] = useState<{ movementId: string; startOn: string; endOn: string; better: Better }>({ movementId: '', ...days, better: 'higher' });
   const [note, setNote] = useState<{ text: string; good: boolean } | null>(null);
@@ -76,6 +86,13 @@ export function BlockBenchmarks({ block }: { block: ClassBlock }) {
         </div>
       )}
       {note && <div className={`msg ${note.good ? '' : 'error'}`} role={note.good ? 'status' : 'alert'}>{note.text}</div>}
+      {canSwitchCoachView(gym.role) && (
+        <div>
+          <Checkbox label="Coaches can see members' benchmark results" checked={see.data === true} disabled={see.isPending || switchSee.isPending} onChange={(on) => { setNote(null); switchSee.mutate(on, { onError: (e) => setNote({ text: e.message, good: false }) }); }} />
+          <p className="muted small">Off by default. When it is on, members are told on their own progress card that their coaches can see these results.</p>
+        </div>
+      )}
+      {see.data === true && <CoachBenchmarkResults blockId={block.id} gymId={gym.gymId} today={todayDay()} list={list} />}
     </section>
   );
 }

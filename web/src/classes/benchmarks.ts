@@ -37,3 +37,6 @@ export function defaultTestDays(block: { startsOn: string; weeks: number }): { s
   const endOn = block.weeks > 1 ? addDaysTo(block.startsOn, (block.weeks - 1) * 7) : addDaysTo(block.startsOn, 0);
   return { startOn: block.startsOn, endOn };
 }
+
+/** Only an owner or admin can switch on whether coaches see members' benchmark results. */
+export const canSwitchCoachView = (role: string): boolean => role === 'owner' || role === 'admin';
