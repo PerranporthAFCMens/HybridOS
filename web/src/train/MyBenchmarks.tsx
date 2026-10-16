@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { getMyBenchmarks } from '../data/memberBenchmarks';
+import { getCoachesSeeResults } from '../data/benchmarkSettings';
 import { blockState } from '../classes/blocks';
 import { dayLabel } from '../member/calc';
 import { pbValueText } from './pb';
@@ -20,12 +21,13 @@ export function MyBenchmarks({ blocks, today }: { blocks: Block[]; today: string
   const { gym, userId } = useReadyAuth();
   const live = blocks.filter((b) => blockState(b.startsOn, b.weeks, today).state !== 'upcoming');
   const q = useQuery({ queryKey: ['m-benchmarks', gym.gymId, userId, live.map((b) => b.id).join(',')], queryFn: () => getMyBenchmarks(userId, gym.gymId, live), enabled: live.length > 0 });
+  const see = useQuery({ queryKey: ['m-coach-see-results', gym.gymId], queryFn: () => getCoachesSeeResults(gym.gymId), enabled: live.length > 0 });
   const sets = q.data ?? [];
   if (sets.length === 0) return null;
   return (
     <section className="mem-card" aria-label="Block benchmarks">
       <h2>Your progress</h2>
-      <div className="muted small">Tested at the start and end of a block. Only you see these.</div>
+      <div className="muted small">Tested at the start and end of a block. {see.data === true ? 'You and your coaches can see these.' : 'Only you see these.'}</div>
       {sets.map((s) => {
         const block = live.find((b) => b.id === s.blockId);
         if (!block) return null;

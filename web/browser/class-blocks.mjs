@@ -126,7 +126,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.getByRole('button', { name: 'Back to blocks' }).click();
   await dialog.getByRole('button', { name: 'Open Hybrid Uppers' }).click();
   await c.has('the block shows its weeks', dialog.getByText('Week 1', { exact: true }));
-  c.ok('and the classes inside them, grouped by week, with empty weeks kept', (await dialog.getByText('No classes this week.').count()) === 4 && (await dialog.getByRole('checkbox').count()) === 5);
+  c.ok('and the classes inside them, grouped by week, with empty weeks kept', (await dialog.getByText('No classes this week.').count()) === 4 && (await dialog.getByRole('checkbox').count()) - (await dialog.getByRole('checkbox', { name: /^Coaches can see/ }).count()) === 5);
   c.ok('a class outside the block\'s weeks is not offered', (await dialog.getByText(/Far away class/).count()) === 0);
   c.ok('the classes already in the block are ticked', (await dialog.getByRole('checkbox', { name: /^Morning HIIT/ }).isChecked()) && (await dialog.getByRole('checkbox', { name: /^Evening Hybrid/ }).isChecked()) && !(await dialog.getByRole('checkbox', { name: /^Midweek Hybrid/ }).isChecked()));
   c.ok('each class shows where its workout stands', (await dialog.getByText('Available: Push day').count()) === 1 && (await dialog.getByText('Draft: Legs').count()) === 1 && (await dialog.getByText('No workout yet').count()) === 3);

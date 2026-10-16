@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { progressFor, readingIn, type BenchmarkDef, type RecordedExercise } from '../src/train/benchmarkProgress';
+import { groupMemberResults, progressFor, readingIn, type BenchmarkDef, type RecordedExercise } from '../src/train/benchmarkProgress';
+import { canSwitchCoachView } from '../src/classes/benchmarks';
 import type { DbSet } from '../src/train/calc';
 
 const set = (o: Partial<DbSet>): DbSet => ({ weight_kg: null, reps: null, duration_seconds: null, distance_m: null, calories: null, side: null, custom_value: null, custom_unit: null, ...o });
@@ -33,5 +34,25 @@ describe('benchmark progress', () => {
     expect(progressFor(row, [], '2026-10-20').start.state).toBe('missed');
     expect(progressFor(row, [ex('2026-10-13', 250)], '2026-10-20').start.state).toBe('done');
     expect(progressFor(row, [], '2026-10-20').change).toBeNull();
+  });
+});
+
+describe('coach results', () => {
+  const r = (user: string, day: string, secs: number, extra: Record<string, unknown> = {}) => ({ user_id: user, display_name: user === 'u1' ? 'Sam T.' : 'Alex B.', exercise_name: '1 km row', movement_id: 'mv1', tracking_type: 'time', day, weight_kg: null, reps: null, duration_seconds: secs, distance_m: null, calories: null, ...extra });
+  it('groups rows per member and works out the same change the member sees', () => {
+    const people = groupMemberResults([r('u1', '2026-10-13', 250), r('u1', '2026-11-17', 235), r('u2', '2026-10-14', 300)]);
+    expect(people.map((p) => p.name)).toEqual(['Sam T.', 'Alex B.']);
+    const sam = progressFor(row, people[0]?.recorded ?? [], '2026-11-20');
+    expect(sam.start.reading?.value).toBe(250);
+    expect(sam.change).toBe(-15);
+    expect(progressFor(row, people[1]?.recorded ?? [], '2026-11-20').end.reading).toBeNull();
+  });
+  it('gathers the sets of one exercise and skips kinds it cannot score', () => {
+    const people = groupMemberResults([r('u1', '2026-10-13', 260), r('u1', '2026-10-13', 245), r('u1', '2026-10-13', 1, { tracking_type: 'scores' })]);
+    expect(people[0]?.recorded).toHaveLength(1);
+    expect(progressFor(row, people[0]?.recorded ?? [], '2026-10-20').start.reading?.value).toBe(245);
+  });
+  it('lets only an owner or admin switch the coach view', () => {
+    expect([canSwitchCoachView('owner'), canSwitchCoachView('admin'), canSwitchCoachView('coach'), canSwitchCoachView('staff'), canSwitchCoachView('member')]).toEqual([true, true, false, false, false]);
   });
 });
