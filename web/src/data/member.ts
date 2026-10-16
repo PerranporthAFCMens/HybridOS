@@ -44,6 +44,27 @@ export async function cancelClass(sessionId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+export interface MyWaitlist { sessionId: string; status: 'waiting' | 'offered'; position: number | null; offerExpiresAt: string | null }
+
+/** The member's open places in line across the gym. Asking also lets the database move a lapsed offer on. */
+export async function listMyWaitlists(gymId: string): Promise<MyWaitlist[]> {
+  const { data, error } = await supabase.rpc('get_my_waitlists', { p_gym_id: gymId });
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
+    sessionId: r.session_id, status: r.status === 'offered' ? 'offered' : 'waiting', position: r.queue_position, offerExpiresAt: r.offer_expires_at,
+  }));
+}
+
+export async function joinWaitlist(sessionId: string): Promise<void> {
+  const { error } = await supabase.rpc('member_join_waitlist', { p_session_id: sessionId });
+  if (error) throw new Error(error.message);
+}
+
+export async function leaveWaitlist(sessionId: string): Promise<void> {
+  const { error } = await supabase.rpc('member_leave_waitlist', { p_session_id: sessionId });
+  if (error) throw new Error(error.message);
+}
+
 /** Does this member's plan cover the class, and if not what are the choices. */
 export async function classAccess(sessionId: string): Promise<ClassAccess> {
   const { data, error } = await supabase.rpc('get_class_booking_options', { p_session_id: sessionId });

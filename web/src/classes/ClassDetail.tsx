@@ -7,13 +7,14 @@ import { Modal } from '../ui/Modal';
 import { AddToClass } from './AddToClass';
 import { ClassWorkoutPanel } from './ClassWorkoutPanel';
 import { BOOKING_STATUS_TEXT, bookedText, dayTitle, rosterActions, rosterSummary, sessionStatus, timeRange } from './calc';
-import { useManageBooking, useRoster, useSetCancelled } from './useClasses';
+import { useClassWaitlist, useManageBooking, useRoster, useSetCancelled } from './useClasses';
 
 /** One class opened from the calendar: its facts, and cancel or bring it back. */
 export function ClassDetail({ session, onClose, onEdit }: { session: TimetableSession; onClose: () => void; onEdit: () => void }) {
   const { gym } = useReadyAuth();
   const setCancelled = useSetCancelled(gym.gymId);
   const roster = useRoster(gym.gymId, session.session_id);
+  const waitlist = useClassWaitlist(gym.gymId, session.session_id);
   const manage = useManageBooking(gym.gymId, session.session_id);
   const [removing, setRemoving] = useState<string | null>(null);
   const [rosterMessage, setRosterMessage] = useState('');
@@ -88,6 +89,19 @@ export function ClassDetail({ session, onClose, onEdit }: { session: TimetableSe
         </>
       )}
       {rosterMessage && <div className="assign-msg"><span className="msg error" role="alert">{rosterMessage}</span></div>}
+      {waitlist.data && waitlist.data.length > 0 && (
+        <>
+          <h4 className="detail-heading">Waitlist</h4>
+          <ol className="roster">
+            {waitlist.data.map((w) => (
+              <li key={w.userId} className="roster-row">
+                <span className="roster-name">{w.name}</span>
+                <span className={`tag ${w.status === 'offered' ? 'good' : ''}`.trim()}>{w.status === 'offered' ? 'Offered a place' : 'Waiting'}</span>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
       {roster.data && <AddToClass sessionId={session.session_id} roster={roster.data} disabled={session.is_cancelled} />}
       {confirming && !session.is_cancelled && (
         <div className="schedule-check bad" role="alert">
