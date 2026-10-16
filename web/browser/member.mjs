@@ -111,7 +111,7 @@ for (const role of ['member', 'owner']) {
     c.ok('the day shows its classes', (await page.getByRole('article').count()) >= 1 && (await page.getByRole('button', { name: /^Book HIIT/ }).count()) === 1);
     const idx3 = (ymd(classes[2].starts_at) - today) / 864e5;
     await strip.nth(idx3).click();
-    c.ok('a full class cannot be booked', await page.getByRole('button', { name: 'Full Yoga flow' }).isDisabled());
+    c.ok('a full class offers the waitlist, not Book', (await page.getByRole('button', { name: 'Join the waitlist for Yoga flow' }).count()) === 1 && (await page.getByRole('button', { name: /^Book Yoga flow/ }).count()) === 0);
     const idx4 = (ymd(classes[3].starts_at) - today) / 864e5;
     await strip.nth(idx4).click();
     await page.getByRole('button', { name: 'Book Pilates' }).click();

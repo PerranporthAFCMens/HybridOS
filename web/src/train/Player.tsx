@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
+import { loadMovements } from '../data/movements';
+import { LEVELS, LEVEL_LABEL, type Level } from '../movements/calc';
+import { anyLevels, helpFor, isLevel, movementIndex } from './levels';
 import { completeWorkout, getMyAssignment, getMySession, listLastTimes, listMyPbs, markStarted, removeExercise, saveExercise, type LastTime, type SessionExercise } from '../data/train';
 import { getMyClassWorkout } from '../data/classWorkouts';
 import { Button } from '../ui/Button';
@@ -122,6 +125,13 @@ function Logger({ id, classSessionId, title, snapshot, source, last, seed }: { i
   const pbs = useQuery({ queryKey: ['m-pbs', gym.gymId, userId], queryFn: () => listMyPbs(userId, gym.gymId) });
   const bests = useMemo(() => bestWeights(pbs.data ?? []), [pbs.data]);
   const bestFor = (a: Act) => bests.get(pbKey(a.name)) ?? null;
+  // The gym's movement list: a cue and video beside an exercise, and what Rx, Scaled or Foundations means for it.
+  const movements = useQuery({ queryKey: ['movements', gym.gymId], queryFn: () => loadMovements(gym.gymId) });
+  const index = useMemo(() => movementIndex(movements.data ?? []), [movements.data]);
+  const levelKey = `hybrid-level-${gym.gymId}`;
+  const [level, setLevelState] = useState<Level | null>(() => { try { const v = localStorage.getItem(levelKey); return isLevel(v) ? v : null; } catch { return null; } });
+  const chooseLevel = (l: Level) => { setLevelState(l); try { localStorage.setItem(levelKey, l); } catch { /* remembering the level is a convenience */ } };
+  const showLevels = anyLevels(index, acts.map((a) => a.name));
 
   useEffect(() => { if (assigned) void markStarted(id); }, [id, assigned]);
   // Once the workout is finished the draft is cleared for good: a later render must never write it back.
@@ -258,6 +268,14 @@ function Logger({ id, classSessionId, title, snapshot, source, last, seed }: { i
         {isClass && <div className="mem-hi">From your class. Fill in what you did: change, swap or leave out anything. It is saved to your own history.</div>}
       </div>
 
+      {showLevels && (
+        <div className="mem-card" role="radiogroup" aria-label="Your level">
+          <div className="muted small">Your level (your gym's wording for each movement is shown below)</div>
+          <div className="mem-actions">
+            {LEVELS.map((l) => <Button key={l} role="radio" aria-checked={level === l} variant={level === l ? 'primary' : undefined} onClick={() => chooseLevel(l)}>{LEVEL_LABEL[l]}</Button>)}
+          </div>
+        </div>
+      )}
       {acts.length === 0 && <div className="mem-card muted">No exercises yet. Add the first one below.</div>}
       {acts.map((a, idx) => {
         const l = lastFor(a);
@@ -272,6 +290,16 @@ function Logger({ id, classSessionId, title, snapshot, source, last, seed }: { i
                 {a.plan && <div className="muted small">Suggested: {planFor(a.tracking, a.target, bestFor(a), a.plan)}</div>}
                 {hasPercent(a.target) && bestFor(a) === null && <div className="muted small">You have no best recorded for {a.name} yet, so fill in the weight you use.</div>}
                 {a.planNote && <div className="muted small">Coach: {a.planNote}</div>}
+                {(() => {
+                  const h = helpFor(index, a.name, level);
+                  return h && (
+                    <>
+                      {level && h.levelText && <div className="small"><b>{LEVEL_LABEL[level]}:</b> {h.levelText}</div>}
+                      {h.cue && <div className="muted small">Cue: {h.cue}</div>}
+                      {h.videoUrl && <div className="small"><a href={h.videoUrl} target="_blank" rel="noopener noreferrer" aria-label={`Watch a video of ${a.name}`}>Watch a video</a></div>}
+                    </>
+                  );
+                })()}
               </div>
               {a.skipped && <Button onClick={() => patch(a.key, { skipped: false })} aria-label={`Undo not this time for ${a.name}`}>Undo</Button>}
             </div>

@@ -60,6 +60,7 @@ const STATES = {
   community: async (page) => { await page.goto(`${base}/community`); await page.getByText('No community posts yet.').waitFor(); },
   communications: async (page) => { await page.goto(`${base}/communications`); await page.getByRole('button', { name: 'Save template' }).waitFor(); },
   workouts: async (page) => { await page.goto(`${base}/workouts`); await page.getByText('No workouts yet. Build your first one.').waitFor(); },
+  movements: async (page) => { await page.goto(`${base}/movements`); await page.getByRole('heading', { name: 'Movements', level: 1 }).waitFor(); },
   'workout editor': async (page) => { await page.goto(`${base}/workouts`); await page.getByRole('button', { name: 'New workout' }).click(); await page.getByLabel('Workout name').waitFor(); },
   'report builder': async (page) => { await page.goto(`${base}/reports`); await page.getByRole('tab', { name: 'Report builder', exact: true }).click(); await page.getByLabel('Look at').waitFor(); },
   'staff day': async (page) => { await page.goto(`${base}/s/today`); await page.getByText('Next up').waitFor(); },

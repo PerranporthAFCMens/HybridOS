@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { loadBlocks, type TemplateRow } from '../data/workouts';
+import { useMovements } from '../movements/useMovements';
+import { movementKey } from '../movements/calc';
 import { AssignWorkoutsDialog } from './AssignWorkouts';
 import { Button } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
@@ -72,6 +74,14 @@ export function Editor({ template, copy, onClose, onSaved }: { template: Templat
 }
 
 function EditorForm({ template, copy, initialBlocks, w, onClose, onSaved }: { template: TemplateRow | null; copy?: boolean; initialBlocks: BlockForm[]; w: ReturnType<typeof useWorkoutWrites>; onClose: (n?: Note) => void; onSaved?: (t: TemplateRow) => void }) {
+  const { gym } = useReadyAuth();
+  const movements = useMovements(gym.gymId);
+  const movementNames = (movements.data ?? []).filter((m) => m.isActive).map((m) => m.name);
+  // A movement from the gym's list brings its usual way of recording; anything else is guessed from the name.
+  const movementTracking = (name: string): Tracking | undefined => {
+    const m = (movements.data ?? []).find((x) => x.isActive && movementKey(x.name) === movementKey(name));
+    return m && (TRACKING as readonly string[]).includes(m.tracking) ? (m.tracking as Tracking) : undefined;
+  };
   const startForm: WorkoutForm = template
     ? { title: copy ? `${template.title} (copy)` : template.title, type: template.workoutType, tags: template.focusTags.join(', '), minutes: template.estimatedMinutes === null ? '' : String(template.estimatedMinutes), description: template.description ?? '', visibility: template.visibility }
     : emptyWorkout;
@@ -163,8 +173,8 @@ function EditorForm({ template, copy, initialBlocks, w, onClose, onSaved }: { te
           </div>
         ))}
         <div className="wk-add">
-          <ExercisePicker label="Add an exercise" placeholder="Start typing, like squat or row" value={adding} own={[]} onChange={setAdding} onPick={setAdding} />
-          <Button disabled={!adding.trim()} onClick={() => { setNote(null); setBlocks((l) => addExercise(l, adding.trim())); setAdding(''); }}>Add exercise</Button>
+          <ExercisePicker label="Add an exercise" placeholder="Start typing, like squat or row" value={adding} own={movementNames} onChange={setAdding} onPick={setAdding} />
+          <Button disabled={!adding.trim()} onClick={() => { setNote(null); setBlocks((l) => addExercise(l, adding.trim(), movementTracking(adding))); setAdding(''); }}>Add exercise</Button>
         </div>
       </Card>
 

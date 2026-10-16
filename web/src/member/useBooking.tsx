@@ -1,13 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { bookClass, cancelClass, classAccess, type ClassAccess, type ClassRow } from '../data/member';
+import { bookClass, cancelClass, classAccess, joinWaitlist, leaveWaitlist, listMyWaitlists, type ClassAccess, type ClassRow, type MyWaitlist } from '../data/member';
 import { pounds } from '../reports/library';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
-import { dayLabel, dayOf, timeOf } from './calc';
+import { dayLabel, dayOf, minutesLeft, timeOf } from './calc';
 
-/** Booking and cancelling, with its three dialogs, shared by Today and Classes. */
+/** Booking, cancelling and the waitlist, with the dialogs, shared by Today and Classes. */
 export function useBooking() {
   const { gym } = useReadyAuth();
   const qc = useQueryClient();
@@ -22,7 +22,35 @@ export function useBooking() {
     return () => clearTimeout(t);
   }, [notice]);
 
-  const refresh = () => qc.invalidateQueries({ queryKey: ['m-classes', gym.gymId] });
+  // Places in line. Reading them also lets the database move a lapsed offer on, so poll gently while any are open.
+  const lists = useQuery({
+    queryKey: ['m-waitlists', gym.gymId],
+    queryFn: () => listMyWaitlists(gym.gymId),
+    refetchInterval: (q) => ((q.state.data ?? []).length > 0 ? 30000 : false),
+  });
+  const waitlists = lists.data ?? [];
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const anyOffered = waitlists.some((w) => w.status === 'offered');
+  useEffect(() => {
+    if (!anyOffered) return;
+    const t = setInterval(() => setNowMs(Date.now()), 15000);
+    return () => clearInterval(t);
+  }, [anyOffered]);
+  // Classes that looked bookable but the database says are full (a place held for someone in line).
+  const [heldFull, setHeldFull] = useState<Set<string>>(new Set());
+
+  const refresh = () => Promise.all([
+    qc.invalidateQueries({ queryKey: ['m-classes', gym.gymId] }),
+    qc.invalidateQueries({ queryKey: ['m-waitlists', gym.gymId] }),
+  ]);
+
+  /** What this member's place in line is for a class, with expired offers treated as gone. */
+  const waitlistFor = (sessionId: string): MyWaitlist | null => {
+    const w = waitlists.find((x) => x.sessionId === sessionId);
+    if (!w) return null;
+    if (w.status === 'offered' && minutesLeft(w.offerExpiresAt, nowMs) === 0) return null;
+    return w;
+  };
 
   const book = async (row: ClassRow) => {
     setBusy(row.sessionId);
@@ -37,7 +65,42 @@ export function useBooking() {
       await refresh();
       setNotice({ text: `Booked: ${row.name}, ${dayLabel(dayOf(row.startsAt))} at ${timeOf(row.startsAt)}.`, good: true });
     } catch (e) {
-      setNotice({ text: e instanceof Error ? e.message : 'Could not book that class.', good: false });
+      const text = e instanceof Error ? e.message : 'Could not book that class.';
+      if (/class is full/i.test(text)) {
+        setHeldFull((prev) => new Set(prev).add(row.sessionId));
+        setNotice({ text: 'That class is full now. You can join the waitlist.', good: false });
+        void refresh();
+      } else {
+        setNotice({ text, good: false });
+      }
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const joinLine = async (row: ClassRow) => {
+    setBusy(row.sessionId);
+    setNotice(null);
+    try {
+      await joinWaitlist(row.sessionId);
+      await refresh();
+      setNotice({ text: `You're on the waitlist for ${row.name}. We'll tell you if a place opens.`, good: true });
+    } catch (e) {
+      setNotice({ text: e instanceof Error ? e.message : 'Could not join the waitlist.', good: false });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const leaveLine = async (row: ClassRow) => {
+    setBusy(row.sessionId);
+    setNotice(null);
+    try {
+      await leaveWaitlist(row.sessionId);
+      await refresh();
+      setNotice({ text: `You've left the waitlist for ${row.name}.`, good: true });
+    } catch (e) {
+      setNotice({ text: e instanceof Error ? e.message : 'Could not leave the waitlist.', good: false });
     } finally {
       setBusy(null);
     }
@@ -90,5 +153,5 @@ export function useBooking() {
     </>
   );
 
-  return { busy, book, askCancel: setConfirmCancel, layer };
+  return { busy, book, joinLine, leaveLine, waitlistFor, isFull: (c: ClassRow) => !c.isBooked && (c.availableSpaces <= 0 || heldFull.has(c.sessionId)), nowMs, askCancel: setConfirmCancel, layer };
 }

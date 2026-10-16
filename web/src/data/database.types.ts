@@ -2228,6 +2228,18 @@ export type Database = {
           },
         ]
       }
+      movements: {
+        Row: { created_at: string; created_by: string | null; cue: string | null; default_tracking: string; gym_id: string; id: string; is_active: boolean; key: string; name: string; updated_at: string; video_url: string | null }
+        Insert: { created_at?: string; created_by?: string | null; cue?: string | null; default_tracking?: string; gym_id: string; id?: string; is_active?: boolean; name: string; updated_at?: string; video_url?: string | null }
+        Update: { created_at?: string; created_by?: string | null; cue?: string | null; default_tracking?: string; gym_id?: string; id?: string; is_active?: boolean; name?: string; updated_at?: string; video_url?: string | null }
+        Relationships: []
+      }
+      movement_levels: {
+        Row: { gym_id: string; level: string; movement_id: string; notes: string | null; prescription: Json; updated_at: string }
+        Insert: { gym_id: string; level: string; movement_id: string; notes?: string | null; prescription?: Json; updated_at?: string }
+        Update: { gym_id?: string; level?: string; movement_id?: string; notes?: string | null; prescription?: Json; updated_at?: string }
+        Relationships: []
+      }
       resources: {
         Row: {
           allow_overlap: boolean
@@ -4060,6 +4072,17 @@ export type Database = {
       apply_plan_terms_to_members: { Args: { p_plan_id: string; p_reason: string }; Returns: number }
       member_book_class: { Args: { p_session_id: string }; Returns: Json }
       member_cancel_class: { Args: { p_session_id: string }; Returns: Json }
+      member_join_waitlist: { Args: { p_session_id: string }; Returns: Json }
+      member_leave_waitlist: { Args: { p_session_id: string }; Returns: Json }
+      get_my_waitlist: { Args: { p_session_id: string }; Returns: Json }
+      get_my_waitlists: {
+        Args: { p_gym_id: string }
+        Returns: { offer_expires_at: string | null; queue_position: number | null; session_id: string; status: string }[]
+      }
+      get_class_waitlist: {
+        Args: { p_gym_id: string; p_session_id: string }
+        Returns: { display_name: string; joined_at: string; offer_expires_at: string | null; status: string; user_id: string }[]
+      }
       member_class_schedule: {
         Args: { p_from?: string; p_gym_id: string; p_to?: string }
         Returns: {
