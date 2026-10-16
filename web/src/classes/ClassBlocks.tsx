@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
 import { Checkbox, DateInput, Field, Input } from '../ui/Field';
 import { Modal } from '../ui/Modal';
+import { BlockBenchmarks } from './BlockBenchmarks';
 import { blockLabel, blockLastDay, blockState, groupByWeek, validateBlock } from './blocks';
 import { dayTitle, timeRange } from './calc';
 import { useBlockClasses, useBlocks, useBlockWrites } from './useBlocks';
@@ -115,6 +116,8 @@ function BlockDetail({ block, onGone }: { block: ClassBlock; onGone: () => void 
         <Field label="Number of weeks" htmlFor="bd-weeks"><Input id="bd-weeks" type="number" inputMode="numeric" min="1" max="52" value={form.weeks} onChange={(e) => setForm({ ...form, weeks: e.target.value })} /></Field>
         {dirtyDetails && <Button variant="primary" disabled={w.update.isPending} onClick={saveDetails}>{w.update.isPending ? 'Saving…' : 'Save block details'}</Button>}
       </div>
+
+      <BlockBenchmarks block={block} />
 
       <h4 className="detail-heading">Classes in this block</h4>
       {q.isPending && <p className="muted small">Loading classes…</p>}
