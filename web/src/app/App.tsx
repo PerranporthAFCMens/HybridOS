@@ -22,6 +22,7 @@ import { MemberView } from '../memberview/MemberView';
 import { Community } from '../community/Community';
 import { Review } from '../training/Review';
 import { Comms } from '../comms/Comms';
+import { Movements } from '../movements/Movements';
 import { Workouts } from '../workouts/Workouts';
 import { homeFor, isPrivileged } from '../auth/access';
 import { MemberShell } from '../member/MemberShell';
@@ -133,6 +134,7 @@ function Main() {
             <Route path="/training" element={<Review />} />
             <Route path="/communications" element={<Comms />} />
             <Route path="/workouts" element={<Workouts />} />
+            <Route path="/movements" element={<Movements />} />
             <Route path="/membership-rules" element={<Rules />} />
             <Route path="/membership-requests" element={<Requests />} />
             <Route path="/signup-process" element={<SignupProcess />} />
