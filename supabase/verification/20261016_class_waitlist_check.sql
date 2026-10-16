@@ -8,14 +8,16 @@ select 'the waitlist table exists with row security on, and signed-in people can
              and not has_table_privilege('authenticated', 'public.class_waitlist', 'delete')
              and not has_table_privilege('anon', 'public.class_waitlist', 'select') then 'ok' else 'WRONG' end as result
 union all
-select 'the four member and admin functions can be run by signed-in people and not signed-out ones',
+select 'the five member and admin functions can be run by signed-in people and not signed-out ones',
        case when has_function_privilege('authenticated', 'public.member_join_waitlist(uuid)', 'execute')
              and has_function_privilege('authenticated', 'public.member_leave_waitlist(uuid)', 'execute')
              and has_function_privilege('authenticated', 'public.get_my_waitlist(uuid)', 'execute')
+             and has_function_privilege('authenticated', 'public.get_my_waitlists(uuid)', 'execute')
              and has_function_privilege('authenticated', 'public.get_class_waitlist(uuid, uuid)', 'execute')
              and not has_function_privilege('anon', 'public.member_join_waitlist(uuid)', 'execute')
              and not has_function_privilege('anon', 'public.member_leave_waitlist(uuid)', 'execute')
              and not has_function_privilege('anon', 'public.get_my_waitlist(uuid)', 'execute')
+             and not has_function_privilege('anon', 'public.get_my_waitlists(uuid)', 'execute')
              and not has_function_privilege('anon', 'public.get_class_waitlist(uuid, uuid)', 'execute') then 'ok' else 'WRONG' end
 union all
 select 'the internal functions cannot be run by signed-in or signed-out people',

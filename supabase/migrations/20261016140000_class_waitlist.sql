@@ -15,6 +15,7 @@
 --                                      time anyone books, joins or looks at that class.
 --   public.member_join_waitlist(session), member_leave_waitlist(session), get_my_waitlist(session)
 --                                      member functions (same sign-in, active membership and class access rules as booking)
+--   public.get_my_waitlists(gym)              the member's open places in line for the whole gym, one call
 --   public.get_class_waitlist(gym, session)   owners and admins: who is on the list and who has an open offer
 --   public.member_book_class / public.book_class_session
 --                                      REPLACED (same behaviour as 20261005120000 plus): places held for other people's offers count as
@@ -240,6 +241,35 @@ begin
 end
 $function$;
 
+-- The member's active places in line across a gym, in one call (the schedule does not carry waitlist state).
+create function public.get_my_waitlists(p_gym_id uuid)
+ returns table(session_id uuid, status text, queue_position integer, offer_expires_at timestamptz)
+ language plpgsql
+ security definer
+ set search_path to 'public', 'private', 'pg_temp'
+as $function$
+declare r record;
+begin
+  if auth.uid() is null then raise exception 'Not authenticated'; end if;
+  if not private.is_gym_member(p_gym_id) then raise exception 'Not a member of this gym'; end if;
+  for r in select w.session_id as sid from public.class_waitlist w
+           where w.gym_id = p_gym_id and w.user_id = auth.uid() and w.status in ('waiting', 'offered') loop
+    perform private.advance_waitlist(r.sid);
+  end loop;
+  return query
+  select w.session_id, w.status,
+         case when w.status = 'waiting' then
+           (select count(*)::integer from public.class_waitlist x
+            where x.session_id = w.session_id and x.status = 'waiting' and (x.joined_at, x.id) <= (w.joined_at, w.id))
+         end,
+         w.offer_expires_at
+  from public.class_waitlist w
+  join public.class_sessions cs on cs.id = w.session_id
+  where w.gym_id = p_gym_id and w.user_id = auth.uid() and w.status in ('waiting', 'offered')
+    and cs.starts_at > now() and not coalesce(cs.is_cancelled, false);
+end
+$function$;
+
 -- Owners and admins: the line for one class.
 create function public.get_class_waitlist(p_gym_id uuid, p_session_id uuid)
  returns table(user_id uuid, display_name text, status text, joined_at timestamptz, offer_expires_at timestamptz)
@@ -266,9 +296,9 @@ begin
 end
 $function$;
 
-revoke all on function public.member_join_waitlist(uuid), public.member_leave_waitlist(uuid), public.get_my_waitlist(uuid), public.get_class_waitlist(uuid, uuid)
+revoke all on function public.member_join_waitlist(uuid), public.member_leave_waitlist(uuid), public.get_my_waitlist(uuid), public.get_my_waitlists(uuid), public.get_class_waitlist(uuid, uuid)
   from public, anon, authenticated, service_role;
-grant execute on function public.member_join_waitlist(uuid), public.member_leave_waitlist(uuid), public.get_my_waitlist(uuid), public.get_class_waitlist(uuid, uuid)
+grant execute on function public.member_join_waitlist(uuid), public.member_leave_waitlist(uuid), public.get_my_waitlist(uuid), public.get_my_waitlists(uuid), public.get_class_waitlist(uuid, uuid)
   to authenticated;
 
 -- The two booking functions, as in 20261005120000 plus the waitlist hold. Their existing grants stay as they are.

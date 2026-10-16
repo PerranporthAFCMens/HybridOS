@@ -141,6 +141,10 @@ select pt.check('raising the capacity offers the new place', pt.wl(pt.c1(), pt.u
 select pt.check('an admin can read the list', pt.q(pt.u('admin_a'), format('select count(*)::text from public.get_class_waitlist(%L, %L)', pt.gym_a(), pt.c1())), '1');
 select pt.check('a member cannot', pt.q(pt.u('m1'), format('select count(*)::text from public.get_class_waitlist(%L, %L)', pt.gym_a(), pt.c1())), 'ERROR:Not authorised');
 select pt.check('another gym''s owner cannot', pt.q(pt.u('admin_b'), format('select count(*)::text from public.get_class_waitlist(%L, %L)', pt.gym_a(), pt.c1())), 'ERROR:Not authorised');
+select pt.check('get_my_waitlists lists the member''s open place', pt.q(pt.u('m1'), format('select count(*)::text || '' '' || min(status) from public.get_my_waitlists(%L)', pt.gym_a())), '1 offered');
+select pt.check('a member with no place gets an empty list', pt.q(pt.u('m2'), format('select count(*)::text from public.get_my_waitlists(%L)', pt.gym_a())), '0');
+select pt.check('get_my_waitlists refuses another gym''s member', pt.q(pt.u('mb'), format('select count(*)::text from public.get_my_waitlists(%L)', pt.gym_a())), 'ERROR:Not a member of this gym');
+select pt.check('signed-out people cannot call get_my_waitlists', pt.anon(format('select count(*)::text from public.get_my_waitlists(%L)', pt.gym_a())), 'ERROR:permission denied for function get_my_waitlists');
 select pt.check('a member reads only their own row', pt.q(pt.u('m1'), 'select count(*)::text from public.class_waitlist'), '1');
 select pt.check('an admin reads the gym''s rows', pt.q(pt.u('admin_a'), 'select (count(*) > 1)::text from public.class_waitlist'), 'true');
 select pt.check('another gym''s member reads none', pt.q(pt.u('mb'), 'select count(*)::text from public.class_waitlist'), '0');

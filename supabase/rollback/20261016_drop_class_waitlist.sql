@@ -148,6 +148,7 @@ begin
 end$$;
 
 drop function if exists public.get_class_waitlist(uuid, uuid);
+drop function if exists public.get_my_waitlists(uuid);
 drop function if exists public.get_my_waitlist(uuid);
 drop function if exists public.member_leave_waitlist(uuid);
 drop function if exists public.member_join_waitlist(uuid);
