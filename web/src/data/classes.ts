@@ -349,6 +349,17 @@ export async function listRoster(gymId: string, sessionId: string): Promise<Rost
   }));
 }
 
+export interface WaitlistEntry { userId: string; name: string; status: 'waiting' | 'offered'; joinedAt: string; offerExpiresAt: string | null }
+
+/** Who is in line for a class (offers first, then in joining order). Owners and admins only. */
+export async function listClassWaitlist(gymId: string, sessionId: string): Promise<WaitlistEntry[]> {
+  const { data, error } = await supabase.rpc('get_class_waitlist', { p_gym_id: gymId, p_session_id: sessionId });
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
+    userId: r.user_id, name: r.display_name, status: r.status === 'offered' ? 'offered' : 'waiting', joinedAt: r.joined_at, offerExpiresAt: r.offer_expires_at,
+  }));
+}
+
 export type BookingAction = 'attended' | 'no_show' | 'booked' | 'cancel' | 'add';
 
 export interface BookingResult {

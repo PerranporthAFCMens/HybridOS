@@ -117,3 +117,7 @@
 /* A past workout in the Recent list: the whole row opens it. */
 .tr-open { min-height: 44px; color: inherit; text-decoration: none; }
 .tr-open b { overflow-wrap: anywhere; }
+
+/* Waitlist buttons sit side by side beside a class, not stretched across it. */
+.mem-class .mem-actions, .mem-line .mem-actions { flex-wrap: nowrap; }
+.mem-class .mem-actions > *, .mem-line .mem-actions > * { flex: none; }
