@@ -1,5 +1,5 @@
 import { londonParts } from '../classes/calc';
-import type { ClassRow, MyPlan, PtRow } from '../data/member';
+import type { ClassRow, MyPlan, MyWaitlist, PtRow } from '../data/member';
 
 // Pure rules for the member app: which day a class is on at the gym, what to put on top of the first
 // screen, and how to word spaces. All days are gym (UK) calendar days.
@@ -40,6 +40,28 @@ export function spaceText(c: Pick<ClassRow, 'isBooked' | 'availableSpaces'>): st
   if (c.isBooked) return 'Booked';
   if (c.availableSpaces <= 0) return 'Full';
   return `${c.availableSpaces} ${c.availableSpaces === 1 ? 'space' : 'spaces'} left`;
+}
+
+/** 1 becomes "1st", 2 "2nd", 11 "11th". */
+export function ordinal(n: number): string {
+  const r = n % 100;
+  if (r >= 11 && r <= 13) return `${n}th`;
+  return `${n}${({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[n % 10] ?? 'th'}`;
+}
+
+/** Whole minutes left on an offer, rounded up; 0 once it has run out. */
+export function minutesLeft(expiresAt: string | null, nowMs: number): number {
+  if (!expiresAt) return 0;
+  return Math.max(0, Math.ceil((new Date(expiresAt).getTime() - nowMs) / 60000));
+}
+
+/** The line shown under a class the member is on the waitlist for. */
+export function waitlistText(w: Pick<MyWaitlist, 'status' | 'position' | 'offerExpiresAt'>, nowMs: number): string {
+  if (w.status === 'offered') {
+    const m = minutesLeft(w.offerExpiresAt, nowMs);
+    return m > 0 ? `A place is held for you: ${m} ${m === 1 ? 'minute' : 'minutes'} left` : 'Your held place has run out';
+  }
+  return w.position ? `You're ${ordinal(w.position)} in line` : "You're on the waitlist";
 }
 
 export interface Flags { classes: boolean; gym: boolean; pt: boolean }

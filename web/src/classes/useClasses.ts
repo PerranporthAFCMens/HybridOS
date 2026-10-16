@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { checkSchedule, createClassSession, listRoster, loadClassForEdit, manageBooking, type BookingAction, setClassCancelled, updateClassSession, listClassTypes, listSchedulingRules, listStaffOptions, listTimetable, type NewClass, type ScheduleProposal } from '../data/classes';
+import { checkSchedule, createClassSession, listClassWaitlist, listRoster, loadClassForEdit, manageBooking, type BookingAction, setClassCancelled, updateClassSession, listClassTypes, listSchedulingRules, listStaffOptions, listTimetable, type NewClass, type ScheduleProposal } from '../data/classes';
 import { listPlans } from '../data/plans';
 import { addDays, type Occurrence, type WeekResult } from './calc';
 
@@ -136,6 +136,11 @@ export function useRoster(gymId: string, sessionId: string) {
   return useQuery({ queryKey: ['roster', gymId, sessionId], queryFn: () => listRoster(gymId, sessionId) });
 }
 
+/** Who is waiting for a place in one class. Stays quiet for anyone the database does not let read it. */
+export function useClassWaitlist(gymId: string, sessionId: string) {
+  return useQuery({ queryKey: ['class-waitlist', gymId, sessionId], queryFn: () => listClassWaitlist(gymId, sessionId), retry: false });
+}
+
 /** Attendance, removing and adding people. The roster and the timetable's booked counts refresh. */
 export function useManageBooking(gymId: string, sessionId: string) {
   const qc = useQueryClient();
@@ -144,6 +149,7 @@ export function useManageBooking(gymId: string, sessionId: string) {
     onSettled: async () => {
       await Promise.all([
         qc.invalidateQueries({ queryKey: ['roster', gymId, sessionId] }),
+        qc.invalidateQueries({ queryKey: ['class-waitlist', gymId, sessionId] }),
         qc.invalidateQueries({ queryKey: ['timetable', gymId] }),
         qc.invalidateQueries({ queryKey: ['today'] }),
       ]);

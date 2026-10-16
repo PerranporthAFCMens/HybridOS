@@ -11,6 +11,7 @@ import { loadMyHomeSettings } from '../data/memberView';
 import { listMyPbs, listRecentSessions } from '../data/train';
 import { DEFAULT_CTA, DEFAULT_LAYOUT } from '../memberview/calc';
 import { Activity, BookedClasses, DoorCard, MembershipTile, Notices, Promo, PtList, Snapshot, UpcomingCount } from './HomeTiles';
+import { ClassAction, waitlistLine } from './ClassAction';
 import type { ClassRow } from '../data/member';
 import { Button } from '../ui/Button';
 import { BirthdayHello } from './Birthday';
@@ -83,7 +84,7 @@ export function Today() {
       case 'next_classes': return sugg.length > 0 && (
         <section className="mem-card" aria-label="Book another">
           <div className="mem-row"><h2>{hero.kind === 'class' ? 'Book another' : 'Coming up'}</h2><Link to="/m/classes">See all</Link></div>
-          {sugg.map((c) => <SuggestionRow key={c.sessionId} c={c} busy={booking.busy === c.sessionId} onBook={() => void booking.book(c)} />)}
+          {sugg.map((c) => <SuggestionRow key={c.sessionId} c={c} booking={booking} />)}
         </section>
       );
       case 'goal': return (d.flags.gym || d.workoutsThisWeek > 0) && (
@@ -183,14 +184,16 @@ export function Today() {
   );
 }
 
-function SuggestionRow({ c, busy, onBook }: { c: ClassRow; busy: boolean; onBook: () => void }) {
+function SuggestionRow({ c, booking }: { c: ClassRow; booking: ReturnType<typeof useBooking> }) {
+  const line = waitlistLine(c, booking);
   return (
     <div className="mem-line">
       <div>
         <b>{c.name}</b>
-        <div className="muted small">{dayLabel(dayOf(c.startsAt))} · {timeOf(c.startsAt)} · {spaceText(c)}</div>
+        <div className="muted small">{dayLabel(dayOf(c.startsAt))} · {timeOf(c.startsAt)} · {booking.isFull(c) ? 'Full' : spaceText(c)}</div>
+        {line && <div className="small"><b>{line}</b></div>}
       </div>
-      <Button variant="primary" disabled={busy} onClick={onBook} aria-label={`Book ${c.name}`}>{busy ? 'Booking…' : 'Book'}</Button>
+      <ClassAction c={c} booking={booking} />
     </div>
   );
 }
