@@ -48,6 +48,8 @@ import { Finish } from '../member/Finish';
 import { StaffShell } from '../staffapp/StaffShell';
 import { StaffDay, StaffTimetable } from '../staffapp/StaffDay';
 import { StaffMe } from '../staffapp/StaffMe';
+import { StaffClients } from '../staffapp/StaffClients';
+import { StaffClient } from '../staffapp/StaffClient';
 import { Strava } from '../member/Strava';
 import { BASENAME } from './site';
 
@@ -113,6 +115,8 @@ function Main() {
           <Route element={<StaffShell />}>
             <Route path="/s/today" element={<StaffDay />} />
             <Route path="/s/timetable" element={<StaffTimetable />} />
+            <Route path="/s/clients" element={<StaffClients />} />
+            <Route path="/s/clients/:userId" element={<StaffClient />} />
             <Route path="/s/me" element={<StaffMe />} />
             <Route path="/s/*" element={<Navigate to="/s/today" replace />} />
           </Route>

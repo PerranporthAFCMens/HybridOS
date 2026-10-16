@@ -9,3 +9,21 @@
 .staff-att { display: flex; gap: 8px; flex-wrap: wrap; }
 .staff-att > * { flex: 1 1 120px; }
 .staff-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.staff-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.staff-title { margin: 2px 0 0; font-size: 24px; line-height: 1.2; font-weight: 800; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.staff-back { display: inline-flex; align-items: center; min-height: 44px; color: var(--hybrid-muted); text-decoration: none; }
+.staff-client {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 72px; padding: 12px 14px;
+  color: inherit; text-decoration: none; background: var(--hybrid-panel); border: 1px solid var(--hybrid-line); border-radius: 14px;
+}
+.staff-client.needs { border-color: var(--hybrid-volt); }
+.staff-client-text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.staff-client-text b { overflow-wrap: anywhere; }
+.staff-client-text .muted { font-size: 13px; overflow-wrap: anywhere; }
+.staff-chevron { color: var(--hybrid-muted); font-size: 22px; }
+.staff-pick { display: grid; gap: 6px; margin-top: 10px; }
+.staff-pick-row {
+  display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 10px; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: var(--hybrid-panel); border: 1px solid var(--hybrid-line); border-radius: 12px;
+}
+.staff-pick-row b { overflow-wrap: anywhere; }

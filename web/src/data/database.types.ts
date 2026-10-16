@@ -404,6 +404,51 @@ export type Database = {
         }
         Relationships: []
       }
+      gym_pt_settings: {
+        Row: {
+          gym_id: string
+          own_clients_only: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          gym_id: string
+          own_clients_only?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          gym_id?: string
+          own_clients_only?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      pt_clients: {
+        Row: {
+          client_user_id: string
+          created_at: string
+          created_by: string | null
+          gym_id: string
+          staff_user_id: string
+        }
+        Insert: {
+          client_user_id: string
+          created_at?: string
+          created_by?: string | null
+          gym_id: string
+          staff_user_id: string
+        }
+        Update: {
+          client_user_id?: string
+          created_at?: string
+          created_by?: string | null
+          gym_id?: string
+          staff_user_id?: string
+        }
+        Relationships: []
+      }
       gym_lift_settings: {
         Row: {
           gym_id: string
