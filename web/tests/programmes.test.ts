@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BlockClass } from '../src/data/classBlocks';
-import { classNames, daysFor, pickClasses, programmeSteps } from '../src/programmes/calc';
+import { classNames, daysFor, gridRows, pickClasses, programmeSteps } from '../src/programmes/calc';
 
 // 2026-10-19 is a Monday, 2026-10-23 a Friday (UK time, BST).
 const cls = (id: string, name: string, iso: string, inBlock = false, workout: BlockClass['workout'] = 'none'): BlockClass =>
@@ -50,5 +50,27 @@ describe('programme steps', () => {
     expect(s[2]?.detail).toBe('1 of 2 set');
     const all = programmeSteps(half.map((c) => ({ ...c, workout: 'available' as const })), 2);
     expect(all.map((x) => x.state)).toEqual(['done', 'done', 'done', 'done']);
+  });
+});
+
+describe('workout grid', () => {
+  // Programme starts Mon 2026-10-19 for 3 weeks. Demo HIIT runs Mondays 06:30 BST (05:30Z) in weeks 1 and 3; a Friday class is week 1.
+  const g = [
+    cls('w1', 'Demo HIIT', '2026-10-19T05:30:00Z', true, 'available'),
+    cls('w3', 'Demo HIIT', '2026-11-02T06:30:00Z', true),
+    cls('f1', 'Demo HIIT', '2026-10-23T16:30:00Z', true),
+    cls('out', 'Demo HIIT', '2026-10-26T05:30:00Z', false),
+  ];
+  it('makes one row for each class slot and one cell for each week', () => {
+    const rows = gridRows(g, '2026-10-19', 3);
+    expect(rows.map((r) => r.label)).toEqual(['Mon 06:30 Demo HIIT', 'Fri 17:30 Demo HIIT']);
+    expect(rows[0]?.cells.map((c) => c?.session.session_id ?? null)).toEqual(['w1', null, 'w3']); // w3 is 06:30Z after the clocks go back: still the 06:30 gym-clock slot
+  });
+  it('keeps the gym clock across the end of summer time, and leaves out classes not in the programme', () => {
+    const rows = gridRows(g, '2026-10-19', 3);
+    expect(rows).toHaveLength(2);
+    const all = rows.flatMap((r) => r.cells).filter(Boolean).map((c) => c?.session.session_id);
+    expect(all).not.toContain('out');
+    expect(all).toContain('w3');
   });
 });

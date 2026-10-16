@@ -66,7 +66,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
       const to = new Date(body.p_to).getTime();
       return reply(route, sessions.filter((s) => new Date(s.starts_at).getTime() >= from && new Date(s.starts_at).getTime() < to));
     }
-    const table = ['class_blocks', 'class_block_sessions', 'class_session_workouts'].find((t) => path.endsWith(`/${t}`));
+    const table = ['class_blocks', 'class_block_sessions', 'class_session_workouts', 'workout_template_blocks', 'workout_template_activities'].find((t) => path.endsWith(`/${t}`));
     if (table && ['POST', 'PATCH', 'DELETE'].includes(method)) {
       writes.push({ table, method, query: Object.fromEntries(url.searchParams), body });
       if (table === 'class_blocks' && method === 'POST') { blocks = [{ id: 'blk2', name: body.name, starts_on: body.starts_on, weeks: body.weeks }, ...blocks]; return reply(route, [{ id: 'blk2' }]); }
@@ -84,7 +84,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/class_session_workouts')) return reply(route, [{ session_id: 's1', title: 'Push day', published_at: '2026-10-12T09:00:00Z' }]);
     if (path.endsWith('/block_benchmarks')) return reply(route, []);
     if (path.endsWith('/movements')) return reply(route, []);
-    if (path.endsWith('/workout_templates')) return reply(route, []);
+    if (path.endsWith('/workout_templates')) return reply(route, [{ id: 't-leg', title: 'Leg Day', description: 'Heavy legs', workout_type: 'strength', focus_tags: ['Legs'], estimated_minutes: 50, visibility: 'private' }]);
+    if (path.endsWith('/workout_template_blocks') || path.endsWith('/workout_template_activities')) return reply(route, []);
     if (path.endsWith('/class_bookings')) return reply(route, []);
     if (path.endsWith('/class_session_staff')) return reply(route, []);
     return false;
@@ -143,6 +144,26 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('the addition is exact: those classes only, this block, this gym', ins && ins.body.length === 3 && ins.body.every((b) => b.block_id === 'blk1' && b.gym_id === GYM) && ['s1', 's2', 's3'].every((id) => ins.body.some((b) => b.session_id === id)));
   c.ok('nothing else was written', writes.length === 1);
   await c.has('step 3 is now where you are: 1 of 3 have a workout', page.getByText('1 of 3 classes have a workout'));
+
+  // Step 3: the grid. Morning HIIT s1 and s2 run in the same slot (weeks 1 and 2); s3 is another slot.
+  const hiit = page.getByRole('group', { name: /09:00 Morning HIIT$/ });
+  c.ok('the grid has a row for each class slot', (await page.locator('.prog-row').count()) === 2);
+  c.ok('a week with a workout says so, one without says Add', (await hiit.first().getByRole('button', { name: /week 1: Available: Push day/ }).count()) === 1 && (await hiit.first().getByRole('button', { name: /week 2: No workout/ }).count()) === 1);
+  c.ok('layout (grid)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/programmes-grid-${name}.png`, fullPage: true });
+  writes.length = 0;
+  await hiit.first().getByRole('button', { name: /week 2: No workout/ }).click();
+  const dlg = page.getByRole('dialog');
+  await dlg.getByRole('button', { name: 'Use for this week' }).click();
+  await c.has('a workout must be chosen first', dlg.getByText('Choose a workout first.'));
+  c.ok('nothing written yet', writes.length === 0);
+  c.ok('layout (picker)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/programmes-picker-${name}.png`, fullPage: true });
+  await dlg.getByLabel('Workout from your library').selectOption('t-leg');
+  await dlg.getByRole('button', { name: /^Use for all 2 weeks of / }).click();
+  c.ok('the picker closes once saved', await dlg.waitFor({ state: 'detached' }).then(() => true, () => false));
+  const wk = writes.find((w) => w.table === 'class_session_workouts' && w.method === 'POST');
+  c.ok('the write is exact: both weeks of that slot only, with the gym and the workout', wk && Array.isArray(wk.body) && wk.body.length === 2 && ['s1', 's2'].every((id) => wk.body.some((b) => b.session_id === id && b.gym_id === GYM && b.template_id === 't-leg' && b.title === 'Leg Day')));
 
   // Step 1 edit, then delete asks first
   writes.length = 0;

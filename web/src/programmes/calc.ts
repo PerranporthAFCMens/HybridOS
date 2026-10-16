@@ -2,6 +2,7 @@
 // A programme is a block (a named run of weeks). The class type here is the class name, as on the timetable.
 import type { BlockClass } from '../data/classBlocks';
 import { londonParts } from '../classes/calc';
+import { blockWeek, gymDay } from '../classes/blocks';
 
 /** Monday first, as the timetable shows the week. The number is the gym-clock weekday, 0 = Sunday. */
 export const WEEKDAYS: { day: number; label: string }[] = [
@@ -53,4 +54,29 @@ export function programmeSteps(classes: BlockClass[], tests: number): Step[] {
     { n: 3, title: 'Workouts', detail: classesDone ? `${withWorkout} of ${inBlock.length} set` : 'After the classes', state: state(3) },
     { n: 4, title: 'Tests', detail: tests > 0 ? `${tests} set` : 'Optional', state: tests > 0 && current === 4 ? 'done' : state(4, true) },
   ];
+}
+
+export interface GridRow { key: string; label: string; cells: (BlockClass | null)[] }
+
+/**
+ * The workout grid: one row for each class slot in the programme (same name, weekday and start time) and one cell for each week.
+ * A week with no class in that slot is null. Only classes that are in the programme are shown.
+ */
+export function gridRows(classes: BlockClass[], startsOn: string, weeks: number): GridRow[] {
+  const rows = new Map<string, GridRow & { sort: [number, string, string] }>();
+  for (const c of classes) {
+    if (!c.inBlock) continue;
+    const week = blockWeek(startsOn, weeks, gymDay(c.session.starts_at));
+    if (week === null) continue;
+    const p = londonParts(new Date(c.session.starts_at));
+    const time = p.time.slice(0, 5);
+    const key = `${c.session.name}|${p.weekday}|${time}`;
+    const day = WEEKDAYS.find((d) => d.day === p.weekday)?.label ?? '';
+    const row = rows.get(key) ?? { key, label: `${day} ${time} ${c.session.name}`, cells: Array<BlockClass | null>(weeks).fill(null), sort: [(p.weekday + 6) % 7, time, c.session.name] };
+    row.cells[week - 1] ??= c;
+    rows.set(key, row);
+  }
+  return [...rows.values()]
+    .sort((a, b) => a.sort[0] - b.sort[0] || a.sort[1].localeCompare(b.sort[1]) || a.sort[2].localeCompare(b.sort[2]))
+    .map(({ key, label, cells }) => ({ key, label, cells }));
 }
