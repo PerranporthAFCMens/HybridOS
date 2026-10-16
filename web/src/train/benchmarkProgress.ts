@@ -41,3 +41,30 @@ export function progressFor(b: BenchmarkDef, recorded: RecordedExercise[], today
   const improved = change === null || change === 0 ? null : b.better === 'lower' ? change < 0 : change > 0;
   return { def: b, start: { day: b.startOn, state: testState(b.startOn, today, s), reading: s }, end: { day: b.endOn, state: testState(b.endOn, today, e), reading: e }, change, improved };
 }
+
+/** One set of one exercise as the coach function returns it. */
+export interface ResultRow { user_id: string; display_name: string; exercise_name: string; movement_id: string | null; tracking_type: string; day: string; weight_kg: number | null; reps: number | null; duration_seconds: number | null; distance_m: number | null; calories: number | null }
+export interface MemberResults { userId: string; name: string; recorded: RecordedExercise[] }
+
+const TRACKINGS: Tracking[] = ['strength', 'reps', 'time', 'distance', 'calories'];
+
+/** Rows (one per set) back into each member's recorded exercises, sets gathered per day and exercise. */
+export function groupMemberResults(rows: ResultRow[]): MemberResults[] {
+  const people = new Map<string, MemberResults>();
+  const entries = new Map<string, RecordedExercise>();
+  for (const r of rows) {
+    const tracking = r.tracking_type as Tracking;
+    if (!TRACKINGS.includes(tracking)) continue;
+    const person = people.get(r.user_id) ?? { userId: r.user_id, name: r.display_name, recorded: [] };
+    people.set(r.user_id, person);
+    const key = [r.user_id, r.day, r.movement_id ?? '', pbKey(r.exercise_name), tracking].join('|');
+    let ex = entries.get(key);
+    if (!ex) {
+      ex = { day: r.day, name: r.exercise_name, movementId: r.movement_id, tracking, sets: [] };
+      entries.set(key, ex);
+      person.recorded.push(ex);
+    }
+    ex.sets.push({ weight_kg: r.weight_kg, reps: r.reps, duration_seconds: r.duration_seconds, distance_m: r.distance_m, calories: r.calories, side: null, custom_value: null, custom_unit: null });
+  }
+  return [...people.values()];
+}

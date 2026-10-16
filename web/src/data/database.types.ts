@@ -449,6 +449,12 @@ export type Database = {
         }
         Relationships: []
       }
+      gym_benchmark_settings: {
+        Row: { coaches_see_results: boolean; gym_id: string; updated_at: string; updated_by: string | null }
+        Insert: { coaches_see_results?: boolean; gym_id: string; updated_at?: string; updated_by?: string | null }
+        Update: { coaches_see_results?: boolean; gym_id?: string; updated_at?: string; updated_by?: string | null }
+        Relationships: []
+      }
       gym_lift_settings: {
         Row: {
           gym_id: string
@@ -3736,6 +3742,23 @@ export type Database = {
       delete_admin_invite: {
         Args: { target_invite_id: string }
         Returns: boolean
+      }
+      get_block_benchmark_results: {
+        Args: { p_block_id: string }
+        Returns: {
+          benchmark_id: string
+          calories: number | null
+          day: string
+          display_name: string
+          distance_m: number | null
+          duration_seconds: number | null
+          exercise_name: string
+          movement_id: string | null
+          reps: number | null
+          tracking_type: string
+          user_id: string
+          weight_kg: number | null
+        }[]
       }
       get_access_invite: {
         Args: { invite_token: string }
