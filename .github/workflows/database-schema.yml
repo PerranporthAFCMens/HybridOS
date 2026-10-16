@@ -195,10 +195,13 @@ jobs:
           psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/class_blocks.sql
           snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
           snap /tmp/cb_after_migration.txt
+          # the block benchmarks migration (20261016170000) points at blocks, so it comes off first and goes back on last
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_block_benchmarks.sql
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261012_drop_class_blocks.sql
           snap /tmp/cb_after_rollback.txt
           if diff -q /tmp/cb_after_migration.txt /tmp/cb_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261016170000_block_benchmarks.sql
           snap /tmp/cb_after_reapply.txt
           if diff -u /tmp/cb_after_migration.txt /tmp/cb_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Lift leaderboard verification, persona tests and rollback
