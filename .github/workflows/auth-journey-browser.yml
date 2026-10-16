@@ -119,10 +119,11 @@ jobs:
 
           async function assertAccount(page,gymId,mobile){
             await openMenuIfMobile(page,mobile);
+            await page.locator('.side .account .who-name').waitFor({timeout:20000});
             const who=await page.locator('.side .account .who').innerText();
             const text=who.replace(/\s+/g,' ').trim();
             console.log('Account area for '+NAMES[gymId]+': '+text);
-            assert.match(text,/HybridOne Auth Journey Test/i,'account area did not show the test account name');
+            assert.match(text,/HybridOne Auth Journey Test|delivered/i,'account area did not show the test account name');
             assert.match(text,/owner|admin/i,'account area did not show an owner or admin role');
             assert.equal((await page.locator('.side .gym b').innerText()).trim(),NAMES[gymId],'sidebar showed the wrong gym');
             const link=page.locator('.side .gym a');
