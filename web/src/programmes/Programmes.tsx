@@ -2,14 +2,14 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { getBlocksOfClasses, type ClassBlock } from '../data/classBlocks';
-import { Button, LinkButton } from '../ui/Button';
+import { Button } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
 import { DateInput, Field, Input } from '../ui/Field';
 import { BlockBenchmarks } from '../classes/BlockBenchmarks';
 import { blockLabel, blockLastDay, blockState, validateBlock } from '../classes/blocks';
-import { dayTitle, timeRange } from '../classes/calc';
 import { useBlockClasses, useBlocks, useBlockWrites } from '../classes/useBlocks';
 import { useBlockBenchmarks } from '../classes/useBenchmarks';
+import { WorkoutGrid } from './WorkoutGrid';
 import { WEEKDAYS, classNames, daysFor, pickClasses, programmeSteps } from './calc';
 import '../members/members.css';
 import '../classes/classes.css';
@@ -183,14 +183,8 @@ function ProgrammePage({ block, onGone }: { block: ClassBlock; onGone: () => voi
         <SectionTitle title="3 Add the workouts" />
         {inBlock === 0 ? <p className="muted small">Attach some classes first (step 2).</p> : (
           <>
-            <p className="muted small">{inBlock - missing.length} of {inBlock} classes have a workout. Open a class on the Timetable to choose one.</p>
-            {missing.length > 0 && (
-              <ul className="prog-miss">
-                {missing.slice(0, 8).map((c) => <li key={c.session.session_id} className="small">{c.session.name} · {dayTitle(new Date(c.session.starts_at))} · {timeRange(c.session)}</li>)}
-                {missing.length > 8 && <li className="muted small">and {missing.length - 8} more</li>}
-              </ul>
-            )}
-            <div className="cw-actions" style={{ marginTop: 10 }}><LinkButton href="/classes">Open the Timetable</LinkButton></div>
+            <p className="muted small">{inBlock - missing.length} of {inBlock} classes have a workout. Tap a week to choose its workout, or use one workout for every week of a class.</p>
+            <WorkoutGrid block={block} classes={classes} />
           </>
         )}
       </Card>

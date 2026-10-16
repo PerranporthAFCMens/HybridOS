@@ -21,6 +21,18 @@ export async function setClassWorkout(gymId: string, userId: string, sessionId: 
   if (error) throw error;
 }
 
+/** Put one saved workout on several classes at once (a copy on each). Replacing keeps a class as available or draft as it was. */
+export async function setClassWorkouts(gymId: string, userId: string, sessionIds: string[], t: TemplateRow): Promise<void> {
+  if (sessionIds.length === 0) return;
+  const snapshot = JSON.parse(JSON.stringify(await snapshotForTemplate(t))) as Json;
+  const now = new Date().toISOString();
+  const { error } = await supabase.from('class_session_workouts').upsert(
+    sessionIds.map((id) => ({ session_id: id, gym_id: gymId, template_id: t.id, title: t.title, workout_snapshot: snapshot, created_by: userId, updated_at: now })),
+    { onConflict: 'session_id' },
+  );
+  if (error) throw error;
+}
+
 /** Make it available to the people in the class, or take it back. */
 export async function setClassWorkoutAvailable(sessionId: string, userId: string, available: boolean): Promise<void> {
   const { error } = await supabase.from('class_session_workouts').update(available ? { published_at: new Date().toISOString(), published_by: userId, updated_at: new Date().toISOString() } : { published_at: null, updated_at: new Date().toISOString() }).eq('session_id', sessionId);
