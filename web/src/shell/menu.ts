@@ -10,7 +10,7 @@ export type IconName = 'home' | 'members' | 'classes' | 'community' | 'reporting
 export const MENU: MenuGroup[] = [
   { key: 'today', label: 'Today', icon: 'home', to: '/today', pages: [{ to: '/today', label: 'Today' }] },
   { key: 'members', label: 'Members', icon: 'members', to: '/members', pages: [{ to: '/members', label: 'Members' }, { to: '/plans', label: 'Membership plans' }] },
-  { key: 'classes', label: 'Classes and workouts', icon: 'classes', to: '/classes', pages: [{ to: '/classes', label: 'Classes' }, { to: '/workouts', label: 'Workout builder' }, { to: '/movements', label: 'Movements' }, { to: '/training', label: 'Client training' }] },
+  { key: 'classes', label: 'Classes and workouts', icon: 'classes', to: '/classes', pages: [{ to: '/classes', label: 'Timetable' }, { to: '/programmes', label: 'Programmes' }, { to: '/workouts', label: 'Workout builder' }, { to: '/movements', label: 'Movements' }, { to: '/training', label: 'Client training' }] },
   { key: 'messages', label: 'Messages and community', icon: 'community', to: '/community', pages: [{ to: '/community', label: 'Community' }, { to: '/communications', label: 'Communications' }] },
   { key: 'reports', label: 'Reports', icon: 'reporting', to: '/reports', pages: [{ to: '/reports', label: 'Reports' }] },
 ];
