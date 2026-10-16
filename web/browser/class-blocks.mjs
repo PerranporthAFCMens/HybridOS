@@ -145,6 +145,18 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.getByRole('button', { name: /^Save classes \(3 to add, 0 to remove\)$/ }).click();
   await c.has('every class can go in (one class, or several a week)', dialog.getByText('Saved. 5 classes are in this block.'));
 
+  // Filter by class name: the tick buttons only touch what is shown
+  const total = await dialog.getByRole('checkbox', { name: / · / }).count();
+  await dialog.getByLabel('Show', { exact: true }).selectOption('Morning HIIT');
+  const only = await dialog.getByRole('checkbox', { name: / · / }).count();
+  c.ok('the filter shows only that class name', only > 0 && only < total && (await dialog.getByRole('checkbox', { name: /^Morning HIIT/ }).count()) === only);
+  await dialog.getByRole('button', { name: `Untick these ${only}` }).click();
+  await dialog.getByRole('button', { name: new RegExp(`^Save classes \\(0 to add, ${only} to remove\\)$`) }).waitFor();
+  await dialog.getByRole('button', { name: `Tick these ${only}`, exact: true }).click();
+  await dialog.getByRole('button', { name: 'Classes saved' }).waitFor();
+  await dialog.getByLabel('Show', { exact: true }).selectOption('');
+  c.ok('clearing the filter shows every class again', (await dialog.getByRole('checkbox', { name: / · / }).count()) === total);
+
   // Change the block's details
   writes.length = 0;
   await dialog.getByLabel('Block name', { exact: true }).fill('Hybrid Uppers 2');
