@@ -44,9 +44,9 @@ jobs:
             select count(*) into v_triggers from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace tn on tn.oid=c.relnamespace join pg_proc p on p.oid=t.tgfoid join pg_namespace fn on fn.oid=p.pronamespace where not t.tgisinternal and (tn.nspname in ('public','private') or fn.nspname in ('public','private'));
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
-            if v_tables<>94 then raise exception 'Expected 94 app tables, got %',v_tables; end if;
-            if v_functions<>167 then raise exception 'Expected 167 committed app functions, got %',v_functions; end if;
-            if v_policies<>226 then raise exception 'Expected 226 app/storage policies, got %',v_policies; end if;
+            if v_tables<>95 then raise exception 'Expected 95 app tables, got %',v_tables; end if;
+            if v_functions<>168 then raise exception 'Expected 168 committed app functions, got %',v_functions; end if;
+            if v_policies<>228 then raise exception 'Expected 228 app/storage policies, got %',v_policies; end if;
             if v_triggers<>42 then raise exception 'Expected 42 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
@@ -476,6 +476,26 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           snap /tmp/bb_after_reapply.txt
           if diff -u /tmp/bb_after_migration.txt /tmp/bb_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: Coach benchmark results verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261016180000_coach_benchmark_results.sql
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261016_coach_benchmark_results_check.sql > /tmp/cbr_check.txt
+          cat /tmp/cbr_check.txt
+          if grep -v ' | ok$' /tmp/cbr_check.txt; then echo 'A coach benchmark results verification check is not ok'; exit 1; fi
+          # owner, coach, member and another gym's people, run as the authenticated role; rolls itself back
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/coach_benchmark_results.sql
+          # the rollback removes everything it added, and applying the migration again restores the same catalog
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/cbr_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_coach_benchmark_results.sql
+          snap /tmp/cbr_after_rollback.txt
+          if diff -q /tmp/cbr_after_migration.txt /tmp/cbr_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/cbr_after_reapply.txt
+          if diff -u /tmp/cbr_after_migration.txt /tmp/cbr_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Prove the rollback file restores the pre-migration state exactly
         shell: bash
         run: |
