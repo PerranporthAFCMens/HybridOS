@@ -5,7 +5,6 @@ import { Button, LinkButton } from '../ui/Button';
 import { Card, Empty } from '../ui/Card';
 import type { TimetableSession } from '../data/classes';
 import { CalendarGrid } from './CalendarGrid';
-import { ClassBlocks } from './ClassBlocks';
 import { ClassDetail } from './ClassDetail';
 import { ClassForm } from './ClassForm';
 import { EditClass } from './EditClass';
@@ -23,7 +22,6 @@ export function Classes() {
   const [adding, setAdding] = useState<{ date: string; start: string } | 'blank' | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [blocksOpen, setBlocksOpen] = useState(false);
   const weekStart = startOfWeek(anchor);
   const step = view === 'day' ? 1 : 7;
   const q = useTimetable(gym.gymId, weekStart);
@@ -43,9 +41,7 @@ export function Classes() {
         <div className="week-actions">
           <Button onClick={() => setAnchor(new Date())}>Today</Button>
           <Button variant="primary" onClick={() => setAdding('blank')}>Add class</Button>
-          <Button onClick={() => setBlocksOpen(true)}>Blocks</Button>
           <LinkButton href={links['class-setup']}>Class setup</LinkButton>
-          <LinkButton href={links.workouts}>Workout builder</LinkButton>
         </div>
       </header>
 
@@ -112,7 +108,6 @@ export function Classes() {
           }}
         />
       )}
-      {blocksOpen && <ClassBlocks onClose={() => setBlocksOpen(false)} />}
       {openedSession && !editingId && <ClassDetail session={openedSession} onClose={() => setOpened(null)} onEdit={() => setEditingId(openedSession.session_id)} />}
       {editingId && (
         <EditClass
