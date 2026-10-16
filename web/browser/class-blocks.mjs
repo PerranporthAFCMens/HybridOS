@@ -1,7 +1,6 @@
-// Browser gate: class blocks. The coach makes a block (a named run of weeks), chooses which classes are in it (one class, or
-// several a week), and changes or deletes it. A class's workout shows which block and week it is in. Signed in as an owner, at phone
-// and desktop width. Supabase is mocked at the network layer. Checks the exact request of every action.
-import { GYM, USER, base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
+// Browser gate: a class's workout shows which block (programme) and week it is in. Making, filling and deleting programmes is checked
+// in programmes.mjs. Signed in as an owner, at phone and desktop width. Supabase is mocked at the network layer.
+import { base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
 
 const pad = (n) => String(n).padStart(2, '0');
 const keyOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -97,86 +96,6 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const c = runChecks();
   const dialog = page.getByRole('dialog');
   await c.has('heading', page.getByRole('heading', { name: 'Classes', level: 1 }));
-
-  // The list of blocks
-  await page.getByRole('button', { name: 'Blocks', exact: true }).click();
-  await c.has('Blocks opens', dialog.getByText('A block is a run of weeks'));
-  await c.has('it lists the block with its week today', dialog.getByText('Week 1 of 6'));
-  c.ok('and its dates', (await dialog.getByText(/6 weeks/).count()) === 1);
-  c.ok('looking wrote nothing', writes.length === 0);
-  c.ok('layout (blocks)', (await page.evaluate(layoutProblems)).length === 0);
-  if (shots) await page.screenshot({ path: `${shots}/class-blocks-list-${name}.png`, fullPage: true });
-
-  // Make a new block: it must have a name and 1 to 52 whole weeks
-  await dialog.getByRole('button', { name: 'New block' }).click();
-  await dialog.getByRole('button', { name: 'Create block' }).click();
-  await c.has('a name is needed', dialog.getByText('Give the block a name, like Hybrid Uppers.'));
-  await dialog.getByLabel('Block name').fill('Lower Block');
-  await dialog.getByLabel('Number of weeks').fill('0');
-  await dialog.getByRole('button', { name: 'Create block' }).click();
-  await c.has('weeks must be 1 to 52', dialog.getByText('Choose between 1 and 52 weeks.'));
-  c.ok('nothing written for refused forms', writes.length === 0);
-  await dialog.getByLabel('Number of weeks').fill('4');
-  await dialog.getByRole('button', { name: 'Create block' }).click();
-  await c.has('the new block opens', dialog.getByRole('heading', { name: 'Lower Block' }));
-  const made = writes.find((w) => w.table === 'class_blocks' && w.method === 'POST');
-  c.ok('create is exact: this gym, name, start day, weeks, who', made && made.body.gym_id === GYM && made.body.name === 'Lower Block' && made.body.weeks === 4 && made.body.starts_on === gymToday && made.body.created_by === USER);
-
-  // Back to the first block and choose its classes
-  await dialog.getByRole('button', { name: 'Back to blocks' }).click();
-  await dialog.getByRole('button', { name: 'Open Hybrid Uppers' }).click();
-  await c.has('the block shows its weeks', dialog.getByText('Week 1', { exact: true }));
-  c.ok('and the classes inside them, grouped by week, with empty weeks kept', (await dialog.getByText('No classes this week.').count()) === 4 && (await dialog.getByRole('checkbox').count()) - (await dialog.getByRole('checkbox', { name: /^Coaches can see/ }).count()) === 5);
-  c.ok('a class outside the block\'s weeks is not offered', (await dialog.getByText(/Far away class/).count()) === 0);
-  c.ok('the classes already in the block are ticked', (await dialog.getByRole('checkbox', { name: /^Morning HIIT/ }).isChecked()) && (await dialog.getByRole('checkbox', { name: /^Evening Hybrid/ }).isChecked()) && !(await dialog.getByRole('checkbox', { name: /^Midweek Hybrid/ }).isChecked()));
-  c.ok('each class shows where its workout stands', (await dialog.getByText('Available: Push day').count()) === 1 && (await dialog.getByText('Draft: Legs').count()) === 1 && (await dialog.getByText('No workout yet').count()) === 3);
-  c.ok('saving is not offered until something changes', await dialog.getByRole('button', { name: 'Classes saved' }).isDisabled());
-  c.ok('layout (block)', (await page.evaluate(layoutProblems)).length === 0);
-  if (shots) await page.screenshot({ path: `${shots}/class-blocks-detail-${name}.png`, fullPage: true });
-  await dialog.getByRole('checkbox', { name: /^Midweek Hybrid/ }).check();
-  await dialog.getByRole('checkbox', { name: /^Evening Hybrid/ }).uncheck();
-  await dialog.getByRole('button', { name: 'Save classes (1 to add, 1 to remove)' }).click();
-  await c.has('saved, and says how many classes are in', dialog.getByText('Saved. 2 classes are in this block.'));
-  const del = writes.find((w) => w.table === 'class_block_sessions' && w.method === 'DELETE');
-  const ins = writes.find((w) => w.table === 'class_block_sessions' && w.method === 'POST');
-  c.ok('the removal is exact: this block, that class only', del && del.query.block_id === 'eq.blk1' && del.query.session_id === 'in.(s2)');
-  c.ok('the addition is exact: only the new class, with the gym', ins && ins.body.length === 1 && ins.body[0].session_id === 's3' && ins.body[0].block_id === 'blk1' && ins.body[0].gym_id === GYM);
-  await dialog.getByRole('button', { name: 'Tick every class' }).click();
-  await dialog.getByRole('button', { name: /^Save classes \(3 to add, 0 to remove\)$/ }).click();
-  await c.has('every class can go in (one class, or several a week)', dialog.getByText('Saved. 5 classes are in this block.'));
-
-  // Filter by class name: the tick buttons only touch what is shown
-  const total = await dialog.getByRole('checkbox', { name: / · / }).count();
-  await dialog.getByLabel('Show', { exact: true }).selectOption('Morning HIIT');
-  const only = await dialog.getByRole('checkbox', { name: / · / }).count();
-  c.ok('the filter shows only that class name', only > 0 && only < total && (await dialog.getByRole('checkbox', { name: /^Morning HIIT/ }).count()) === only);
-  await dialog.getByRole('button', { name: `Untick these ${only}` }).click();
-  await dialog.getByRole('button', { name: new RegExp(`^Save classes \\(0 to add, ${only} to remove\\)$`) }).waitFor();
-  await dialog.getByRole('button', { name: `Tick these ${only}`, exact: true }).click();
-  await dialog.getByRole('button', { name: 'Classes saved' }).waitFor();
-  await dialog.getByLabel('Show', { exact: true }).selectOption('');
-  c.ok('clearing the filter shows every class again', (await dialog.getByRole('checkbox', { name: / · / }).count()) === total);
-
-  // Change the block's details
-  writes.length = 0;
-  await dialog.getByLabel('Block name', { exact: true }).fill('Hybrid Uppers 2');
-  await dialog.getByRole('button', { name: 'Save block details' }).click();
-  await c.has('details saved', dialog.getByText(/Block saved\./));
-  const upd = writes.find((w) => w.table === 'class_blocks' && w.method === 'PATCH');
-  c.ok('the update is exact: this block only', upd && upd.query.id === 'eq.blk1' && upd.body.name === 'Hybrid Uppers 2' && upd.body.weeks === 6 && upd.body.starts_on === gymToday);
-
-  // Delete asks first
-  writes.length = 0;
-  await dialog.getByRole('button', { name: 'Delete this block' }).click();
-  c.ok('deleting asks first and writes nothing yet', writes.length === 0 && (await dialog.getByRole('button', { name: 'Yes, delete it' }).count()) === 1);
-  await dialog.getByRole('button', { name: 'Keep' }).click();
-  c.ok('keeping leaves it', writes.length === 0 && (await dialog.getByRole('button', { name: 'Delete this block' }).count()) === 1);
-  await dialog.getByRole('button', { name: 'Delete this block' }).click();
-  await dialog.getByRole('button', { name: 'Yes, delete it' }).click();
-  await c.has('back to the list', dialog.getByText('A block is a run of weeks'));
-  const gone = writes.find((w) => w.table === 'class_blocks' && w.method === 'DELETE');
-  c.ok('the delete is exact: this block only', gone && gone.query.id === 'eq.blk1' && writes.length === 1);
-  await dialog.getByRole('button', { name: 'Close' }).click();
 
   // A class's workout: the block and week it is in
   writes.length = 0;

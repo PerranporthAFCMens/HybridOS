@@ -1,4 +1,4 @@
-// Browser gate: block benchmarks. An owner opens a block, adds a movement to test with a start day, an end day and which result is
+// Browser gate: block benchmarks. An owner opens a programme (block), adds a movement to test with a start day, an end day and which result is
 // better, and removes it again. Wrong forms are refused in plain words with nothing sent. Signed in as an owner, at phone and desktop
 // width. Supabase is mocked at the network layer; the exact request of each write is checked.
 import { GYM, USER, base, launch, mockSupabase, reply, runChecks, signedInPage, sizes } from './mock.mjs';
@@ -42,12 +42,10 @@ for (const [name, viewport] of Object.entries(sizes)) {
     return false;
   });
 
-  await page.goto(`${base}/classes`);
+  await page.goto(`${base}/programmes`);
   const c = runChecks();
-  const dialog = page.getByRole('dialog');
-  await page.getByRole('button', { name: 'Blocks', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Open Hybrid Uppers' }).click();
-  const section = dialog.getByRole('region', { name: 'Benchmarks' });
+  await page.getByRole('button', { name: 'Open Hybrid Uppers' }).click();
+  const section = page.getByRole('region', { name: 'Benchmarks' });
   await c.has('the block shows its benchmarks', section.getByText('Back Squat'));
   c.ok('with both test days and which result is better', (await section.getByText(/Start test .* · End test .* · Higher is better/).count()) === 1);
   c.ok('a movement already tested is not offered again, a switched-off one never is', (await section.getByLabel('Movement to test').getByRole('option').allTextContents()).join('|') === 'Choose a movement|1 km Row');

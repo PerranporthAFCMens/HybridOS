@@ -130,6 +130,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Today' }).click();
   await c.has('Today returns to this week', page.getByRole('heading', { name: /Strength and conditioning/ }));
+  c.ok('the old Blocks and Workout builder buttons are gone from the header (the tabs above reach them)', (await page.locator('header').getByRole('button', { name: 'Blocks', exact: true }).count()) === 0 && (await page.locator('header').getByRole('link', { name: 'Workout builder', exact: true }).count()) === 0);
   c.ok('Class setup link goes to the new Class setup screen', (await page.getByRole('link', { name: 'Class setup' }).getAttribute('href')) === '/class-setup');
   c.ok(`read-only: no writes (${writes.join(', ') || 'none'})`, writes.length === 0);
 
