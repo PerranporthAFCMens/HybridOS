@@ -44,9 +44,9 @@ jobs:
             select count(*) into v_triggers from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace tn on tn.oid=c.relnamespace join pg_proc p on p.oid=t.tgfoid join pg_namespace fn on fn.oid=p.pronamespace where not t.tgisinternal and (tn.nspname in ('public','private') or fn.nspname in ('public','private'));
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
-            if v_tables<>93 then raise exception 'Expected 93 app tables, got %',v_tables; end if;
+            if v_tables<>94 then raise exception 'Expected 94 app tables, got %',v_tables; end if;
             if v_functions<>167 then raise exception 'Expected 167 committed app functions, got %',v_functions; end if;
-            if v_policies<>224 then raise exception 'Expected 224 app/storage policies, got %',v_policies; end if;
+            if v_policies<>226 then raise exception 'Expected 226 app/storage policies, got %',v_policies; end if;
             if v_triggers<>42 then raise exception 'Expected 42 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>1 then raise exception 'Expected 1 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
@@ -195,10 +195,13 @@ jobs:
           psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/class_blocks.sql
           snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
           snap /tmp/cb_after_migration.txt
+          # the block benchmarks migration (20261016170000) points at blocks, so it comes off first and goes back on last
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_block_benchmarks.sql
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261012_drop_class_blocks.sql
           snap /tmp/cb_after_rollback.txt
           if diff -q /tmp/cb_after_migration.txt /tmp/cb_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261016170000_block_benchmarks.sql
           snap /tmp/cb_after_reapply.txt
           if diff -u /tmp/cb_after_migration.txt /tmp/cb_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Lift leaderboard verification, persona tests and rollback
@@ -422,13 +425,15 @@ jobs:
           # the rollback removes everything it added, and applying the migration again restores the same catalog
           snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
           snap /tmp/mv_after_migration.txt
-          # the workout level migration (20261016160000) points at movements, so it comes off first and goes back on last
+          # the workout level and block benchmark migrations point at movements, so they come off first and go back on last
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_block_benchmarks.sql
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_workout_level_and_movement_link.sql
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_movement_library.sql
           snap /tmp/mv_after_rollback.txt
           if diff -q /tmp/mv_after_migration.txt /tmp/mv_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261016160000_workout_level_and_movement_link.sql
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/migrations/20261016170000_block_benchmarks.sql
           snap /tmp/mv_after_reapply.txt
           if diff -u /tmp/mv_after_migration.txt /tmp/mv_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Workout level and movement link verification, persona tests and rollback
@@ -451,6 +456,26 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           snap /tmp/wl_after_reapply.txt
           if diff -u /tmp/wl_after_migration.txt /tmp/wl_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: Block benchmarks verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261016170000_block_benchmarks.sql
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261016_block_benchmarks_check.sql > /tmp/bb_check.txt
+          cat /tmp/bb_check.txt
+          if grep -v ' | ok$' /tmp/bb_check.txt; then echo 'A block benchmarks verification check is not ok'; exit 1; fi
+          # coach, owner, member and another gym's people, run as the authenticated role; rolls itself back
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/block_benchmarks.sql
+          # the rollback removes everything it added, and applying the migration again restores the same catalog
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/bb_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_block_benchmarks.sql
+          snap /tmp/bb_after_rollback.txt
+          if diff -q /tmp/bb_after_migration.txt /tmp/bb_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/bb_after_reapply.txt
+          if diff -u /tmp/bb_after_migration.txt /tmp/bb_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Prove the rollback file restores the pre-migration state exactly
         shell: bash
         run: |
