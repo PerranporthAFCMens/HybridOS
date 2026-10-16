@@ -8,6 +8,7 @@ import { listTrackedLifts } from '../data/lifts';
 import { getBlocksOfClasses } from '../data/classBlocks';
 import { groupClassWorkouts } from './classwork';
 import { pbValueText } from './pb';
+import { MyBenchmarks } from './MyBenchmarks';
 import { dayLabel, dayOf, timeOf } from '../member/calc';
 import type { MemberCtx } from '../member/useMember';
 import { coachNote, comingUp, dueNow, planDay } from './calc';
@@ -84,6 +85,8 @@ export function Train() {
           ))}
         </section>
       )}
+
+      <MyBenchmarks blocks={[...new Map([...(blocks.data ?? new Map()).values()].map((b) => [b.id, b])).values()]} today={d.today} />
 
       <section className="mem-card" aria-label="Today">
         <h2>Today</h2>
