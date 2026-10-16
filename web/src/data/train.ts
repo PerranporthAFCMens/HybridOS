@@ -134,18 +134,18 @@ export interface ExerciseInput { name: string; tracking: Tracking; note: string 
  * be recorded does not fail the save; it is reported.
  */
 export async function saveExercise(
-  ctx: { gymId: string; userId: string; sessionId: string | null; title: string; position: number; assignmentId?: string | null; classSessionId?: string | null },
+  ctx: { gymId: string; userId: string; sessionId: string | null; title: string; position: number; assignmentId?: string | null; classSessionId?: string | null; level?: string | null; movementId?: string | null },
   e: ExerciseInput,
 ): Promise<{ sessionId: string; entryId: string; won: Won[]; pbError: string | null }> {
   const fail = (err: unknown): never => { throw new Error(err instanceof Error ? err.message : (err as { message?: string }).message ?? 'Could not save the exercise.', { cause: err }); };
   let sessionId = ctx.sessionId;
   if (!sessionId) {
-    const s = await supabase.from('workout_sessions').insert({ gym_id: ctx.gymId, user_id: ctx.userId, title: ctx.title, performed_at: new Date().toISOString(), assignment_id: ctx.assignmentId ?? null, class_session_id: ctx.classSessionId ?? null }).select('id').single();
+    const s = await supabase.from('workout_sessions').insert({ gym_id: ctx.gymId, user_id: ctx.userId, title: ctx.title, performed_at: new Date().toISOString(), assignment_id: ctx.assignmentId ?? null, class_session_id: ctx.classSessionId ?? null, level: ctx.level ?? null }).select('id').single();
     if (s.error) fail(s.error);
     sessionId = s.data?.id ?? null;
   }
   if (!sessionId) return fail(new Error('Could not start the workout.'));
-  const r = await supabase.from('workout_entries').insert({ session_id: sessionId, gym_id: ctx.gymId, user_id: ctx.userId, exercise_name: e.name, tracking_type: dbTracking(e.tracking), notes: e.note, position: ctx.position }).select('id').single();
+  const r = await supabase.from('workout_entries').insert({ session_id: sessionId, gym_id: ctx.gymId, user_id: ctx.userId, exercise_name: e.name, tracking_type: dbTracking(e.tracking), notes: e.note, position: ctx.position, movement_id: ctx.movementId ?? null }).select('id').single();
   if (r.error || !r.data) return fail(r.error ?? new Error('Could not save the exercise.'));
   const entryId = r.data.id;
   const ins = await supabase.from('workout_sets').insert(e.sets.map((st, j) => ({ entry_id: entryId, set_number: j + 1, ...st })));
@@ -172,9 +172,9 @@ export async function removeExercise(entryId: string): Promise<void> {
 }
 
 /** Finish: name and note the workout, and mark the coach's workout done. Returns whether that was marked. */
-export async function completeWorkout(input: { sessionId: string | null; title: string; notes: string | null; assignment: { id: string; rpe: number | null; note: string | null; result: unknown } | null }): Promise<{ marked: boolean }> {
+export async function completeWorkout(input: { sessionId: string | null; title: string; notes: string | null; level?: string | null; assignment: { id: string; rpe: number | null; note: string | null; result: unknown } | null }): Promise<{ marked: boolean }> {
   if (input.sessionId) {
-    const u = await supabase.from('workout_sessions').update({ title: input.title, notes: input.notes, updated_at: new Date().toISOString() }).eq('id', input.sessionId);
+    const u = await supabase.from('workout_sessions').update({ title: input.title, notes: input.notes, ...(input.level ? { level: input.level } : {}), updated_at: new Date().toISOString() }).eq('id', input.sessionId);
     if (u.error) throw new Error(`Your exercises are saved, but the workout could not be finished: ${u.error.message}`);
   }
   let marked = false;

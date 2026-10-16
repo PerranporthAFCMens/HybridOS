@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { loadMovements } from '../data/movements';
-import { LEVELS, LEVEL_LABEL, type Level } from '../movements/calc';
+import { LEVELS, LEVEL_LABEL, movementKey, type Level } from '../movements/calc';
 import { anyLevels, helpFor, isLevel, movementIndex } from './levels';
 import { completeWorkout, getMyAssignment, getMySession, listLastTimes, listMyPbs, markStarted, removeExercise, saveExercise, type LastTime, type SessionExercise } from '../data/train';
 import { getMyClassWorkout } from '../data/classWorkouts';
@@ -132,6 +132,8 @@ function Logger({ id, classSessionId, title, snapshot, source, last, seed }: { i
   const [level, setLevelState] = useState<Level | null>(() => { try { const v = localStorage.getItem(levelKey); return isLevel(v) ? v : null; } catch { return null; } });
   const chooseLevel = (l: Level) => { setLevelState(l); try { localStorage.setItem(levelKey, l); } catch { /* remembering the level is a convenience */ } };
   const showLevels = anyLevels(index, acts.map((a) => a.name));
+  // Only a workout that offers levels records one, so an old remembered choice is not stamped on an unrelated workout.
+  const savedLevel = showLevels ? level : null;
 
   useEffect(() => { if (assigned) void markStarted(id); }, [id, assigned]);
   // Once the workout is finished the draft is cleared for good: a later render must never write it back.
@@ -179,7 +181,7 @@ function Logger({ id, classSessionId, title, snapshot, source, last, seed }: { i
     if (!entry) { if (!quiet) setCardError((e) => ({ ...e, [a.key]: 'Add some numbers first.' })); return false; }
     setSaving(a.key);
     try {
-      const res = await saveExercise({ gymId: gym.gymId, userId, sessionId, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length, assignmentId: assigned ? id : null, classSessionId: classSessionId ?? null }, entry);
+      const res = await saveExercise({ gymId: gym.gymId, userId, sessionId, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length, assignmentId: assigned ? id : null, classSessionId: classSessionId ?? null, level: savedLevel, movementId: index.get(movementKey(entry.name))?.id ?? null }, entry);
       setSessionId(res.sessionId);
       patch(a.key, { entryId: res.entryId, savedSets: a.sets.map((s) => setText(a.tracking, s)).filter(Boolean) });
       setWon((w) => [...w, ...res.won]);
@@ -235,7 +237,7 @@ function Logger({ id, classSessionId, title, snapshot, source, last, seed }: { i
         if (!r.ok) return setError(r.message);
         const entry = r.entries[0];
         if (!entry) continue;
-        const res = await saveExercise({ gymId: gym.gymId, userId, sessionId: session, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length + (anySaved ? 1 : 0), assignmentId: assigned ? id : null, classSessionId: classSessionId ?? null }, entry);
+        const res = await saveExercise({ gymId: gym.gymId, userId, sessionId: session, title: titleFor(entry.name), position: acts.filter((x) => x.entryId).length + (anySaved ? 1 : 0), assignmentId: assigned ? id : null, classSessionId: classSessionId ?? null, level: savedLevel, movementId: index.get(movementKey(entry.name))?.id ?? null }, entry);
         session = res.sessionId;
         anySaved = true;
         newWins.push(...res.won);
@@ -245,7 +247,7 @@ function Logger({ id, classSessionId, title, snapshot, source, last, seed }: { i
       setSessionId(session);
       if (!assigned && !anySaved) return setError('Add some numbers first, or go back.');
       const firstName = acts.find((a) => a.name.trim())?.name.trim() ?? '';
-      const result = await completeWorkout({ sessionId: session, title: titleFor(firstName), notes: notes.trim() || null, assignment: !assigned ? null : { id, rpe: rpe ? Number(rpe) : null, note: assignmentNote(notes, overview.skipped, overview.swapped), result: resultJson(buildResult(acts.map((a) => ({ ...a, entered: !!a.entryId || hasEntered(a) })))) } });
+      const result = await completeWorkout({ sessionId: session, title: titleFor(firstName), notes: notes.trim() || null, level: savedLevel, assignment: !assigned ? null : { id, rpe: rpe ? Number(rpe) : null, note: assignmentNote(notes, overview.skipped, overview.swapped), result: resultJson(buildResult(acts.map((a) => ({ ...a, entered: !!a.entryId || hasEntered(a) })))) } });
       finished.current = true;
       try { localStorage.removeItem(key); } catch { /* nothing to clear */ }
       await refresh();

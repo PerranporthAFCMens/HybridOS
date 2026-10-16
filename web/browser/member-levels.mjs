@@ -22,11 +22,23 @@ process.env.MOCK_ROLE = 'member';
 for (const [name, viewport] of Object.entries(sizes)) {
   for (const withLevels of [true, false]) {
     const { ctx, page, errors } = await signedInPage(browser, { ...viewport });
-    await mockSupabase(page, async ({ route, path, url }) => {
+    const writes = [];
+    await mockSupabase(page, async ({ route, path, url, method, body }) => {
       if (path.endsWith('/rpc/member_class_schedule')) return reply(route, []);
       if (path.endsWith('/class_session_workouts')) return reply(route, [{ session_id: 'c1', title: 'Hybrid benchmark', workout_snapshot: snapshot, class_sessions: { name: 'Hybrid 6pm', starts_at: hrs(-3) } }].filter((w) => !url.searchParams.get('session_id') || url.searchParams.get('session_id') === `eq.${w.session_id}`));
       if (path.endsWith('/movements')) return reply(route, movements);
       if (path.endsWith('/movement_levels')) return reply(route, withLevels ? levels : []);
+      if (path.endsWith('/workout_sessions')) {
+        if (method === 'POST') { writes.push(`session ${JSON.stringify(body)}`); return reply(route, [{ id: 's9' }]); }
+        if (method === 'PATCH') { writes.push(`PATCH session ${JSON.stringify(body)}`); return reply(route, []); }
+        return reply(route, []);
+      }
+      if (path.endsWith('/workout_entries')) {
+        if (method === 'POST') { writes.push(`entry ${JSON.stringify(body)}`); return reply(route, [{ id: 'e1' }]); }
+        return reply(route, []);
+      }
+      if (path.endsWith('/workout_sets') && method === 'POST') { writes.push('sets'); return reply(route, []); }
+      if (path.endsWith('/personal_bests')) return reply(route, []);
       if (path.endsWith('/memberships')) return reply(route, []);
       if (path.endsWith('/pt_appointments')) return reply(route, []);
       return false;
@@ -53,6 +65,14 @@ for (const [name, viewport] of Object.entries(sizes)) {
     } else {
       c.ok('no level choice when no movement has level wording', (await group.count()) === 0);
     }
+    await page.getByLabel('Sled Push set 1 Distance').fill('20');
+    await page.getByRole('button', { name: 'Finish workout' }).click();
+    await c.has('the workout saves', page.getByText('Class workout saved.'));
+    const sess = writes.find((w) => w.startsWith('session '));
+    const entry = writes.find((w) => w.startsWith('entry '));
+    c.ok(withLevels ? 'the chosen level is saved with the workout' : 'no level is saved when no movement has level wording', !!sess && sess.includes(withLevels ? '"level":"rx"' : '"level":null'));
+    c.ok('the exercise is linked to its library movement', !!entry && entry.includes('"movement_id":"mv1"'));
+    c.ok('an exercise the library does not know is not linked', !writes.some((w) => w.startsWith('entry ') && w.includes('"exercise_name":"Plank"') && !w.includes('"movement_id":null') && !w.includes('"movement_id":"mv2"')));
     const noSideways = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
     c.ok('no sideways scroll', noSideways);
     c.ok('no page errors', errors.length === 0);
