@@ -175,7 +175,7 @@ def hand_clean_addresses_to_app():
  # The old pages opened by their real name (classes.html, or inside the old frame) are untouched. Live (Vercel) rewrites the address before any file is looked for, so nothing changes there.
  if site_root()=='/':return
  hand='<script>/* dev preview: this address belongs to the app */if(!/\\.html$/.test(location.pathname)&&!/\\/$/.test(location.pathname))location.replace(location.pathname+"/"+location.search+location.hash)</script>'
- for name in ('classes','community','staff','class-setup','communications'):
+ for name in ('classes','community','staff','class-setup','communications','auth-return','sign-out'):
   f=OUT/(name+'.html')
   if not f.exists():continue
   t=f.read_text(encoding='utf-8')
