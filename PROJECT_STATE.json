@@ -14,9 +14,9 @@
     "note": "Production release of 9 October 2026 completed at e7fe129c60169250204f61ad6ac6cdea3127c006 (Manual production release run 232). main is an ancestor of dev; dev is ahead only by the release-record pull request that restores the hold."
   },
   "release_gate": {
-    "production_hold": false,
-    "production_promotion_allowed": true,
-    "reason": "Owner authorised a production release on 18 October 2026 (the rebuilt sign-in, choose-gym, password-reset, invite and sign-out screens with the old addresses redirected to them, plus the waitlist, movement library, level picker, benchmarks and the staff My clients area). Stripe stays on its test keys. The hold is cleared only for this release and is restored straight after it."
+    "production_hold": true,
+    "production_promotion_allowed": false,
+    "reason": "Production release c85b018f1c29c8f35330a813107c7a5e887cc683 (18 October 2026) is complete. Promotion is re-held until a future release is deliberately prepared and re-authorised."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
