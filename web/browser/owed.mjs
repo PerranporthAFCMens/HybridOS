@@ -16,7 +16,7 @@ function layoutProblems() {
     const name = `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]}`;
     if (cs.position !== 'fixed' && cs.position !== 'absolute' && (r.right > vw + 1 || r.left < -1)) problems.push(`${name} runs off the screen`);
     const interactive = ['button', 'select', 'input', 'textarea'].includes(e.tagName.toLowerCase()) || e.matches('.btn');
-    if (interactive && !e.closest('.menu-btn') && !e.closest('.report-tab') && r.height < 40) problems.push(`${name} only ${Math.round(r.height)}px tall`);
+    if (interactive && !e.closest('.menu-btn') && r.height < 40) problems.push(`${name} only ${Math.round(r.height)}px tall`);
   }
   return problems;
 }
@@ -80,9 +80,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
   if (shots) await page.screenshot({ path: `${shots}/owed-dashboard-${name}.png`, fullPage: true });
   await alertBox.getByRole('link', { name: 'See who owes' }).click();
   await c.has('the link opens Reports on Money owed', page.getByRole('button', { name: /^Priya Nair, owes £70\.00/ }));
-  c.ok('with that tab selected', (await page.getByRole('tab', { name: 'Money owed' }).getAttribute('aria-selected')) === 'true');
+  c.ok('with that tab selected', (await page.getByLabel('Report section').inputValue()) === 'owed');
   await page.goto(`${base}/reports`);
-  await page.getByRole('tab', { name: 'Money owed' }).click();
+  await page.getByLabel('Report section').selectOption({ label: 'Money owed' });
   await c.has('the list opens with the biggest debt first', page.getByRole('button', { name: /^Priya Nair, owes £70\.00, 2 missed payments/ }));
   c.ok('the total, the people and the missed payments add up', (await page.getByTestId('owed-total').innerText()) === '£120.00' && (await page.getByText('People not financial').locator('..').innerText()).includes('2') && (await page.getByText('Missed payments', { exact: true }).locator('..').innerText()).includes('3'));
   const names = await page.locator('.owed-row b').allInnerTexts();
@@ -155,13 +155,13 @@ for (const [name, viewport] of Object.entries(sizes)) {
   // Everyone is financial
   mode = 'empty';
   await page.reload();
-  await page.getByRole('tab', { name: 'Money owed' }).click();
+  await page.getByLabel('Report section').selectOption({ label: 'Money owed' });
   await c.has('an empty list says so', page.getByText('Everyone is financial. Nobody has a missed payment.'));
 
   // Not allowed
   mode = 'denied';
   await page.reload();
-  await page.getByRole('tab', { name: 'Money owed' }).click();
+  await page.getByLabel('Report section').selectOption({ label: 'Money owed' });
   await c.has('someone who is not an owner or admin is told so', page.getByText('Only owners and admins can see money owed.'));
 
   c.ok('no page errors', errors.length === 0);

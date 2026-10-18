@@ -63,7 +63,7 @@ const STATES = {
   workouts: async (page) => { await page.goto(`${base}/workouts`); await page.getByText('No workouts yet. Build your first one.').waitFor(); },
   movements: async (page) => { await page.goto(`${base}/movements`); await page.getByRole('heading', { name: 'Movements', level: 1 }).waitFor(); },
   'workout editor': async (page) => { await page.goto(`${base}/workouts`); await page.getByRole('button', { name: 'New workout' }).click(); await page.getByLabel('Workout name').waitFor(); },
-  'report builder': async (page) => { await page.goto(`${base}/reports`); await page.getByRole('tab', { name: 'Report builder', exact: true }).click(); await page.getByLabel('Look at').waitFor(); },
+  'report builder': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Report builder' }); await page.getByLabel('Look at').waitFor(); },
   'staff day': async (page) => { await page.goto(`${base}/s/today`); await page.getByText('Next up').waitFor(); },
   'staff roster': async (page) => { await page.goto(`${base}/s/today`); await page.getByRole('button', { name: 'See who is booked' }).click(); await page.getByRole('button', { name: /^Attended: / }).waitFor(); },
   'staff timetable': async (page) => { await page.goto(`${base}/s/timetable`); await page.getByRole('heading', { name: 'Gym timetable' }).waitFor(); await page.getByText('Strength and conditioning').first().waitFor(); },
@@ -129,7 +129,13 @@ function audit() {
 const browser = await launch();
 let allOk = true;
 const c = runChecks();
+// AUDIT_SIZES (for example "desktop") runs only those widths, so CI can run the widths side by side.
+const only = process.env.AUDIT_SIZES?.split(',');
+// AUDIT_PART="1/2" runs every second screen starting with the first ("2/2": the others), so one width can be split in two.
+const partMatch = /^(\d+)\/(\d+)$/.exec(process.env.AUDIT_PART ?? '');
+const part = partMatch ? { n: +partMatch[1] - 1, of: +partMatch[2] } : null;
 for (const [sizeName, viewport] of Object.entries(SIZES)) {
+  if (only && !only.includes(sizeName)) continue;
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, handle);
   await page.addInitScript(() => {
@@ -138,7 +144,8 @@ for (const [sizeName, viewport] of Object.entries(SIZES)) {
     s.textContent = 'input[type=date]::-webkit-datetime-edit{display:inline-block;min-width:330px}';
     document.addEventListener('DOMContentLoaded', () => document.head.appendChild(s));
   });
-  for (const [stateName, go] of Object.entries(STATES)) {
+  for (const [stateIndex, [stateName, go]] of Object.entries(STATES).entries()) {
+    if (part && stateIndex % part.of !== part.n) continue;
     const navs = [];
     const onNav = (fr) => { if (fr === page.mainFrame()) navs.push(fr.url()); };
     page.on('framenavigated', onNav);

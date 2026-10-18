@@ -123,13 +123,13 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('the members line has its latest value labelled', (await members.locator('.chart-end').count()) === 1);
   c.ok('layout (overview charts)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/reports-charts-overview-${name}.png`, fullPage: true });
-  c.ok('old page link still there', (await page.getByRole('link', { name: 'Open the detailed reports' }).getAttribute('href')).includes('reporting.html'));
-  c.ok('nine tabs, Money owed among them', (await page.getByRole('tab').count()) === 9 && (await page.getByRole('tab', { name: 'Money owed' }).count()) === 1);
-  c.ok('Overview is the first tab', (await page.getByRole('tab', { name: 'Overview', exact: true }).getAttribute('aria-selected')) === 'true');
+  c.ok('no link to the old reporting page', (await page.getByRole('link', { name: 'Open the detailed reports' }).count()) === 0);
+  c.ok('nine tabs, Money owed among them', (await page.getByLabel('Report section').locator('option').count()) === 9 && (await page.getByLabel('Report section').locator('option', { hasText: 'Money owed' }).count()) === 1);
+  c.ok('Overview is the first tab', (await page.getByLabel('Report section').inputValue()) === 'overview');
 
   // The other tabs: figures, tables and the heatmap (all from the same mocked data)
   const stat = (label) => page.locator('.card.stat', { hasText: label }).locator('.stat-num');
-  await page.getByRole('tab', { name: 'Memberships', exact: true }).click();
+  await page.getByLabel('Report section').selectOption({ label: 'Memberships' });
   await c.has('memberships tab', page.getByRole('heading', { name: 'Membership plans' }));
   c.ok('memberships: active, MRR, plans, new joins', (await stat('Active').first().textContent()) === '3' && (await stat('MRR').textContent()) === '£130' && (await stat('Plans').textContent()) === '2' && (await stat('New joins').textContent()) === '1');
   c.ok('memberships: plan rows with share', (await page.locator('tbody tr').first().textContent()).includes('Hybrid Monthly with a long plan name') && (await page.locator('tbody tr').first().textContent()).includes('67%'));
@@ -142,7 +142,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('members over time line', page.getByRole('figure', { name: 'Members over time' }));
   c.ok('layout (memberships tab)', (await page.evaluate(layoutProblems)).length === 0);
 
-  await page.getByRole('tab', { name: 'Classes', exact: true }).click();
+  await page.getByLabel('Report section').selectOption({ label: 'Classes' });
   await c.has('classes tab', page.getByRole('heading', { name: 'Class heatmap' }));
   c.ok('classes: fill, attendances, no-shows, sessions', (await stat('Avg fill').textContent()) === '10%' && (await stat('Attendances').textContent()) === '1' && (await stat('No-shows').textContent()) === '1' && (await stat('Sessions').textContent()) === '2');
   c.ok('the bars are actually drawn (the coloured part has a width)', ((await page.locator('.bar-row .fill').first().boundingBox())?.width ?? 0) > 20);
@@ -170,14 +170,14 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('layout (classes tab)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/reports-tabs-classes-${name}.png`, fullPage: true });
 
-  await page.getByRole('tab', { name: 'Members', exact: true }).click();
+  await page.getByLabel('Report section').selectOption({ label: 'Members' });
   await c.has('members tab', page.getByRole('heading', { name: 'Most active members' }));
   c.ok('members: active, attending, attendances, no-show rate', (await stat('Active gym members').textContent()) === '2' && (await stat('Members attending').textContent()) === '1' && (await stat('Total attendances').textContent()) === '1' && (await stat('No-show rate').textContent()) === '50%');
   c.ok('most active: ranked with names', (await page.locator('tbody tr').first().textContent()).includes('1') && (await page.locator('tbody tr').first().textContent()).includes('Alex Joiner'));
   const topCsv = await saved(page, () => page.getByRole('button', { name: 'CSV' }).first().click());
   c.ok('most active CSV has the header and the protected name', topCsv.bytes.toString('utf8').startsWith('﻿Rank,Member,Attended,Total activity,No-shows\r\n') && topCsv.bytes.toString('utf8').includes(`"'=HYPERLINK(""http://evil.example"")"`));
 
-  await page.getByRole('tab', { name: 'Payments', exact: true }).click();
+  await page.getByLabel('Report section').selectOption({ label: 'Payments' });
   await c.has('payments tab', page.getByRole('heading', { name: 'Bad debtors / payment recovery' }));
   c.ok('payments: failed, outstanding, records', (await stat('Failed / at-risk payments').textContent()) === '1' && (await stat('Outstanding').textContent()) === '£59.99' && (await stat('Payment records').textContent()) === '130');
   c.ok('payments: the failed one with its reason', (await page.locator('tbody tr').first().textContent()).includes('insufficient_funds'));
@@ -193,7 +193,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   if (shots) await page.screenshot({ path: `${shots}/reports-charts-payments-${name}.png`, fullPage: true });
 
   // Accounting export for Xero
-  await page.getByRole('tab', { name: 'Accounting (Xero)', exact: true }).click();
+  await page.getByLabel('Report section').selectOption({ label: 'Accounting (Xero)' });
   await c.has('xero tab', page.getByRole('heading', { name: 'Accounting export for Xero' }));
   c.ok('xero: how many payments and the total', (await stat('Payments received').textContent()) === '129' && (await stat('Total received').textContent()) === '£5,805.00');
   await c.has('invoices wait for the account code and tax type', page.getByText('Enter your sales account code from Xero'));
@@ -217,11 +217,11 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('layout (xero tab)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/reports-xero-${name}.png`, fullPage: true });
   await page.reload();
-  await page.getByRole('tab', { name: 'Accounting (Xero)', exact: true }).click();
+  await page.getByLabel('Report section').selectOption({ label: 'Accounting (Xero)' });
   await c.has('the details are remembered after a reload', page.getByLabel('Sales account code'));
   c.ok('account code remembered', (await page.getByLabel('Sales account code').inputValue()) === '200' && (await page.getByLabel('Tax type').inputValue()) === 'No VAT' && (await page.getByLabel('VAT included in payments (%)').inputValue()) === '20');
 
-  await page.getByRole('tab', { name: 'Report library', exact: true }).click();
+  await page.getByLabel('Report section').selectOption({ label: 'Report library' });
   const pick = page.getByLabel('Report', { exact: true });
   const paper = page.getByLabel('What you will download');
   await c.has('library opens with a report to choose', pick);
