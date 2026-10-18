@@ -95,3 +95,15 @@ export async function signUpForInvite(email: string, password: string, name: str
   if (data.session) return 'signed-in';
   return data.user && data.user.identities?.length === 0 ? 'exists' : 'confirm';
 }
+
+/** Confirms a new account with the code from the email. On success the person is signed in. Used by every sign-up screen. */
+export async function confirmWithCode(email: string, code: string): Promise<void> {
+  const { error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code, type: 'email' });
+  if (error) throw new Error(/expired|invalid/i.test(error.message) ? 'That code is wrong or has run out. Check it, or ask for a new one.' : error.message);
+}
+
+/** Sends a fresh code to the same address. `redirectTo` is the page the link in the same email opens. */
+export async function resendCode(email: string, redirectTo: string): Promise<void> {
+  const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase(), options: { emailRedirectTo: redirectTo } });
+  if (error) throw new Error(error.message);
+}

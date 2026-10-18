@@ -1,13 +1,15 @@
 import { siteUrl } from '../app/site';
+import { resendCode } from '../data/auth';
+import { EmailCodeForm } from '../auth/EmailCodeForm';
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { confirmWithCode, createAccount, resendCode, currentUserId, getJoinGym, getJoinStyle, getPaymentMode, getSignupDocuments, joinWithPlan, myMembershipAt, preparePayment, saveJoinDetails, signInToJoin, type PaymentSession } from '../data/join';
+import { createAccount, joinReturnUrl, currentUserId, getJoinGym, getJoinStyle, getPaymentMode, getSignupDocuments, joinWithPlan, myMembershipAt, preparePayment, saveJoinDetails, signInToJoin, type PaymentSession } from '../data/join';
 import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { DateInput, Field, FieldRow, Input, PasswordInput } from '../ui/Field';
 import {
-  EMPTY_DETAILS, STEP_TITLES, canPayOnline, checkAbout, checkAccount, checkAddress, checkCode, cleanCode, checkEmergency, checkGuardian, checkPayer, isFreePlan, isUnder18, payTermsText, planPrice, stepsFor, toRpcArgs,
+  EMPTY_DETAILS, STEP_TITLES, canPayOnline, checkAbout, checkAccount, checkAddress, checkEmergency, checkGuardian, checkPayer, isFreePlan, isUnder18, payTermsText, planPrice, stepsFor, toRpcArgs,
   type JoinDetails, type JoinPlan, type StepId,
 } from './calc';
 import { termsSentence } from '../plans/terms';
@@ -54,7 +56,6 @@ export function Join() {
   const [msg, setMsg] = useState<{ text: string; good: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
-  const [code, setCode] = useState('');
   const [joined, setJoined] = useState<{ planName: string; gymId: string; confirming?: boolean } | null>(null);
   const [chosen, setChosen] = useState<JoinPlan | null>(null);
   const [payer, setPayer] = useState({ email: '' });
@@ -133,27 +134,10 @@ export function Join() {
     });
   };
 
-  // The 6-digit code from the confirmation email: confirms the account and signs the person in, right here on this page.
-  const submitCode = (e: FormEvent) => {
-    e.preventDefault();
-    void run(checkCode(code), async () => {
-      await confirmWithCode(acct.email, cleanCode(code));
-      setCheckEmail(false);
-      setCode('');
-      setUserId(await currentUserId());
-      setStep('about');
-    });
-  };
-  const sendAnotherCode = () => {
-    void run(null, async () => {
-      await resendCode(acct.email, slug);
-      setMsg({ text: 'A new code is on its way. Use the newest email.', good: true });
-    });
-  };
-  const useAnotherEmail = () => {
-    setMsg(null);
-    setCode('');
+  const codeConfirmed = async () => {
     setCheckEmail(false);
+    setUserId(await currentUserId());
+    setStep('about');
   };
 
   const submitAbout = (e: FormEvent) => {
@@ -247,20 +231,7 @@ export function Join() {
 
       <Card>
         {step === 'account' && checkEmail && (
-          <form onSubmit={submitCode} noValidate>
-            <h2>Check your email</h2>
-            <p>We sent a code to <b>{acct.email}</b>. Type it in here to confirm your email address and carry on.</p>
-            <Field label="Code from the email" htmlFor="join-code">
-              <Input id="join-code" inputMode="numeric" autoComplete="one-time-code" maxLength={12} value={code} onChange={(e) => setCode(e.target.value)} />
-            </Field>
-            {alertBox}
-            <div className="join-nav">
-              <Button onClick={useAnotherEmail} disabled={busy}>Use a different email</Button>
-              <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Checking…' : 'Confirm'}</Button>
-            </div>
-            <p><Button onClick={sendAnotherCode} disabled={busy}>Send me a new code</Button></p>
-            <p className="muted small">It can take a minute. Check your spam folder too.</p>
-          </form>
+          <EmailCodeForm email={acct.email} resend={() => resendCode(acct.email, joinReturnUrl(slug))} onConfirmed={codeConfirmed} onUseOtherEmail={() => setCheckEmail(false)} />
         )}
 
         {step === 'account' && !checkEmail && (
