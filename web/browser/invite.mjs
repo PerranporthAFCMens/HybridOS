@@ -25,6 +25,12 @@ for (const [name, viewport] of Object.entries(sizes)) {
     await c.has('create account is offered', page.getByRole('button', { name: 'Create account' }).first());
     await page.getByRole('button', { name: 'Create account' }).last().click();
     await c.has('an empty password is refused', page.getByText('Enter a password.'));
+    // An address that already has an account: Supabase answers with no session and no identities, and sends no email.
+    await page.route('**/auth/v1/signup*', (route) => reply(route, { id: 'u1', aud: 'authenticated', email: 'new.admin@example.test', identities: [], created_at: '2026-01-01T00:00:00Z' }));
+    await page.locator('#invite-password').fill('a-long-password');
+    await page.getByRole('button', { name: 'Create account' }).last().click();
+    await c.has('an existing account is told to sign in', page.getByText(/already has an account, so no confirmation email was sent/));
+    await c.has('the form switches to sign in', page.getByRole('button', { name: 'Sign in' }).last());
     c.ok('no overflow', !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)));
     c.ok('no page errors', errors.length === 0);
     await ctx.close();

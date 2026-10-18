@@ -83,7 +83,8 @@ export async function claimAccessInvite(token: string): Promise<ClaimedInvite> {
 }
 
 /** Creates the invited person's account. Returns true when they are signed in straight away (no email confirmation needed). */
-export async function signUpForInvite(email: string, password: string, name: string, redirectTo: string): Promise<boolean> {
+/** 'exists': Supabase hides an address that already has an account (no error, no session, no email), so the screen must say so. */
+export async function signUpForInvite(email: string, password: string, name: string, redirectTo: string): Promise<'signed-in' | 'confirm' | 'exists'> {
   const display = name || email.split('@')[0];
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -91,5 +92,6 @@ export async function signUpForInvite(email: string, password: string, name: str
     options: { emailRedirectTo: redirectTo, data: { display_name: display, full_name: display, signup_type: 'staff' } },
   });
   if (error) throw error;
-  return !!data.session;
+  if (data.session) return 'signed-in';
+  return data.user && data.user.identities?.length === 0 ? 'exists' : 'confirm';
 }
