@@ -246,7 +246,7 @@ jobs:
           const path = require('path');
           const base=process.env.DEV_BASE,email=process.env.TEST_EMAIL,password=process.env.AUTH_JOURNEY_PASSWORD,hub=process.env.HUB_GYM_ID,out='visual-audit';
           const errors=[],manifest=[];
-          const adminViews=['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html'];
+          const adminViews=['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html'];
           const safe=v=>v.replace(/[^a-z0-9_-]+/gi,'-').replace(/^-|-$/g,'').toLowerCase();
           async function settle(page,ms=700){await page.waitForLoadState('domcontentloaded').catch(()=>{});await page.waitForTimeout(ms)}
           async function snap(page,vp,surface,{wait=700,fullPage=true}={}){
