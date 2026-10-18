@@ -10,6 +10,7 @@ name: HybridOne protected routing browser
 # 18 October release exact-SHA trigger (same reason).
 # 18 October release, second candidate (auth journey updated for the new sign-in screens).
 # 18 October release, third candidate (dev preview hands the switch-gym address to the new chooser).
+# 18 October release, fourth candidate (auth journey accepts the trailing slash the dev preview adds).
 # 15 October release exact-SHA trigger (same reason).
 
 on:

@@ -12,6 +12,7 @@ name: HybridOne Auth journey browser
 # 14 October release exact-SHA trigger (same reason).
 # 18 October release exact-SHA trigger (same reason).
 # 18 October release, third candidate (dev preview hands the switch-gym address to the new chooser).
+# 18 October release, fourth candidate (auth journey accepts the trailing slash the dev preview adds).
 # 15 October release exact-SHA trigger (same reason).
 
 on:
@@ -141,7 +142,7 @@ jobs:
           }
 
           async function chooseNew(page,gymId){
-            await page.waitForURL(url=>url.pathname.endsWith('/choose-gym'),{timeout:20000});
+            await page.waitForURL(url=>/\/choose-gym\/?$/.test(url.pathname),{timeout:20000});
             await page.waitForFunction(()=>document.querySelectorAll('.choose-gym').length===2,null,{timeout:20000});
             assert.equal(await page.locator('.choose-gym').count(),2,'expected exactly two active gyms');
             const chooserText=await page.locator('.choose').innerText();
@@ -159,7 +160,7 @@ jobs:
           async function switchGym(page,gymId,mobile){
             await openMenuIfMobile(page,mobile);
             await page.locator('.side .gym a').click();
-            await page.waitForURL(url=>url.pathname.endsWith('/choose-gym')&&url.searchParams.get('switch')==='1',{timeout:20000});
+            await page.waitForURL(url=>/\/choose-gym\/?$/.test(url.pathname)&&url.searchParams.get('switch')==='1',{timeout:20000});
             await chooseNew(page,gymId);
           }
 
@@ -167,7 +168,7 @@ jobs:
             const page=await context.newPage();
             try{
               await page.goto(base+'today',{waitUntil:'domcontentloaded',timeout:30000});
-              await page.waitForURL(url=>url.pathname.endsWith('/choose-gym'),{timeout:20000});
+              await page.waitForURL(url=>/\/choose-gym\/?$/.test(url.pathname),{timeout:20000});
               assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),null,'Missing gym context silently selected a gym');
             }finally{await page.close()}
           }
@@ -175,11 +176,11 @@ jobs:
           async function signOutAndRelog(page,mobile){
             await openMenuIfMobile(page,mobile);
             await page.getByRole('button',{name:'Sign out'}).click();
-            await page.waitForURL(url=>url.pathname.endsWith('/sign-in'),{timeout:20000});
+            await page.waitForURL(url=>/\/sign-in\/?$/.test(url.pathname),{timeout:20000});
             await page.waitForTimeout(750);
             assert.ok(page.url().includes('/sign-in'),'signed-out session silently re-entered the app');
             await page.goto(base+'today',{waitUntil:'domcontentloaded',timeout:30000});
-            await page.waitForURL(url=>url.pathname.endsWith('/sign-in'),{timeout:20000});
+            await page.waitForURL(url=>/\/sign-in\/?$/.test(url.pathname),{timeout:20000});
             await page.getByLabel('Email').fill(email);
             await page.getByLabel('Password',{exact:true}).fill(password);
             await page.getByRole('button',{name:'Sign in',exact:true}).click();
