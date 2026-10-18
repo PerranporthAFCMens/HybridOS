@@ -87,7 +87,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('four times of day listed', (await page.getByRole('list', { name: 'Busiest times of day' }).locator('.bar-label').allTextContents()).join() === 'Morning,Daytime,Evening,Late');
   const mix = await page.getByRole('list', { name: 'Active memberships by plan' }).locator('.bar-row').allTextContents();
   c.ok('plan mix biggest first, unused plans included', mix.length === 3 && mix[0].includes('Hybrid Monthly') && mix[0].endsWith('2') && mix[1].startsWith('Annual'));
-  c.ok('old detailed reports link', (await page.getByRole('link', { name: 'Open the detailed reports' }).getAttribute('href')).includes('reporting.html'));
+  c.ok('no link to the old reporting page', (await page.getByRole('link', { name: 'Open the detailed reports' }).count()) === 0);
   { const lp = await page.evaluate(layoutProblems); if (lp.length) console.log('  layout problems:', lp.slice(0, 5).join(' | ')); c.ok('layout', lp.length === 0); }
   if (shots) await page.screenshot({ path: `${shots}/reports-${name}.png`, fullPage: true });
 
