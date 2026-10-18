@@ -72,8 +72,13 @@ export function Invite() {
     setMsg(null);
     try {
       if (mode === 'signup') {
-        const signedIn = await signUpForInvite(invite.email, password, name.trim(), inviteReturnUrl(token));
-        if (!signedIn) say('Account created. Confirm your email, then return to this same invitation link.', true);
+        const result = await signUpForInvite(invite.email, password, name.trim(), inviteReturnUrl(token));
+        if (result === 'exists') {
+          setMode('login');
+          say('This email already has an account, so no confirmation email was sent. Sign in with your existing password to accept the invitation.');
+        } else if (result === 'confirm') {
+          say('Account created. Confirm your email, then return to this same invitation link.', true);
+        }
       } else {
         await signInWithPassword(invite.email, password);
       }
