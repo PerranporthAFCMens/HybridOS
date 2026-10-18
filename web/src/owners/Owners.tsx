@@ -40,13 +40,13 @@ export function Owners() {
   const doRemoveAdmin = (p: Person) => w.removeAdmin.mutate(p.userId, { onSuccess: () => ok(`${p.name} no longer has access to ${gym.gymName}. Their HybridOne login stays.`), onError: bad });
   const doApproveAction = (id: string) => w.approveAction.mutate(id, { onSuccess: outcome('approve-action'), onError: bad });
 
-  const showLink = (token: string, email: string, role: string) => { setLink(inviteLink(window.location.href, token, email, gym.gymName, role)); setCopied(false); };
+  const showLink = (token: string) => { setLink(inviteLink(window.location.href, token)); setCopied(false); };
   const doApproveInvite = (i: Invite) => {
     const byLink = i.delivery === 'link';
     w.approveOwnerInvite.mutate({ id: i.id, link: byLink }, {
       onSuccess: (r) => {
         if (!r.ready) return ok('Your owner approval is recorded. Waiting for the remaining owner approval(s).');
-        if (byLink && r.token) { showLink(r.token, i.email, i.role); return ok('Your approval completed the owner approval requirement. The secure invite link is ready to copy.'); }
+        if (byLink && r.token) { showLink(r.token); return ok('Your approval completed the owner approval requirement. The secure invite link is ready to copy.'); }
         w.sendEmail.mutate(i.id, { onSuccess: () => ok('Your approval completed the owner approval requirement. The invitation email has now been sent.'), onError: bad });
       },
       onError: bad,
@@ -64,7 +64,7 @@ export function Owners() {
         setForm((f) => ({ ...f, name: '', email: '' }));
         const roleName = form.role === 'owner' ? 'Owner' : 'Admin';
         if (r.status !== 'open') return ok(`Owner invitation created. ${r.approvals} of ${r.required} owner approvals recorded. ${byLink ? 'The secure link' : 'The email'} will be available after final approval.`);
-        if (byLink && r.token) { showLink(r.token, check.email, form.role); return ok(`Secure invite link created. Copy it and send it directly to ${check.email}.`); }
+        if (byLink && r.token) { showLink(r.token); return ok(`Secure invite link created. Copy it and send it directly to ${check.email}.`); }
         w.sendEmail.mutate(r.inviteId, {
           onSuccess: () => ok(`${roleName} invitation emailed to ${check.email}.`),
           onError: (e) => setNote({ text: `${e.message} The invite has been saved below. Use Send / retry email to try again.`, good: false }),

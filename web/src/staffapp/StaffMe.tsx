@@ -25,9 +25,9 @@ export function StaffMe() {
       </section>
       <section className="mem-actions">
         {ctx.allowed('full_access') && <LinkButton href="/today">Open the admin</LinkButton>}
-        {auth.gyms.length > 1 && <a className="btn secondary" href={`${siteUrl('choose-gym.html')}?switch=1`}>Switch gym</a>}
+        {auth.gyms.length > 1 && <a className="btn secondary" href={`${siteUrl('choose-gym')}?switch=1`}>Switch gym</a>}
       </section>
-      <Button onClick={() => { void auth.signOut().then(() => window.location.assign(siteUrl('login.html'))); }}>Sign out</Button>
+      <Button onClick={() => { void auth.signOut().then(() => window.location.assign(siteUrl('sign-in'))); }}>Sign out</Button>
     </div>
   );
 }

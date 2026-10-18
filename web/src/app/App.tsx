@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { LEGACY_CHOOSER, LEGACY_LOGIN, useAuth } from '../auth/AuthProvider';
+import { CHOOSE_GYM, SIGN_IN, useAuth } from '../auth/AuthProvider';
 import { Shell } from '../shell/Shell';
 import { Today } from '../today/Today';
 import { Members } from '../members/Members';
@@ -73,9 +73,9 @@ function Gate({ children }: { children: ReactNode }) {
     case 'loading':
       return <div className="center muted">Loading…</div>;
     case 'signed-out':
-      return <Leave to={LEGACY_LOGIN} />;
+      return <Leave to={SIGN_IN} />;
     case 'choose-gym':
-      return <Leave to={`${LEGACY_CHOOSER}`} />;
+      return <Leave to={CHOOSE_GYM} />;
     case 'no-access':
       return <div className="center">You do not have access to a gym yet.</div>;
     case 'ready': {

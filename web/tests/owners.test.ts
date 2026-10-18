@@ -53,14 +53,12 @@ describe('invites', () => {
     expect(validateInvite('A', 'nope')).toMatchObject({ ok: false });
     expect(validateInvite(' Josh ', ' j@x.co ')).toEqual({ ok: true, name: 'Josh', email: 'j@x.co' });
   });
-  it('builds the link to the old landing page with everything encoded', () => {
-    const url = new URL(inviteLink('https://h.example/today', 'tok en', 'a+b@x.co', 'Puffin & Co', 'owner'));
-    expect(url.pathname).toBe('/index.html');
+  it('builds the link to the invitation screen with the token encoded', () => {
+    const url = new URL(inviteLink('https://h.example/today?x=1#y', 'tok en'));
+    expect(url.pathname).toBe('/invite');
     expect(url.hash).toBe('');
-    expect(url.searchParams.get('access_invite')).toBe('tok en');
-    expect(url.searchParams.get('invite_email')).toBe('a+b@x.co');
-    expect(url.searchParams.get('invite_gym')).toBe('Puffin & Co');
-    expect(url.searchParams.get('invite_role')).toBe('owner');
+    expect(url.searchParams.get('token')).toBe('tok en');
+    expect([...url.searchParams.keys()]).toEqual(['token']);
   });
 });
 

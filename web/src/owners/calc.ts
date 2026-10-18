@@ -67,15 +67,12 @@ export function validateInvite(name: string, email: string): { ok: true; name: s
 
 export const EXPIRY_DAYS = [3, 7, 14, 30] as const;
 
-/** The secure link the invited person opens. It still goes through the old landing page until the cutover. */
-export function inviteLink(base: string, token: string, email: string, gymName: string, role: string): string {
-  const u = new URL(siteUrl('index.html'), base);
+/** The secure link the invited person opens: the invitation screen, with the token. */
+export function inviteLink(base: string, token: string): string {
+  const u = new URL(siteUrl('invite'), base);
   u.search = '';
   u.hash = '';
-  u.searchParams.set('access_invite', token);
-  u.searchParams.set('invite_email', email);
-  u.searchParams.set('invite_gym', gymName);
-  u.searchParams.set('invite_role', role);
+  u.searchParams.set('token', token);
   return u.toString();
 }
 
