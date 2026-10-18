@@ -99,7 +99,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   });
   await page.goto(`${base}/reports`);
   const c = runChecks();
-  await page.getByRole('tab', { name: 'Report builder', exact: true }).click();
+  await page.getByLabel('Report section').selectOption({ label: 'Report builder' });
   const paper = page.getByLabel('What you will download');
   const show = page.getByLabel('Show', { exact: true });
   const openFine = async () => { const b = page.getByRole('button', { name: /Filters, columns and fields/ }); if ((await b.getAttribute('aria-expanded')) !== 'true') await b.click(); };
@@ -107,7 +107,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const dataset = page.getByLabel('Look at');
   const dialog = page.getByRole('dialog');
   await c.has('builder opens', dataset);
-  c.ok('nine tabs, Money owed among them', (await page.getByRole('tab').count()) === 9 && (await page.getByRole('tab', { name: 'Money owed' }).count()) === 1);
+  c.ok('nine tabs, Money owed among them', (await page.getByLabel('Report section').locator('option').count()) === 9 && (await page.getByLabel('Report section').locator('option', { hasText: 'Money owed' }).count()) === 1);
   c.ok('eight datasets, staff included', (await dataset.locator('option').allInnerTexts()).join('|') === 'Members|Memberships|Payments|Classes|Bookings and attendance|Staff|Classes delivered|Clients seen');
   await page.getByRole('button', { name: /Start from a ready-made report/ }).click();
   c.ok('twelve ready-made reports', (await page.locator('.bld-starter').count()) === 12);
@@ -243,7 +243,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('dialog').getByRole('button', { name: 'Save report' }).click();
   await c.has('saved message', page.getByText('Saved "Payments by state" on this device.'));
   await page.reload();
-  await page.getByRole('tab', { name: 'Report builder', exact: true }).click();
+  await page.getByLabel('Report section').selectOption({ label: 'Report builder' });
   await c.has('the saved report is listed after a reload', page.getByLabel('My saved reports'));
   await page.getByLabel('My saved reports').selectOption('Payments by state');
   await openFine();

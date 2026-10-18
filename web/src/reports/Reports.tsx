@@ -1,7 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { links } from '../shell/legacy';
-import { Button, LinkButton } from '../ui/Button';
+import { Button } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
 import { Select } from '../ui/Field';
 import { Modal } from '../ui/Modal';
@@ -65,11 +64,12 @@ export function Reports() {
 
       <p className="muted report-hint">Click any figure, bar or chart to see the rows behind it, and download them.</p>
 
-      <div className="report-tabs" role="tablist" aria-label="Report sections">
-        {TABS.map(([key, label]) => (
-          <button key={key} type="button" role="tab" id={`tab-${key}`} aria-selected={tab === key} className={`report-tab${tab === key ? ' active' : ''}`} onClick={() => setTab(key)}>{label}</button>
-        ))}
-      </div>
+      <label className="report-pick">
+        <span className="muted">Report</span>
+        <Select aria-label="Report section" value={tab} onChange={(e) => setTab(e.target.value as TabKey)}>
+          {TABS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+        </Select>
+      </label>
 
       {tab === 'overview' && q.isError && <Card><Empty>Could not load the report. Refresh to try again.</Empty></Card>}
       {tab === 'overview' && q.isPending && <Card><Empty>Loading reporting…</Empty></Card>}
@@ -128,12 +128,6 @@ export function Reports() {
       {tab !== 'overview' && tab !== 'owed' && (
         <ReportTabs tab={tab} rangeDays={Number(range)} rangeLabel={rangeLabel} onOpenTable={(build) => setDrill(() => build)} />
       )}
-
-      <Card>
-        <SectionTitle title="The old Reporting page" />
-        <p className="muted">Everything from the old Reporting page is now here, including the Xero export. The old page stays available until you accept the new one.</p>
-        <LinkButton href={links.reports}>Open the detailed reports</LinkButton>
-      </Card>
 
       {drill && <DrillDown build={drill} gymName={gym.gymName} onClose={() => setDrill(null)} />}
     </>

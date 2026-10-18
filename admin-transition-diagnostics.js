@@ -81,7 +81,7 @@
       const u=new URL(a.href,location.href);
       if(u.origin!==location.origin)return;
       const file=u.pathname.split('/').pop()||'index.html';
-      if(!['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'].includes(file))return;
+      if(!['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'].includes(file))return;
       sessionStorage.setItem(START,String(Date.now()));
       sessionStorage.setItem(TARGET,location.pathname.split('/').pop()+(location.hash||''));
     }catch(_e){}
