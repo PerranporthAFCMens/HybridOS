@@ -11,6 +11,7 @@ name: HybridOne Auth journey browser
 # 11 October release exact-SHA trigger (same reason).
 # 14 October release exact-SHA trigger (same reason).
 # 18 October release exact-SHA trigger (same reason).
+# 18 October release, third candidate (dev preview hands the switch-gym address to the new chooser).
 # 15 October release exact-SHA trigger (same reason).
 
 on:
