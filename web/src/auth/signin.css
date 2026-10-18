@@ -13,3 +13,5 @@
 .choose-gym-logo img { width: 100%; height: 100%; object-fit: contain; }
 .choose-gym small { display: block; color: var(--hybrid-muted); }
 @media (max-width: 460px) { .signin-links { grid-template-columns: 1fr; } }
+.signin .notice { margin: 14px 0; padding: 12px 14px; border-radius: 10px; background: var(--hybrid-bg); border: 1px solid var(--hybrid-line); font-size: 14px; line-height: 1.45; }
+.signin-pw { display: grid; gap: 10px; margin: 12px 0; }

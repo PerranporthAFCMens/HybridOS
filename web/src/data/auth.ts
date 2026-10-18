@@ -51,3 +51,45 @@ export async function updatePassword(password: string): Promise<void> {
   const { error } = await supabase.auth.updateUser({ password });
   if (error) throw error;
 }
+
+export interface AccessInvite {
+  email: string;
+  gymName: string;
+  role: string;
+  status: string;
+}
+
+/** Looks up an access invitation by its secure token. Null when there is no such invitation. */
+export async function getAccessInvite(token: string): Promise<AccessInvite | null> {
+  const { data, error } = await supabase.rpc('get_access_invite', { invite_token: token });
+  if (error) throw error;
+  const row = data?.[0];
+  return row ? { email: row.email, gymName: row.gym_name, role: row.invite_role || 'admin', status: row.status } : null;
+}
+
+export interface ClaimedInvite {
+  gymId: string;
+  role: string;
+  active: boolean;
+}
+
+/** Accepts the invitation for the signed-in person. The database checks the email matches. */
+export async function claimAccessInvite(token: string): Promise<ClaimedInvite> {
+  const { data, error } = await supabase.rpc('claim_access_invite', { invite_token: token });
+  if (error) throw error;
+  const row = data?.[0];
+  if (!row) throw new Error('Invitation could not be accepted.');
+  return { gymId: row.gym_id, role: row.role, active: row.access_status === 'active' };
+}
+
+/** Creates the invited person's account. Returns true when they are signed in straight away (no email confirmation needed). */
+export async function signUpForInvite(email: string, password: string, name: string, redirectTo: string): Promise<boolean> {
+  const display = name || email.split('@')[0];
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: redirectTo, data: { display_name: display, full_name: display, signup_type: 'staff' } },
+  });
+  if (error) throw error;
+  return !!data.session;
+}
