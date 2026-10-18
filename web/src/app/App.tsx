@@ -52,6 +52,8 @@ import { StaffMe } from '../staffapp/StaffMe';
 import { StaffClients } from '../staffapp/StaffClients';
 import { StaffClient } from '../staffapp/StaffClient';
 import { Strava } from '../member/Strava';
+import { ChooseGym } from '../auth/ChooseGym';
+import { SignIn } from '../auth/SignIn';
 import { BASENAME } from './site';
 
 function Leave({ to }: { to: string }) {
@@ -161,6 +163,8 @@ export function App() {
     <BrowserRouter basename={BASENAME}>
       <Routes>
         <Route path="/join/:slug" element={<Join />} />
+        <Route path="/sign-in" element={<SignIn />} />
+        <Route path="/choose-gym" element={<ChooseGym />} />
         <Route path="*" element={<Main />} />
       </Routes>
     </BrowserRouter>

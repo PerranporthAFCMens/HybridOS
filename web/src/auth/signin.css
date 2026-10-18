@@ -1,0 +1,15 @@
+.signin { max-width: 440px; margin: 0 auto; padding: 32px 16px 48px; }
+.signin-logo { max-width: 200px; max-height: 80px; object-fit: contain; margin-bottom: 14px; }
+.signin h1 { margin: 6px 0 8px; font-size: 28px; }
+.signin form { display: grid; gap: 14px; margin-top: 16px; }
+.signin-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.signin-msg { margin: 12px 0; font-size: 14px; color: var(--hybrid-danger, #ff7b7b); }
+.signin-msg.good { color: var(--hybrid-pulse); }
+.choose { max-width: 560px; margin: 0 auto; padding: 32px 16px 48px; display: grid; gap: 12px; }
+.choose h1 { margin: 6px 0 4px; font-size: 28px; }
+.choose-gym { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 12px 14px; border: 1px solid var(--hybrid-line); border-radius: 12px; background: var(--hybrid-panel); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.choose-gym:hover { border-color: var(--hybrid-line-strong); }
+.choose-gym-logo { flex: none; width: 48px; height: 48px; display: grid; place-items: center; overflow: hidden; border-radius: 10px; background: var(--hybrid-raised); font-weight: 600; }
+.choose-gym-logo img { width: 100%; height: 100%; object-fit: contain; }
+.choose-gym small { display: block; color: var(--hybrid-muted); }
+@media (max-width: 460px) { .signin-links { grid-template-columns: 1fr; } }
