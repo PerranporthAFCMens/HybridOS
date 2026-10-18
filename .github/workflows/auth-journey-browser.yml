@@ -131,35 +131,42 @@ jobs:
             assert.equal((await link.innerText()).trim(),'Switch gym','sidebar switch-gym link missing');
           }
 
-          async function loginAndChoose(page,gymId){
-            await page.goto(base+'login.html',{waitUntil:'domcontentloaded',timeout:30000});
-            await page.locator('#email').fill(email);
-            await page.locator('#password').fill(password);
-            await page.locator('#signIn').click();
-            await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html'),{timeout:20000});
-            await page.waitForFunction(()=>document.querySelectorAll('.gym-card').length===2,null,{timeout:20000});
-            assert.equal(await page.locator('.gym-card').count(),2,'expected exactly two active gyms');
-            const chooserText=await page.locator('#gyms').innerText();
+          // The new sign-in page and chooser (/sign-in, /choose-gym). Both gyms must be listed, exactly two.
+          async function signInNew(page){
+            await page.goto(base+'sign-in',{waitUntil:'domcontentloaded',timeout:30000});
+            await page.getByLabel('Email').fill(email);
+            await page.getByLabel('Password',{exact:true}).fill(password);
+            await page.getByRole('button',{name:'Sign in',exact:true}).click();
+          }
+
+          async function chooseNew(page,gymId){
+            await page.waitForURL(url=>url.pathname.endsWith('/choose-gym'),{timeout:20000});
+            await page.waitForFunction(()=>document.querySelectorAll('.choose-gym').length===2,null,{timeout:20000});
+            assert.equal(await page.locator('.choose-gym').count(),2,'expected exactly two active gyms');
+            const chooserText=await page.locator('.choose').innerText();
             assert.match(chooserText,/Hybrid Hub/i);
             assert.match(chooserText,/Puffin Performance/i);
-            await page.locator('[data-gym="'+gymId+'"]').click();
+            await page.locator('.choose-gym').filter({hasText:NAMES[gymId]}).click();
             await waitForNewApp(page,gymId);
+          }
+
+          async function loginAndChoose(page,gymId){
+            await signInNew(page);
+            await chooseNew(page,gymId);
           }
 
           async function switchGym(page,gymId,mobile){
             await openMenuIfMobile(page,mobile);
             await page.locator('.side .gym a').click();
-            await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html')&&url.searchParams.get('switch')==='1',{timeout:20000});
-            await page.waitForFunction(()=>document.querySelectorAll('.gym-card').length===2,null,{timeout:20000});
-            await page.locator('[data-gym="'+gymId+'"]').click();
-            await waitForNewApp(page,gymId);
+            await page.waitForURL(url=>url.pathname.endsWith('/choose-gym')&&url.searchParams.get('switch')==='1',{timeout:20000});
+            await chooseNew(page,gymId);
           }
 
           async function assertNoGymFallsBackToChooser(context){
             const page=await context.newPage();
             try{
               await page.goto(base+'today',{waitUntil:'domcontentloaded',timeout:30000});
-              await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html'),{timeout:20000});
+              await page.waitForURL(url=>url.pathname.endsWith('/choose-gym'),{timeout:20000});
               assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),null,'Missing gym context silently selected a gym');
             }finally{await page.close()}
           }
@@ -167,19 +174,15 @@ jobs:
           async function signOutAndRelog(page,mobile){
             await openMenuIfMobile(page,mobile);
             await page.getByRole('button',{name:'Sign out'}).click();
-            await page.waitForURL(url=>url.pathname.endsWith('/login.html'),{timeout:20000});
+            await page.waitForURL(url=>url.pathname.endsWith('/sign-in'),{timeout:20000});
             await page.waitForTimeout(750);
-            assert.ok(page.url().includes('/login.html'),'signed-out session silently re-entered the app');
+            assert.ok(page.url().includes('/sign-in'),'signed-out session silently re-entered the app');
             await page.goto(base+'today',{waitUntil:'domcontentloaded',timeout:30000});
-            await page.waitForURL(url=>url.pathname.endsWith('/login.html'),{timeout:20000});
-            await page.locator('#email').fill(email);
-            await page.locator('#password').fill(password);
-            await page.locator('#signIn').click();
-            await page.waitForURL(url=>url.pathname.endsWith('/choose-gym.html'),{timeout:20000});
-            await page.waitForFunction(()=>document.querySelectorAll('.gym-card').length===2,null,{timeout:20000});
-            assert.equal(await page.locator('.gym-card').count(),2,'re-login did not restore the two-gym chooser');
-            await page.locator('[data-gym="'+hub+'"]').click();
-            await waitForNewApp(page,hub);
+            await page.waitForURL(url=>url.pathname.endsWith('/sign-in'),{timeout:20000});
+            await page.getByLabel('Email').fill(email);
+            await page.getByLabel('Password',{exact:true}).fill(password);
+            await page.getByRole('button',{name:'Sign in',exact:true}).click();
+            await chooseNew(page,hub);
           }
 
           (async()=>{
@@ -202,7 +205,7 @@ jobs:
               const back=await dp.goBack({waitUntil:'domcontentloaded',timeout:20000});
               if(back){
                 await dp.waitForTimeout(500);
-                assert.ok(!dp.url().includes('/login.html')&&!dp.url().includes('/choose-gym.html'),'back navigation entered an auth loop');
+                assert.ok(!dp.url().includes('/sign-in')&&!dp.url().includes('/choose-gym'),'back navigation entered an auth loop');
                 assert.equal(await dp.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),puffin,'back navigation lost gym context');
               }
               await signOutAndRelog(dp,false);
@@ -221,7 +224,7 @@ jobs:
               await waitForNewApp(mp,puffin);
               await mp.goto(base+'today',{waitUntil:'domcontentloaded',timeout:30000});
               await mp.waitForTimeout(500);
-              assert.ok(!mp.url().includes('/login.html'),'authenticated mobile protected route fell back to login');
+              assert.ok(!mp.url().includes('/sign-in'),'authenticated mobile protected route fell back to login');
               await signOutAndRelog(mp,true);
               console.log('Mobile switch, refresh, sign-out and re-login passed');
               await mobile.close();

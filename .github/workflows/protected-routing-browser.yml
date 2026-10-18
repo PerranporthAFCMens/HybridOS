@@ -8,6 +8,7 @@ name: HybridOne protected routing browser
 # 11 October release exact-SHA trigger (same reason).
 # 14 October release exact-SHA trigger (same reason).
 # 18 October release exact-SHA trigger (same reason).
+# 18 October release, second candidate (auth journey updated for the new sign-in screens).
 # 15 October release exact-SHA trigger (same reason).
 
 on:
