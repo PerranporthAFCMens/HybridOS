@@ -16,7 +16,7 @@
   "release_gate": {
     "production_hold": false,
     "production_promotion_allowed": true,
-    "reason": "Owner authorised a production release on 14 October 2026 (Stripe payment at sign-up in sandbox/test mode only, Quick join, plan terms and cancelling, the rebuilt staff screens, welcome email and choose-your-own-password for new staff, one short admin menu, training and class features). Stripe stays on its test keys. The hold is cleared only for this release and is restored straight after it."
+    "reason": "Owner authorised a production release on 18 October 2026 (the rebuilt sign-in, choose-gym, password-reset, invite and sign-out screens with the old addresses redirected to them, plus the waitlist, movement library, level picker, benchmarks and the staff My clients area). Stripe stays on its test keys. The hold is cleared only for this release and is restored straight after it."
   },
   "production": {
     "public_origin": "https://www.hybridone.co.uk",
