@@ -139,7 +139,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('its usual days are ticked and it counts the matches', page.getByText('3 classes match'));
   c.ok('the days it runs on are pressed', (await page.getByRole('group', { name: 'On which days' }).getByRole('button', { pressed: true }).count()) === 2);
   await page.getByRole('group', { name: 'On which days' }).getByRole('button', { pressed: true }).last().click();
-  await c.has('un-ticking a day changes the count', page.getByText(/[12] classes? match/));
+  await c.has('un-ticking a day changes the count', page.getByText(/[12] class(es)? match/));
   await page.getByRole('group', { name: 'On which days' }).getByRole('button', { pressed: true }).last().click();
   c.ok('nothing is written until Add is pressed', writes.length === 0);
   await page.getByRole('button', { name: 'Evening Hybrid', exact: true }).click();
@@ -156,7 +156,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('step 3 is now where you are: 1 of 3 have a workout', page.getByText('1 of 3 classes have a workout'));
 
   // Step 3: the grid. Morning HIIT s1 and s2 run in the same slot (weeks 1 and 2); s3 is another slot.
-  const hiit = page.getByRole('group', { name: /09:00 Morning HIIT$/ });
+  const todayName = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', weekday: 'short' }).format(new Date());
+  const hiit = page.getByRole('group', { name: new RegExp(`^${todayName} 09:00 Morning HIIT$`) });
   c.ok('the grid has a row for each class slot', (await page.locator('.prog-row').count()) === 2);
   c.ok('a week with a workout says so, one without says Add', (await hiit.first().getByRole('button', { name: /week 1: Available: Push day/ }).count()) === 1 && (await hiit.first().getByRole('button', { name: /week 2: No workout/ }).count()) === 1);
   c.ok('layout (grid)', (await page.evaluate(layoutProblems)).length === 0);
