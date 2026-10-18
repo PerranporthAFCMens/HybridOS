@@ -2,10 +2,11 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Session } from '@supabase/supabase-js';
 import { siteUrl } from '../app/site';
-import { claimAccessInvite, getAccessInvite, getSession, onSessionChange, signInWithPassword, signOut, signUpForInvite, updatePassword, type ClaimedInvite } from '../data/auth';
+import { claimAccessInvite, getAccessInvite, getSession, onSessionChange, resendCode, signInWithPassword, signOut, signUpForInvite, updatePassword, type ClaimedInvite } from '../data/auth';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Field, Input, PasswordInput } from '../ui/Field';
+import { EmailCodeForm } from './EmailCodeForm';
 import { inviteNotice, inviteReturnUrl, inviteUsable, roleLabel } from './invite';
 import { setSelectedGymId } from './gymStorage';
 import './signin.css';
@@ -33,6 +34,7 @@ export function Invite() {
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [passwordMsg, setPasswordMsg] = useState<{ text: string; good: boolean } | null>(null);
+  const [codeSent, setCodeSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ text: string; good: boolean } | null>(null);
   const [claimed, setClaimed] = useState<ClaimedInvite | null>(null);
@@ -77,7 +79,7 @@ export function Invite() {
           setMode('login');
           say('This email already has an account, so no confirmation email was sent. Sign in with your existing password to accept the invitation.');
         } else if (result === 'confirm') {
-          say('Account created. Confirm your email, then return to this same invitation link.', true);
+          setCodeSent(true);
         }
       } else {
         await signInWithPassword(invite.email, password);
@@ -166,6 +168,12 @@ export function Invite() {
           </>
         ) : matches ? (
           <Button variant="primary" onClick={() => void claim()} disabled={busy}>Accept {invite.gymName} invite</Button>
+        ) : codeSent ? (
+          <EmailCodeForm
+            email={invite.email}
+            resend={() => resendCode(invite.email, inviteReturnUrl(token))}
+            onConfirmed={() => setCodeSent(false)}
+          />
         ) : (
           <form onSubmit={submit}>
             <div className="signin-links">

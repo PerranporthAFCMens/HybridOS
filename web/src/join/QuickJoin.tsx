@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { siteUrl } from '../app/site';
 import {
-  confirmWithCode, currentUserId, emailMeACode, getPaymentMode, getSignupDocuments, joinWithPlan, myMembershipAt, preparePayment, resendCode, saveBasics,
+  currentUserId, emailMeACode, joinReturnUrl, getPaymentMode, getSignupDocuments, joinWithPlan, myMembershipAt, preparePayment, saveBasics,
   type JoinGym, type JoinStyle, type PaymentSession,
 } from '../data/join';
+import { confirmWithCode, resendCode } from '../data/auth';
 import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { DateInput, Field, FieldRow, Input } from '../ui/Field';
@@ -150,7 +151,7 @@ export function QuickJoin({ slug, gym, style }: { slug: string; gym: JoinGym; st
   };
   const sendAnother = () => {
     void run(async () => {
-      await resendCode(email, slug);
+      await resendCode(email, joinReturnUrl(slug));
       setMsg({ text: 'A new code is on its way. Use the newest email.', good: true });
     });
   };

@@ -31,6 +31,19 @@ for (const [name, viewport] of Object.entries(sizes)) {
     await page.getByRole('button', { name: 'Create account' }).last().click();
     await c.has('an existing account is told to sign in', page.getByText(/already has an account, so no confirmation email was sent/));
     await c.has('the form switches to sign in', page.getByRole('button', { name: 'Sign in' }).last());
+    // A new address: asked for the same emailed code as a new member, and the right code signs them in.
+    const verified = [];
+    await page.unroute('**/auth/v1/signup*');
+    await page.route('**/auth/v1/signup*', (route) => reply(route, { id: 'u2', aud: 'authenticated', email: 'new.admin@example.test', identities: [{ identity_id: 'i-1' }], created_at: '2026-01-01T00:00:00Z' }));
+    await page.route('**/auth/v1/verify*', (route) => { verified.push(JSON.parse(route.request().postData() || '{}')); return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ code: 403, error_code: 'otp_expired', msg: 'Email link is invalid or has expired' }) }); });
+    await page.getByRole('button', { name: 'Create account' }).first().click();
+    await page.locator('#invite-password').fill('a-long-password');
+    await page.getByRole('button', { name: 'Create account' }).last().click();
+    await c.has('a new account is asked for the code from the email', page.getByRole('heading', { name: 'Check your email' }));
+    await page.getByLabel('Code from the email', { exact: true }).fill('0670 0482');
+    await page.getByRole('button', { name: 'Confirm', exact: true }).click();
+    await c.has('a wrong or old code says so', page.getByRole('alert').filter({ hasText: 'wrong or has run out' }));
+    c.ok('the tidied code was sent for the invited email', JSON.stringify([verified[0]?.email, verified[0]?.token, verified[0]?.type]) === JSON.stringify(['new.admin@example.test', '06700482', 'email']));
     c.ok('no overflow', !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)));
     c.ok('no page errors', errors.length === 0);
     await ctx.close();

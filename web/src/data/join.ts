@@ -51,8 +51,11 @@ export async function getSignupDocuments(slug: string): Promise<JoinDocument[]> 
   });
 }
 
+/** Where the link in a join email brings the person back to. */
+export const joinReturnUrl = (slug: string): string => new URL(siteUrl(`join/${encodeURIComponent(slug)}`), window.location.origin).toString();
+
 export async function createAccount(email: string, password: string, slug: string, gymName: string): Promise<{ signedIn: boolean; existing: boolean }> {
-  const back = new URL(siteUrl(`join/${encodeURIComponent(slug)}`), window.location.origin);
+  const back = new URL(joinReturnUrl(slug));
   const { data, error } = await supabase.auth.signUp({
     email: email.trim().toLowerCase(),
     password,
@@ -61,19 +64,6 @@ export async function createAccount(email: string, password: string, slug: strin
   if (looksLikeExistingAccount(error, data?.user)) return { signedIn: false, existing: true };
   if (error) throw new Error(error.message);
   return { signedIn: !!data.session, existing: false };
-}
-
-/** Confirms a new account with the 6-digit code from the email. On success the person is signed in. */
-export async function confirmWithCode(email: string, code: string): Promise<void> {
-  const { error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code, type: 'email' });
-  if (error) throw new Error(/expired|invalid/i.test(error.message) ? 'That code is wrong or has run out. Check it, or ask for a new one.' : error.message);
-}
-
-/** Sends a fresh code to the same address. */
-export async function resendCode(email: string, slug: string): Promise<void> {
-  const back = new URL(siteUrl(`join/${encodeURIComponent(slug)}`), window.location.origin);
-  const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase(), options: { emailRedirectTo: back.toString() } });
-  if (error) throw new Error(error.message);
 }
 
 export async function signInToJoin(email: string, password: string): Promise<void> {
@@ -192,7 +182,7 @@ export async function getJoinStyle(slug: string): Promise<JoinStyle> {
 
 /** Emails a sign-in code. A new address gets an account; an existing one just signs in. No password either way. */
 export async function emailMeACode(email: string, slug: string, gymId: string): Promise<void> {
-  const back = new URL(siteUrl(`join/${encodeURIComponent(slug)}`), window.location.origin);
+  const back = new URL(joinReturnUrl(slug));
   back.searchParams.set('gym', slug);
   back.searchParams.set('gym_id', gymId);
   const { error } = await supabase.auth.signInWithOtp({
