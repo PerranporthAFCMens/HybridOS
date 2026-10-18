@@ -110,6 +110,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('the late payment window starts at 7 days', (await page.getByLabel('A payment counts as missed').inputValue()) === '7');
   await page.getByLabel('A payment counts as missed').selectOption('14');
   await c.has('...and is saved', page.getByText('Saved.'));
+  // "Saved." can still be on screen from the earlier save, so wait for the request itself (up to 5 seconds).
+  for (let i = 0; i < 50 && overdueWrites.length === 0; i++) await page.waitForTimeout(100);
   c.ok('saved exactly: this gym, 14 days, in its own table', overdueWrites.length === 1 && overdueWrites[0].body.gym_id === GYM && overdueWrites[0].body.overdue_grace_days === 14 && overdueWrites[0].query.on_conflict === 'gym_id');
   c.ok('and the payment settings were left alone', writes.length === 4);
 
