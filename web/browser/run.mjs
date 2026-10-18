@@ -16,14 +16,17 @@ const WEIGHT = {
   join: 11, 'join-pay': 15, 'quick-join': 14, owners: 11, member: 11, builder: 10, 'classes-calendar': 10,
   'member-home': 9, back: 9, 'member-community': 8, owed: 8, access: 8, classes: 7, programmes: 27,
 };
-// The layout audit is the slowest check by far (3 screen widths x about 45 screens), so it runs as three
-// separate jobs, one per width.
+// The layout audit is the slowest check by far (3 screen widths x about 45 screens), so it runs as six
+// separate jobs: each width in two halves (every other screen).
 const AUDIT_SIZES = ['phone320', 'phone390', 'desktop'];
-const AUDIT_WEIGHT = 107;
+const AUDIT_PARTS = 2;
+const AUDIT_WEIGHT = 60;
 
 const files = readdirSync(dir).filter((f) => f.endsWith('.mjs') && !['mock.mjs', 'fake-date.mjs', 'run.mjs'].includes(f)).map((f) => f.slice(0, -4)).sort();
 const jobs = files.flatMap((name) => (name === 'audit'
-  ? AUDIT_SIZES.map((size) => ({ label: `audit (${size})`, file: 'audit.mjs', env: { AUDIT_SIZES: size }, weight: AUDIT_WEIGHT }))
+  ? AUDIT_SIZES.flatMap((size) => Array.from({ length: AUDIT_PARTS }, (_, i) => ({
+    label: `audit (${size} ${i + 1}/${AUDIT_PARTS})`, file: 'audit.mjs', env: { AUDIT_SIZES: size, AUDIT_PART: `${i + 1}/${AUDIT_PARTS}` }, weight: AUDIT_WEIGHT,
+  })))
   : [{ label: name, file: `${name}.mjs`, env: {}, weight: WEIGHT[name] ?? DEFAULT_WEIGHT }]));
 
 const m = /^(\d+)\/(\d+)$/.exec(process.env.SHARD ?? '1/1');
