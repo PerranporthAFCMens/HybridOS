@@ -195,7 +195,7 @@ async function run(role) {
     await c.has('link shown', page.getByText('Secure invite link ready'));
     const linkValue = await page.getByLabel('Secure invite link').inputValue();
     const lu = new URL(linkValue);
-    c.ok('link carries the token, email, gym and role', lu.pathname.endsWith('/index.html') && lu.searchParams.get('access_invite') === 'secret-token' && lu.searchParams.get('invite_email') === 'ivy@example.com' && lu.searchParams.get('invite_gym') === 'Puffin Performance' && lu.searchParams.get('invite_role') === 'admin');
+    c.ok('link opens the invitation screen with the token', lu.pathname.endsWith('/invite') && lu.searchParams.get('token') === 'secret-token');
     c.ok('link invite exact call and no email', writes.some((w) => w.rpc === 'create_shareable_access_invite' && w.body.invitee_name === 'Ivy Link') && calls.length === 0);
     c.ok('layout after actions', (await page.evaluate(layoutProblems)).length === 0);
     c.ok('no page errors', errors.length === 0);

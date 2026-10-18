@@ -228,7 +228,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await again.getByRole('button', { name: 'Create account', exact: true }).click();
   await c.has('an email that already has an account is told so', again.getByRole('alert').filter({ hasText: 'already has an account' }));
   await c.has('and is offered sign-in on the page', again.getByRole('button', { name: 'Sign in', exact: true }));
-  c.ok('and the sign-in page', (await again.getByRole('link', { name: 'Go to the sign-in page' }).getAttribute('href')) === '/login.html');
+  c.ok('and the sign-in page', (await again.getByRole('link', { name: 'Go to the sign-in page' }).getAttribute('href')) === '/sign-in');
   c.ok('the email is kept', (await again.getByLabel('Email', { exact: true }).inputValue()) === 'ada@example.test');
   await freshCtx.close();
 

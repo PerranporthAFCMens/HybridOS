@@ -1,5 +1,5 @@
 // Browser gate: the new app, served from the built _site, sends a signed-out
-// visitor to the universal login at phone and desktop widths, with no overflow.
+// visitor to the new sign-in page at phone and desktop widths, with no overflow.
 import { launch, serveApp } from './mock.mjs';
 
 const base = process.env.SITE_URL ?? 'http://127.0.0.1:4173';
@@ -14,8 +14,8 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.goto(`${base}/today`);
-  await page.waitForURL(/login\.html/, { timeout: 15000 }).catch(() => undefined);
-  const ok = /login\.html/.test(page.url()) && errors.length === 0;
+  await page.waitForURL(/sign-in/, { timeout: 15000 }).catch(() => undefined);
+  const ok = /sign-in/.test(page.url()) && errors.length === 0;
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
   console.log(`${name}: url=${page.url()} errors=${errors.length} overflow=${overflow} -> ${ok && !overflow ? 'PASS' : 'FAIL'}`);
   if (!ok || overflow) failed = true;

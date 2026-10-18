@@ -276,7 +276,7 @@ export function Join() {
             {alertBox}
             {nav(mode === 'signup' ? 'Create account' : 'Sign in', false)}
             <p><Button onClick={() => { setMsg(null); setMode(mode === 'signup' ? 'signin' : 'signup'); }}>{mode === 'signup' ? 'I already have an account' : 'Create a new account'}</Button></p>
-            {mode === 'signin' && <p className="muted small">Prefer the sign-in page? <a href={siteUrl('login.html')}>Go to the sign-in page</a>.</p>}
+            {mode === 'signin' && <p className="muted small">Prefer the sign-in page? <a href={siteUrl('sign-in')}>Go to the sign-in page</a>.</p>}
           </form>
         )}
 

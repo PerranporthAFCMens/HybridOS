@@ -53,7 +53,7 @@ export function Shell() {
             {logo && !logo.uploaded && <img className="gym-wordmark" src={logo.src} alt="" />}
             <small>Current gym</small>
             <b>{auth.gym.gymName}</b>
-            {auth.gyms.length > 1 && <a href={`${siteUrl('choose-gym.html')}?switch=1`}>Switch gym</a>}
+            {auth.gyms.length > 1 && <a href={`${siteUrl('choose-gym')}?switch=1`}>Switch gym</a>}
           </div>
         </div>
         <nav className="nav" aria-label="Main">
@@ -72,7 +72,7 @@ export function Shell() {
           </div>
           <Button
             onClick={() => {
-              void auth.signOut().then(() => window.location.assign(siteUrl('login.html')));
+              void auth.signOut().then(() => window.location.assign(siteUrl('sign-in')));
             }}
           >
             Sign out

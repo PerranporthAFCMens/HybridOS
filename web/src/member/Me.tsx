@@ -177,9 +177,9 @@ export function Me() {
         <Link className="btn secondary" to="/m/strava">Strava</Link>
         <p className="muted small">Community and billing are still in the classic app while they are rebuilt here.</p>
         <a className="btn secondary" href={`${siteUrl('member.html')}?classic=1&gym_id=${encodeURIComponent(auth.gym.gymId)}`}>Open the classic app</a>
-        {auth.gyms.length > 1 && <a className="btn secondary" href={`${siteUrl('choose-gym.html')}?switch=1`}>Switch gym</a>}
+        {auth.gyms.length > 1 && <a className="btn secondary" href={`${siteUrl('choose-gym')}?switch=1`}>Switch gym</a>}
       </section>
-      <Button onClick={() => { void auth.signOut().then(() => window.location.assign(siteUrl('login.html'))); }}>Sign out</Button>
+      <Button onClick={() => { void auth.signOut().then(() => window.location.assign(siteUrl('sign-in'))); }}>Sign out</Button>
     </div>
   );
 }

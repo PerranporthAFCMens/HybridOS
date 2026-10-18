@@ -3,6 +3,49 @@
   "buildCommand": "python3 scripts/build_site.py",
   "outputDirectory": "_site",
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/login",
+      "destination": "/sign-in",
+      "permanent": false
+    },
+    {
+      "source": "/login.html",
+      "destination": "/sign-in",
+      "permanent": false
+    },
+    {
+      "source": "/choose-gym.html",
+      "destination": "/choose-gym",
+      "permanent": false
+    },
+    {
+      "source": "/auth-return.html",
+      "destination": "/auth-return",
+      "permanent": false
+    },
+    {
+      "source": "/admin-invite.html",
+      "destination": "/invite",
+      "permanent": false
+    },
+    {
+      "source": "/sign-out.html",
+      "destination": "/sign-out",
+      "permanent": false
+    },
+    {
+      "source": "/index.html",
+      "has": [
+        {
+          "type": "query",
+          "key": "access_invite"
+        }
+      ],
+      "destination": "/invite",
+      "permanent": false
+    }
+  ],
   "git": {
     "deploymentEnabled": {
       "dev": false

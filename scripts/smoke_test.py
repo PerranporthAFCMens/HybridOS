@@ -81,6 +81,8 @@ else:
  for x in ('/landing.html','/hybrid-hub','/puffin-performance','/app'):
   if x not in vt:problems.append(f'vercel.json: route missing: {x}')
  if '"trailingSlash": false' not in vt:problems.append('vercel.json: trailingSlash=false canonical route contract missing')
+ for old,new in (('/login.html','/sign-in'),('/choose-gym.html','/choose-gym'),('/auth-return.html','/auth-return'),('/admin-invite.html','/invite'),('/sign-out.html','/sign-out')):
+  if f'"source": "{old}"' not in vt or f'"destination": "{new}"' not in vt:problems.append(f'vercel.json: redirect {old} -> {new} missing')
 
 for brand_page in ROOT.glob('*.html'):
  bt=brand_page.read_text(encoding='utf-8')

@@ -8,8 +8,8 @@ import { resolveAccess, type Access } from './access';
 import { clearSelectedGymId, getSelectedGymId, setSelectedGymId } from './gymStorage';
 
 /** Legacy pages that own sign-in and gym choice until those screens move. */
-export const LEGACY_LOGIN = siteUrl('login.html');
-export const LEGACY_CHOOSER = siteUrl('choose-gym.html');
+export const SIGN_IN = siteUrl('sign-in');
+export const CHOOSE_GYM = siteUrl('choose-gym');
 
 export type AuthState =
   | { status: 'loading' }
