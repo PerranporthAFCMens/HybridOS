@@ -55,6 +55,7 @@ import { Strava } from '../member/Strava';
 import { ChooseGym } from '../auth/ChooseGym';
 import { SignIn } from '../auth/SignIn';
 import { AuthReturn } from '../auth/AuthReturn';
+import { Invite } from '../auth/Invite';
 import { SignOut } from '../auth/SignOut';
 import { BASENAME } from './site';
 
@@ -168,6 +169,7 @@ export function App() {
         <Route path="/sign-in" element={<SignIn />} />
         <Route path="/choose-gym" element={<ChooseGym />} />
         <Route path="/auth-return" element={<AuthReturn />} />
+        <Route path="/invite" element={<Invite />} />
         <Route path="/sign-out" element={<SignOut />} />
         <Route path="*" element={<Main />} />
       </Routes>
