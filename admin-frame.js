@@ -10,7 +10,7 @@ function gymLoginUrl(returnHere=true){
   if(returnHere){const ret=new URL(location.href);if(gymId)ret.searchParams.set('gym_id',gymId);u.searchParams.set('return_to',ret.toString())}
   return u.toString();
 }
-const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html']);
+const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html']);
 const routes=[
  {key:'dashboard',label:'Today',icon:'home',href:'./today'},
  {key:'members',label:'Members',icon:'members',href:'./members'},
@@ -45,7 +45,7 @@ function keyFor(view){
  const v=cleanView(view),[file,hash='']=v.split('#');
  if(file==='community.html'||file==='communications.html')return'community';
  if(file==='classes.html'||file==='class-setup.html'||file==='workout-builder.html')return'classes';
- if(['admin-operations.html','staff-permissions.html','admin-access.html','resource-availability.html','gym-layout.html','access-settings.html','member-view-settings.html'].includes(file))return'settings';
+ if(['admin-operations.html','staff-permissions.html','admin-access.html','resource-availability.html','access-settings.html','member-view-settings.html'].includes(file))return'settings';
  if(file==='reporting.html')return'reporting';
  if(file==='index.html'&&(hash==='members'||hash==='memberships'))return'members';
  if(file==='index.html'&&hash==='community')return'community';
