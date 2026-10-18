@@ -39,11 +39,7 @@ button.bar-row:hover { background: rgba(255, 255, 255, .04); }
 .lib-card h5 { margin: 0 0 4px; font-size: 14px; color: var(--hybrid-ink); }
 .lib-card p { margin: 0 0 10px; }
 .lib-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.report-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
-.report-tab { min-height: 40px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--hybrid-line); background: var(--hybrid-panel); color: var(--hybrid-muted); font: inherit; font-size: 14px; cursor: pointer; }
-.report-tab:hover { color: var(--hybrid-ink); }
-.report-tab.active { background: var(--hybrid-raised); color: var(--hybrid-ink); border-color: var(--hybrid-line-strong); }
-.report-tab:focus-visible { outline: 2px solid var(--hybrid-pulse); outline-offset: 2px; }
+.report-pick { display: grid; gap: 6px; max-width: 360px; margin: 0 0 16px; }
 .heat { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
 .heat th { font-size: 12px; font-weight: 500; color: var(--hybrid-muted); padding: 6px 2px; text-align: center; }
 .heat th[scope="row"] { text-align: left; color: var(--hybrid-ink); }
@@ -54,7 +50,7 @@ button.bar-row:hover { background: rgba(255, 255, 255, .04); }
 .heat td.v4 { background: rgba(198, 241, 53, .5); color: #0b1020; }
 .heat td.v5 { background: rgba(198, 241, 53, .8); color: #0b1020; }
 .stat .stat-num { display: block; }
-.report-tabs ~ .card { margin-bottom: 16px; }
+.report-pick ~ .card { margin-bottom: 16px; }
 
 /* Tiles: equal height, the figure always on the bottom line whatever the label wraps to, and the whole row used. */
 .stat { display: flex; flex-direction: column; justify-content: space-between; gap: 6px; min-height: 104px; }
