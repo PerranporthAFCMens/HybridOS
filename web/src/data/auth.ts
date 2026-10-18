@@ -45,3 +45,9 @@ export async function getPublicGymBrand(gymId: string): Promise<PublicGymBrand |
   const b = data as { name?: unknown; logo_url?: unknown };
   return { name: typeof b.name === 'string' ? b.name : null, logoUrl: typeof b.logo_url === 'string' ? b.logo_url : null };
 }
+
+/** Sets a new password for the signed-in person (used after a password reset link). */
+export async function updatePassword(password: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+}
