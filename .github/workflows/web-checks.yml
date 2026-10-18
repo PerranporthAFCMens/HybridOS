@@ -8,9 +8,10 @@ on:
     paths: ['web/**', 'scripts/build_site.py', '.github/workflows/web-checks.yml']
 
 jobs:
-  web:
+  # Type check, lint, unit tests and the build. Runs side by side with the browser checks below.
+  static:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v5
@@ -25,6 +26,28 @@ jobs:
 
       - name: Type check, lint, unit tests
         run: npm run typecheck && npm run lint && npm run test
+        working-directory: web
+
+  # The browser checks, split into 5 shares that run at the same time on separate machines (they used
+  # to run one after another in a single job, about 8 minutes). Every check is in exactly one share:
+  # web/browser/run.mjs hands them out. The number of shares is set in `shard` below AND in SHARD.
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
         working-directory: web
 
       - name: Build the whole site (includes web/ -> _site/next/)
@@ -62,12 +85,25 @@ jobs:
           exit 1
         working-directory: web
 
-      - name: Browser checks at phone (390px) and desktop (1280px) width, and the layout audit
+      - name: Browser checks at phone (390px) and desktop (1280px) width, and the layout audit (share ${{ matrix.shard }} of 5)
         run: |
           python3 -m http.server 4173 --directory ../_site &
           sleep 2
-          npm run browser
+          SHARD=${{ matrix.shard }}/5 npm run browser
         working-directory: web
+
+  # The one check that must pass before merging (kept under its old name, `web`, so branch protection
+  # needs no change). It passes only when the static job and all 5 browser shares passed.
+  web:
+    if: always()
+    needs: [static, browser]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: All web checks passed
+        run: |
+          echo "static: ${{ needs.static.result }}, browser shares: ${{ needs.browser.result }}"
+          [ "${{ needs.static.result }}" = "success" ] && [ "${{ needs.browser.result }}" = "success" ]
 
   # Safari-style engine (WebKit), in its OWN job so it never delays the main check above. Reporting
   # only for now: a failure here shows as a failed job but does not block a merge, because this job is
@@ -105,6 +141,10 @@ jobs:
       options: --ipc=host
     timeout-minutes: 15
     continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v6
 
@@ -119,13 +159,13 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
 
-      - name: Browser checks in WebKit
+      - name: Browser checks in WebKit (share ${{ matrix.shard }} of 5)
         run: |
           npx --yes http-server ../_site -p 4174 -s &
           for i in $(seq 1 30); do
             node -e "fetch('http://127.0.0.1:4174/').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))" && break
             sleep 1
           done
-          export SITE_URL=http://127.0.0.1:4174 BROWSER=webkit
+          export SITE_URL=http://127.0.0.1:4174 BROWSER=webkit SHARD=${{ matrix.shard }}/5
           npm run browser
         working-directory: web

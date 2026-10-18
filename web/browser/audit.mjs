@@ -129,7 +129,10 @@ function audit() {
 const browser = await launch();
 let allOk = true;
 const c = runChecks();
+// AUDIT_SIZES (for example "desktop") runs only those widths, so CI can run the widths side by side.
+const only = process.env.AUDIT_SIZES?.split(',');
 for (const [sizeName, viewport] of Object.entries(SIZES)) {
+  if (only && !only.includes(sizeName)) continue;
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, handle);
   await page.addInitScript(() => {
