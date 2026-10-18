@@ -53,7 +53,7 @@ CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membe
 JS=('supabase-request-guard.js','app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','gym-context.js','gym-switcher.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
 
-GUARDED_APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','groups.html','onboarding.html','admin.html','communications.html')
+GUARDED_APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','groups.html','onboarding.html','admin.html','communications.html')
 for n in GUARDED_APP_PAGES:
  p=ROOT/n
  if not p.exists():problems.append(f'{n}: guarded app page missing');continue
@@ -93,10 +93,10 @@ RENDER_BASELINE={
  'admin-pages.css':'fe5f058ea31a9279a39f1d51a9ee35d010e91bda',
  'admin-shell.css':'ec3d5ab0faee0b01d383fbea29183e604430a53e',
  'admin-frame.css':'4af4cf23fa071d5fb4324bac9a12929428ee316b',
- 'admin-embed.js':'73920d3e75684542819929736e15613d1d95c24e',
- 'admin-frame.js':'610348eb46119ba1d2e860aef209b4d537bcca4d',
- 'app-stability.js':'661d84d7129dad37a84978f940b5995625bf1c75',
- 'shared-admin-nav.js':'05ee13d6eaed0222abea41a8aee019302512c86c',
+ 'admin-embed.js':'45cd7c73161cd446ad3fd7712987c8598e606170',
+ 'admin-frame.js':'88ad8055b29362354450d437580b6147b5bb50ef',
+ 'app-stability.js':'e2f0434b7911deb5a6e211111b40b2f4f67658f7',
+ 'shared-admin-nav.js':'c212f8e692746f5b58968b483ddd59d4d52f9183',
 }
 def git_blob_sha(path):
  import hashlib
@@ -253,7 +253,7 @@ if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: dupli
 
 for x in ('classes-group','settings-group','community-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member experience',"section:'Preview'","href:'./m/today'",'Door access'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: consolidated admin navigation missing: {x}')
-for page_name in ('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'):
+for page_name in ('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  nav_refs=re.findall(r'<script[^>]+src=["\']\.\/shared-admin-nav\.js(?:\?[^"\']*)?["\'][^>]*>\s*<\/script>',page_text,flags=re.I)
  if len(nav_refs)!=1:problems.append(f'{page_name}: expected exactly one admin nav runtime, found {len(nav_refs)}')
@@ -366,7 +366,7 @@ app_css=(ROOT/'app-consistency.css').read_text(encoding='utf-8')
 for x in ('Centralised HybridOne sidebar shell','hybrid-shell-brand','hybrid-shell-gym','hybrid-nav-icon','grid-template-columns:254px'):
  if x not in app_css:problems.append(f'app-consistency.css: central shell styling missing: {x}')
 
-admin_pages=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','gym-layout.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html')
+admin_pages=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html')
 for page_name in admin_pages:
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('html.admin-embedded .side{display:none!important}','html.admin-embedded .shell,html.admin-embedded #app,html.admin-embedded #appView{display:block!important;grid-template-columns:1fr!important}','html.admin-embedded .main{min-height:100%!important;background:#0B1020!important}'):
@@ -404,7 +404,7 @@ for x in ('hybridNavigationMask','beginNavigation','HybridNavigation','adminFile
  if x not in stability:problems.append(f'app-stability.js: admin navigation transition rule missing: {x}')
 for x in ("syncMobileBrowserChrome","mobileViewport.matches)return","meta[name=\"theme-color\"]","pageshow","visibilitychange","#0B1020"):
  if x not in stability:problems.append(f'app-stability.js: mobile Safari chrome reset missing: {x}')
-for x in ("document.documentElement.classList.contains('admin-embedded')","'workout-builder.html'","'gym-layout.html'"):
+for x in ("document.documentElement.classList.contains('admin-embedded')","'workout-builder.html'"):
  if x not in stability:problems.append(f'app-stability.js: embedded admin transition isolation missing: {x}')
 for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','staff.html','member.html','member-preview.html','social.html','groups.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')

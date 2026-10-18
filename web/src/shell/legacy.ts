@@ -8,7 +8,6 @@ export function legacyAdminUrl(file: string, hash = ''): string {
 export const legacyRoutes = {
   channels: legacyAdminUrl('index.html', 'community'),
   reports: legacyAdminUrl('reporting.html'),
-  layout: legacyAdminUrl('gym-layout.html'),
 } as const;
 
 export type LegacyRoute = keyof typeof legacyRoutes;

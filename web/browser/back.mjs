@@ -52,9 +52,9 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.goto(`${base}/admin.html?next=1`);
   await page.waitForURL(/\/today$/);
   c.ok('next=1 turns the new app back on', page.url().endsWith('/today'));
-  await page.goto(`${base}/admin.html?view=gym-layout.html`);
+  await page.goto(`${base}/admin.html?view=workout-builder.html`);
   await page.waitForTimeout(500);
-  c.ok('another old page is not redirected', page.url().includes('/admin.html?view=gym-layout.html'));
+  c.ok('another old page is not redirected', page.url().includes('/admin.html?view=workout-builder.html'));
   c.ok('no page errors in the new app', newAppErrors === 0);
   if (!c.report(name)) allOk = false;
   await ctx.close();
