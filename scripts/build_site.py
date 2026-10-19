@@ -182,5 +182,21 @@ def hand_clean_addresses_to_app():
   if 'dev preview: this address belongs to the app' in t:continue
   if '<head>' not in t:raise RuntimeError(f'Cannot hand over {name}.html: missing <head>')
   f.write_text(t.replace('<head>','<head>'+hand,1),encoding='utf-8')
-def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();add_brand_layer();build_next_app();hand_clean_addresses_to_app();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
+def hand_old_sign_in_pages_to_app():
+ # Dev preview only. GitHub Pages has no redirects, so the old sign-in pages (opened by their real .html names) still showed the old screens. Each now hands over to its new screen in the app,
+ # keeping the query and the # part (emailed links, gym_id, return_to, token). Live (Vercel) already redirects these addresses in vercel.json, so nothing changes there.
+ root=site_root()
+ if root=='/':return
+ routes={'login':('sign-in',''),'choose-gym':('choose-gym',''),'auth-return':('auth-return',''),'admin-invite':('invite',''),'sign-out':('sign-out',''),
+  'hybrid-hub-login':('sign-in','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),'puffin-performance-login':('sign-in','aec16956-3793-4543-873b-4412646ca1eb')}
+ for name,(route,gym) in routes.items():
+  f=OUT/(name+'.html')
+  if not f.exists():continue
+  t=f.read_text(encoding='utf-8')
+  if 'dev preview: old sign-in page' in t:continue
+  if '<head>' not in t:raise RuntimeError(f'Cannot hand over {name}.html: missing <head>')
+  gymjs=f'if(!q.has("gym_id"))q.set("gym_id","{gym}");' if gym else ''
+  hand=f'<script>/* dev preview: old sign-in page, now the app screen */(function(){{var q=new URLSearchParams(location.search);{gymjs}var s=q.toString();location.replace("{root}{route}/"+(s?"?"+s:"")+location.hash)}})()</script>'
+  f.write_text(t.replace('<head>','<head>'+hand,1),encoding='utf-8')
+def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();add_brand_layer();build_next_app();hand_clean_addresses_to_app();hand_old_sign_in_pages_to_app();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
 if __name__=='__main__':build()
