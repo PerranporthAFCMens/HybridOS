@@ -66,7 +66,7 @@ create function private.is_platform_admin() returns boolean
   language sql stable security definer set search_path = ''
 as $$ select exists (select 1 from public.platform_admins a where a.user_id = auth.uid()) $$;
 revoke all on function private.is_platform_admin() from public, anon, authenticated, service_role;
-grant execute on function private.is_platform_admin() to authenticated;
+-- Not granted to anyone: the platform functions below run as their owner and call it themselves.
 
 create policy "anyone signed in reads the catalogue" on public.platform_addons for select to authenticated using (true);
 
