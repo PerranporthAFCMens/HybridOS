@@ -179,6 +179,14 @@ async function loadTemplate(context: GymContext | null, action: string) {
   }
 }
 
+// The new join page (/join/<slug>, not the old join.html) has a box for the emailed code, so the button is only a backup there.
+// Leaving it out keeps the email free of the supabase.co address, which spam filters dislike next to a hybridone.co.uk sender.
+function codeEntryAvailable(emailData: EmailData) {
+  if (emailData.email_action_type !== 'signup' && emailData.email_action_type !== 'magiclink') return false
+  if (!emailData.token) return false
+  return /^\/join\/[a-z0-9-]+\/?$/i.test(parseRedirect(emailData.redirect_to)?.pathname || '')
+}
+
 function verificationUrl(emailData: EmailData, tokenHash?: string) {
   if (!tokenHash || !emailData.email_action_type) return null
   const u = new URL('/auth/v1/verify', SUPABASE_URL)
@@ -260,7 +268,7 @@ Deno.serve(async (req) => {
       const target = action === 'email_change' && user.new_email ? String(user.new_email) : String(user.email || '')
       if (!target) throw new Error('No recipient email')
       const tokenHash = emailData.token_hash || emailData.token_hash_new
-      const link = ['signup','invite','magiclink','recovery','email_change'].includes(action) ? verificationUrl(emailData, tokenHash) : null
+      const link = ['signup','invite','magiclink','recovery','email_change'].includes(action) && !codeEntryAvailable(emailData) ? verificationUrl(emailData, tokenHash) : null
       await sendViaResend({ to: target, from, replyTo: context?.replyTo, subject: template.subject, html: renderEmail(context, template, emailData, link), text: renderText(context, template, emailData, link), idempotency: `hybridone:${idBase}` })
     }
 
