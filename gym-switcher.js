@@ -18,7 +18,7 @@
       note.innerHTML='<i class="hi hi-repeat" aria-hidden="true"></i><span>Switch gym</span>';
       gym.appendChild(note);
     }
-    const open=e=>{e?.preventDefault();location.href='./choose-gym.html?switch=1'};
+    const open=e=>{e?.preventDefault();location.href='./choose-gym?switch=1'};
     gym.addEventListener('click',open);
     gym.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open(e)}});
     return true;

@@ -122,7 +122,7 @@
     context.classList.toggle('hidden',allMemberships.length===0);
     wrap.innerHTML=allMemberships.length>1?'<button type="button" class="account-menu-action" id="accountSwitchGymBtn"><span>Switch gym</span><span><i class="hi hi-arrow-up-right" aria-hidden="true"></i></span></button>':'';
     divider.classList.toggle('hidden',allMemberships.length<2);
-    const b=q('#accountSwitchGymBtn');if(b)b.onclick=e=>{e.stopPropagation();navigateAccountTarget('./choose-gym.html?switch=1')};
+    const b=q('#accountSwitchGymBtn');if(b)b.onclick=e=>{e.stopPropagation();navigateAccountTarget('./choose-gym?switch=1')};
   }
   function renderPortalActions(){
     const wrap=q('#accountPortalActions'),context=q('#accountPortalContext'),divider=q('#accountPortalDivider');
@@ -197,7 +197,7 @@
   avatarFile.onchange=()=>{const file=avatarFile.files?.[0];if(!file)return;if(file.size>5242880){msg.textContent='Profile photo must be 5 MB or smaller.';msg.className='account-msg error';avatarFile.value='';return}const url=URL.createObjectURL(file);avatarPreview.innerHTML='<img src="'+url+'" alt="New profile photo preview">'};
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();if(modal.classList.contains('open'))closeModal()}});
-  q('#accountSignOutBtn').onclick=async()=>{q('#accountSignOutBtn').disabled=true;sessionStorage.removeItem('hybrid-gym-id');await sb.auth.signOut();sessionStorage.removeItem('hybrid-gym-id');navigateAccountTarget('./login.html')};
+  q('#accountSignOutBtn').onclick=async()=>{q('#accountSignOutBtn').disabled=true;sessionStorage.removeItem('hybrid-gym-id');await sb.auth.signOut();sessionStorage.removeItem('hybrid-gym-id');navigateAccountTarget('./sign-in')};
 
   saveBtn.onclick=async()=>{
     msg.textContent='';msg.className='account-msg';

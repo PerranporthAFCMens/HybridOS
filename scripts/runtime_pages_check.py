@@ -42,7 +42,7 @@ else:
 checks=[
     (
         'index.html',
-        ('hybrid-universal-login-entry',"location.replace('./login.html')"),
+        ('hybrid-universal-login-entry',"location.replace('./sign-in')"),
         ()
     ),
     (
