@@ -42,6 +42,8 @@ const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const HOOK_SECRET_RAW = Deno.env.get('SEND_EMAIL_HOOK_SECRET') ?? ''
 const DEFAULT_FROM = 'noreply@hybridone.co.uk'
+// Gyms whose email links open on hybridone.co.uk (the app's /auth-confirm page) instead of the supabase.co address. Puffin Performance is the test gym.
+const OWN_DOMAIN_LINK_GYMS = new Set(['aec16956-3793-4543-873b-4412646ca1eb'])
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -196,6 +198,20 @@ function verificationUrl(emailData: EmailData, tokenHash?: string) {
   return u.toString()
 }
 
+// The link a person presses. For a gym on the own-domain list, and a return page on hybridone.co.uk, it opens the app's confirm page, which
+// confirms the one-time token when they press Continue. Everything else keeps the supabase.co link, which still works as before.
+function emailLink(context: GymContext | null, emailData: EmailData, tokenHash?: string) {
+  const supabaseLink = verificationUrl(emailData, tokenHash)
+  if (!supabaseLink || !tokenHash || !emailData.email_action_type || !context || !OWN_DOMAIN_LINK_GYMS.has(context.id)) return supabaseLink
+  const redirect = parseRedirect(emailData.redirect_to)
+  if (!redirect || redirect.protocol !== 'https:' || !/(^|\.)hybridone\.co\.uk$/i.test(redirect.hostname)) return supabaseLink
+  const u = new URL('/auth-confirm', redirect.origin)
+  u.searchParams.set('token_hash', tokenHash)
+  u.searchParams.set('type', emailData.email_action_type)
+  u.searchParams.set('next', `${redirect.pathname}${redirect.search}`)
+  return u.toString()
+}
+
 function renderEmail(context: GymContext | null, template: Awaited<ReturnType<typeof loadTemplate>>, emailData: EmailData, link: string | null) {
   const gymName = context?.name || 'HybridOne'
   const accent = context?.accent || '#0b1020'
@@ -258,8 +274,8 @@ Deno.serve(async (req) => {
     const idBase = `${user.id}:${action}:${emailData.token_hash || emailData.token_hash_new || emailData.token || 'notice'}`
 
     if (action === 'email_change' && user.new_email && emailData.token_hash && emailData.token_hash_new) {
-      const currentLink = verificationUrl(emailData, emailData.token_hash_new)
-      const newLink = verificationUrl(emailData, emailData.token_hash)
+      const currentLink = emailLink(context, emailData, emailData.token_hash_new)
+      const newLink = emailLink(context, emailData, emailData.token_hash)
       await Promise.all([
         sendViaResend({ to: String(user.email || ''), from, replyTo: context?.replyTo, subject: template.subject, html: renderEmail(context, template, emailData, currentLink), text: renderText(context, template, emailData, currentLink), idempotency: `hybridone:${idBase}:current` }),
         sendViaResend({ to: String(user.new_email), from, replyTo: context?.replyTo, subject: template.subject, html: renderEmail(context, template, { ...emailData, token: emailData.token_new }, newLink), text: renderText(context, template, { ...emailData, token: emailData.token_new }, newLink), idempotency: `hybridone:${idBase}:new` }),
@@ -268,7 +284,7 @@ Deno.serve(async (req) => {
       const target = action === 'email_change' && user.new_email ? String(user.new_email) : String(user.email || '')
       if (!target) throw new Error('No recipient email')
       const tokenHash = emailData.token_hash || emailData.token_hash_new
-      const link = ['signup','invite','magiclink','recovery','email_change'].includes(action) && !codeEntryAvailable(emailData) ? verificationUrl(emailData, tokenHash) : null
+      const link = ['signup','invite','magiclink','recovery','email_change'].includes(action) && !codeEntryAvailable(emailData) ? emailLink(context, emailData, tokenHash) : null
       await sendViaResend({ to: target, from, replyTo: context?.replyTo, subject: template.subject, html: renderEmail(context, template, emailData, link), text: renderText(context, template, emailData, link), idempotency: `hybridone:${idBase}` })
     }
 

@@ -54,6 +54,7 @@ import { StaffClient } from '../staffapp/StaffClient';
 import { Strava } from '../member/Strava';
 import { ChooseGym } from '../auth/ChooseGym';
 import { SignIn } from '../auth/SignIn';
+import { AuthConfirm } from '../auth/AuthConfirm';
 import { AuthReturn } from '../auth/AuthReturn';
 import { Invite } from '../auth/Invite';
 import { SignOut } from '../auth/SignOut';
@@ -168,6 +169,7 @@ export function App() {
         <Route path="/join/:slug" element={<Join />} />
         <Route path="/sign-in" element={<SignIn />} />
         <Route path="/choose-gym" element={<ChooseGym />} />
+        <Route path="/auth-confirm" element={<AuthConfirm />} />
         <Route path="/auth-return" element={<AuthReturn />} />
         <Route path="/invite" element={<Invite />} />
         <Route path="/sign-out" element={<SignOut />} />
