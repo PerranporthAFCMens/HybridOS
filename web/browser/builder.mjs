@@ -40,6 +40,9 @@ const payments = Array.from({ length: 130 }, (_, i) => ({
   id: `pay${String(i).padStart(3, '0')}`, user_id: i === 0 ? U2 : U1, charge_date: daysAgo(i % 25).slice(0, 10), created_at: daysAgo(i % 25), amount_pence: i === 0 ? 5999 : 4500,
   state: i === 0 ? 'failed' : 'paid_out', provider: 'manual', failure_code: i === 0 ? 'insufficient_funds' : null, failure_message: null,
 }));
+// The months the mock payments fall in (they run from today back 24 days), so the check holds on any day of the month.
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const paidMonths = [...new Set(payments.map((p) => p.charge_date.slice(0, 7)))].sort().map((m) => `${MONTHS[Number(m.slice(5)) - 1]} ${m.slice(0, 4)}`).join('|');
 
 function layoutProblems() {
   const problems = [];
@@ -123,7 +126,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('headline figure is the total in pounds', (await page.getByRole('list', { name: 'Headline figures' }).textContent()).includes('£5,805.00'));
   await openFine();
   c.ok('the boxes show what was chosen', (await page.getByLabel('Group by box').textContent()).includes('Charge date') && (await page.getByLabel('Filters box').getByLabel('Filter 1: value').inputValue()) === 'failed');
-  c.ok('paper shows the months', (await readPaper((p) => p.locator('tbody th').allInnerTexts())).join('|') === 'Sep 2026|Oct 2026');
+  c.ok('paper shows the months', (await readPaper((p) => p.locator('tbody th').allInnerTexts())).join('|') === paidMonths);
   c.ok('chart marks have height', ((await page.getByRole('figure', { name: 'Payments: summary' }).locator('.chart-mark').first().boundingBox())?.height ?? 0) > 2);
   c.ok('layout (starter chart)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/builder-chart-${name}.png`, fullPage: true });

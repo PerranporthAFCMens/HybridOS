@@ -346,7 +346,11 @@ insert into pt.fn_allow values
  ('save_my_emergency(text,text,text)','writes only the caller''s own emergency contact by auth.uid() (tested in quick_join.sql)'),
  ('save_my_address(text,text,text,text)','writes only the caller''s own address by auth.uid() (tested in quick_join.sql)'),
  ('get_my_ready_status(uuid)','returns only what the caller themselves still has to do at a gym they belong to, by auth.uid() (tested in quick_join.sql)'),
- ('get_public_gym_join_style(text)','public join page: returns only which questions a gym asks, by gym slug (anon callable)');
+ ('get_public_gym_join_style(text)','public join page: returns only which questions a gym asks, by gym slug (anon callable)'),
+ ('my_gym_addons(uuid)','lists add-on keys only through gym_addon_enabled, which is true only for members of that gym and platform admins'),
+ ('platform_list_gyms()','refuses anyone who is not on the platform admin list (private.is_platform_admin), checked first in the function'),
+ ('platform_set_gym_addon(uuid,text,boolean)','refuses anyone who is not on the platform admin list (private.is_platform_admin), checked first in the function'),
+ ('platform_audit(integer)','refuses anyone who is not on the platform admin list (private.is_platform_admin), checked first in the function');
 create table pt.fn_audit as
 select p.oid::regprocedure::text as fn,
        case when p.prorettype = 'trigger'::regtype then 'trigger function'

@@ -4,8 +4,9 @@ on:
   push:
     branches: [main, dev]
     paths: ['web/**', 'scripts/build_site.py', '.github/workflows/web-checks.yml']
+  # No paths filter on pull_request: the `web` job below is a required check on dev, so it must report on
+  # every pull request, including ones that only change docs or database files.
   pull_request:
-    paths: ['web/**', 'scripts/build_site.py', '.github/workflows/web-checks.yml']
 
 jobs:
   # Type check, lint, unit tests and the build. Runs side by side with the browser checks below.
