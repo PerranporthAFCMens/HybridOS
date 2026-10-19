@@ -4,17 +4,15 @@ This is the operating protocol for HybridOne work.
 
 ## Mandatory read order
 
-Before making a HybridOne change:
+Before making a HybridOne change, read only what the task needs (keeps sessions cheap; `CLAUDE.md` has the same list):
 
-1. read `PROJECT_STATE.json`
-2. read `PROJECT_CONTROL.md`
-3. read `ENVIRONMENT.md`
-4. read `STATUS.md`
-5. read `AUTH_CONTEXT.md` for login, routing, tenancy, role or multi-gym work
-6. read `AUTH_TEST_MATRIX.md` for Auth, invitations, email or permissions
-7. read `UI_CONSISTENCY.md` for user-facing UI work
-8. use `HANDOVER.md` for architecture/background
-9. inspect current code and live service state
+1. always: `STATUS.md` (short current state; older history is in `docs/status-archive/`, search it, do not read it whole)
+2. login, routing, tenancy, role or multi-gym work: `AUTH_CONTEXT.md`
+3. Auth, invitations, email or permissions tests: `AUTH_TEST_MATRIX.md`
+4. user-facing UI work: `UI_CONSISTENCY.md` (old pages) or `web/UI_RULES.md` and `web/ARCHITECTURE.md` (new app)
+5. environment, route or deployment work: `PROJECT_STATE.json` and `ENVIRONMENT.md`
+6. architecture or background: `HANDOVER.md`
+7. always: inspect the current code and live service state
 
 Do not rely on chat memory when repository/live state can be checked.
 

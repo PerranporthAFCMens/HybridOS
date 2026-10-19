@@ -16,7 +16,7 @@ Give this file to whichever AI is working on the repo. These rules apply to ever
 7. **You open PRs. The owner merges, except the narrow case in rule 16. You never merge anything else.**
 8. **Nothing touches `main`, rulesets, Vercel settings or the live Supabase project without the owner's explicit approval of the exact text** (the exact SQL, the exact command, the exact setting). No exceptions for "small" changes. See rule 15 for the one narrow exception for workflow files on a PR branch.
 9. **Stop at the first problem and report.** Do not fix forward. If a check fails after a merge or a live change, roll back first and investigate second.
-10. **Update `STATUS.md` in every PR.** At the start of every chat, read `STATUS.md` and this file and summarise where we are before doing anything. Anything not in `STATUS.md` counts as forgotten.
+10. **Keep `STATUS.md` short and write a note per change.** At the start of every chat, read `STATUS.md` (the short current-state page) and summarise where we are before doing anything; read other files only as `CLAUDE.md` says. Do not edit `STATUS.md` in every PR (that caused merge conflicts): add one small note file in `docs/rebuild-notes/` instead, and update `STATUS.md` only when the live state, a checkpoint SHA or the next-work list changes. Anything not written in `STATUS.md` or a note counts as forgotten.
 11. **Say which gym a change touches.** Puffin Performance is the test gym. Hybrid Hub is a demo for a friend's gym: keep test accounts and experiments off it.
 12. **Plain English.** The owner is not a developer. Explain what each step does and what a pass or fail looks like.
 13. **The repository is public.** Never put secrets, tokens, passwords, personal emails or user IDs in it. Use placeholders.
