@@ -359,7 +359,7 @@ jobs:
               await page.goto(process.env.ACTION_URL,{waitUntil:'domcontentloaded',timeout:30000});
               if(process.env.MODE==='recovery'){
                 await page.getByRole('heading',{name:'Choose a new password'}).waitFor({timeout:20000});
-                assert.equal((await page.locator('.signin .eyebrow').innerText()).trim(),process.env.EXPECTED_NAME);
+                await page.waitForFunction(n=>document.querySelector('.signin .eyebrow')?.textContent?.trim()===n,process.env.EXPECTED_NAME,{timeout:20000});
                 await page.getByLabel('New password',{exact:true}).fill(process.env.NEW_PASSWORD);
                 await page.getByLabel('Confirm new password',{exact:true}).fill(process.env.NEW_PASSWORD);
                 await page.getByRole('button',{name:'Save new password'}).click();
@@ -380,7 +380,7 @@ jobs:
                 console.log(process.env.EXPECTED_NAME+' password reset and new-password login passed');
               }else{
                 await page.getByRole('heading',{name:'Secure link verified'}).waitFor({timeout:20000});
-                assert.equal((await page.locator('.signin .eyebrow').innerText()).trim(),process.env.EXPECTED_NAME);
+                await page.waitForFunction(n=>document.querySelector('.signin .eyebrow')?.textContent?.trim()===n,process.env.EXPECTED_NAME,{timeout:20000});
                 await page.getByRole('button',{name:'Continue'}).click();
                 await page.waitForURL(url=>url.pathname.endsWith('/today'),{timeout:20000});
                 assert.equal(await page.evaluate(()=>sessionStorage.getItem('hybrid-gym-id')),process.env.EXPECTED_GYM,'continue opened the wrong gym');
