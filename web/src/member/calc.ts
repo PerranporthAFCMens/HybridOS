@@ -1,5 +1,5 @@
 import { londonParts } from '../classes/calc';
-import type { ClassRow, MyPlan, MyWaitlist, PtRow } from '../data/member';
+import type { ClassRow, MyPack, MyPlan, MyWaitlist, PtRow } from '../data/member';
 
 // Pure rules for the member app: which day a class is on at the gym, what to put on top of the first
 // screen, and how to word spaces. All days are gym (UK) calendar days.
@@ -150,3 +150,13 @@ export const distance = (m: number): string => (m >= 1000 ? `${(m / 1000).toFixe
 
 /** "Thu 15 Oct, 07:04" in UK time. */
 export const stamp = (iso: string): string => `${dayLabel(dayOf(iso))}, ${timeOf(iso)}`;
+
+/** Classes the member can still spend from packs that are not cancelled or out of date. */
+export function packClassesLeft(packs: MyPack[], nowMs: number): number {
+  return packs
+    .filter((p) => !p.voidedAt && p.creditsLeft > 0 && (!p.expiresAt || new Date(p.expiresAt).getTime() > nowMs))
+    .reduce((n, p) => n + p.creditsLeft, 0);
+}
+
+/** "7 pack classes left", or "1 pack class left". */
+export const packLeftText = (n: number): string => `${n} pack ${n === 1 ? 'class' : 'classes'} left`;

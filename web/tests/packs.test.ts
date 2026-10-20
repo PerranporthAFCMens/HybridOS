@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { emptyPackForm, formFromPack, heldExpiryText, heldLeftText, heldState, heldSummary, packSummary, perClassText, sortHeld, validatePackType, validityText } from '../src/packs/calc';
+import { packClassesLeft, packLeftText } from '../src/member/calc';
 import type { HeldPack, PackType } from '../src/data/classPacks';
 
 const type = (over: Partial<PackType> = {}): PackType => ({ id: 'k1', name: '10 class pack', credits: 10, pricePence: 6000, validDays: 90, isActive: true, ...over });
@@ -70,5 +71,24 @@ describe('held packs', () => {
   });
   it('counts packs in use', () => {
     expect(heldSummary([held(), held({ voidedAt: '2026-10-10T00:00:00Z' })], now)).toBe('1 in use · 2 given or bought');
+  });
+});
+
+describe('member pack balance', () => {
+  const now = new Date('2026-10-20T12:00:00Z').getTime();
+  it('counts only classes that can still be spent', () => {
+    const packs = [
+      { creditsLeft: 3, expiresAt: null, voidedAt: null },
+      { creditsLeft: 2, expiresAt: '2026-11-01T00:00:00Z', voidedAt: null },
+      { creditsLeft: 4, expiresAt: '2026-10-01T00:00:00Z', voidedAt: null },
+      { creditsLeft: 5, expiresAt: null, voidedAt: '2026-10-10T00:00:00Z' },
+      { creditsLeft: 0, expiresAt: null, voidedAt: null },
+    ];
+    expect(packClassesLeft(packs, now)).toBe(5);
+    expect(packClassesLeft([], now)).toBe(0);
+  });
+  it('words', () => {
+    expect(packLeftText(1)).toBe('1 pack class left');
+    expect(packLeftText(6)).toBe('6 pack classes left');
   });
 });

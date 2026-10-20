@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { ClassAction, waitlistLine } from './ClassAction';
-import { dayLabel, dayOf, dayStrip, spaceText, timeOf } from './calc';
+import { dayLabel, dayOf, dayStrip, packLeftText, spaceText, timeOf } from './calc';
 import type { MemberCtx } from './useMember';
 import { useBooking } from './useBooking';
 
@@ -16,6 +16,7 @@ export function MemberClasses() {
     <div className="mem-screen">
       {booking.layer}
       <h1 className="mem-title">Classes</h1>
+      {booking.packLeft > 0 && <p className="muted small" data-testid="pack-left">You have {packLeftText(booking.packLeft)}. Booking a class your plan does not cover uses one.</p>}
       <div className="mem-days" role="group" aria-label="Choose a day">
         {strip.map((s) => {
           const has = d.classes.data.some((c) => dayOf(c.startsAt) === s.key);
