@@ -1,4 +1,4 @@
-import type { PackType, PackTypeInput } from '../data/classPacks';
+import type { HeldPack, PackType, PackTypeInput } from '../data/classPacks';
 import { toPence } from '../plans/calc';
 import { money } from '../today/calc';
 
@@ -52,4 +52,36 @@ export function validityText(validDays: number | null): string {
 
 export function packSummary(types: PackType[]): string {
   return `${types.filter((t) => t.isActive).length} on sale · ${types.length} total`;
+}
+
+export type HeldState = 'active' | 'used' | 'expired' | 'cancelled';
+
+/** Where a held pack stands. Cancelled wins, then used up, then expired. */
+export function heldState(p: Pick<HeldPack, 'creditsLeft' | 'expiresAt' | 'voidedAt'>, now: Date): HeldState {
+  if (p.voidedAt) return 'cancelled';
+  if (p.creditsLeft <= 0) return 'used';
+  if (p.expiresAt && new Date(p.expiresAt) <= now) return 'expired';
+  return 'active';
+}
+
+export const heldStateLabel: Record<HeldState, string> = { active: 'In use', used: 'Used up', expired: 'Expired', cancelled: 'Cancelled' };
+
+/** "7 of 10 classes left". */
+export function heldLeftText(p: Pick<HeldPack, 'creditsLeft' | 'creditsTotal'>): string {
+  return `${p.creditsLeft} of ${p.creditsTotal} ${p.creditsTotal === 1 ? 'class' : 'classes'} left`;
+}
+
+export function heldExpiryText(expiresAt: string | null): string {
+  return expiresAt ? `Expires ${new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(expiresAt))}` : 'Never expires';
+}
+
+/** In-use packs first, then the rest; newest first inside each group. */
+export function sortHeld(packs: HeldPack[], now: Date): HeldPack[] {
+  const rank = (p: HeldPack) => (heldState(p, now) === 'active' ? 0 : 1);
+  return [...packs].sort((a, b) => rank(a) - rank(b) || b.createdAt.localeCompare(a.createdAt));
+}
+
+export function heldSummary(packs: HeldPack[], now: Date): string {
+  const live = packs.filter((p) => heldState(p, now) === 'active').length;
+  return `${live} in use · ${packs.length} given or bought`;
 }

@@ -1,4 +1,5 @@
-// Browser gate: the Class packs page. An owner sees the packs the gym sells, makes one, edits one, and puts one on or off sale.
+// Browser gate: the Class packs page. An owner sees the packs the gym sells, makes one, edits one, and puts one on or off sale,
+// gives one to a member, sees the packs members hold and cancels one.
 // Signed in as an owner, at phone and desktop width. Supabase is mocked at the network layer. Checks the exact request of every action.
 import { GYM, base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
 
@@ -25,12 +26,35 @@ const typesDb = [
   { id: 'k2', name: 'Drop-in', credits: 1, price_pence: 1200, valid_days: null, is_active: false },
 ];
 
+const people = [
+  { user_id: 'u-ann', joined_at: '2026-01-01T00:00:00Z', attrition_on: null, role: 'member' },
+  { user_id: 'u-bob', joined_at: '2026-02-01T00:00:00Z', attrition_on: null, role: 'member' },
+];
+const profiles = [
+  { id: 'u-ann', display_name: 'Ann Archer', first_name: 'Ann', last_name: 'Archer' },
+  { id: 'u-bob', display_name: 'Bob Brown', first_name: 'Bob', last_name: 'Brown' },
+];
+const heldDb = [
+  { id: 'h1', user_id: 'u-ann', name: '10 class pack', credits_total: 10, credits_left: 7, expires_at: '2099-12-01T00:00:00Z', source: 'owner', voided_at: null, created_at: '2026-10-10T00:00:00Z' },
+  { id: 'h2', user_id: 'u-bob', name: 'Drop-in', credits_total: 1, credits_left: 0, expires_at: null, source: 'purchase', voided_at: null, created_at: '2026-10-12T00:00:00Z' },
+  { id: 'h3', user_id: 'u-gone', name: '10 class pack', credits_total: 10, credits_left: 4, expires_at: null, source: 'owner', voided_at: '2026-10-14T00:00:00Z', created_at: '2026-10-01T00:00:00Z' },
+];
+
 const browser = await launch();
 let allOk = true;
 for (const [name, viewport] of Object.entries(sizes)) {
   const writes = [];
+  const rpcs = [];
   const { ctx, page, errors } = await signedInPage(browser, viewport);
   await mockSupabase(page, async ({ route, url, path, method, body }) => {
+    if (path.includes('/rpc/owner_')) {
+      rpcs.push({ path: path.split('/rpc/')[1], body });
+      await route.fulfill({ status: 200, contentType: 'application/json', body: path.endsWith('give_class_pack') ? '"new-pack-id"' : 'null' });
+      return true;
+    }
+    if (path.endsWith('/class_packs')) return reply(route, heldDb);
+    if (path.endsWith('/gym_members')) return reply(route, people);
+    if (path.endsWith('/profiles')) return reply(route, profiles);
     if (path.endsWith('/class_pack_types') && ['POST', 'PATCH'].includes(method)) {
       writes.push({ method, query: Object.fromEntries(url.searchParams), body });
       await route.fulfill({ status: 204, body: '' });
@@ -96,6 +120,42 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await dialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => undefined);
   const edited = writes.find((w) => w.method === 'PATCH');
   c.ok('edit is exact: this pack only, new price, no expiry', edited && edited.query.id === 'eq.k1' && edited.query.gym_id === `eq.${GYM}` && edited.body.price_pence === 5500 && edited.body.valid_days === null && edited.body.credits === 10 && edited.body.gym_id === undefined);
+
+  // Packs members hold
+  const row = (t) => page.locator('.held', { hasText: t });
+  await c.has('held packs list the member and the classes left', row('Ann Archer').getByText('7 of 10 classes left'));
+  c.ok('an expiry date, and where it came from', (await row('Ann Archer').getByText(/Expires 1 Dec 2099/).count()) === 1 && (await row('Ann Archer').getByText(/Given by the gym/).count()) === 1 && (await row('Bob Brown').getByText(/Bought/).count()) === 1);
+  c.ok('states: in use, used up, cancelled (member no longer at the gym)', (await row('Ann Archer').getByText('In use', { exact: true }).count()) === 1 && (await row('Bob Brown').getByText('Used up', { exact: true }).count()) === 1 && (await row('Former member').getByText('Cancelled', { exact: true }).count()) === 1);
+  c.ok('only a pack in use can be cancelled', (await row('Ann Archer').getByRole('button', { name: 'Cancel pack' }).count()) === 1 && (await row('Bob Brown').getByRole('button').count()) === 0 && (await row('Former member').getByRole('button').count()) === 0);
+  c.ok('the summary counts packs in use', (await page.getByText('1 in use · 3 given or bought').count()) === 1);
+  c.ok('layout (held list)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/packs-held-${name}.png`, fullPage: true });
+
+  // Cancel needs a second tap; keeping it writes nothing
+  await row('Ann Archer').getByRole('button', { name: 'Cancel pack' }).click();
+  await row('Ann Archer').getByRole('button', { name: 'Keep it' }).click();
+  c.ok('"Keep it" cancels nothing', rpcs.length === 0 && (await row('Ann Archer').getByRole('button', { name: 'Cancel pack' }).count()) === 1);
+  await row('Ann Archer').getByRole('button', { name: 'Cancel pack' }).click();
+  await row('Ann Archer').getByRole('button', { name: 'Yes, cancel it' }).click();
+  await page.waitForTimeout(300);
+  c.ok('cancelling calls the cancel function for this pack only', rpcs.length === 1 && rpcs[0].path === 'owner_void_class_pack' && JSON.stringify(rpcs[0].body) === JSON.stringify({ p_pack_id: 'h1' }));
+
+  // Give a pack: only packs on sale have the button; a member must be chosen
+  rpcs.length = 0;
+  c.ok('only a pack on sale can be given', (await card('10 class pack').getByRole('button', { name: 'Give to a member' }).count()) === 1 && (await card('Drop-in').getByRole('button', { name: 'Give to a member' }).count()) === 0);
+  await card('10 class pack').getByRole('button', { name: 'Give to a member' }).click();
+  await c.has('the give form opens', dialog.getByText('Give a class pack').first());
+  await c.has('it says nothing is charged', dialog.getByText(/Nothing is charged/));
+  c.ok('members are listed by name', (await dialog.getByRole('option', { name: 'Ann Archer' }).count()) === 1 && (await dialog.getByRole('option', { name: 'Bob Brown' }).count()) === 1);
+  c.ok('layout (give form)', (await page.evaluate(layoutProblems)).length === 0);
+  await dialog.getByRole('button', { name: 'Give class pack' }).click();
+  await c.has('choosing nobody is refused', dialog.getByText('Choose who to give it to.'));
+  c.ok('nothing called for a refused form', rpcs.length === 0);
+  await dialog.getByLabel('Member').selectOption({ label: 'Bob Brown' });
+  await dialog.getByRole('button', { name: 'Give class pack' }).click();
+  c.ok('the form closes once given', await dialog.waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false));
+  c.ok('giving is exact: this gym, this member, this pack', rpcs.length === 1 && rpcs[0].path === 'owner_give_class_pack' && JSON.stringify(rpcs[0].body) === JSON.stringify({ p_gym_id: GYM, p_user_id: 'u-bob', p_pack_type_id: 'k1' }));
+  await c.has('a confirmation names the member and the pack', page.getByText('Gave Bob Brown the 10 class pack.'));
 
   // Escape closes without saving
   writes.length = 0;
