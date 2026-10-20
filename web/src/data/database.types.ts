@@ -212,6 +212,7 @@ export type Database = {
         Row: {
           booked_at: string
           cancelled_at: string | null
+          class_pack_id: string | null
           created_at: string
           gym_id: string
           id: string
@@ -223,6 +224,7 @@ export type Database = {
         Insert: {
           booked_at?: string
           cancelled_at?: string | null
+          class_pack_id?: string | null
           created_at?: string
           gym_id: string
           id?: string
@@ -234,6 +236,7 @@ export type Database = {
         Update: {
           booked_at?: string
           cancelled_at?: string | null
+          class_pack_id?: string | null
           created_at?: string
           gym_id?: string
           id?: string
@@ -248,6 +251,13 @@ export type Database = {
             columns: ["gym_id"]
             isOneToOne: false
             referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_bookings_class_pack_id_fkey"
+            columns: ["class_pack_id"]
+            isOneToOne: false
+            referencedRelation: "class_packs"
             referencedColumns: ["id"]
           },
           {
