@@ -4,7 +4,7 @@
     /* Self-heal: an admin page opened inside the Admin shell without the embedded flag would draw a second menu. Reload it as an embedded page. */
     try{
       const file=location.pathname.split('/').pop()||'index.html';
-      const knownPages=['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html'];
+      const knownPages=['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','communications.html'];
       if(window.top!==window.self&&knownPages.includes(file)&&window.parent.location.origin===location.origin&&/\/admin\.html$/.test(window.parent.location.pathname)){
         const u=new URL(location.href);u.searchParams.set('embedded','1');location.replace(u.toString());
       }
@@ -12,7 +12,7 @@
     return;
   }
   document.documentElement.classList.add('admin-embedded');
-  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html']);
+  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','communications.html']);
 
   function viewFromUrl(href){
     try{
