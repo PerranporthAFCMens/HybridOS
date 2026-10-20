@@ -1,4 +1,5 @@
 import type { Session } from '@supabase/supabase-js';
+import type { ConfirmType } from '../auth/confirmLink';
 import { supabase } from './client';
 
 export async function getSession(): Promise<Session | null> {
@@ -44,6 +45,12 @@ export async function getPublicGymBrand(gymId: string): Promise<PublicGymBrand |
   if (error || !data || typeof data !== 'object' || Array.isArray(data)) return null;
   const b = data as { name?: unknown; logo_url?: unknown };
   return { name: typeof b.name === 'string' ? b.name : null, logoUrl: typeof b.logo_url === 'string' ? b.logo_url : null };
+}
+
+/** Confirms a link from an email that opens on our own domain. On success the person is signed in on this browser. */
+export async function confirmEmailLink(tokenHash: string, type: ConfirmType): Promise<void> {
+  const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+  if (error) throw new Error(/expired|invalid|used/i.test(error.message) ? 'This link has run out or was already used.' : error.message);
 }
 
 /** Sets a new password for the signed-in person (used after a password reset link). */
