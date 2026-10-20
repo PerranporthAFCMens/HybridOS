@@ -46,6 +46,7 @@ export function Staff() {
           <div className="muted small">Staff and coaches use the staff app. Anyone who should run the whole gym (a senior manager, say) is added as an admin under Owners and admins, and gets the full admin panel.</div>
         </div>
         <div className="staff-top">
+          <LinkButton href={links.rota}>Rota and time off</LinkButton>
           <LinkButton href={links.owners}>Owners and admins</LinkButton>
           <LinkButton href={links.settings}>Settings</LinkButton>
           <Button variant="primary" onClick={() => { setMessage(''); setEditing('new'); }}>Add staff login</Button>

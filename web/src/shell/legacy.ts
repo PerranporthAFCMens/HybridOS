@@ -13,7 +13,7 @@ export const legacyRoutes = {
 export type LegacyRoute = keyof typeof legacyRoutes;
 
 /** Screens already moved to the new app. */
-export const appLinks = { members: '/members', plans: '/plans', classes: '/classes', staff: '/staff', access: '/access', owners: '/owners', community: '/community', communications: '/communications', workouts: '/workouts', door: '/door', 'member-view': '/member-view', resources: '/rooms', settings: '/settings', 'class-setup': '/class-setup', lifts: '/lifts', payments: '/payments', 'membership-rules': '/membership-rules', 'membership-requests': '/membership-requests', 'signup-process': '/signup-process', 'member-privacy': '/member-privacy' } as const;
+export const appLinks = { members: '/members', plans: '/plans', classes: '/classes', staff: '/staff', rota: '/rota', access: '/access', owners: '/owners', community: '/community', communications: '/communications', workouts: '/workouts', door: '/door', 'member-view': '/member-view', resources: '/rooms', settings: '/settings', 'class-setup': '/class-setup', lifts: '/lifts', payments: '/payments', 'membership-rules': '/membership-rules', 'membership-requests': '/membership-requests', 'signup-process': '/signup-process', 'member-privacy': '/member-privacy' } as const;
 
 /** Every link target a screen may use: moved screens first, old pages for the rest. */
 export const links = { ...legacyRoutes, ...appLinks } as const;

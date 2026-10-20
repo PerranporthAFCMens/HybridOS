@@ -15,6 +15,7 @@ import { ClassSetup } from '../classsetup/ClassSetup';
 import { Lifts } from '../lifts/Lifts';
 import { Payments } from '../payments/Payments';
 import { Staff } from '../staff/Staff';
+import { Rota } from '../rota/Rota';
 import { Settings } from '../staff/Settings';
 import { Rooms } from '../rooms/Rooms';
 import { Access } from '../access/Access';
@@ -139,6 +140,7 @@ function Main() {
             <Route path="/reports" element={<Reports />} />
             <Route path="/estate" element={<Estate />} />
             <Route path="/staff" element={<Staff />} />
+            <Route path="/rota" element={<Rota />} />
             <Route path="/rooms" element={<Rooms />} />
             <Route path="/access" element={<Access />} />
             <Route path="/owners" element={<Owners />} />

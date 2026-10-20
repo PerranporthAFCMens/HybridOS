@@ -10,7 +10,15 @@ const ADA = '33333333-3333-4333-8333-333333333333';
 const at = (h, m = 0, d = 0) => { const x = new Date(); x.setDate(x.getDate() + d); x.setHours(h, m, 0, 0); return x.toISOString(); };
 const SIZES = { phone320: { width: 320, height: 640 }, phone390: { width: 390, height: 844 }, desktop: { width: 1280, height: 800 } };
 
+let onRota = false; // set while a rota state is being opened
 const handle = async ({ route, url, path, select }) => {
+  // The rota screen needs a small team, hours, and some time off (only while that screen is open, so the Staff screen keeps its empty state).
+  if (onRota) {
+    if (path.endsWith('/rpc/get_gym_team_accounts')) return reply(route, [{ user_id: 'c1', display_name: 'Alexandra Montgomery-Featherstonehaugh', email: 'alex@example.test', role: 'coach', is_active: true, access_status: 'active', joined_at: '2026-01-01T00:00:00Z' }, { user_id: 'c2', display_name: 'Sam Staff', email: 'sam@example.test', role: 'staff', is_active: true, access_status: 'active', joined_at: '2026-01-01T00:00:00Z' }]);
+    if (path.endsWith('/staff_working_hours')) return reply(route, [1, 2, 3, 4, 5, 6, 0].flatMap((weekday) => ['c1', 'c2'].map((user_id) => ({ user_id, weekday, is_working: weekday !== 0, start_time: '06:00:00', end_time: '14:00:00' }))));
+    if (path.endsWith('/staff_time_blocks')) return reply(route, [{ id: 'b1', user_id: 'c1', starts_at: at(0, 0, 0), ends_at: at(0, 0, 2), kind: 'leave', reason: 'Holiday with a long reason' }, { id: 'b2', user_id: 'c2', starts_at: at(16, 0, 3), ends_at: at(18, 0, 3), kind: 'blocked', reason: 'Dentist' }]);
+    if (path.endsWith('/gym_closed_days')) return reply(route, [{ id: 'd1', closed_on: new Date(Date.now() + 4 * 864e5).toISOString().slice(0, 10), reason: 'Bank holiday' }]);
+  }
   if (path.endsWith('/rpc/get_member_contact_visibility')) return reply(route, { team_sees_phone: true, team_sees_address: false }, 1);
   if (path.endsWith('/rpc/get_member_details')) return reply(route, { date_of_birth: '1994-06-14', phone_hidden: false, address_hidden: false, phone: '+447700900123', has_details: true, address_line1: 'Flat 12, Extraordinarily Long Named Building Court', address_line2: 'Off the Rather Long Road Name', town: 'Perranporth', postcode: 'TR6 0AB', emergency_name: 'Bartholomew Featherstonehaugh-Montgomery', emergency_phone: '+447700900456', emergency_relationship: 'Partner or spouse', guardian_name: null, guardian_phone: null }, 1);
   if (path.endsWith('/gym_members')) return reply(route, [{ user_id: ADA, role: 'member', joined_at: '2026-03-01T00:00:00', attrition_on: null }, { user_id: 'b', role: 'member', joined_at: '2026-05-01T00:00:00', attrition_on: null }]);
@@ -53,6 +61,9 @@ const STATES = {
   'member record': async (page) => { await page.goto(`${base}/members`); await page.locator('.member-row').first().click(); await page.getByText('Customer lifecycle').waitFor(); await page.getByRole('heading', { name: /Hybrid Monthly/ }).waitFor(); },
   settings: async (page) => { await page.goto(`${base}/settings`); await page.getByRole('heading', { name: 'Settings', level: 1 }).waitFor(); },
   staff: async (page) => { await page.goto(`${base}/staff`); await page.getByText('No team accounts yet.').waitFor(); },
+  rota: async (page) => { await page.goto(`${base}/rota`); await page.getByRole('heading', { name: 'Rota and time off' }).waitFor(); await page.locator('.rota-cell.working').first().waitFor(); },
+  'rota time off': async (page) => { await page.goto(`${base}/rota`); await page.locator('.rota-cell.working').first().click(); await page.getByRole('dialog').getByLabel('Reason (optional)').waitFor(); },
+  'rota closed day': async (page) => { await page.goto(`${base}/rota`); await page.getByRole('button', { name: /gym open\. Open$/ }).first().click(); await page.getByRole('dialog').getByLabel('Reason (optional)').waitFor(); },
   'staff form': async (page) => { await page.goto(`${base}/staff`); await page.getByRole('button', { name: 'Add staff login' }).click(); await page.getByRole('dialog').getByLabel('Name').waitFor(); },
   rooms: async (page) => { await page.goto(`${base}/rooms`); await page.getByText('Nothing set up yet. Add your first room.').waitFor(); },
   'rooms form': async (page) => { await page.goto(`${base}/rooms`); await page.getByRole('button', { name: 'Add room or equipment' }).click(); await page.getByRole('dialog').getByLabel('Name').waitFor(); },
@@ -152,7 +163,7 @@ for (const [sizeName, viewport] of Object.entries(SIZES)) {
     const navs = [];
     const onNav = (fr) => { if (fr === page.mainFrame()) navs.push(fr.url()); };
     page.on('framenavigated', onNav);
-    try { await go(page, viewport); } catch (e) {
+    try { onRota = stateName.startsWith('rota'); await go(page, viewport); } catch (e) {
       c.ok(`${sizeName} / ${stateName}: could not open (${String(e).split('\n')[0].slice(0, 80)})`, false);
       console.log(`  ${sizeName} / ${stateName}: page errors: ${errors.slice(-3).join(' | ').slice(0, 400)}; navigations: ${navs.length} (${[...new Set(navs)].slice(0, 4).join(', ')}); body: ${(await page.locator('body').innerText().catch(() => '')).slice(0, 200).replace(/\n/g, ' / ')}`);
       page.off('framenavigated', onNav);
