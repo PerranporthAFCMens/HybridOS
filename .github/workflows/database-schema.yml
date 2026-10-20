@@ -508,6 +508,8 @@ jobs:
           if grep -v ' | ok$' /tmp/cp_check.txt; then echo 'A class packs verification check is not ok'; exit 1; fi
           # owner, coach, member and another gym's people, run as the authenticated role; rolls itself back
           psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/class_packs.sql
+          # the class pack booking migration (20261020133000) depends on the class_packs table, so take it off first; the next step puts it back
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261020_drop_class_pack_booking.sql
           # the rollback removes everything it added, and applying the migration again restores the same catalog
           snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
           snap /tmp/cp_after_migration.txt
