@@ -76,7 +76,7 @@ jobs:
           PY
             grep -Fq 'id="hybrid-universal-login-entry"' "$tmp" || return 1
             grep -Fq "q.get('embedded')==='1'||q.get('gym_id')||q.get('access_invite')" "$tmp" || return 1
-            grep -Fq "location.replace('./login.html')" "$tmp" || return 1
+            grep -Fq "location.replace('./sign-in')" "$tmp" || return 1
           }
 
           for attempt in $(seq 1 36); do

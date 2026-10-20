@@ -9,7 +9,7 @@
     {key:'settings-group',label:'Settings and staff',icon:'admin',href:'./settings'},
     {key:'member-view',label:'Preview as member',icon:'profile',href:'./m/today',section:'Preview'},
     {key:'staff-view',label:'Preview as staff',icon:'staff',href:'./staff.html?view=staff'},
-    {key:'sign-out',label:'Sign out',icon:'profile',href:'./sign-out.html',section:'Account'}
+    {key:'sign-out',label:'Sign out',icon:'profile',href:'./sign-out',section:'Account'}
   ];
   const contextTabs={
     'members-group':[{key:'members',label:'Members',href:'./index.html#members'},{key:'memberships',label:'Membership plans',href:'./index.html#memberships'}],
