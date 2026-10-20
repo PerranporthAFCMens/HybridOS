@@ -45,7 +45,7 @@ jobs:
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
             if v_tables<>103 then raise exception 'Expected 103 app tables, got %',v_tables; end if;
-            if v_functions<>187 then raise exception 'Expected 187 committed app functions, got %',v_functions; end if;
+            if v_functions<>189 then raise exception 'Expected 189 committed app functions, got %',v_functions; end if;
             if v_policies<>237 then raise exception 'Expected 237 app/storage policies, got %',v_policies; end if;
             if v_triggers<>44 then raise exception 'Expected 44 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>2 then raise exception 'Expected 2 app sequence, got %',v_sequences; end if;
@@ -541,6 +541,27 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           snap /tmp/cpb_after_reapply.txt
           if diff -u /tmp/cpb_after_migration.txt /tmp/cpb_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: Class pack purchase verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261020150000_class_pack_purchase.sql
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261020_class_pack_purchase_check.sql > /tmp/cpp_check.txt
+          cat /tmp/cpp_check.txt
+          if grep -v ' | ok$' /tmp/cpp_check.txt; then echo 'A class pack purchase verification check is not ok'; exit 1; fi
+          # the payment service, signed-in members, owners and visitors; rolls itself back
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/class_pack_purchase.sql
+          # the rollback removes everything it added, and applying the migration again restores the same catalog
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/cpp_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261020_drop_class_pack_purchase.sql
+          snap /tmp/cpp_after_rollback.txt
+          if diff -q /tmp/cpp_after_migration.txt /tmp/cpp_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/cpp_after_reapply.txt
+          if diff -u /tmp/cpp_after_migration.txt /tmp/cpp_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Prove the rollback file restores the pre-migration state exactly
         shell: bash
         run: |
