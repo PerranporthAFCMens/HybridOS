@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addDays, blockText, cellFor, emptyBlockForm, validateBlock, weekDates, weekLabel, weekStart, type BlockRow } from '../src/rota/calc';
+import { addDays, blockText, bookedText, cellFor, emptyBlockForm, findClashes, slotText, validateBlock, weekDates, weekLabel, weekStart, type BlockRow } from '../src/rota/calc';
 
 const hours = [{ weekday: 4, isWorking: true, start: '06:00:00', end: '14:00:00' }];
 const block = (startsAt: string, endsAt: string, kind = 'leave', reason: string | null = null): BlockRow => ({ id: 'b1', userId: 'u1', startsAt, endsAt, kind, reason });
@@ -58,5 +58,24 @@ describe('saving a block', () => {
   it('describes a block in words', () => {
     expect(blockText(block('2026-10-29T16:00:00.000Z', '2026-10-29T18:00:00.000Z'))).toBe('Thu 29, 16:00–18:00');
     expect(blockText(block('2026-10-29T00:00:00.000Z', '2026-10-31T00:00:00.000Z'))).toBe('Thursday 29 October to Friday 30 October');
+  });
+});
+
+describe('bookings inside time off', () => {
+  const blocks = [block('2026-10-29T16:00:00.000Z', '2026-10-29T18:00:00.000Z', 'blocked')];
+  const cls = (sessionId: string, userId: string, startsAt: string, endsAt: string) => ({ sessionId, name: 'HIIT', startsAt, endsAt, userId, booked: 6 });
+  it('lists only what overlaps that person\'s own time off, soonest first', () => {
+    const out = findClashes(
+      blocks,
+      [cls('s2', 'u1', '2026-10-29T17:30:00.000Z', '2026-10-29T18:30:00.000Z'), cls('s1', 'u1', '2026-10-29T17:00:00.000Z', '2026-10-29T18:00:00.000Z'), cls('s3', 'u1', '2026-10-29T18:00:00.000Z', '2026-10-29T19:00:00.000Z'), cls('s4', 'u2', '2026-10-29T17:00:00.000Z', '2026-10-29T18:00:00.000Z')],
+      [{ id: 'p1', userId: 'u1', startsAt: '2026-10-29T16:00:00.000Z', endsAt: '2026-10-29T17:00:00.000Z' }],
+    );
+    expect(out.map((c) => c.key)).toEqual(['p:p1', 'c:s1:u1', 'c:s2:u1']); // s3 starts as the block ends; s4 is someone else
+    expect(out[0]).toMatchObject({ kind: 'pt', title: 'Personal training session' });
+    expect(bookedText(out[1] ?? { kind: 'class', booked: null })).toBe('6 booked');
+    expect(bookedText(out[0] ?? { kind: 'class', booked: null })).toBe('Booked');
+  });
+  it('shows times on the gym clock', () => {
+    expect(slotText('2026-10-29T17:00:00.000Z', '2026-10-29T18:00:00.000Z')).toBe('Thu 29 Oct, 17:00–18:00');
   });
 });
