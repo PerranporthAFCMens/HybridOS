@@ -3,11 +3,12 @@
 // Stripe calls this (no sign-in: it proves who it is with a signature, checked below). Set it up once in Stripe:
 //   Developers > Webhooks > Add endpoint > "Listen to events on Connected accounts"
 //   URL: https://<your-project>.supabase.co/functions/v1/stripe-webhook      (this function must NOT require a JWT)
-//   Events: invoice.paid, invoice.payment_failed, customer.subscription.updated, customer.subscription.deleted
+//   Events: invoice.paid, invoice.payment_failed, customer.subscription.updated, customer.subscription.deleted, payment_intent.succeeded
 //   Then copy the signing secret (whsec_...) into Supabase > Edge Functions > Secrets as STRIPE_WEBHOOK_SECRET.
 // A paid invoice for a membership still waiting for its first payment makes it ACTIVE and records the payment and the card
 // (only Stripe's token for it: no card detail is kept). Later paid invoices (monthly payments) are recorded too. Receiving the same event twice does nothing new.
 // A failed payment is recorded as a FAILED payment (it then shows on the owner's Money owed list) and the member is emailed once per invoice.
+// A paid class pack (a one-off card payment our own server marked as a class pack) makes the member's pack, once per payment. Other payments are ignored here.
 // A subscription cancelled in Stripe ends the membership today and the member is told. If the email cannot be sent nothing else is undone.
 //
 // One file on purpose (it can be pasted into the Supabase function editor). The helpers at the top have no Deno-only code and are
@@ -128,6 +129,19 @@ export function membershipEndedMail(o: { gymName: string; firstName: string; lin
   }
 }
 
+/** What a paid class pack payment says about itself (metadata our own server put on it), or null if it is not one of ours. */
+export function packPaymentFrom(pi: Row): { paymentId: string; gymId: string; userId: string; packTypeId: string; amountPence: number } | null {
+  const m = obj(pi.metadata)
+  const id = str(pi.id)
+  if (str(m.kind) !== 'class_pack' || !/^pi_[A-Za-z0-9]+$/.test(id)) return null
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  const gymId = str(m.gym_id)
+  const userId = str(m.user_id)
+  const packTypeId = str(m.pack_type_id)
+  if (!uuid.test(gymId) || !uuid.test(userId) || !uuid.test(packTypeId)) return null
+  return { paymentId: id, gymId, userId, packTypeId, amountPence: num(pi.amount_received) || num(pi.amount) }
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // The function
 // ---------------------------------------------------------------------------------------------------------------
@@ -203,6 +217,16 @@ async function onSubscription(admin: Admin, subId: string, status: string, delet
   return json(200, { ok: true, result: data, emailed })
 }
 
+async function onPackPaid(admin: Admin, pi: Row): Promise<Response> {
+  const paid = packPaymentFrom(pi)
+  if (!paid) return json(200, { ok: true, ignored: 'not a class pack payment' })
+  const { data, error } = await admin.rpc('stripe_record_pack_purchase', {
+    p_gym_id: paid.gymId, p_user_id: paid.userId, p_pack_type_id: paid.packTypeId, p_payment_id: paid.paymentId, p_amount_pence: paid.amountPence,
+  })
+  if (error) return json(500, { error: error.message })
+  return json(200, { ok: true, pack_id: data })
+}
+
 async function handle(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json(405, { error: 'POST only' })
   try {
@@ -218,6 +242,7 @@ async function handle(req: Request): Promise<Response> {
     const event = JSON.parse(payload) as Row
     const type = str(event.type)
     const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } }) as unknown as Admin
+    if (type === 'payment_intent.succeeded') return await onPackPaid(admin, obj(obj(event.data).object))
     if (type === 'invoice.payment_failed') return await onPaymentFailed(admin, obj(obj(event.data).object))
     if (type === 'customer.subscription.updated' || type === 'customer.subscription.deleted') {
       const sub = obj(obj(event.data).object)
