@@ -18,7 +18,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.goto(`${base}/plans`);
   await c.has('plans loads', page.getByRole('heading', { name: 'Membership plans', level: 1 }));
   c.ok('Membership plans lights up Members', (await menu.getByRole('link', { name: 'Members' }).getAttribute('class')) === 'active');
-  c.ok('and shows the Members tabs', (await page.getByRole('navigation', { name: 'Members' }).getByRole('link').allInnerTexts()).join('|') === 'Members|Membership plans');
+  c.ok('and shows the Members tabs', (await page.getByRole('navigation', { name: 'Members' }).getByRole('link').allInnerTexts()).join('|') === 'Members|Membership plans|Class packs');
   await page.goto(`${base}/training`);
   await c.has('training loads', page.getByRole('heading', { name: 'Client training', level: 1 }));
   c.ok('Client training lights up Classes and workouts', (await menu.getByRole('link', { name: 'Classes and workouts' }).getAttribute('class')) === 'active');

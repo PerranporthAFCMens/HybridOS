@@ -259,6 +259,20 @@ export type Database = {
           },
         ]
       }
+      class_pack_types: {
+        Row: { created_at: string; created_by: string | null; credits: number; gym_id: string; id: string; is_active: boolean; name: string; price_pence: number; updated_at: string; valid_days: number | null }
+        Insert: { created_at?: string; created_by?: string | null; credits: number; gym_id: string; id?: string; is_active?: boolean; name: string; price_pence: number; updated_at?: string; valid_days?: number | null }
+        Update: { created_at?: string; created_by?: string | null; credits?: number; gym_id?: string; id?: string; is_active?: boolean; name?: string; price_pence?: number; updated_at?: string; valid_days?: number | null }
+        Relationships: []
+      }
+      class_packs: {
+        Row: { created_at: string; credits_left: number; credits_total: number; expires_at: string | null; granted_by: string | null; gym_id: string; id: string; name: string; paid_pence: number; pack_type_id: string | null; provider_payment_id: string | null; source: string; user_id: string; voided_at: string | null }
+        Insert: { created_at?: string; credits_left: number; credits_total: number; expires_at?: string | null; granted_by?: string | null; gym_id: string; id?: string; name: string; paid_pence?: number; pack_type_id?: string | null; provider_payment_id?: string | null; source: string; user_id: string; voided_at?: string | null }
+        Update: { created_at?: string; credits_left?: number; credits_total?: number; expires_at?: string | null; granted_by?: string | null; gym_id?: string; id?: string; name?: string; paid_pence?: number; pack_type_id?: string | null; provider_payment_id?: string | null; source?: string; user_id?: string; voided_at?: string | null }
+        Relationships: [
+          { foreignKeyName: "class_packs_pack_type_id_fkey"; columns: ["pack_type_id"]; isOneToOne: false; referencedRelation: "class_pack_types"; referencedColumns: ["id"] },
+        ]
+      }
       class_session_reserved_plans: {
         Row: {
           plan_id: string
@@ -4190,6 +4204,8 @@ export type Database = {
       member_book_class: { Args: { p_session_id: string }; Returns: Json }
       member_cancel_class: { Args: { p_session_id: string }; Returns: Json }
       member_join_waitlist: { Args: { p_session_id: string }; Returns: Json }
+      owner_give_class_pack: { Args: { p_gym_id: string; p_pack_type_id: string; p_user_id: string }; Returns: string }
+      owner_void_class_pack: { Args: { p_pack_id: string }; Returns: undefined }
       member_leave_waitlist: { Args: { p_session_id: string }; Returns: Json }
       get_my_waitlist: { Args: { p_session_id: string }; Returns: Json }
       get_my_waitlists: {
