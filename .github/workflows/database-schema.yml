@@ -45,7 +45,7 @@ jobs:
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
             if v_tables<>101 then raise exception 'Expected 101 app tables, got %',v_tables; end if;
-            if v_functions<>176 then raise exception 'Expected 176 committed app functions, got %',v_functions; end if;
+            if v_functions<>180 then raise exception 'Expected 180 committed app functions, got %',v_functions; end if;
             if v_policies<>233 then raise exception 'Expected 233 app/storage policies, got %',v_policies; end if;
             if v_triggers<>42 then raise exception 'Expected 42 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>2 then raise exception 'Expected 2 app sequence, got %',v_sequences; end if;
@@ -501,7 +501,7 @@ jobs:
         run: |
           set -euo pipefail
           DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
-          MIG=supabase/migrations/20261020100000_class_packs.sql
+          MIG=supabase/migrations/20261020110000_class_packs.sql
           psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261020_class_packs_check.sql > /tmp/cp_check.txt
           cat /tmp/cp_check.txt
           if grep -v ' | ok$' /tmp/cp_check.txt; then echo 'A class packs verification check is not ok'; exit 1; fi

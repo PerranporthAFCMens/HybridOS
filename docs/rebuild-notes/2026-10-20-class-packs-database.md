@@ -1,6 +1,6 @@
 # Class packs, part 1 of 3: the database (20 October 2026)
 
-**Database only. No screens, no payments, booking unchanged. SQL to run by hand (Adam).** Migration `supabase/migrations/20261020100000_class_packs.sql`, rollback `supabase/rollback/20261020_drop_class_packs.sql`, check `supabase/verification/20261020_class_packs_check.sql`, tests `supabase/tests/class_packs.sql` (39 checks).
+**Database only. No screens, no payments, booking unchanged. SQL to run by hand (Adam).** Migration `supabase/migrations/20261020110000_class_packs.sql`, rollback `supabase/rollback/20261020_drop_class_packs.sql`, check `supabase/verification/20261020_class_packs_check.sql`, tests `supabase/tests/class_packs.sql` (39 checks).
 
 - `class_pack_types`: what a gym sells (name, number of classes, price, days it lasts or never). Owners and admins manage; members read the ones switched on.
 - `class_packs`: a pack a member holds, with the name and class count copied at the time (so editing a pack type never changes packs already held), classes left, expiry, who gave it or the payment it came from. Members read their own; owners and admins read the gym's. Nobody writes it directly.
