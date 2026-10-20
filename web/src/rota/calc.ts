@@ -97,3 +97,31 @@ export function blockText(b: BlockRow): string {
   if (whole) return sp.date === ep.date ? longDay(sp.date) : `${longDay(sp.date)} to ${longDay(ep.date)}`;
   return `${dayHeading(sp.date)}, ${clock(s)}–${clock(e)}`;
 }
+
+// ---- Bookings that fall inside time off ----
+
+/** One person on one class (a class with two coaches gives two rows). `booked` is how many members have a place. */
+export interface ClassSlot { sessionId: string; name: string; startsAt: string; endsAt: string; userId: string; booked: number | null }
+export interface PtSlot { id: string; userId: string; startsAt: string; endsAt: string }
+export interface Clash { key: string; kind: 'class' | 'pt'; userId: string; title: string; startsAt: string; endsAt: string; booked: number | null; sessionId: string | null; appointmentId: string | null }
+
+const overlaps = (aStart: string, aEnd: string, bStart: string, bEnd: string) => new Date(aStart) < new Date(bEnd) && new Date(aEnd) > new Date(bStart);
+
+/** What is already booked with someone while they have time off, soonest first. Nothing here is changed by this; it is only the list. */
+export function findClashes(blocks: BlockRow[], classes: ClassSlot[], pt: PtSlot[]): Clash[] {
+  const hit = (userId: string, s: string, e: string) => blocks.some((b) => b.userId === userId && overlaps(b.startsAt, b.endsAt, s, e));
+  const out: Clash[] = [];
+  for (const c of classes) if (hit(c.userId, c.startsAt, c.endsAt)) out.push({ key: `c:${c.sessionId}:${c.userId}`, kind: 'class', userId: c.userId, title: c.name, startsAt: c.startsAt, endsAt: c.endsAt, booked: c.booked, sessionId: c.sessionId, appointmentId: null });
+  for (const p of pt) if (hit(p.userId, p.startsAt, p.endsAt)) out.push({ key: `p:${p.id}`, kind: 'pt', userId: p.userId, title: 'Personal training session', startsAt: p.startsAt, endsAt: p.endsAt, booked: null, sessionId: null, appointmentId: p.id });
+  return out.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+}
+
+const WHEN = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Europe/London' });
+const TIME = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Europe/London' });
+/** "Thu 29 Oct, 17:00–18:00". */
+export const slotText = (startsAt: string, endsAt: string) => `${WHEN.format(new Date(startsAt))}–${TIME.format(new Date(endsAt))}`;
+
+export function bookedText(c: Pick<Clash, 'kind' | 'booked'>): string {
+  if (c.kind === 'pt') return 'Booked';
+  return c.booked === null ? '' : c.booked === 1 ? '1 booked' : `${c.booked} booked`;
+}
