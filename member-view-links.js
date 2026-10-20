@@ -5,7 +5,7 @@
   const params=new URLSearchParams(location.search);
   const flag=params.get('view')==='member'?'view':params.get('preview')==='member'?'preview':'';
   if(!flag)return;
-  const FAMILY=['member.html','social.html','groups.html','integrations.html'];
+  const FAMILY=['member.html','social.html','groups.html'];
   function fix(root){
     (root||document).querySelectorAll('a[href]').forEach(a=>{
       const raw=a.getAttribute('href');

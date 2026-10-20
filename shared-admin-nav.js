@@ -1,5 +1,5 @@
 (function(){
-  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','admin-access.html','communications.html']);
+  const adminPages=new Set(['index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','admin-access.html','communications.html']);
   const sidebar=[
     {key:'dashboard',label:'Today',icon:'home',href:'./today'},
     {key:'members-group',label:'Members',icon:'members',href:'./members'},
