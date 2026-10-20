@@ -35,6 +35,26 @@
       "permanent": false
     },
     {
+      "source": "/hybrid-hub",
+      "destination": "/sign-in?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98",
+      "permanent": false
+    },
+    {
+      "source": "/hybrid-hub-login.html",
+      "destination": "/sign-in?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98",
+      "permanent": false
+    },
+    {
+      "source": "/puffin-performance",
+      "destination": "/sign-in?gym_id=aec16956-3793-4543-873b-4412646ca1eb",
+      "permanent": false
+    },
+    {
+      "source": "/puffin-performance-login.html",
+      "destination": "/sign-in?gym_id=aec16956-3793-4543-873b-4412646ca1eb",
+      "permanent": false
+    },
+    {
       "source": "/index.html",
       "has": [
         {
@@ -55,18 +75,6 @@
     {
       "source": "/",
       "destination": "/landing.html"
-    },
-    {
-      "source": "/login",
-      "destination": "/login.html"
-    },
-    {
-      "source": "/hybrid-hub",
-      "destination": "/hybrid-hub-login.html"
-    },
-    {
-      "source": "/puffin-performance",
-      "destination": "/puffin-performance-login.html"
     },
     {
       "source": "/app",

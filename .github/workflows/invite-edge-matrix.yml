@@ -5,8 +5,6 @@ on:
     branches: [dev]
     paths:
       - '.github/workflows/invite-edge-matrix.yml'
-      - 'admin-invite.html'
-      - 'login.html'
 
 permissions:
   contents: read

@@ -54,7 +54,7 @@ if not problems:
     runtime_script=(ROOT/'scripts/runtime_pages_check.py').read_text(encoding='utf-8')
     protected=(ROOT/'.github/workflows/protected-routing-browser.yml').read_text(encoding='utf-8')
     if 'HybridOne dev runtime verification' not in runtime_workflow:problems.append('dev runtime workflow name/contract missing')
-    for marker in ('deployment.json','login.html','choose-gym.html','hybrid-hub-login.html','puffin-performance-login.html'):
+    for marker in ('deployment.json','login.html','old sign-in address'):
         if marker not in runtime_script:problems.append(f'runtime Pages verification contract incomplete: {marker}')
     for marker in ('HybridOne protected routing browser','return_to','admin-access.html','sign-in','gym hint missing from universal login'):
         if marker not in protected:problems.append(f'protected routing browser contract missing: {marker}')
