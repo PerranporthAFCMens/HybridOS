@@ -39,6 +39,7 @@ export function StaffShell() {
         <NavLink to="/s/today">{icon('M3 11l9-8 9 8M5 10v10h14V10')}<span>My day</span></NavLink>
         {ctx.allowed('view_timetable') && <NavLink to="/s/timetable">{icon('M4 5h16v15H4zM4 10h16M9 3v4M15 3v4')}<span>Timetable</span></NavLink>}
         <NavLink to="/s/clients">{icon('M9 11a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5M17 5.5a3 3 0 010 6M19 15c2 .8 3 2.4 3 5')}<span>Clients</span></NavLink>
+        <NavLink to="/s/time-off">{icon('M8 3v4M16 3v4M4 8h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1zM9 14l2 2 4-4')}<span>Time off</span></NavLink>
         <NavLink to="/s/me">{icon('M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6')}<span>Me</span></NavLink>
       </nav>
     </div>

@@ -1,5 +1,7 @@
 import { supabase } from './client';
-import type { BlockRow, ClosedRow } from '../rota/calc';
+import { setClassCancelled } from './classes';
+import { listClassSessions } from './today';
+import type { BlockRow, ClassSlot, ClosedRow, PtSlot } from '../rota/calc';
 
 export interface RotaData { blocks: BlockRow[]; closed: ClosedRow[] }
 
@@ -36,5 +38,52 @@ export async function addClosedDay(gymId: string, day: string, reason: string | 
 
 export async function removeClosedDay(gymId: string, id: string): Promise<void> {
   const { error } = await supabase.from('gym_closed_days').delete().eq('gym_id', gymId).eq('id', id);
+  if (error) throw error;
+}
+
+// ---- What is already booked with someone (so time off can be checked against it) ----
+
+export interface Bookings { classes: ClassSlot[]; pt: PtSlot[] }
+
+/**
+ * The upcoming classes (one row per coach) and booked personal training sessions between two instants. With `userId` only that
+ * person's; without it everyone's (owners and admins).
+ */
+export async function loadBookings(gymId: string, fromIso: string, toIso: string, userId?: string): Promise<Bookings> {
+  let classesQ = supabase.from('class_session_staff').select('user_id, class_sessions!inner(id, name, starts_at, ends_at, is_cancelled)').eq('gym_id', gymId)
+    .gte('class_sessions.starts_at', fromIso).lt('class_sessions.starts_at', toIso).eq('class_sessions.is_cancelled', false);
+  let ptQ = supabase.from('pt_appointments').select('id, staff_user_id, starts_at, ends_at').eq('gym_id', gymId).eq('status', 'booked').gte('starts_at', fromIso).lt('starts_at', toIso);
+  if (userId) {
+    classesQ = classesQ.eq('user_id', userId);
+    ptQ = ptQ.eq('staff_user_id', userId);
+  }
+  const [classes, pt, calendar] = await Promise.all([classesQ, ptQ, listClassSessions(gymId, fromIso, toIso).catch(() => [])]);
+  if (classes.error) throw classes.error;
+  if (pt.error) throw pt.error;
+  const booked = new Map(calendar.map((s) => [s.session_id, s.booked_count]));
+  return {
+    classes: (classes.data ?? []).flatMap((r) => (r.class_sessions ? [{ sessionId: r.class_sessions.id, name: r.class_sessions.name, startsAt: r.class_sessions.starts_at, endsAt: r.class_sessions.ends_at, userId: r.user_id, booked: booked.get(r.class_sessions.id) ?? null }] : [])),
+    pt: (pt.data ?? []).map((p) => ({ id: p.id, userId: p.staff_user_id, startsAt: p.starts_at, endsAt: p.ends_at })),
+  };
+}
+
+/** A person's own time off from now on (their screen). */
+export async function loadMyBlocks(gymId: string, userId: string, fromIso: string): Promise<BlockRow[]> {
+  const { data, error } = await supabase.from('staff_time_blocks').select('id, user_id, starts_at, ends_at, kind, reason').eq('gym_id', gymId).eq('user_id', userId).gt('ends_at', fromIso).order('starts_at').limit(200);
+  if (error) throw error;
+  return (data ?? []).map((b) => ({ id: b.id, userId: b.user_id, startsAt: b.starts_at, endsAt: b.ends_at, kind: b.kind, reason: b.reason }));
+}
+
+/** Every person's time off from now on, for the owner's "needs a decision" list. */
+export async function loadUpcomingBlocks(gymId: string, fromIso: string, toIso: string): Promise<BlockRow[]> {
+  const { data, error } = await supabase.from('staff_time_blocks').select('id, user_id, starts_at, ends_at, kind, reason').eq('gym_id', gymId).lt('starts_at', toIso).gt('ends_at', fromIso).order('starts_at').limit(1000);
+  if (error) throw error;
+  return (data ?? []).map((b) => ({ id: b.id, userId: b.user_id, startsAt: b.starts_at, endsAt: b.ends_at, kind: b.kind, reason: b.reason }));
+}
+
+/** Owners and admins: cancel a class (members see it as cancelled, as from the timetable), or a personal training session. */
+export const cancelClass = (gymId: string, sessionId: string) => setClassCancelled(gymId, sessionId, true);
+export async function cancelPtSession(gymId: string, id: string): Promise<void> {
+  const { error } = await supabase.from('pt_appointments').update({ status: 'cancelled' }).eq('gym_id', gymId).eq('id', id);
   if (error) throw error;
 }

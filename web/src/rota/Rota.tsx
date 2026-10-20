@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
 import { Checkbox, DateInput, Field, FieldRow, Input, Select } from '../ui/Field';
 import { Modal } from '../ui/Modal';
+import { Clashes } from './Clashes';
 import { isActiveMember, roleLabel, type TeamRow } from '../staff/calc';
 import { useStaffData } from '../staff/useStaff';
 import { BLOCK_KINDS, addDays, blockText, cellFor, dayHeading, dayRange, emptyBlockForm, longDay, validateBlock, weekDates, weekLabel, weekStart, type BlockForm, type BlockKind, type BlockRow, type ClosedRow } from './calc';
@@ -37,7 +38,7 @@ export function Rota() {
         <div>
           <div className="eyebrow">Settings and staff</div>
           <h1>Rota and time off</h1>
-          <div className="muted">Who is working when at {gym.gymName}. Each day starts from the person's weekly hours; tap a day to block out time or mark leave. Coaches and PTs will be able to block their own time too.</div>
+          <div className="muted">Who is working when at {gym.gymName}. Each day starts from the person's weekly hours; tap a day to block out time or mark leave. Coaches and PTs block their own time from the Time off tab in the staff app.</div>
         </div>
         <div className="staff-top rota-top">
           <Button variant="primary" disabled={allPeople.length === 0} onClick={() => { setMessage(''); setDialog({ kind: 'time-off', userId: allPeople[0]?.userId ?? '', date: today >= start && today <= addDays(start, 6) ? today : start }); }}>Add time off</Button>
@@ -120,6 +121,8 @@ export function Rota() {
           </>
         )}
       </Card>
+
+      {staff.data && <Clashes names={new Map(staff.data.team.map((m) => [m.userId, m.name]))} />}
 
       {dialog?.kind === 'time-off' && staff.data && rota.data && (
         <TimeOffDialog people={allPeople} start={dialog.date} userId={dialog.userId} blocks={rota.data.blocks} onClose={() => setDialog(null)} onDone={(t) => { setMessage(t); }} />
