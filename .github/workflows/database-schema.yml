@@ -45,7 +45,7 @@ jobs:
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
             if v_tables<>99 then raise exception 'Expected 99 app tables, got %',v_tables; end if;
-            if v_functions<>174 then raise exception 'Expected 174 committed app functions, got %',v_functions; end if;
+            if v_functions<>178 then raise exception 'Expected 178 committed app functions, got %',v_functions; end if;
             if v_policies<>229 then raise exception 'Expected 229 app/storage policies, got %',v_policies; end if;
             if v_triggers<>42 then raise exception 'Expected 42 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>2 then raise exception 'Expected 2 app sequence, got %',v_sequences; end if;

@@ -121,3 +121,4 @@
 /* Waitlist buttons sit side by side beside a class, not stretched across it. */
 .mem-class .mem-actions, .mem-line .mem-actions { flex-wrap: nowrap; }
 .mem-class .mem-actions > *, .mem-line .mem-actions > * { flex: none; }
+.mem-card.pay-problem { border-color: var(--hybrid-danger, #d92d20); box-shadow: inset 0 0 0 1px var(--hybrid-danger, #d92d20); }

@@ -4100,6 +4100,7 @@ export type Database = {
       }
       decide_membership_request: { Args: { p_approve: boolean; p_note?: string; p_request_id: string }; Returns: undefined }
       get_my_membership_options: { Args: { p_gym_id: string }; Returns: Json }
+      get_my_payment_notice: { Args: { p_gym_id: string }; Returns: Json }
       request_membership_cancel: { Args: { p_membership_id: string; p_reason?: string }; Returns: string }
       request_membership_change: { Args: { p_membership_id: string; p_to_plan_id: string }; Returns: string }
       request_membership_pause: { Args: { p_ends_on: string; p_membership_id: string; p_reason?: string; p_starts_on: string }; Returns: string }

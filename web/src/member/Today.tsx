@@ -15,6 +15,7 @@ import { ClassAction, waitlistLine } from './ClassAction';
 import type { ClassRow } from '../data/member';
 import { Button } from '../ui/Button';
 import { BirthdayHello } from './Birthday';
+import { PaymentNoticeCard } from './PaymentNoticeCard';
 import { birthdayKey, chooseHero, dayLabel,isBirthdayToday, dayOf, goalMessage, suggestions, timeOf, whenWords, spaceText } from './calc';
 import { dueNow } from '../train/calc';
 import type { MemberCtx } from './useMember';
@@ -116,6 +117,7 @@ export function Today() {
   return (
     <div className="mem-screen">
       {booking.layer}
+      <PaymentNoticeCard />
       <Notices notices={d.notices} />
       {showBirthday && <BirthdayHello first={first} gymName={gym.gymName} onClose={closeBirthday} />}
       {birthday.isSuccess && !birthday.data && (
