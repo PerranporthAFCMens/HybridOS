@@ -45,9 +45,9 @@ jobs:
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
             if v_tables<>103 then raise exception 'Expected 103 app tables, got %',v_tables; end if;
-            if v_functions<>182 then raise exception 'Expected 182 committed app functions, got %',v_functions; end if;
+            if v_functions<>187 then raise exception 'Expected 187 committed app functions, got %',v_functions; end if;
             if v_policies<>237 then raise exception 'Expected 237 app/storage policies, got %',v_policies; end if;
-            if v_triggers<>43 then raise exception 'Expected 43 app-related triggers, got %',v_triggers; end if;
+            if v_triggers<>44 then raise exception 'Expected 44 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>2 then raise exception 'Expected 2 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
             if exists(select 1 from public.profiles) then raise exception 'Baseline must not contain live profile rows'; end if;
@@ -402,8 +402,9 @@ jobs:
           if grep -v ' | ok$' /tmp/wl_check.txt; then echo 'A class waitlist verification check is not ok'; exit 1; fi
           # members, owner, admin and another gym's people, run as the authenticated role; rolls itself back
           psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/class_waitlist.sql
-          # the rollback removes everything it added, and applying the migration again restores the same catalog
-          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          # the rollback removes everything it added, and applying the migration again restores the same catalog.
+          # The two booking functions are redefined again by the later class pack booking migration (20261020133000), so they are left out here.
+          snap() { psql "$DB_URL" -X -q -v skip='book_class_session(uuid);member_book_class(uuid)' -f supabase/tests/catalog_snapshot.sql > "$1"; }
           snap /tmp/wl_after_migration.txt
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261016_drop_class_waitlist.sql
           snap /tmp/wl_after_rollback.txt
@@ -507,6 +508,8 @@ jobs:
           if grep -v ' | ok$' /tmp/cp_check.txt; then echo 'A class packs verification check is not ok'; exit 1; fi
           # owner, coach, member and another gym's people, run as the authenticated role; rolls itself back
           psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/class_packs.sql
+          # the class pack booking migration (20261020133000) depends on the class_packs table, so take it off first; the next step puts it back
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261020_drop_class_pack_booking.sql
           # the rollback removes everything it added, and applying the migration again restores the same catalog
           snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
           snap /tmp/cp_after_migration.txt
@@ -516,6 +519,28 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           snap /tmp/cp_after_reapply.txt
           if diff -u /tmp/cp_after_migration.txt /tmp/cp_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: Class pack booking verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261020133000_class_pack_booking.sql
+          # earlier steps roll back and re-apply the waitlist migration, which puts its own booking functions back: apply this migration again first (safe to repeat)
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261020_class_pack_booking_check.sql > /tmp/cpb_check.txt
+          cat /tmp/cpb_check.txt
+          if grep -v ' | ok$' /tmp/cpb_check.txt; then echo 'A class pack booking verification check is not ok'; exit 1; fi
+          # pack holders, plan holders, owner and another gym's people, run as the authenticated role; rolls itself back
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/class_pack_booking.sql
+          # the rollback removes everything it added, and applying the migration again restores the same catalog
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/cpb_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261020_drop_class_pack_booking.sql
+          snap /tmp/cpb_after_rollback.txt
+          if diff -q /tmp/cpb_after_migration.txt /tmp/cpb_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/cpb_after_reapply.txt
+          if diff -u /tmp/cpb_after_migration.txt /tmp/cpb_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Prove the rollback file restores the pre-migration state exactly
         shell: bash
         run: |
@@ -536,6 +561,24 @@ jobs:
           mv /tmp/membership_status_enforcement.sql "$MIG"
           if diff -u /tmp/snap_before_migration.txt /tmp/snap_after_rollback.txt; then echo 'Rollback restores the pre-migration catalog exactly'; else echo 'Rollback does NOT restore the pre-migration catalog'; exit 1; fi
           if diff -q /tmp/snap_before_migration.txt /tmp/snap_after_migration.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+      - name: Prove the class pack booking rollback restores the pre-migration state exactly
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261020133000_class_pack_booking.sql
+          supabase db reset --local
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/cpbx_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261020_drop_class_pack_booking.sql
+          snap /tmp/cpbx_after_rollback.txt
+          # rebuild WITHOUT the new migration to get the true pre-migration catalog
+          mv "$MIG" /tmp/class_pack_booking.sql
+          supabase db reset --local
+          snap /tmp/cpbx_before_migration.txt
+          mv /tmp/class_pack_booking.sql "$MIG"
+          if diff -u /tmp/cpbx_before_migration.txt /tmp/cpbx_after_rollback.txt; then echo 'Rollback restores the pre-migration catalog exactly'; else echo 'Rollback does NOT restore the pre-migration catalog'; exit 1; fi
+          if diff -q /tmp/cpbx_before_migration.txt /tmp/cpbx_after_migration.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
       - name: Stop local Supabase
         if: always()
         run: supabase stop --no-backup
