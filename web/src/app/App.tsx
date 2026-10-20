@@ -50,6 +50,7 @@ import { Finish } from '../member/Finish';
 import { StaffShell } from '../staffapp/StaffShell';
 import { StaffDay, StaffTimetable } from '../staffapp/StaffDay';
 import { StaffMe } from '../staffapp/StaffMe';
+import { StaffTimeOff } from '../staffapp/StaffTimeOff';
 import { StaffClients } from '../staffapp/StaffClients';
 import { StaffClient } from '../staffapp/StaffClient';
 import { Strava } from '../member/Strava';
@@ -125,6 +126,7 @@ function Main() {
             <Route path="/s/timetable" element={<StaffTimetable />} />
             <Route path="/s/clients" element={<StaffClients />} />
             <Route path="/s/clients/:userId" element={<StaffClient />} />
+            <Route path="/s/time-off" element={<StaffTimeOff />} />
             <Route path="/s/me" element={<StaffMe />} />
             <Route path="/s/*" element={<Navigate to="/s/today" replace />} />
           </Route>
