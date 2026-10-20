@@ -19,6 +19,9 @@ const handle = async ({ route, url, path, select }) => {
     if (path.endsWith('/staff_time_blocks')) return reply(route, [{ id: 'b1', user_id: 'c1', starts_at: at(0, 0, 0), ends_at: at(0, 0, 2), kind: 'leave', reason: 'Holiday with a long reason' }, { id: 'b3', user_id: USER, starts_at: at(9, 0, 5), ends_at: at(11, 0, 5), kind: 'sick', reason: 'A long reason that goes on and on and on' }, { id: 'b2', user_id: 'c2', starts_at: at(16, 0, 3), ends_at: at(18, 0, 3), kind: 'blocked', reason: 'Dentist' }]);
     if (path.endsWith('/gym_closed_days')) return reply(route, [{ id: 'd1', closed_on: new Date(Date.now() + 4 * 864e5).toISOString().slice(0, 10), reason: 'Bank holiday' }]);
   }
+  if (path.endsWith('/rpc/platform_list_gyms')) return reply(route, [{ gym_id: 'g1', name: 'Puffin Performance with a long name', slug: 'puffin', created_at: '2026-01-01T00:00:00Z', members: 42, owner_email: 'owner@example.test', addons_off: ['community'] }], 1);
+  if (path.endsWith('/rpc/platform_audit')) return reply(route, [{ id: 1, at: '2026-10-20T10:00:00Z', actor: 'a1', action: 'set_gym_addon', gym_id: 'g1', detail: { addon: 'community', enabled: false } }], 1);
+  if (path.endsWith('/platform_addons')) return reply(route, [{ key: 'classes', name: 'Classes', description: 'Timetable and booking', optional: false, default_on: true, sort_order: 1 }, { key: 'community', name: 'Community', description: 'Feed and posts', optional: true, default_on: true, sort_order: 2 }], 2);
   if (path.endsWith('/rpc/get_member_contact_visibility')) return reply(route, { team_sees_phone: true, team_sees_address: false }, 1);
   if (path.endsWith('/rpc/get_member_details')) return reply(route, { date_of_birth: '1994-06-14', phone_hidden: false, address_hidden: false, phone: '+447700900123', has_details: true, address_line1: 'Flat 12, Extraordinarily Long Named Building Court', address_line2: 'Off the Rather Long Road Name', town: 'Perranporth', postcode: 'TR6 0AB', emergency_name: 'Bartholomew Featherstonehaugh-Montgomery', emergency_phone: '+447700900456', emergency_relationship: 'Partner or spouse', guardian_name: null, guardian_phone: null }, 1);
   if (path.endsWith('/gym_members')) return reply(route, [{ user_id: ADA, role: 'member', joined_at: '2026-03-01T00:00:00', attrition_on: null }, { user_id: 'b', role: 'member', joined_at: '2026-05-01T00:00:00', attrition_on: null }]);
@@ -95,6 +98,7 @@ const STATES = {
   'member bests': async (page) => { await page.goto(`${base}/m/train/pbs`); await page.getByText('No personal bests yet.').waitFor(); },
   'member pt': async (page) => { await page.goto(`${base}/m/train/pt`); await page.getByText('No sessions booked.').waitFor(); },
   'member me': async (page) => { await page.goto(`${base}/m/me`); await page.getByRole('button', { name: 'Sign out' }).waitFor(); },
+  control: async (page) => { await page.goto(`${base}/control`); await page.getByText('Manage Puffin Performance with a long name').waitFor(); },
   estate: async (page) => { await page.goto(`${base}/estate`); await page.getByText('The estate view is for owners and admins of two or more gyms.').waitFor(); },
   'member groups': async (page) => { await page.goto(`${base}/m/groups`); await page.getByText('You are not in any groups yet.').waitFor(); },
   'member group form': async (page) => { await page.goto(`${base}/m/groups`); await page.getByRole('button', { name: 'New group' }).click(); await page.getByRole('dialog').getByLabel('Group name').waitFor(); },
