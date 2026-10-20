@@ -967,6 +967,41 @@ export type Database = {
           },
         ]
       }
+      gym_closed_days: {
+        Row: {
+          closed_on: string
+          created_at: string
+          created_by: string | null
+          gym_id: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          closed_on: string
+          created_at?: string
+          created_by?: string | null
+          gym_id: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          closed_on?: string
+          created_at?: string
+          created_by?: string | null
+          gym_id?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_closed_days_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gym_communication_settings: {
         Row: {
           accent_color: string
@@ -2682,6 +2717,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "staff_profiles_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_time_blocks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          gym_id: string
+          id: string
+          kind: string
+          reason: string | null
+          starts_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          gym_id: string
+          id?: string
+          kind?: string
+          reason?: string | null
+          starts_at: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          gym_id?: string
+          id?: string
+          kind?: string
+          reason?: string | null
+          starts_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_time_blocks_gym_id_fkey"
             columns: ["gym_id"]
             isOneToOne: false
             referencedRelation: "gyms"
