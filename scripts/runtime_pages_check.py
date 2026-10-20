@@ -47,7 +47,7 @@ checks=[
     ),
     (
         'login.html',
-        ('dev preview: old sign-in address','"sign-in/"'),
+        ('dev preview: old sign-in address','sign-in/"'),
         ('Your gyms.<br>One login.',)
     ),
 ]
