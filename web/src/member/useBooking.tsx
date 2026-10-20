@@ -1,15 +1,15 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { bookClass, cancelClass, classAccess, joinWaitlist, leaveWaitlist, listMyWaitlists, type ClassAccess, type ClassRow, type MyWaitlist } from '../data/member';
+import { bookClass, cancelClass, classAccess, joinWaitlist, leaveWaitlist, listMyPacks, listMyWaitlists, type ClassAccess, type ClassRow, type MyWaitlist } from '../data/member';
 import { pounds } from '../reports/library';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
-import { dayLabel, dayOf, minutesLeft, timeOf } from './calc';
+import { dayLabel, dayOf, minutesLeft, packClassesLeft, packLeftText, timeOf } from './calc';
 
 /** Booking, cancelling and the waitlist, with the dialogs, shared by Today and Classes. */
 export function useBooking() {
-  const { gym } = useReadyAuth();
+  const { gym, userId } = useReadyAuth();
   const qc = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ text: string; good: boolean } | null>(null);
@@ -30,6 +30,8 @@ export function useBooking() {
   });
   const waitlists = lists.data ?? [];
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const packsQ = useQuery({ queryKey: ['m-packs', gym.gymId, userId], queryFn: () => listMyPacks(gym.gymId, userId) });
+  const packLeft = packClassesLeft(packsQ.data ?? [], nowMs);
   const anyOffered = waitlists.some((w) => w.status === 'offered');
   useEffect(() => {
     if (!anyOffered) return;
@@ -42,6 +44,7 @@ export function useBooking() {
   const refresh = () => Promise.all([
     qc.invalidateQueries({ queryKey: ['m-classes', gym.gymId] }),
     qc.invalidateQueries({ queryKey: ['m-waitlists', gym.gymId] }),
+    qc.invalidateQueries({ queryKey: ['m-packs', gym.gymId] }),
   ]);
 
   /** What this member's place in line is for a class, with expired offers treated as gone. */
@@ -57,13 +60,15 @@ export function useBooking() {
     setNotice(null);
     try {
       const access = await classAccess(row.sessionId);
-      if (!access.included) {
+      // A member with pack classes goes straight to the database, which spends a pack class only when the plan does not cover it.
+      if (!access.included && packLeft === 0) {
         setNotIncluded({ row, access });
         return;
       }
-      await bookClass(row.sessionId);
+      const { usedPack } = await bookClass(row.sessionId);
       await refresh();
-      setNotice({ text: `Booked: ${row.name}, ${dayLabel(dayOf(row.startsAt))} at ${timeOf(row.startsAt)}.`, good: true });
+      const when = `${dayLabel(dayOf(row.startsAt))} at ${timeOf(row.startsAt)}`;
+      setNotice({ text: usedPack ? `Booked: ${row.name}, ${when}. One pack class used, ${packLeftText(Math.max(packLeft - 1, 0))}.` : `Booked: ${row.name}, ${when}.`, good: true });
     } catch (e) {
       const text = e instanceof Error ? e.message : 'Could not book that class.';
       if (/class is full/i.test(text)) {
@@ -111,9 +116,9 @@ export function useBooking() {
     setBusy(row.sessionId);
     setNotice(null);
     try {
-      await cancelClass(row.sessionId);
+      const { classReturned } = await cancelClass(row.sessionId);
       await refresh();
-      setNotice({ text: `Cancelled: ${row.name}.`, good: true });
+      setNotice({ text: classReturned ? `Cancelled: ${row.name}. The class went back on your pack.` : `Cancelled: ${row.name}.`, good: true });
     } catch (e) {
       setNotice({ text: e instanceof Error ? e.message : 'Could not cancel that booking.', good: false });
     } finally {
@@ -130,7 +135,7 @@ export function useBooking() {
           <p className="muted">
             {notIncluded.access.canPayDropIn
               ? `It can be booked as a drop-in for ${pounds(notIncluded.access.dropInPence)}. Paying online is not switched on yet, so please ask the gym to book you in.`
-              : 'Ask your gym about a plan that includes classes.'}
+              : 'Ask your gym about a plan or class pack that includes classes.'}
           </p>
           {notIncluded.access.upgradePlans.length > 0 && (
             <ul className="mem-list">
@@ -153,5 +158,5 @@ export function useBooking() {
     </>
   );
 
-  return { busy, book, joinLine, leaveLine, waitlistFor, isFull: (c: ClassRow) => !c.isBooked && (c.availableSpaces <= 0 || heldFull.has(c.sessionId)), nowMs, askCancel: setConfirmCancel, layer };
+  return { busy, packLeft, book, joinLine, leaveLine, waitlistFor, isFull: (c: ClassRow) => !c.isBooked && (c.availableSpaces <= 0 || heldFull.has(c.sessionId)), nowMs, askCancel: setConfirmCancel, layer };
 }

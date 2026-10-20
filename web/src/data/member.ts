@@ -34,14 +34,30 @@ export async function listMyClasses(gymId: string, from: Date, to: Date): Promis
 }
 
 /** The database decides whether the booking is allowed; its words are passed on as they are. */
-export async function bookClass(sessionId: string): Promise<void> {
-  const { error } = await supabase.rpc('member_book_class', { p_session_id: sessionId });
+export async function bookClass(sessionId: string): Promise<{ usedPack: boolean }> {
+  const { data, error } = await supabase.rpc('member_book_class', { p_session_id: sessionId });
   if (error) throw new Error(error.message);
+  return { usedPack: flag(data, 'used_pack') };
 }
 
-export async function cancelClass(sessionId: string): Promise<void> {
-  const { error } = await supabase.rpc('member_cancel_class', { p_session_id: sessionId });
+/** `classReturned` is true when the class went back onto the member's pack. */
+export async function cancelClass(sessionId: string): Promise<{ classReturned: boolean }> {
+  const { data, error } = await supabase.rpc('member_cancel_class', { p_session_id: sessionId });
   if (error) throw new Error(error.message);
+  return { classReturned: flag(data, 'class_returned') };
+}
+
+function flag(data: unknown, key: string): boolean {
+  return !!data && typeof data === 'object' && !Array.isArray(data) && (data as Record<string, unknown>)[key] === true;
+}
+
+export interface MyPack { creditsLeft: number; expiresAt: string | null; voidedAt: string | null }
+
+/** This member's own packs in the gym (the database also lets an owner read everyone's, so the user is named). */
+export async function listMyPacks(gymId: string, userId: string): Promise<MyPack[]> {
+  const { data, error } = await supabase.from('class_packs').select('credits_left, expires_at, voided_at').eq('gym_id', gymId).eq('user_id', userId);
+  if (error) throw error;
+  return (data ?? []).map((p) => ({ creditsLeft: p.credits_left, expiresAt: p.expires_at, voidedAt: p.voided_at }));
 }
 
 export interface MyWaitlist { sessionId: string; status: 'waiting' | 'offered'; position: number | null; offerExpiresAt: string | null }
