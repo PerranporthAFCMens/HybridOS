@@ -89,6 +89,8 @@ as $$
 declare uid uuid := auth.uid(); n integer; owed bigint; latest date; m public.memberships%rowtype;
 begin
   if uid is null then raise exception 'Sign in first'; end if;
+  -- Any status of membership may read its own notice (a member whose membership just ended still needs to see why).
+  if not private.member_status_allows(p_gym_id, array['pending', 'active', 'paused', 'cancelled', 'expired']) then raise exception 'Not a member of this gym'; end if;
   select count(*), coalesce(sum(amount_pence), 0), max(charge_date) into n, owed, latest
     from private.missed_payments(p_gym_id) where user_id = uid and state = 'failed';
   select * into m from public.memberships where gym_id = p_gym_id and user_id = uid order by created_at desc, id desc limit 1;
