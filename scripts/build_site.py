@@ -6,7 +6,7 @@ def checked_out_sha():
  try:return subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True,stderr=subprocess.DEVNULL).strip()
  except Exception:return ''
 BUILD_SHA=(os.environ.get('HYBRID_BUILD_SHA') or os.environ.get('VERCEL_GIT_COMMIT_SHA') or checked_out_sha() or os.environ.get('GITHUB_SHA') or 'dev');VERSION=BUILD_SHA[:12];EXCLUDE={'.git','.github','scripts','_site','web'}
-APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','member-memberships.html','integrations.html','social.html','groups.html','onboarding.html','communications.html');TENANT_PAGES=('index.html','member.html','member-preview.html','classes.html','staff.html','member-memberships.html','integrations.html','social.html','groups.html');ADMIN_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','communications.html')
+APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','social.html','groups.html','communications.html');TENANT_PAGES=('index.html','member.html','member-preview.html','classes.html','staff.html','social.html','groups.html');ADMIN_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','communications.html')
 def copy_source():
  if OUT.exists():shutil.rmtree(OUT)
  OUT.mkdir()
@@ -68,7 +68,7 @@ def replace_exact(t,old,new,label):
  return t.replace(old,new,1)
 def add_member_access_guard():
  # UI stage of the membership-status rules. The newest membership row for the selected gym governs (see gym-context.js getMembershipAccess).
- for n in ('member.html','social.html','groups.html','integrations.html'):
+ for n in ('member.html','social.html','groups.html'):
   write(n,inject_head(read(n),'member-access-guard.js',f'<script src="./member-access-guard.js?v={VERSION}"></script>'))
  s=read('member.html')
  if 'HybridMemberAccessReady' in s:return
