@@ -8,7 +8,7 @@ APP_PAGES=(
  'index.html','community.html','classes.html','class-setup.html','workout-builder.html',
  'admin-access.html','admin-operations.html','resource-availability.html',
  'staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html',
- 'staff.html','member.html',
+ 'member.html',
  'social.html','groups.html','communications.html','admin.html'
 )
 problems=[]

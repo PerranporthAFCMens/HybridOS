@@ -8,3 +8,4 @@ Old pages that the rebuilt app has replaced. They are kept for reference only: t
 | `member-memberships.html` (admin memberships tab) | Members and Membership plans in the new admin | 20 October 2026 |
 | `onboarding.html` | sign-up at `/join/<gym>` and the sign-in pages | 20 October 2026 |
 | `member-preview.html` (demo member preview), with `member-preview-classes.js` and `member-preview-controls.js` | Preview as member, which opens the real new member app at `/m/today` | 20 October 2026 |
+| `staff.html` (old staff portal), with `staff-operations.css`, `staff-operations.js` and `staff-shell.js` | the staff app at `/s/today` | 20 October 2026 |

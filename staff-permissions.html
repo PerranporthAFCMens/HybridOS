@@ -152,7 +152,7 @@ async function init(){
  if(gmErr||!gm||gm.access_status!=='active'){location.href=gymEntryUrl();return}
  let allowed=['owner','admin'].includes(gm.role);
  if(!allowed&&['staff','coach'].includes(gm.role)){const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',gm.gym_id).eq('user_id',session.user.id).maybeSingle();allowed=sa?.permissions?.manage_staff===true}
- if(!allowed){location.href='./staff.html';return}
+ if(!allowed){location.href='./s/today';return}
  gymId=gm.gym_id;currentRole=gm.role;$('gymName').textContent=gm.gyms?.name||'';
  const [lr,mr,ar]=await Promise.all([
    sb.from('staff_access_levels').select('*').eq('gym_id',gymId).eq('is_active',true).order('name'),

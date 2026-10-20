@@ -100,13 +100,13 @@
 
   function currentPortal(){
     if(location.pathname.endsWith('/member.html'))return 'member';
-    if(location.pathname.endsWith('/staff.html'))return 'staff';
+    if(location.pathname.includes('/s/'))return 'staff';
     return 'owner';
   }
   function portalLabel(p){return p==='owner'?'Owner':'Staff/Employee'}
   function portalHref(p){
     const gymId=sessionStorage.getItem('hybrid-gym-id')||'';
-    const raw=p==='owner'?'./admin.html?view=index.html':p==='staff'?(['owner','admin'].includes(membershipRole?.role)?'./staff.html?view=staff':'./staff.html'):(membershipRole?.role==='member'?'./member.html':'./m/today');
+    const raw=p==='owner'?'./admin.html?view=index.html':p==='staff'?'./s/today':(membershipRole?.role==='member'?'./member.html':'./m/today');
     const u=new URL(raw,location.href);if(gymId)u.searchParams.set('gym_id',gymId);return u.toString();
   }
   function navigateAccountTarget(raw){

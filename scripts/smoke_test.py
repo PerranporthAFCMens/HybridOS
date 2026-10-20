@@ -38,11 +38,11 @@ if './member-preview.html' in member_settings:problems.append('member-view-setti
 member_portal=(ROOT/'member.html').read_text(encoding='utf-8')
 for marker in ("memberViewParams.get('view')==='member'",'Viewing the member portal as your account','./admin.html'):
  if marker not in member_portal:problems.append(f'member.html: authenticated owner-as-member flow missing: {marker}')
-CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
-JS=('supabase-request-guard.js','app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','gym-context.js','gym-switcher.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
+CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
+JS=('supabase-request-guard.js','app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','gym-context.js','gym-switcher.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
 
-GUARDED_APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','social.html','groups.html','admin.html','communications.html')
+GUARDED_APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member.html','social.html','groups.html','admin.html','communications.html')
 for n in GUARDED_APP_PAGES:
  p=ROOT/n
  if not p.exists():problems.append(f'{n}: guarded app page missing');continue
@@ -87,9 +87,9 @@ RENDER_BASELINE={
  'admin-shell.css':'ec3d5ab0faee0b01d383fbea29183e604430a53e',
  'admin-frame.css':'4af4cf23fa071d5fb4324bac9a12929428ee316b',
  'admin-embed.js':'ff17ecb14f348764c90b76882e86b5c22033ced0',
- 'admin-frame.js':'82ff3796d2674915937f6fec198deeb9b0e916da',
+ 'admin-frame.js':'a1cba7135bf477045c1e0a9564a1e64e47362f00',
  'app-stability.js':'5678cb39fc960cbd2e19d5aa43ab75d996d2d130',
- 'shared-admin-nav.js':'026138be3d9271552ee5d14c6eb79f85b1f228bf',
+ 'shared-admin-nav.js':'2dd7d9b8bcf68ef60ccd8684fbb53ede6e2f8d47',
 }
 def git_blob_sha(path):
  import hashlib
@@ -258,14 +258,14 @@ for x in ('./shared-shell.js','./shared-admin-nav.js'):
 for x in ("location.pathname==='/'","location.replace('./landing.html')"):
  if x not in index_source:problems.append(f'index.html: production marketing-root fallback missing: {x}')
 if ".eq('is_active',true).limit(1)" in index_source:problems.append('index.html: ambiguous first-gym lookup returned')
-for context_file in ('staff.html','tenant-branding.js','admin-frame.js','member.html','social.html'):
+for context_file in ('tenant-branding.js','admin-frame.js','member.html','social.html'):
  context_source=(ROOT/context_file).read_text(encoding='utf-8')
  if ".eq('is_active',true).limit(1)" in context_source:problems.append(f'{context_file}: ambiguous first-gym lookup returned')
  if "sessionStorage.getItem('hybrid-gym-id')" not in context_source:problems.append(f'{context_file}: explicit login gym context missing')
 admin_access=(ROOT/'admin-access.html').read_text(encoding='utf-8')
 if "i.status==='open'&&i.delivery_method!=='link'" not in admin_access:problems.append('admin-access.html: open email invites must remain resendable')
 if "i.email_sent_at?'Resend email':'Send / retry email'" not in admin_access:problems.append('admin-access.html: resend label contract missing')
-for protected_name in ('admin-access.html','admin-operations.html','staff-permissions.html','staff.html'):
+for protected_name in ('admin-access.html','admin-operations.html','staff-permissions.html'):
  protected_text=(ROOT/protected_name).read_text(encoding='utf-8')
  for marker in ('./sign-in','./choose-gym','return_to'):
   if marker not in protected_text:problems.append(f'{protected_name}: universal login/chooser redirect missing: {marker}')
@@ -280,7 +280,6 @@ for x in ("const explicitGymId=params.get('gym_id')||''","const storedGymId=sess
 if "if(!membership&&gms.length===1)" in admin_frame_context:problems.append('admin-frame.js: unsafe single-membership cross-gym fallback returned')
 for context_file,required,unsafe in (
  ('index.html',"!selected&&!queryGymId&&!storedGymId&&gms.length===1","if(!selected&&gms.length===1)"),
- ('staff.html',"!membership&&!storedGymId&&gm.data.length===1","if(!membership&&gm.data.length===1)"),
  ('tenant-branding.js',"!membership&&!storedGymId&&gm.length===1","if(!membership&&gm.length===1)")
 ):
  context_source=(ROOT/context_file).read_text(encoding='utf-8')
@@ -370,14 +369,14 @@ for x in ("syncMobileBrowserChrome","mobileViewport.matches)return","meta[name=\
  if x not in stability:problems.append(f'app-stability.js: mobile Safari chrome reset missing: {x}')
 for x in ("document.documentElement.classList.contains('admin-embedded')","'workout-builder.html'"):
  if x not in stability:problems.append(f'app-stability.js: embedded admin transition isolation missing: {x}')
-for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','social.html','groups.html'):
+for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member.html','social.html','groups.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  if 'hybrid-critical-shell' not in page_text:problems.append(f'{page_name}: critical first-paint shell missing')
  if '#hybridNavigationMask' not in page_text:problems.append(f'{page_name}: navigation mask critical CSS missing')
 account=(ROOT/'account-menu.js').read_text(encoding='utf-8')
 for x in ("storage.from('avatars')",'accountAvatarFile','staffPermissions.full_access','accountDateOfBirth','accountGender','date_of_birth','gender'):
  if x not in account:problems.append(f'account-menu.js: profile/portal workflow missing: {x}')
-for page_name in ('member.html','staff.html','social.html'):
+for page_name in ('member.html','social.html'):
  shell_page=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('data-shell-icon','Hybrid'):
   if x not in shell_page:problems.append(f'{page_name}: shared shell navigation missing: {x}')
@@ -392,15 +391,6 @@ for x in ("params.get('gym_id')","sessionStorage.getItem('hybrid-gym-id')",".eq(
 resource_source=(ROOT/'resource-availability.html').read_text(encoding='utf-8')
 for x in ('grid-template-columns:minmax(0,1fr) auto','input[type="time"]{grid-column:auto;min-width:0;width:100%','overflow-x:hidden'):
  if x not in resource_source:problems.append(f'resource-availability.html: mobile width containment missing: {x}')
-staff_page=(ROOT/'staff.html').read_text(encoding='utf-8')
-for x in ("$('loading').classList.add('hidden');$('app').classList.remove('hidden');window.__hybridAppReady=true","Assigned classes failed","Staff portal failed to initialise"):
- if x not in staff_page:problems.append(f'staff.html: non-blocking startup guard missing: {x}')
-if '<nav class="bottom">' in staff_page:problems.append('staff.html: retired mobile bottom navigation returned')
-for x in ('staffTimetableLink','ownerPreviewNav','Back to Owner/Admin','Gym timetable',"supabase.from('class_sessions')"):
- if x not in staff_page:problems.append(f'staff.html: staff role-switch/timetable boundary missing: {x}')
-if 'href="./classes.html"' in staff_page:problems.append('staff.html: Staff View must not link into Owner/Admin classes page')
-if 'grid-template-columns:repeat(2,minmax(0,1fr));gap:12px' not in staff_page:
- problems.append('staff.html: compact two-stat mobile Staff layout missing')
 member_exp_css=(ROOT/'member-experience.css').read_text(encoding='utf-8')
 for x in ('member-empty-state','Secondary Member pages: intentional empty states and calmer desktop density','#membership>.card'):
  if x not in member_exp_css:problems.append(f'member-experience.css: Member secondary-page polish missing: {x}')

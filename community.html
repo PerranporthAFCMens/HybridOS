@@ -39,7 +39,7 @@ async function init(){
  if(!gm?.length){location.href=window.HybridGymContext.chooserUrl({returnTo:location.href});return}
  let allowed=['owner','admin'].includes(gm[0].role);
  if(!allowed&&['staff','coach'].includes(gm[0].role)){const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',gm[0].gym_id).eq('user_id',userId).maybeSingle();allowed=sa?.permissions?.full_access===true}
- if(!allowed){location.href='./staff.html';return}
+ if(!allowed){location.href='./s/today';return}
  gymId=gm[0].gym_id;window.HybridGymContext.setGym(gymId);$('gymName').textContent=gm[0].gyms?.name||'Gym';
  const{data:pf}=await sb.from('profiles').select('id,display_name,first_name,last_name,avatar_url');(pf||[]).forEach(p=>profiles.set(p.id,p));
  $('loading').classList.add('hidden');$('app').classList.remove('hidden');await loadFeed()
