@@ -10,6 +10,7 @@ import { Classes } from '../classes/Classes';
 import { ClassPacks } from '../packs/ClassPacks';
 import { Programmes } from '../programmes/Programmes';
 import { Reports } from '../reports/Reports';
+import { Control } from '../control/Control';
 import { Estate } from '../estate/Estate';
 import { ClassSetup } from '../classsetup/ClassSetup';
 import { Lifts } from '../lifts/Lifts';
@@ -141,6 +142,7 @@ function Main() {
             <Route path="/packs" element={<ClassPacks />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/estate" element={<Estate />} />
+            <Route path="/control" element={<Control />} />
             <Route path="/staff" element={<Staff />} />
             <Route path="/rota" element={<Rota />} />
             <Route path="/rooms" element={<Rooms />} />
