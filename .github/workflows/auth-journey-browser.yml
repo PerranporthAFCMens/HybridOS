@@ -1,4 +1,5 @@
 name: HybridOne Auth journey browser
+# 20 October release exact-SHA trigger (same reason as the 18 October one).
 
 # Release-gate browser verification for the exact dev revision; harmless claim-function ACL trigger comment.
 # Persistent Admin shell account menu is included in this gate.

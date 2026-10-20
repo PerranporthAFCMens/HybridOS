@@ -1,4 +1,5 @@
 name: HybridOne protected routing browser
+# 20 October release exact-SHA trigger (same reason as the 18 October one).
 
 # Task 4 route-preservation verification trigger.
 # Release-candidate exact-SHA gate trigger.
