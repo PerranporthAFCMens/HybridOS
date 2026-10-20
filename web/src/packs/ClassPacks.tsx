@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
+import { nameOf } from '../members/calc';
+import { useMemberDirectory } from '../members/useMembers';
 import type { PackType, PackTypeInput } from '../data/classPacks';
 import { money } from '../today/calc';
 import { Button } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
-import { Field, FieldRow, Input } from '../ui/Field';
+import { Field, FieldRow, Input, Select } from '../ui/Field';
 import { Modal } from '../ui/Modal';
-import { emptyPackForm, formFromPack, packSummary, perClassText, validatePackType, validityText, type PackForm } from './calc';
-import { usePackTypes, usePackTypeWrites } from './usePacks';
+import { emptyPackForm, formFromPack, heldExpiryText, heldLeftText, heldState, heldStateLabel, heldSummary, packSummary, perClassText, sortHeld, validatePackType, validityText, type PackForm } from './calc';
+import { useHeldPackWrites, useHeldPacks, usePackTypes, usePackTypeWrites } from './usePacks';
 import '../members/members.css';
 import '../plans/plans.css';
+import './packs.css';
 
 /** Owners and admins: the class packs the gym sells (a number of classes for a price, with an optional expiry). */
 export function ClassPacks() {
@@ -20,6 +23,20 @@ export function ClassPacks() {
   const [editing, setEditing] = useState<{ pack: PackType | null } | null>(null);
   const [toggleError, setToggleError] = useState('');
   const types = q.data ?? [];
+  const members = useMemberDirectory(gym.gymId);
+  const held = useHeldPacks(gym.gymId);
+  const heldWrites = useHeldPackWrites(gym.gymId);
+  // null = closed; the pack being given
+  const [giving, setGiving] = useState<PackType | null>(null);
+  // The held pack waiting for "Yes, cancel it", and any error from cancelling
+  const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+  const [heldError, setHeldError] = useState('');
+  const [notice, setNotice] = useState('');
+  const now = new Date();
+  const nameFor = (userId: string) => {
+    const m = members.data?.find((x) => x.userId === userId);
+    return m ? nameOf(m) : 'Former member';
+  };
 
   return (
     <>
@@ -34,7 +51,7 @@ export function ClassPacks() {
         </div>
       </header>
 
-      <p className="muted small">A class pack is a number of classes sold for a price, such as 10 classes for £60. Members cannot buy them yet: paying by card and giving a pack to a member are coming next.</p>
+      <p className="muted small">A class pack is a number of classes sold for a price, such as 10 classes for £60. Members cannot buy them yet, but you can give one to a member below.</p>
       {q.isError && <Card><Empty>Could not load class packs. Refresh to try again.</Empty></Card>}
       {toggleError && <div className="msg error" role="alert">{toggleError}</div>}
       {q.isPending && <Card><Empty>Loading class packs…</Empty></Card>}
@@ -53,6 +70,7 @@ export function ClassPacks() {
             <div className="muted plan-text">{perClassText(t)}</div>
             <div className="muted small plan-text">{validityText(t.validDays)}</div>
             <div className="membership-actions">
+              {t.isActive && <Button variant="primary" onClick={() => { setNotice(''); setGiving(t); }}>Give to a member</Button>}
               <Button onClick={() => setEditing({ pack: t })}>Edit</Button>
               <Button
                 disabled={writes.toggle.isPending}
@@ -67,6 +85,75 @@ export function ClassPacks() {
           </Card>
         ))}
       </div>
+
+      <header className="page-top packs-held-top">
+        <div>
+          <div className="eyebrow">Packs members hold</div>
+          <h2>Given and bought</h2>
+        </div>
+        {held.data && <span className="muted">{heldSummary(held.data, now)}</span>}
+      </header>
+      {notice && <div className="msg good" role="status">{notice}</div>}
+      {heldError && <div className="msg error" role="alert">{heldError}</div>}
+      {held.isError && <Card><Empty>Could not load the packs members hold. Refresh to try again.</Empty></Card>}
+      {held.isPending && <Card><Empty>Loading…</Empty></Card>}
+      {held.data && held.data.length === 0 && <Card><Empty>No member holds a class pack yet.</Empty></Card>}
+      {held.data && held.data.length > 0 && (
+        <Card>
+          <ul className="held-list">
+            {sortHeld(held.data, now).map((p) => {
+              const state = heldState(p, now);
+              return (
+                <li key={p.id} className="held">
+                  <div className="held-main">
+                    <strong>{nameFor(p.userId)}</strong>
+                    <div>{p.name}</div>
+                    <div className="muted small">{heldLeftText(p)} · {heldExpiryText(p.expiresAt)} · {p.source === 'purchase' ? 'Bought' : 'Given by the gym'}</div>
+                  </div>
+                  <div className="held-side">
+                    <span className={`tag${state === 'active' ? ' good' : ''}`}>{heldStateLabel[state]}</span>
+                    {state === 'active' && confirmCancel !== p.id && <Button onClick={() => { setHeldError(''); setConfirmCancel(p.id); }}>Cancel pack</Button>}
+                    {state === 'active' && confirmCancel === p.id && (
+                      <>
+                        <Button
+                          variant="primary"
+                          disabled={heldWrites.cancel.isPending}
+                          onClick={() => heldWrites.cancel.mutate(p.id, { onSuccess: () => setConfirmCancel(null), onError: (e) => setHeldError(e.message) })}
+                        >
+                          Yes, cancel it
+                        </Button>
+                        <Button onClick={() => setConfirmCancel(null)}>Keep it</Button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
+
+      {giving && (
+        <GivePack
+          pack={giving}
+          people={(members.data ?? []).map((m) => ({ userId: m.userId, name: nameOf(m) })).sort((a, b) => a.name.localeCompare(b.name))}
+          loading={members.isPending}
+          saving={heldWrites.give.isPending}
+          onClose={() => setGiving(null)}
+          onGive={(userId, onError) =>
+            heldWrites.give.mutate(
+              { userId, packTypeId: giving.id },
+              {
+                onSuccess: () => {
+                  setNotice(`Gave ${nameFor(userId)} the ${giving.name}.`);
+                  setGiving(null);
+                },
+                onError: (e) => onError(e.message),
+              },
+            )
+          }
+        />
+      )}
 
       {editing && (
         <PackEditor
@@ -112,6 +199,36 @@ function PackEditor({ pack, saving, onClose, onSave }: { pack: PackType | null; 
       {pack && <p className="muted small">Changing a pack does not change packs members already have.</p>}
       <div className="assign-msg">{error && <span className="msg error" role="alert">{error}</span>}</div>
       <Button variant="primary" className="wide-btn" disabled={saving} onClick={submit}>Save class pack</Button>
+    </Modal>
+  );
+}
+
+function GivePack({ pack, people, loading, saving, onClose, onGive }: { pack: PackType; people: { userId: string; name: string }[]; loading: boolean; saving: boolean; onClose: () => void; onGive: (userId: string, onError: (message: string) => void) => void }) {
+  const [userId, setUserId] = useState('');
+  const [error, setError] = useState('');
+  return (
+    <Modal title="Give a class pack" onClose={onClose}>
+      <SectionTitle title="Give a class pack" action={<Button onClick={onClose}>Close</Button>} />
+      <p className="muted small">{pack.name}: {pack.credits} {pack.credits === 1 ? 'class' : 'classes'}, {validityText(pack.validDays).toLowerCase()}. Nothing is charged.</p>
+      <Field label="Member" htmlFor="give-member">
+        <Select id="give-member" value={userId} onChange={(e) => setUserId(e.target.value)} disabled={loading}>
+          <option value="">{loading ? 'Loading members…' : 'Choose a member'}</option>
+          {people.map((p) => <option key={p.userId} value={p.userId}>{p.name}</option>)}
+        </Select>
+      </Field>
+      <div className="assign-msg">{error && <span className="msg error" role="alert">{error}</span>}</div>
+      <Button
+        variant="primary"
+        className="wide-btn"
+        disabled={saving}
+        onClick={() => {
+          if (!userId) return setError('Choose who to give it to.');
+          setError('');
+          onGive(userId, setError);
+        }}
+      >
+        Give class pack
+      </Button>
     </Modal>
   );
 }

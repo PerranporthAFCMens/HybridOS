@@ -44,3 +44,36 @@ export async function setPackTypeActive(gymId: string, id: string, isActive: boo
   const { error } = await supabase.from('class_pack_types').update({ is_active: isActive, updated_at: new Date().toISOString() }).eq('id', id).eq('gym_id', gymId);
   if (error) throw error;
 }
+
+/** A pack a member holds. Never written directly: owners give and cancel through functions. */
+export interface HeldPack {
+  id: string;
+  userId: string;
+  name: string;
+  creditsTotal: number;
+  creditsLeft: number;
+  expiresAt: string | null;
+  source: string;
+  voidedAt: string | null;
+  createdAt: string;
+}
+
+export async function listHeldPacks(gymId: string): Promise<HeldPack[]> {
+  const { data, error } = await supabase
+    .from('class_packs')
+    .select('id, user_id, name, credits_total, credits_left, expires_at, source, voided_at, created_at')
+    .eq('gym_id', gymId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((p) => ({ id: p.id, userId: p.user_id, name: p.name, creditsTotal: p.credits_total, creditsLeft: p.credits_left, expiresAt: p.expires_at, source: p.source, voidedAt: p.voided_at, createdAt: p.created_at }));
+}
+
+export async function giveClassPack(gymId: string, userId: string, packTypeId: string): Promise<void> {
+  const { error } = await supabase.rpc('owner_give_class_pack', { p_gym_id: gymId, p_user_id: userId, p_pack_type_id: packTypeId });
+  if (error) throw error;
+}
+
+export async function voidClassPack(packId: string): Promise<void> {
+  const { error } = await supabase.rpc('owner_void_class_pack', { p_pack_id: packId });
+  if (error) throw error;
+}

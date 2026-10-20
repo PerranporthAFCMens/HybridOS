@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { emptyPackForm, formFromPack, packSummary, perClassText, validatePackType, validityText } from '../src/packs/calc';
-import type { PackType } from '../src/data/classPacks';
+import { emptyPackForm, formFromPack, heldExpiryText, heldLeftText, heldState, heldSummary, packSummary, perClassText, sortHeld, validatePackType, validityText } from '../src/packs/calc';
+import type { HeldPack, PackType } from '../src/data/classPacks';
 
 const type = (over: Partial<PackType> = {}): PackType => ({ id: 'k1', name: '10 class pack', credits: 10, pricePence: 6000, validDays: 90, isActive: true, ...over });
 
@@ -45,5 +45,30 @@ describe('wording', () => {
     expect(formFromPack(type())).toEqual({ name: '10 class pack', credits: '10', price: '60.00', validDays: '90' });
     expect(formFromPack(type({ validDays: null })).validDays).toBe('');
     expect(emptyPackForm.credits).toBe('10');
+  });
+});
+
+describe('held packs', () => {
+  const now = new Date('2026-10-20T12:00:00Z');
+  const held = (over: Partial<HeldPack> = {}): HeldPack => ({ id: 'p1', userId: 'u1', name: '10 class pack', creditsTotal: 10, creditsLeft: 7, expiresAt: null, source: 'owner', voidedAt: null, createdAt: '2026-10-01T00:00:00Z', ...over });
+  it('says where a pack stands: cancelled, then used up, then expired, else in use', () => {
+    expect(heldState(held(), now)).toBe('active');
+    expect(heldState(held({ expiresAt: '2026-12-01T00:00:00Z' }), now)).toBe('active');
+    expect(heldState(held({ expiresAt: '2026-10-19T00:00:00Z' }), now)).toBe('expired');
+    expect(heldState(held({ creditsLeft: 0, expiresAt: '2026-10-19T00:00:00Z' }), now)).toBe('used');
+    expect(heldState(held({ voidedAt: '2026-10-10T00:00:00Z', creditsLeft: 0 }), now)).toBe('cancelled');
+  });
+  it('words the classes left and the expiry', () => {
+    expect(heldLeftText(held())).toBe('7 of 10 classes left');
+    expect(heldLeftText(held({ creditsTotal: 1, creditsLeft: 1 }))).toBe('1 of 1 class left');
+    expect(heldExpiryText(null)).toBe('Never expires');
+    expect(heldExpiryText('2026-12-01T00:00:00Z')).toBe('Expires 1 Dec 2026');
+  });
+  it('lists packs in use first, newest first within each group', () => {
+    const list = [held({ id: 'old', createdAt: '2026-09-01T00:00:00Z' }), held({ id: 'gone', voidedAt: '2026-10-10T00:00:00Z', createdAt: '2026-10-15T00:00:00Z' }), held({ id: 'new', createdAt: '2026-10-10T00:00:00Z' })];
+    expect(sortHeld(list, now).map((p) => p.id)).toEqual(['new', 'old', 'gone']);
+  });
+  it('counts packs in use', () => {
+    expect(heldSummary([held(), held({ voidedAt: '2026-10-10T00:00:00Z' })], now)).toBe('1 in use · 2 given or bought');
   });
 });
