@@ -1,4 +1,4 @@
--- Undo 20261020110000_staff_time_blocks.sql. Puts validate_class_schedule back exactly as it was and removes the new lists
+-- Undo 20261020120000_staff_time_blocks.sql. Puts validate_class_schedule back exactly as it was and removes the new lists
 -- (any blocks and closed days saved since are lost). Bookings are not touched.
 begin;
 drop trigger if exists pt_appointments_time_off_guard on public.pt_appointments;

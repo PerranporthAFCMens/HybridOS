@@ -10,7 +10,7 @@ Gym touched: all gyms by design (per-gym rows). Test on Puffin Performance only;
 - Nothing already booked is cancelled or moved. Members cannot see the new lists.
 
 ## Files
-- `supabase/migrations/20261020110000_staff_time_blocks.sql` (tables, rules, shared check, PT guard, scheduler change)
+- `supabase/migrations/20261020120000_staff_time_blocks.sql` (tables, rules, shared check, PT guard, scheduler change)
 - `supabase/rollback/20261020_drop_staff_time_blocks.sql` (puts the scheduler back exactly, drops the lists)
 - Ready-to-run SQL for the owner is in the project's `sql-to-run/` folder (PRE_CHECK, RUN, CHECK).
 
@@ -22,4 +22,4 @@ Run on a scratch Postgres with stand-in tables (not the live database): own bloc
 - Repeating blocks, the calendar screen and the "classes affected" list are pieces 2 and 3.
 - `web/src/data/database.types.ts` will need regenerating once the SQL has been run (piece 2 uses it).
 
-- `.github/workflows/database-schema.yml`: the expected schema counts go up to match the new migration (tables 99 to 101, functions 178 to 180, policies 229 to 233, triggers 42 to 43), as in the earlier platform foundation change.
+- `.github/workflows/database-schema.yml`: the expected schema counts go up to match the new migration (tables 101 to 103, functions 180 to 182, policies 233 to 237, triggers 42 to 43 (after the class packs change that is already on dev)), as in the earlier platform foundation change.
