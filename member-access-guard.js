@@ -56,7 +56,7 @@
    const u=new URL('./member.html',location.href);if(gymId)u.searchParams.set('gym_id',gymId);u.hash='membership';
    back.href=u.toString();back.textContent='My membership';actions.appendChild(back);
   }
-  const out=document.createElement('a');out.href='./sign-out.html';out.textContent='Sign out';
+  const out=document.createElement('a');out.href='./sign-out';out.textContent='Sign out';
   if(kind==='ended')out.className='hmab-primary';
   actions.appendChild(out);
   card.appendChild(h);card.appendChild(p);card.appendChild(actions);wrap.appendChild(card);document.body.appendChild(wrap);

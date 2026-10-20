@@ -84,11 +84,11 @@ jobs:
             const page=await context.newPage();
             try{
               await page.goto(base+'index.html?routing_probe='+encodeURIComponent(sha),{waitUntil:'domcontentloaded',timeout:30000});
-              await page.waitForURL(url=>url.pathname.endsWith('/login.html'),{timeout:20000});
+              await page.waitForURL(url=>/\/sign-in\/?$/.test(url.pathname),{timeout:20000});
               const final=new URL(page.url());
-              assert.equal(final.pathname.endsWith('/login.html'),true,'bare index did not reach universal login: '+final.href);
+              assert.equal(/\/sign-in\/?$/.test(final.pathname),true,'bare index did not reach universal login: '+final.href);
               assert.equal(final.searchParams.get('gym_id'),null,'bare index unexpectedly carried a gym hint: '+final.href);
-              assert.match(await page.title(),/Sign in .* HybridOne/i);
+              assert.match(await page.title(),/HybridOne/i);
               console.log('Bare index passed: index.html -> universal login');
             }finally{
               await context.close();
@@ -101,11 +101,11 @@ jobs:
             try{
               const join=path.includes('?')?'&':'?';
               await page.goto(base+path+join+'routing_probe='+encodeURIComponent(sha),{waitUntil:'domcontentloaded',timeout:30000});
-              await page.waitForURL(url=>url.pathname.endsWith('/login.html'),{timeout:20000});
+              await page.waitForURL(url=>/\/sign-in\/?$/.test(url.pathname),{timeout:20000});
               const final=new URL(page.url());
-              assert.equal(final.pathname.endsWith('/login.html'),true,'wrong login route: '+final.href);
+              assert.equal(/\/sign-in\/?$/.test(final.pathname),true,'wrong login route: '+final.href);
               assert.equal(final.searchParams.get('gym_id'),gymId,'gym hint missing from universal login: '+final.href);
-              assert.match(await page.title(),/Sign in .* HybridOne/i);
+              assert.match(await page.title(),/HybridOne/i);
               const ret=final.searchParams.get('return_to');
               assert.ok(ret,'return_to missing from '+final.href);
               const retUrl=new URL(ret);

@@ -17,17 +17,17 @@ for marker in ('admin-frame-mobile','admin-frame-backdrop','mobile()'):
 if "if(window.matchMedia('(max-width:900px)').matches){" in admin_frame_js:
  problems.append('admin-frame.js: mobile Admin shell redirects out of the persistent top-level shell')
 account_menu=(ROOT/'account-menu.js').read_text(encoding='utf-8')
-for marker in ('Switch gym','allMemberships',"eq('access_status','active')",'choose-gym.html?switch=1'):
+for marker in ('Switch gym','allMemberships',"eq('access_status','active')",'choose-gym?switch=1'):
  if marker not in account_menu:problems.append(f'account-menu.js: multi-gym switch contract missing: {marker}')
 if '.limit(1)' in account_menu:problems.append('account-menu.js: first-gym assumption returned')
 for marker in ('hybrid:memberships-loaded','__hybridActiveMemberships'):
  if marker not in account_menu:problems.append(f'account-menu.js: persistent shell membership handoff missing: {marker}')
 gym_switcher=(ROOT/'gym-switcher.js').read_text(encoding='utf-8')
-for marker in ('hybrid:memberships-loaded','__hybridActiveMemberships','hybrid-gym-switchable','choose-gym.html?switch=1'):
+for marker in ('hybrid:memberships-loaded','__hybridActiveMemberships','hybrid-gym-switchable','choose-gym?switch=1'):
  if marker not in gym_switcher:problems.append(f'gym-switcher.js: persistent multi-gym shell contract missing: {marker}')
-for marker in ("function navigateAccountTarget","admin-embedded","window.parent.location.href","navigateAccountTarget('./login.html')"):
+for marker in ("function navigateAccountTarget","admin-embedded","window.parent.location.href","navigateAccountTarget('./sign-in')"):
  if marker not in account_menu:problems.append(f'account-menu.js: embedded Admin account navigation missing: {marker}')
-if "await sb.auth.signOut();sessionStorage.removeItem('hybrid-gym-id');navigateAccountTarget('./login.html')" not in account_menu:
+if "await sb.auth.signOut();sessionStorage.removeItem('hybrid-gym-id');navigateAccountTarget('./sign-in')" not in account_menu:
  problems.append('account-menu.js: sign out must clear current gym after Auth completes')
 for login_name,gym_id in (('hybrid-hub-login.html','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),('puffin-performance-login.html','aec16956-3793-4543-873b-4412646ca1eb')):
  alias=(ROOT/login_name).read_text(encoding='utf-8')
@@ -40,7 +40,7 @@ for brand_file in list(ROOT.glob('*.html'))+list(ROOT.glob('*.js'))+list((ROOT/'
  except Exception: continue
  if 'HYBRIDONE' in brand_text: problems.append(f'{brand_file.name}: uppercase HybridOne branding found; use HybridOne')
 index_entry=(ROOT/'index.html').read_text(encoding='utf-8')
-if 'hybrid-universal-login-entry' not in index_entry or "location.replace('./login.html')" not in index_entry:
+if 'hybrid-universal-login-entry' not in index_entry or "location.replace('./sign-in')" not in index_entry:
  problems.append('index.html: bare entry must hand off to universal login')
 member_settings=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
 for marker in ('Member experience settings','./member.html?view=member','View as Member'):
@@ -96,9 +96,9 @@ RENDER_BASELINE={
  'admin-shell.css':'ec3d5ab0faee0b01d383fbea29183e604430a53e',
  'admin-frame.css':'4af4cf23fa071d5fb4324bac9a12929428ee316b',
  'admin-embed.js':'ff17ecb14f348764c90b76882e86b5c22033ced0',
- 'admin-frame.js':'9de06224c9b6ad9506c1e9a6ecc6daef9d0f316b',
+ 'admin-frame.js':'82ff3796d2674915937f6fec198deeb9b0e916da',
  'app-stability.js':'5678cb39fc960cbd2e19d5aa43ab75d996d2d130',
- 'shared-admin-nav.js':'c4b3719930a18366b5d10ad4a5bfe2ff5ffe4174',
+ 'shared-admin-nav.js':'026138be3d9271552ee5d14c6eb79f85b1f228bf',
 }
 def git_blob_sha(path):
  import hashlib
@@ -234,7 +234,7 @@ for x in ('markAdminHotNav','hybrid-admin-hot-nav','sessionStorage.setItem'):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: smooth admin hand-off missing: {x}')
 for x in ("window.matchMedia('(max-width:900px)').matches","e.preventDefault();const href=a.href;closeMobile();requestAnimationFrame(()=>location.assign(href))"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: explicit mobile drawer navigation missing: {x}')
-for x in ("{key:'sign-out'","href:'./sign-out.html'"):
+for x in ("{key:'sign-out'","href:'./sign-out'"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: global admin sign out missing: {x}')
 auth_return=(ROOT/'auth-return.html')
 if not auth_return.exists():problems.append('auth-return.html: secure Auth return page missing')
@@ -289,12 +289,12 @@ if "i.status==='open'&&i.delivery_method!=='link'" not in admin_access:problems.
 if "i.email_sent_at?'Resend email':'Send / retry email'" not in admin_access:problems.append('admin-access.html: resend label contract missing')
 for protected_name in ('admin-access.html','admin-operations.html','staff-permissions.html','staff.html'):
  protected_text=(ROOT/protected_name).read_text(encoding='utf-8')
- for marker in ('./login.html','./choose-gym.html','return_to'):
+ for marker in ('./sign-in','./choose-gym','return_to'):
   if marker not in protected_text:problems.append(f'{protected_name}: universal login/chooser redirect missing: {marker}')
  if 'hybrid-hub-login.html' in protected_text or 'puffin-performance-login.html' in protected_text:
   problems.append(f'{protected_name}: dedicated login implementation reference returned')
 if "location.replace('./'+requested);" in admin_frame_js:problems.append('admin-frame.js: mobile handoff drops gym context')
-for marker in ('./login.html','./choose-gym.html','return_to',"params.set('gym_id',membership.gym_id)"):
+for marker in ('./sign-in','./choose-gym','return_to',"params.set('gym_id',membership.gym_id)"):
  if marker not in admin_frame_js:problems.append(f'admin-frame.js: universal protected routing missing: {marker}')
 admin_frame_context=(ROOT/'admin-frame.js').read_text(encoding='utf-8')
 for x in ("const explicitGymId=params.get('gym_id')||''","const storedGymId=sessionStorage.getItem('hybrid-gym-id')||''","!membership&&!explicitGymId&&!storedGymId&&gms.length===1"):
