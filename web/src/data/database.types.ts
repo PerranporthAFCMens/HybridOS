@@ -2011,6 +2011,12 @@ export type Database = {
           },
         ]
       }
+      platform_addons: {
+        Row: { key: string; name: string; description: string | null; optional: boolean; default_on: boolean; sort_order: number }
+        Insert: { key: string; name: string; description?: string | null; optional?: boolean; default_on?: boolean; sort_order?: number }
+        Update: { key?: string; name?: string; description?: string | null; optional?: boolean; default_on?: boolean; sort_order?: number }
+        Relationships: []
+      }
       payment_records: {
         Row: {
           amount_pence: number
@@ -4017,6 +4023,17 @@ export type Database = {
       }
       get_member_home_settings: { Args: { p_gym_id: string }; Returns: Json }
       get_my_training_groups: { Args: { p_gym_id: string }; Returns: Json }
+      platform_list_gyms: {
+        Args: Record<PropertyKey, never>
+        Returns: { gym_id: string; name: string; slug: string; created_at: string; members: number; owner_email: string | null; addons_off: string[] }[]
+      }
+      platform_set_gym_addon: { Args: { p_enabled: boolean; p_gym_id: string; p_key: string }; Returns: undefined }
+      platform_audit: {
+        Args: { p_limit?: number }
+        Returns: { id: number; at: string; actor: string | null; action: string; gym_id: string | null; detail: Json }[]
+      }
+      gym_addon_enabled: { Args: { p_gym_id: string; p_key: string }; Returns: boolean }
+      my_gym_addons: { Args: { p_gym_id: string }; Returns: string[] }
       get_public_gym_brand: { Args: { p_gym_id: string }; Returns: Json }
       add_gym_signup_document: {
         Args: {
