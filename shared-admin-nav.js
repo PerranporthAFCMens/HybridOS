@@ -8,7 +8,7 @@
     {key:'reporting',label:'Reports',icon:'reporting',href:'./reports'},
     {key:'settings-group',label:'Settings and staff',icon:'admin',href:'./settings'},
     {key:'member-view',label:'Preview as member',icon:'profile',href:'./m/today',section:'Preview'},
-    {key:'staff-view',label:'Preview as staff',icon:'staff',href:'./staff.html?view=staff'},
+    {key:'staff-view',label:'Preview as staff',icon:'staff',href:'./s/today'},
     {key:'sign-out',label:'Sign out',icon:'profile',href:'./sign-out',section:'Account'}
   ];
   const contextTabs={

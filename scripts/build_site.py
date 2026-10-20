@@ -6,7 +6,7 @@ def checked_out_sha():
  try:return subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True,stderr=subprocess.DEVNULL).strip()
  except Exception:return ''
 BUILD_SHA=(os.environ.get('HYBRID_BUILD_SHA') or os.environ.get('VERCEL_GIT_COMMIT_SHA') or checked_out_sha() or os.environ.get('GITHUB_SHA') or 'dev');VERSION=BUILD_SHA[:12];EXCLUDE={'.git','.github','scripts','_site','web'}
-APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','social.html','groups.html','communications.html');TENANT_PAGES=('index.html','member.html','classes.html','staff.html','social.html','groups.html');ADMIN_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','communications.html')
+APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member.html','social.html','groups.html','communications.html');TENANT_PAGES=('index.html','member.html','classes.html','social.html','groups.html');ADMIN_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','communications.html')
 def copy_source():
  if OUT.exists():shutil.rmtree(OUT)
  OUT.mkdir()
@@ -104,8 +104,6 @@ def add_admin_shell():
   s=inject_body(s,'admin-embed.js',f'<script src="./admin-embed.js?v={VERSION}" defer></script>');s=inject_body(s,'shared-admin-nav.js',f'<script src="./shared-admin-nav.js?v={VERSION}" defer></script>');s=inject_body(s,'admin-access-guard.js',f'<script src="./admin-access-guard.js?v={VERSION}" defer></script>');s=inject_body(s,'admin-transition-diagnostics.js',f'<script src="./admin-transition-diagnostics.js?v={VERSION}" defer></script>')
   if n=='index.html':s=s.replace('<section id="authView" class="auth">','<section id="authView" class="auth hidden">',1)
   write(n,s)
-def add_staff_shell():
- s=read('staff.html');s=inject_head(s,'staff-operations.css',f'<link rel="stylesheet" href="./staff-operations.css?v={VERSION}">');s=inject_body(s,'staff-shell.js',f'<script src="./staff-shell.js?v={VERSION}" defer></script>');write('staff.html',inject_body(s,'staff-operations.js',f'<script src="./staff-operations.js?v={VERSION}" defer></script>'))
 def add_scheduler_assets():
  s=read('classes.html')
  for a in ('calendar-mobile.css','calendar-views.css','session-manager.css'):s=inject_head(s,a,f'<link rel="stylesheet" href="./{a}?v={VERSION}">')
@@ -187,5 +185,5 @@ def hand_old_sign_in_pages_to_app():
   gymjs=f'if(!q.has("gym_id"))q.set("gym_id","{gym}");' if gym else ''
   hand=f'<script>/* dev preview: old sign-in address, now the app screen */(function(){{var q=new URLSearchParams(location.search);{gymjs}var s=q.toString();location.replace("{root}{route}/"+(s?"?"+s:"")+location.hash)}})()</script>'
   (OUT/(name+'.html')).write_text('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>HybridOne</title>'+hand+'</head><body></body></html>',encoding='utf-8')
-def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();finalise_ui_contract();add_brand_layer();build_next_app();hand_clean_addresses_to_app();hand_old_sign_in_pages_to_app();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
+def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();finalise_ui_contract();add_brand_layer();build_next_app();hand_clean_addresses_to_app();hand_old_sign_in_pages_to_app();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
 if __name__=='__main__':build()

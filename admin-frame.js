@@ -19,7 +19,7 @@ const routes=[
  {key:'reporting',label:'Reports',icon:'reporting',href:'./reports'},
  {key:'settings',label:'Settings and staff',icon:'admin',href:'./settings'},
  {key:'member-view',label:'Preview as member',icon:'profile',href:'./m/today',section:'Preview'},
- {key:'staff-view',label:'Preview as staff',icon:'staff',href:'./staff.html?view=staff'}
+ {key:'staff-view',label:'Preview as staff',icon:'staff',href:'./s/today'}
 ];
 const frameA=document.getElementById('adminContentFrameA'),frameB=document.getElementById('adminContentFrameB'),nav=document.getElementById('adminFrameNav'),gymName=document.getElementById('adminFrameGym'),frameMain=document.querySelector('.admin-frame-main');
 let activeFrame=frameA,inactiveFrame=frameB,currentView='',loadSeq=0,pendingSwap=null,initialReadyFallback=null;
@@ -125,7 +125,7 @@ async function init(){
    const{data:sa}=await sb.from('staff_access').select('permissions').eq('gym_id',membership.gym_id).eq('user_id',session.user.id).maybeSingle();
    allowed=sa?.permissions?.full_access===true;
  }
- if(!allowed){location.replace('./staff.html');return}
+ if(!allowed){location.replace('./s/today');return}
  gymName.textContent=membership.gyms?.name||'Gym';
  {const card=gymName.closest('.gym'),url=membership.gyms?.logo_url;
   if(card&&url&&/^https?:/i.test(url)){let img=card.querySelector('.tenant-gym-logo');if(!img){img=document.createElement('img');card.insertBefore(img,card.firstChild)}img.className='tenant-gym-logo uploaded';img.src=url;img.alt=membership.gyms?.name||'Gym logo'}}
