@@ -122,3 +122,9 @@
 .mem-class .mem-actions, .mem-line .mem-actions { flex-wrap: nowrap; }
 .mem-class .mem-actions > *, .mem-line .mem-actions > * { flex: none; }
 .mem-card.pay-problem { border-color: var(--hybrid-danger, #d92d20); box-shadow: inset 0 0 0 1px var(--hybrid-danger, #d92d20); }
+
+/* Buying a class pack */
+.pack-buy-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pack-card-box { min-height: 120px; margin-bottom: 12px; }
+.pack-due { margin: 0 0 12px; }
+.pack-agree { margin: 12px 0; font-size: 14px; }

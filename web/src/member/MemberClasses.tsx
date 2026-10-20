@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { BuyPacks } from './BuyPacks';
 import { ClassAction, waitlistLine } from './ClassAction';
 import { dayLabel, dayOf, dayStrip, packLeftText, spaceText, timeOf } from './calc';
 import type { MemberCtx } from './useMember';
@@ -46,6 +47,7 @@ export function MemberClasses() {
           </article>
         );
       })}
+      <BuyPacks />
     </div>
   );
 }
