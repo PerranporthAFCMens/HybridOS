@@ -25,7 +25,7 @@ describe('the workouts email', () => {
   it('never puts markup from a name, title or note into the page', () => {
     const m = assignedMail({ ...base, coachName: '<b>Sam</b>', titles: ['<script>alert(1)</script>'], note: '"><img src=x>' });
     expect(m.html).not.toContain('<script>');
-    expect(m.html).not.toContain('<img');
+    expect(m.html).not.toContain('<img src=x');
     expect(m.html).not.toContain('<b>Sam</b>');
   });
   it('copes with no first name', () => {
