@@ -19,6 +19,12 @@ describe('failed payment emails', () => {
     expect(m.subject).not.toMatch(/[\r\n]/);
     expect(m.text.startsWith('Hi,')).toBe(true);
   });
+  it('blames payments only when Stripe says payments failed', () => {
+    const base = { gymName: 'Puffin Performance', firstName: 'Sam', link: 'https://x.test/' };
+    expect(membershipEndedMail({ ...base, paymentFailed: true }).text).toContain('payments could not be taken');
+    expect(membershipEndedMail(base).text).not.toContain('payments could not be taken');
+    expect(membershipEndedMail(base).text).toContain('has ended.');
+  });
   it('words money and reasons plainly', () => {
     expect(poundsOf(-5)).toBe('£0.00');
     expect(failureWords('card_expired')).toContain('expired');

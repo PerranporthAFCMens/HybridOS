@@ -115,10 +115,10 @@ export function paymentFailedMail(o: { gymName: string; firstName: string; amoun
   }
 }
 
-/** Stripe ended the subscription because payments kept failing (or it was cancelled there): the membership has ended. */
-export function membershipEndedMail(o: { gymName: string; firstName: string; link: string }): Mail {
+/** Stripe ended the subscription: the membership has ended. Says "payments could not be taken" only when Stripe's own reason is a payment failure. */
+export function membershipEndedMail(o: { gymName: string; firstName: string; link: string; paymentFailed?: boolean }): Mail {
   const hi = o.firstName ? `Hi ${o.firstName},` : 'Hi,'
-  const a = `Your membership at ${o.gymName} has ended because your payments could not be taken.`
+  const a = o.paymentFailed ? `Your membership at ${o.gymName} has ended because your payments could not be taken.` : `Your membership at ${o.gymName} has ended.`
   const b = 'If you would like to carry on, please speak to the gym or rejoin from the link below.'
   const button = 'Open HybridOne'
   return {
@@ -190,7 +190,7 @@ async function onPaymentFailed(admin: Admin, invoice: Row): Promise<Response> {
   return json(200, { ok: true, result: data, emailed })
 }
 
-async function onSubscription(admin: Admin, subId: string, status: string, deleted: boolean): Promise<Response> {
+async function onSubscription(admin: Admin, subId: string, status: string, deleted: boolean, reason: string): Promise<Response> {
   if (!subId) return json(200, { ok: true, ignored: 'no subscription' })
   const { data, error } = await admin.rpc('stripe_subscription_event', { p_subscription_id: subId, p_stripe_status: status, p_deleted: deleted })
   if (error) return json(500, { error: error.message })
@@ -198,7 +198,7 @@ async function onSubscription(admin: Admin, subId: string, status: string, delet
   let emailed = false
   // Told only when Stripe is what ended the membership. If the app ended it first (a member leaving) nothing changed here, so no email.
   if (r.ok === true && r.changed === true && (deleted || status === 'canceled')) {
-    emailed = await emailMember(admin, str(r.gym_id), str(r.user_id), membershipEndedMail)
+    emailed = await emailMember(admin, str(r.gym_id), str(r.user_id), (o) => membershipEndedMail({ ...o, paymentFailed: reason === 'payment_failed' }))
   }
   return json(200, { ok: true, result: data, emailed })
 }
@@ -221,7 +221,7 @@ async function handle(req: Request): Promise<Response> {
     if (type === 'invoice.payment_failed') return await onPaymentFailed(admin, obj(obj(event.data).object))
     if (type === 'customer.subscription.updated' || type === 'customer.subscription.deleted') {
       const sub = obj(obj(event.data).object)
-      return await onSubscription(admin, str(sub.id), str(sub.status), type === 'customer.subscription.deleted')
+      return await onSubscription(admin, str(sub.id), str(sub.status), type === 'customer.subscription.deleted', str(obj(sub.cancellation_details).reason))
     }
     if (type !== 'invoice.paid') return json(200, { ok: true, ignored: type })
 
