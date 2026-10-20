@@ -38,11 +38,11 @@ if './member-preview.html' in member_settings:problems.append('member-view-setti
 member_portal=(ROOT/'member.html').read_text(encoding='utf-8')
 for marker in ("memberViewParams.get('view')==='member'",'Viewing the member portal as your account','./admin.html'):
  if marker not in member_portal:problems.append(f'member.html: authenticated owner-as-member flow missing: {marker}')
-CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'member-preview.html':['app-consistency.css','app-stability.js','social-nav.js','member-preview-classes.js','member-preview-controls.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
-JS=('supabase-request-guard.js','app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','gym-context.js','gym-switcher.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-preview-classes.js','member-preview-controls.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
+CRITICAL={'join.html':['get_public_gym_join_options','join_public_gym_with_membership','Create member account','Choose your membership','await supabase.auth.signOut()','setMode(\'signup\')','exchangeCodeForSession','confirmed=1'],'index.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','staff_access'],'member-view-settings.html':['app-consistency.css','app-stability.js','shared-admin-nav.js','Member home layout'],'member.html':['app-consistency.css','app-stability.js','social-nav.js','member-experience.css','member-experience.js','member-coach.css','member-coach.js','class-booking-access.js','social-notifications.js'],'classes.html':['app-consistency.css','app-stability.js','calendar-mobile.js','calendar-views.js','session-manager.js','class-admin-enhancements.js','class-admin-live-refresh.js'],'staff.html':['app-consistency.css','app-stability.js','staff-shell.js','staff-operations.css','staff-operations.js','full_access'],'social.html':['app-consistency.css','app-stability.js','social-enhancements.js','window.__hybridSocial'],'groups.html':['app-consistency.css','app-stability.js','Training Groups','groups.js'],'group-join.html':['join_training_group_by_code','preview_training_group_invite','Join group']}
+JS=('supabase-request-guard.js','app-stability.js','social-nav.js','shared-admin-nav.js','admin-access-guard.js','admin-transition-diagnostics.js','account-menu.js','gym-context.js','gym-switcher.js','calendar-mobile.js','calendar-views.js','scheduling-engine.js','session-manager.js','tenant-branding.js','pb-workout-enhancements.js','gym-activities.js','class-booking-access.js','member-experience.js','member-coach.js','class-admin-enhancements.js','class-admin-live-refresh.js','staff-shell.js','staff-operations.js','social-enhancements.js','groups.js','admin-frame.js','admin-embed.js')
 if not ROOT.exists():raise SystemExit(f'Build output does not exist: {ROOT}')
 
-GUARDED_APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','social.html','groups.html','admin.html','communications.html')
+GUARDED_APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','social.html','groups.html','admin.html','communications.html')
 for n in GUARDED_APP_PAGES:
  p=ROOT/n
  if not p.exists():problems.append(f'{n}: guarded app page missing');continue
@@ -125,8 +125,7 @@ for page in ROOT.glob('*.html'):
   tmp.unlink(missing_ok=True)
   if r.returncode:problems.append(f'{page.name}: inline JavaScript syntax error: {r.stderr.strip()}')
  if page.name!='classes.html' and ('class-admin-enhancements.js' in t or 'class-admin-live-refresh.js' in t):problems.append(f'{page.name}: class admin runtime leaked')
- if page.name!='member-preview.html' and ('member-preview-classes.js' in t or 'member-preview-controls.js' in t):problems.append(f'{page.name}: preview runtime leaked')
- if page.name not in ('member.html','member-preview.html') and ('member-experience.js' in t or 'member-experience.css' in t or 'member-coach.js' in t or 'member-coach.css' in t):problems.append(f'{page.name}: member runtime leaked')
+ if page.name!='member.html' and ('member-experience.js' in t or 'member-experience.css' in t or 'member-coach.js' in t or 'member-coach.css' in t):problems.append(f'{page.name}: member runtime leaked')
  if page.name!='social.html' and 'social-enhancements.js' in t:problems.append(f'{page.name}: social runtime leaked')
 class_access=(ROOT/'class-booking-access.js').read_text(encoding='utf-8')
 for x in ('get_class_booking_options','prepare_class_drop_in_purchase','Pay as you go','Membership options'):
@@ -137,7 +136,7 @@ for x in ('Drop-in price (£)','drop_in_price_pence','dropInPrice'):
 activity_picker=(ROOT/'gym-activities.js').read_text(encoding='utf-8')
 for x in ('Bench Press','HYROX Sled Push','Start typing to search exercises and activities','HybridGymActivities','#pbExercise,.exerciseName'):
  if x not in activity_picker:problems.append(f'gym-activities.js: searchable activity catalogue missing: {x}')
-for page_name in ('member.html','member-preview.html'):
+for page_name in ('member.html',):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  if 'Training groups' not in page_text:problems.append(f'{page_name}: training groups navigation missing')
 
@@ -163,9 +162,6 @@ for x in ('member_class_schedule','member_book_class','member_cancel_class','pt_
 coach=(ROOT/'member-coach.js').read_text(encoding='utf-8')
 for x in ('memberWeekPlan','member_class_schedule','workout_sessions','hybrid_member_weekly_goal','NEXT 7 DAYS'):
  if x not in coach:problems.append(f'member-coach.js: required weekly plan workflow missing: {x}')
-pc=(ROOT/'member-preview-controls.js').read_text(encoding='utf-8')
-for x in ('openPreviewPage','wireNavigation','memberPreviewAccountMenu','previewAccountSave','hybridOS_memberPreviewAccount'):
- if x not in pc:problems.append(f'member-preview-controls.js: required workflow missing: {x}')
 social_notice=(ROOT/'social-notifications.js').read_text(encoding='utf-8')
 for x in ('hybrid-social-badge','New social activity','social_comment','social_reply','markRead'):
  if x not in social_notice:problems.append(f'social-notifications.js: unread social workflow missing: {x}')
@@ -374,14 +370,14 @@ for x in ("syncMobileBrowserChrome","mobileViewport.matches)return","meta[name=\
  if x not in stability:problems.append(f'app-stability.js: mobile Safari chrome reset missing: {x}')
 for x in ("document.documentElement.classList.contains('admin-embedded')","'workout-builder.html'"):
  if x not in stability:problems.append(f'app-stability.js: embedded admin transition isolation missing: {x}')
-for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','social.html','groups.html'):
+for page_name in ('index.html','community.html','classes.html','class-setup.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','social.html','groups.html'):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  if 'hybrid-critical-shell' not in page_text:problems.append(f'{page_name}: critical first-paint shell missing')
  if '#hybridNavigationMask' not in page_text:problems.append(f'{page_name}: navigation mask critical CSS missing')
 account=(ROOT/'account-menu.js').read_text(encoding='utf-8')
 for x in ("storage.from('avatars')",'accountAvatarFile','staffPermissions.full_access','accountDateOfBirth','accountGender','date_of_birth','gender'):
  if x not in account:problems.append(f'account-menu.js: profile/portal workflow missing: {x}')
-for page_name in ('member.html','member-preview.html','staff.html','social.html'):
+for page_name in ('member.html','staff.html','social.html'):
  shell_page=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('data-shell-icon','Hybrid'):
   if x not in shell_page:problems.append(f'{page_name}: shared shell navigation missing: {x}')
@@ -454,7 +450,7 @@ for x in ("sessionStorage.getItem('hybrid-gym-id')",".eq('gym_id',selectedGymId)
 if ".select('gym_id').eq('user_id',authUser.id).eq('is_active',true).limit(1)" in pb_enhancements:problems.append('pb-workout-enhancements.js: first-active-gym shortcut returned')
 member_portal=(ROOT/'member.html').read_text(encoding='utf-8')
 if "hybrid:workout-saved" not in member_portal:problems.append('member.html: successful manual workout save must refresh member activity surfaces')
-for page_name in ('member.html','member-preview.html'):
+for page_name in ('member.html',):
  page_text=(ROOT/page_name).read_text(encoding='utf-8')
  for x in ('member-workouts-v2.js','member-workouts-v2.css'):
   if x not in page_text:problems.append(f'{page_name}: Workout V2 runtime not isolated/mounted: {x}')
@@ -476,8 +472,6 @@ for page_name in ('index.html','community.html','classes.html','class-setup.html
   if x not in page_text:problems.append(f'{page_name}: embedded admin mode missing: {x}')
 member_view=(ROOT/'member-view-settings.html').read_text(encoding='utf-8')
 if 'href="./member.html?view=member" target="_top"' not in member_view:problems.append('member-view-settings.html: authenticated View as Member must escape persistent admin frame')
-member_preview=(ROOT/'member-preview.html').read_text(encoding='utf-8')
-if './admin.html?view=member-view-settings.html' not in member_preview:problems.append('member-preview.html: Back to admin must return to persistent admin shell')
 if problems:raise SystemExit('HybridOne smoke checks failed:\n- '+'\n- '.join(problems))
 print('HybridOne built-site smoke checks passed')
 

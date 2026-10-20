@@ -6,7 +6,7 @@ def checked_out_sha():
  try:return subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True,stderr=subprocess.DEVNULL).strip()
  except Exception:return ''
 BUILD_SHA=(os.environ.get('HYBRID_BUILD_SHA') or os.environ.get('VERCEL_GIT_COMMIT_SHA') or checked_out_sha() or os.environ.get('GITHUB_SHA') or 'dev');VERSION=BUILD_SHA[:12];EXCLUDE={'.git','.github','scripts','_site','web'}
-APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','member-preview.html','social.html','groups.html','communications.html');TENANT_PAGES=('index.html','member.html','member-preview.html','classes.html','staff.html','social.html','groups.html');ADMIN_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','communications.html')
+APP_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','staff.html','member.html','social.html','groups.html','communications.html');TENANT_PAGES=('index.html','member.html','classes.html','staff.html','social.html','groups.html');ADMIN_PAGES=('index.html','community.html','classes.html','class-setup.html','workout-builder.html','admin-access.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','communications.html')
 def copy_source():
  if OUT.exists():shutil.rmtree(OUT)
  OUT.mkdir()
@@ -60,9 +60,7 @@ def add_tenant_runtime():
   if not(OUT/n).exists():continue
   s=inject_head(read(n),'tenant-branding.css',f'<link rel="stylesheet" href="./tenant-branding.css?v={VERSION}">');write(n,inject_body(s,'tenant-branding.js',f'<script src="./tenant-branding.js?v={VERSION}" defer></script>'))
 def harden_member():
- css=f'<link rel="stylesheet" href="./member-experience.css?v={VERSION}">';coachcss=f'<link rel="stylesheet" href="./member-coach.css?v={VERSION}">';js=f'<script type="module" src="./member-experience.js?v={VERSION}"></script>';coachjs=f'<script type="module" src="./member-coach.js?v={VERSION}"></script>';activities=f'<script src="./gym-activities.js?v={VERSION}" defer></script>';classaccess=f'<script type="module" src="./class-booking-access.js?v={VERSION}"></script>';socialnotice=f'<script type="module" src="./social-notifications.js?v={VERSION}"></script>';s=read('member.html');s=inject_head(s,'member-experience.css',css);s=inject_head(s,'member-coach.css',coachcss);s=inject_body(s,'social-nav.js',f'<script src="./social-nav.js?v={VERSION}" defer></script>');s=inject_body(s,'gym-activities.js',activities);s=inject_body(s,'class-booking-access.js',classaccess);s=inject_body(s,'social-notifications.js',socialnotice);s=inject_body(s,'member-experience.js',js);write('member.html',inject_body(s,'member-coach.js',coachjs));s=read('member-preview.html');s=inject_head(s,'member-experience.css',css);s=inject_head(s,'member-coach.css',coachcss)
- for a in ('social-nav.js','member-preview-classes.js','member-preview-controls.js'):s=inject_body(s,a,f'<script src="./{a}?v={VERSION}" defer></script>')
- s=inject_body(s,'gym-activities.js',activities);s=inject_body(s,'member-experience.js',js);write('member-preview.html',inject_body(s,'member-coach.js',coachjs))
+ css=f'<link rel="stylesheet" href="./member-experience.css?v={VERSION}">';coachcss=f'<link rel="stylesheet" href="./member-coach.css?v={VERSION}">';js=f'<script type="module" src="./member-experience.js?v={VERSION}"></script>';coachjs=f'<script type="module" src="./member-coach.js?v={VERSION}"></script>';activities=f'<script src="./gym-activities.js?v={VERSION}" defer></script>';classaccess=f'<script type="module" src="./class-booking-access.js?v={VERSION}"></script>';socialnotice=f'<script type="module" src="./social-notifications.js?v={VERSION}"></script>';s=read('member.html');s=inject_head(s,'member-experience.css',css);s=inject_head(s,'member-coach.css',coachcss);s=inject_body(s,'social-nav.js',f'<script src="./social-nav.js?v={VERSION}" defer></script>');s=inject_body(s,'gym-activities.js',activities);s=inject_body(s,'class-booking-access.js',classaccess);s=inject_body(s,'social-notifications.js',socialnotice);s=inject_body(s,'member-experience.js',js);write('member.html',inject_body(s,'member-coach.js',coachjs));
 def replace_exact(t,old,new,label):
  if t.count(old)!=1:raise RuntimeError(f'member.html membership-status patch failed: expected exactly one match for {label} (found {t.count(old)}); member.html changed, update add_member_access_guard()')
  return t.replace(old,new,1)
@@ -120,10 +118,6 @@ def add_social_runtime():
 def add_social_notification_runtime():
  for n in ('social.html','community.html','groups.html'):
   s=read(n);s=inject_body(s,'social-notifications.js',f'<script type="module" src="./social-notifications.js?v={VERSION}"></script>');write(n,s)
-def brand_member_preview():
- n='member-preview.html';s=read(n);s=s.replace('<title>Member Preview · HybridOne</title>','<title>Hybrid Hub · Member Preview</title>').replace('Puffin Performance','Hybrid Hub')
- if 'member-gym-logo' not in s:s=s.replace('<main class="main">','<main class="main"><div class="member-gym-logo"><img src="./assets/hybrid-hub-logo-horizontal.svg" alt="Hybrid Hub"></div>',1)
- write(n,s)
 def finalise_ui_contract():
  # Canonical visual primitives must be the final stylesheet on every product
  # surface. Page/specialist CSS owns feature geometry; app-consistency owns
@@ -193,5 +187,5 @@ def hand_old_sign_in_pages_to_app():
   gymjs=f'if(!q.has("gym_id"))q.set("gym_id","{gym}");' if gym else ''
   hand=f'<script>/* dev preview: old sign-in address, now the app screen */(function(){{var q=new URLSearchParams(location.search);{gymjs}var s=q.toString();location.replace("{root}{route}/"+(s?"?"+s:"")+location.hash)}})()</script>'
   (OUT/(name+'.html')).write_text('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>HybridOne</title>'+hand+'</head><body></body></html>',encoding='utf-8')
-def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();brand_member_preview();finalise_ui_contract();add_brand_layer();build_next_app();hand_clean_addresses_to_app();hand_old_sign_in_pages_to_app();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
+def build():copy_source();clean_legacy_class_mobile_back();version_admin_frame_assets();add_shared_runtime();add_tenant_runtime();harden_member();add_member_access_guard();add_admin_shell();add_staff_shell();add_scheduler_assets();add_social_runtime();add_social_notification_runtime();finalise_ui_contract();add_brand_layer();build_next_app();hand_clean_addresses_to_app();hand_old_sign_in_pages_to_app();write_deployment_manifest();print(f'Built HybridOne site in {OUT} from {BUILD_SHA}')
 if __name__=='__main__':build()
