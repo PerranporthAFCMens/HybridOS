@@ -21,3 +21,5 @@ Run on a scratch Postgres with stand-in tables (not the live database): own bloc
 - Closed days are only checked per selected coach, so a class with no coach picked is not blocked by a closed day.
 - Repeating blocks, the calendar screen and the "classes affected" list are pieces 2 and 3.
 - `web/src/data/database.types.ts` will need regenerating once the SQL has been run (piece 2 uses it).
+
+- `.github/workflows/database-schema.yml`: the expected schema counts go up to match the new migration (tables 99 to 101, functions 178 to 180, policies 229 to 233, triggers 42 to 43), as in the earlier platform foundation change.
