@@ -121,11 +121,13 @@ jobs:
                 const page=await context.newPage();
                 try{
                   const email=process.env['PERSONA_'+c.key.toUpperCase()+'_EMAIL'];
-                  await page.goto(base+'login.html',{waitUntil:'domcontentloaded',timeout:30000});
-                  await page.locator('#email').fill(email);
-                  await page.locator('#password').fill(password);
-                  await page.locator('#signIn').click();
-                  await page.waitForURL(url=>!url.pathname.endsWith('/login.html'),{timeout:30000});
+                  // Sign in on the new screen (login.html now hands over to /sign-in on the dev site). The old member pages
+                  // below read the same saved session, so they are still checked as before.
+                  await page.goto(base+'sign-in',{waitUntil:'domcontentloaded',timeout:30000});
+                  await page.getByLabel('Email').fill(email);
+                  await page.getByLabel('Password',{exact:true}).fill(password);
+                  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+                  await page.waitForURL(url=>!/\/sign-in\/?$/.test(url.pathname),{timeout:30000});
                   await page.goto(base+'member.html?view=member&gym_id='+puffin,{waitUntil:'domcontentloaded',timeout:30000});
                   await settled(page,c.access);
                   const banner=await page.locator('#hybridMemberStatusBanner').count()?await page.locator('#hybridMemberStatusBanner').innerText():null;
