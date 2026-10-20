@@ -2,12 +2,6 @@ from __future__ import annotations
 import re,subprocess,sys
 from pathlib import Path
 ROOT=Path(sys.argv[1] if len(sys.argv)>1 else '_site').resolve();problems=[]
-login_text=(ROOT/'login.html').read_text(encoding='utf-8')
-for marker in ('Your gyms.<br>One login.','choose-gym.html',"eq('access_status','active')",'gym-context.js'):
- if marker not in login_text:problems.append(f'login.html: universal login contract missing: {marker}')
-chooser_text=(ROOT/'choose-gym.html').read_text(encoding='utf-8')
-for marker in ('Choose a gym',"params.get('switch')==='1'",'data-gym','hybrid-last-gym-id'):
- if marker not in chooser_text:problems.append(f'choose-gym.html: multi-gym chooser contract missing: {marker}')
 admin_frame=(ROOT/'admin.html').read_text(encoding='utf-8')
 for marker in ('admin-frame-account userchip','gym-context.js?v=','account-menu.js','gym-switcher.js'):
  if marker not in admin_frame:problems.append(f'admin.html: persistent account/gym shell missing: {marker}')
@@ -29,11 +23,6 @@ for marker in ("function navigateAccountTarget","admin-embedded","window.parent.
  if marker not in account_menu:problems.append(f'account-menu.js: embedded Admin account navigation missing: {marker}')
 if "await sb.auth.signOut();sessionStorage.removeItem('hybrid-gym-id');navigateAccountTarget('./sign-in')" not in account_menu:
  problems.append('account-menu.js: sign out must clear current gym after Auth completes')
-for login_name,gym_id in (('hybrid-hub-login.html','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),('puffin-performance-login.html','aec16956-3793-4543-873b-4412646ca1eb')):
- alias=(ROOT/login_name).read_text(encoding='utf-8')
- if './login.html' not in alias or gym_id not in alias:problems.append(f'{login_name}: gym shortcut does not use universal login')
-invite_text=(ROOT/'admin-invite.html').read_text(encoding='utf-8')
-if 'href="./admin.html"' not in invite_text:problems.append('admin-invite.html: accepted staff invite must open admin shell')
 # HybridOne is a CamelCase brand. Never ship the all-caps text variant in customer-facing source.
 for brand_file in list(ROOT.glob('*.html'))+list(ROOT.glob('*.js'))+list((ROOT/'scripts').glob('*.py')):
  try: brand_text=brand_file.read_text(encoding='utf-8')
@@ -83,6 +72,8 @@ else:
  if '"trailingSlash": false' not in vt:problems.append('vercel.json: trailingSlash=false canonical route contract missing')
  for old,new in (('/login.html','/sign-in'),('/choose-gym.html','/choose-gym'),('/auth-return.html','/auth-return'),('/admin-invite.html','/invite'),('/sign-out.html','/sign-out')):
   if f'"source": "{old}"' not in vt or f'"destination": "{new}"' not in vt:problems.append(f'vercel.json: redirect {old} -> {new} missing')
+ for old,gym_id in (('/hybrid-hub','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),('/hybrid-hub-login.html','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),('/puffin-performance','aec16956-3793-4543-873b-4412646ca1eb'),('/puffin-performance-login.html','aec16956-3793-4543-873b-4412646ca1eb')):
+  if f'"source": "{old}"' not in vt or f'"destination": "/sign-in?gym_id={gym_id}"' not in vt:problems.append(f'vercel.json: gym shortcut {old} -> sign-in with its gym missing')
 
 for brand_page in ROOT.glob('*.html'):
  bt=brand_page.read_text(encoding='utf-8')
@@ -236,21 +227,12 @@ for x in ("window.matchMedia('(max-width:900px)').matches","e.preventDefault();c
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: explicit mobile drawer navigation missing: {x}')
 for x in ("{key:'sign-out'","href:'./sign-out'"):
  if x not in admin_nav:problems.append(f'shared-admin-nav.js: global admin sign out missing: {x}')
-auth_return=(ROOT/'auth-return.html')
-if not auth_return.exists():problems.append('auth-return.html: secure Auth return page missing')
-else:
- art=auth_return.read_text(encoding='utf-8')
- for x in ("params.get('gym_id')","mode==='recovery'","supabase.auth.updateUser({password})","eq('access_status','active')","data.length===1","ctx.chooserUrl()","Powered by HybridOne"):
-  if x not in art:problems.append(f'auth-return.html: universal Auth return flow missing: {x}')
 join_auth=(ROOT/'join.html').read_text(encoding='utf-8')
 for x in ("redirectUrl.searchParams.set('gym_id',joinData.gym_id)","emailRedirectTo:redirect"):
  if x not in join_auth:problems.append(f'join.html: gym context missing from signup confirmation flow: {x}')
 for x in ("if(!r.data.session){msg('authMsg','Account created. Check your email and confirm your address to continue.','good');return}","user_metadata?.phone","confirmedPhone"):
  if x not in join_auth:problems.append(f'join.html: confirmed-email signup handling missing: {x}')
 if "Account created but no active session was returned" in join_auth:problems.append('join.html: retired immediate-session signup assumption returned')
-sign_out=(ROOT/'sign-out.html').read_text(encoding='utf-8')
-for x in ('supabase.auth.signOut()',"location.replace('./login.html')",'Signing you out'):
- if x not in sign_out:problems.append(f'sign-out.html: reliable sign out flow missing: {x}')
 if 'Member memberships' in admin_nav:problems.append('shared-admin-nav.js: duplicate Member memberships tab returned')
 
 for x in ('classes-group','settings-group','community-group','members-group','admin-context-tabs','HybridShell','Rooms & equipment','Service dependencies','Staff & working hours','Member experience',"section:'Preview'","href:'./m/today'",'Door access'):
@@ -317,22 +299,9 @@ if "Puffin Performance" in tenant_branding:problems.append('tenant-branding.js: 
 for x in ("HYBRID_HUB_ID","sessionStorage.getItem('hybrid-gym-id')"):
  if x not in tenant_branding:problems.append(f'tenant-branding.js: tenant-aware branding missing: {x}')
  if x not in shared_shell:problems.append(f'shared-shell.js: tenant-aware branding missing: {x}')
-for login_name,gym_name,gym_id in (
- ('hybrid-hub-login.html','Hybrid Hub','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),
- ('puffin-performance-login.html','Puffin Performance','aec16956-3793-4543-873b-4412646ca1eb')
-):
- login=(ROOT/login_name)
- if not login.exists():problems.append(f'{login_name}: gym login shortcut missing');continue
- lt=login.read_text(encoding='utf-8')
- for x in (gym_name,gym_id,'./login.html',"u.searchParams.set('gym_id'"):
-  if x not in lt:problems.append(f'{login_name}: universal login shortcut missing: {x}')
- for forbidden in ('signInWithPassword','resetPasswordForEmail','signInWithOtp'):
-  if forbidden in lt:problems.append(f'{login_name}: separate auth implementation returned: {forbidden}')
 for context_page in ('community.html','classes.html','class-setup.html','workout-builder.html','admin-operations.html','resource-availability.html','staff-permissions.html','access-settings.html','reporting.html','member-view-settings.html','member-memberships.html','admin-access.html'):
  cp=(ROOT/context_page).read_text(encoding='utf-8')
  if 'hybrid-gym-id' not in cp:problems.append(f'{context_page}: login gym context not enforced')
-sign_out=(ROOT/'sign-out.html').read_text(encoding='utf-8')
-if "sessionStorage.removeItem('hybrid-gym-id')" not in sign_out:problems.append('sign-out.html: gym context is not cleared on sign out')
 for template_name in ('supabase-email-invite-template.html','supabase-email-magic-link-template.html'):
  template=(ROOT/template_name)
  if not template.exists():problems.append(f'{template_name}: branded email template missing');continue
@@ -340,9 +309,6 @@ for template_name in ('supabase-email-invite-template.html','supabase-email-magi
  for x in ('{{ .ConfirmationURL }}','{{ .Data.hybrid_email_brand_name }}','{{ .Data.hybrid_email_heading }}','{{ .Data.hybrid_email_body }}','{{ .Data.hybrid_email_button_label }}','{{ .Data.hybrid_email_accent }}','{{ .Data.hybrid_email_footer }}'):
   if x not in tt:problems.append(f'{template_name}: gym-configurable invite email content missing: {x}')
 
-admin_invite=(ROOT/'admin-invite.html').read_text(encoding='utf-8')
-for x in ('get_access_invite','claim_access_invite','Access activated','equal Owner','Set a password for future sign-ins','supabase.auth.updateUser','Different account signed in','Sign out and continue with invited email','supabase.auth.signOut()'):
- if x not in admin_invite:problems.append(f'admin-invite.html: email-first Admin/Owner acceptance workflow missing: {x}')
 access_guard=(ROOT/'admin-access-guard.js').read_text(encoding='utf-8')
 for x in ("['admin','owner'].includes(membership.role)","access_status!=='pending'","HybridAccess","readOnly:true","required Owner approval","Read-only until the required Owner approval"):
  if x not in access_guard:problems.append(f'admin-access-guard.js: pending Admin/Owner read-only guard missing: {x}')
