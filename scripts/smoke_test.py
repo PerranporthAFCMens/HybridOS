@@ -72,8 +72,11 @@ else:
  if '"trailingSlash": false' not in vt:problems.append('vercel.json: trailingSlash=false canonical route contract missing')
  for old,new in (('/login.html','/sign-in'),('/choose-gym.html','/choose-gym'),('/auth-return.html','/auth-return'),('/admin-invite.html','/invite'),('/sign-out.html','/sign-out')):
   if f'"source": "{old}"' not in vt or f'"destination": "{new}"' not in vt:problems.append(f'vercel.json: redirect {old} -> {new} missing')
- for old,gym_id in (('/hybrid-hub','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),('/hybrid-hub-login.html','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),('/puffin-performance','aec16956-3793-4543-873b-4412646ca1eb'),('/puffin-performance-login.html','aec16956-3793-4543-873b-4412646ca1eb')):
-  if f'"source": "{old}"' not in vt or f'"destination": "/sign-in?gym_id={gym_id}"' not in vt:problems.append(f'vercel.json: gym shortcut {old} -> sign-in with its gym missing')
+ for old,new in (('/hybrid-hub-login.html','/hybrid-hub'),('/puffin-performance-login.html','/puffin-performance')):
+  if f'"source": "{old}"' not in vt or f'"destination": "{new}"' not in vt:problems.append(f'vercel.json: redirect {old} -> {new} missing')
+ if 'hybrid-hub|puffin-performance' not in vt:problems.append('vercel.json: gym sign-in pages (/hybrid-hub, /puffin-performance) must be served by the app, not redirected')
+ for gym in ('/hybrid-hub','/puffin-performance'):
+  if f'"source": "{gym}"' in vt:problems.append(f'vercel.json: {gym} must not be redirected away (it is the gym own sign-in page)')
 
 for brand_page in ROOT.glob('*.html'):
  bt=brand_page.read_text(encoding='utf-8')

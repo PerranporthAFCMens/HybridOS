@@ -24,6 +24,8 @@ describe('safeReturn', () => {
     expect(safeReturn(null, ORIGIN, '/')).toBe('');
     expect(safeReturn('/login.html', ORIGIN, '/')).toBe('');
     expect(safeReturn('/sign-in', ORIGIN, '/')).toBe('');
+    expect(safeReturn('/hybrid-hub', ORIGIN, '/')).toBe('');
+    expect(safeReturn('/puffin-performance', ORIGIN, '/')).toBe('');
   });
   it('drops an address outside the dev site folder', () => {
     expect(safeReturn('/other/page', ORIGIN, '/HybridOS/')).toBe('');

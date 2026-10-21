@@ -1,6 +1,7 @@
 import { siteUrl } from '../app/site';
 import type { GymAccess } from '../data/memberships';
 import { homeFor } from './access';
+import { GYM_SIGN_IN_PAGES } from './gymPages';
 
 /** Where a person lands for one gym: owners and admins in the new admin, staff and coaches in the staff app, members in the member app. */
 export function landingFor(gym: GymAccess): string {
@@ -22,7 +23,7 @@ export function safeReturn(raw: string | null, origin: string, siteRoot: string)
   }
   if (target.origin !== origin || !target.pathname.startsWith(siteRoot)) return '';
   const leaf = target.pathname.split('/').pop() ?? '';
-  if (['login.html', 'choose-gym.html', 'auth-return.html', 'sign-out.html', 'sign-in', 'choose-gym'].includes(leaf)) return '';
+  if (['login.html', 'choose-gym.html', 'auth-return.html', 'sign-out.html', 'sign-in', 'choose-gym', ...GYM_SIGN_IN_PAGES.map((g) => g.path)].includes(leaf)) return '';
   return `${target.pathname}${target.search}${target.hash}`;
 }
 
