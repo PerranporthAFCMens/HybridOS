@@ -2,15 +2,15 @@
 import { base, launch, runChecks, serveApp, sizes } from './mock.mjs';
 
 const PAGES = [
-  { path: 'hybrid-hub', name: 'Hybrid Hub' },
-  { path: 'puffin-performance', name: 'Puffin Performance' },
+  { path: 'hybrid-hub', name: 'Hybrid Hub', join: 'hybrid-hub-demo' },
+  { path: 'puffin-performance', name: 'Puffin Performance', join: 'puffin-performance' },
 ];
 
 const browser = await launch();
 let allOk = true;
 for (const [size, viewport] of Object.entries(sizes)) {
   const c = runChecks();
-  for (const { path, name } of PAGES) {
+  for (const { path, name, join } of PAGES) {
     const ctx = await browser.newContext({ viewport });
     await serveApp(ctx);
     const page = await ctx.newPage();
@@ -25,6 +25,9 @@ for (const [size, viewport] of Object.entries(sizes)) {
     await page.goto(`${base}/${path}`);
     await c.has(`${name}: the sign-in form shows`, page.getByLabel('Email'));
     await c.has(`${name}: its own name shows`, page.getByText(name).first());
+    const joinLink = page.getByRole('link', { name: `New here? Join ${name}` });
+    await c.has(`${name}: a join link shows`, joinLink);
+    c.ok(`${name}: the join link opens /join/${join}`, ((await joinLink.getAttribute('href')) ?? '').endsWith(`/join/${join}`));
     c.ok(`${name}: the address stays /${path}`, new URL(page.url()).pathname.endsWith(`/${path}`));
     c.ok(`${name}: no overflow`, !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)));
     c.ok(`${name}: no page errors`, errors.length === 0);

@@ -177,7 +177,7 @@ export function App() {
       <Routes>
         <Route path="/join/:slug" element={<Join />} />
         <Route path="/sign-in" element={<SignIn />} />
-        {GYM_SIGN_IN_PAGES.map((g) => <Route key={g.path} path={`/${g.path}`} element={<SignIn gymId={g.gymId} />} />)}
+        {GYM_SIGN_IN_PAGES.map((g) => <Route key={g.path} path={`/${g.path}`} element={<SignIn gymId={g.gymId} joinSlug={g.joinSlug} />} />)}
         <Route path="/choose-gym" element={<ChooseGym />} />
         <Route path="/auth-confirm" element={<AuthConfirm />} />
         <Route path="/auth-return" element={<AuthReturn />} />

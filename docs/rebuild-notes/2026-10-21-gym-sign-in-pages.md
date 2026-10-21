@@ -18,3 +18,6 @@ Revert this PR. `/hybrid-hub` and `/puffin-performance` go back to forwarding to
 
 ## Checks
 `npm run check` in `web/` (typecheck, lint, 850 tests, build) and the new browser check `gym-sign-in` (phone and desktop) pass.
+
+## Follow-up: join link
+Each gym sign-in page also has a "New here? Join <gym>" button. It opens that gym's existing sign-up and membership purchase page (`/join/<slug>`; Hybrid Hub's slug is `hybrid-hub-demo`, Puffin Performance's is `puffin-performance`). No database change. Rollback: revert.
