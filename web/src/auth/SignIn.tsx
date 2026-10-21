@@ -11,11 +11,14 @@ import { setSelectedGymId } from './gymStorage';
 import { authReturnUrl, landingFor, safeReturn } from './signin';
 import './signin.css';
 
-/** The one sign-in page. Works out what to do next from who is signed in, and never decides gym access itself. */
-export function SignIn() {
+/**
+ * The sign-in page. Works out what to do next from who is signed in, and never decides gym access itself.
+ * A gym's own address (/hybrid-hub, /puffin-performance) passes that gym's id, so the page keeps its address and shows that gym.
+ */
+export function SignIn({ gymId }: { gymId?: string } = {}) {
   const auth = useAuth();
   const params = new URLSearchParams(window.location.search);
-  const hintGymId = params.get('gym_id') ?? '';
+  const hintGymId = gymId ?? params.get('gym_id') ?? '';
   const returnTo = safeReturn(params.get('return_to'), window.location.origin, SITE);
   const brandQ = useQuery({ queryKey: ['gym-brand', hintGymId], queryFn: () => getPublicGymBrand(hintGymId), enabled: !!hintGymId, retry: false });
 
@@ -75,7 +78,7 @@ export function SignIn() {
         <div className="eyebrow">{brand?.name ?? 'HybridOne'}</div>
         <h1>Sign in</h1>
         <p className="muted">Use the email address and password linked to your HybridOne account. If your account has more than one gym, you choose where to go next.</p>
-        {hintGymId && <p className="muted small">This link will open {brand?.name ?? 'that gym'} if your account has access.</p>}
+        {hintGymId && !gymId && <p className="muted small">This link will open {brand?.name ?? 'that gym'} if your account has access.</p>}
         <form onSubmit={submit}>
           <Field label="Email" htmlFor="signin-email">
             <Input id="signin-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />

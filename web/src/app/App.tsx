@@ -58,6 +58,7 @@ import { StaffClient } from '../staffapp/StaffClient';
 import { Strava } from '../member/Strava';
 import { ChooseGym } from '../auth/ChooseGym';
 import { SignIn } from '../auth/SignIn';
+import { GYM_SIGN_IN_PAGES } from '../auth/gymPages';
 import { AuthConfirm } from '../auth/AuthConfirm';
 import { AuthReturn } from '../auth/AuthReturn';
 import { Invite } from '../auth/Invite';
@@ -176,6 +177,7 @@ export function App() {
       <Routes>
         <Route path="/join/:slug" element={<Join />} />
         <Route path="/sign-in" element={<SignIn />} />
+        {GYM_SIGN_IN_PAGES.map((g) => <Route key={g.path} path={`/${g.path}`} element={<SignIn gymId={g.gymId} />} />)}
         <Route path="/choose-gym" element={<ChooseGym />} />
         <Route path="/auth-confirm" element={<AuthConfirm />} />
         <Route path="/auth-return" element={<AuthReturn />} />

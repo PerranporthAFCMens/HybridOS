@@ -175,12 +175,12 @@ def hand_clean_addresses_to_app():
   if '<head>' not in t:raise RuntimeError(f'Cannot hand over {name}.html: missing <head>')
   f.write_text(t.replace('<head>','<head>'+hand,1),encoding='utf-8')
 def hand_old_sign_in_pages_to_app():
- # Dev preview only. The old sign-in pages are deleted. GitHub Pages has no redirects, so the old addresses (login.html, choose-gym.html, emailed auth-return.html and admin-invite.html links, gym shortcuts)
+ # Dev preview only. The old sign-in pages are deleted. GitHub Pages has no redirects, so the old addresses (login.html, choose-gym.html, emailed auth-return.html and admin-invite.html links, old gym sign-in addresses)
  # are written here as tiny pages that hand over to the new app screen, keeping the query and the # part (emailed links, gym_id, return_to, token). Live (Vercel) redirects these addresses in vercel.json, so nothing is written there.
  root=site_root()
  if root=='/':return
  routes={'login':('sign-in',''),'choose-gym':('choose-gym',''),'auth-return':('auth-return',''),'admin-invite':('invite',''),'sign-out':('sign-out',''),
-  'hybrid-hub-login':('sign-in','242f57c2-6e37-4977-b3c5-1c87de7d0b98'),'puffin-performance-login':('sign-in','aec16956-3793-4543-873b-4412646ca1eb')}
+  'hybrid-hub-login':('hybrid-hub',''),'puffin-performance-login':('puffin-performance','')}
  for name,(route,gym) in routes.items():
   gymjs=f'if(!q.has("gym_id"))q.set("gym_id","{gym}");' if gym else ''
   hand=f'<script>/* dev preview: old sign-in address, now the app screen */(function(){{var q=new URLSearchParams(location.search);{gymjs}var s=q.toString();location.replace("{root}{route}/"+(s?"?"+s:"")+location.hash)}})()</script>'

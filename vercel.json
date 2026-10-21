@@ -35,23 +35,13 @@
       "permanent": false
     },
     {
-      "source": "/hybrid-hub",
-      "destination": "/sign-in?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98",
-      "permanent": false
-    },
-    {
       "source": "/hybrid-hub-login.html",
-      "destination": "/sign-in?gym_id=242f57c2-6e37-4977-b3c5-1c87de7d0b98",
-      "permanent": false
-    },
-    {
-      "source": "/puffin-performance",
-      "destination": "/sign-in?gym_id=aec16956-3793-4543-873b-4412646ca1eb",
+      "destination": "/hybrid-hub",
       "permanent": false
     },
     {
       "source": "/puffin-performance-login.html",
-      "destination": "/sign-in?gym_id=aec16956-3793-4543-873b-4412646ca1eb",
+      "destination": "/puffin-performance",
       "permanent": false
     },
     {
@@ -93,7 +83,7 @@
       "destination": "/data-deletion.html"
     },
     {
-      "source": "/:screen(today|members|plans|classes|reports|staff|rota|rooms|access|owners|door|member-view|community|communications|workouts|training|membership-rules|membership-requests|signup-process|member-privacy|settings|class-setup|programmes|packs|movements|estate|lifts|payments|sign-in|choose-gym|auth-return|auth-confirm|sign-out|invite)",
+      "source": "/:screen(today|members|plans|classes|reports|staff|rota|rooms|access|owners|door|member-view|community|communications|workouts|training|membership-rules|membership-requests|signup-process|member-privacy|settings|class-setup|programmes|packs|movements|estate|lifts|payments|sign-in|choose-gym|auth-return|auth-confirm|sign-out|invite|hybrid-hub|puffin-performance)",
       "destination": "/next/index.html"
     },
     {
