@@ -21,7 +21,8 @@ export function DownloadButtons({ gymName, build, formats }: { gymName: string; 
     }
   };
   return (
-    <div className="download-group" role="group" aria-label="Download">
+    <div className="download-group quiet" role="group" aria-label="Download">
+      <span className="muted small">Export</span>
       {FORMATS.filter(([f]) => !formats || formats.includes(f)).map(([f, label]) => (
         <Button key={f} onClick={() => void go(f)} disabled={busy !== null}>{busy === f ? 'Preparing…' : label}</Button>
       ))}
