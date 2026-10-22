@@ -43,7 +43,7 @@ export function Reports() {
 
   return (
     <>
-      <header className="page-top">
+      <header className="page-top report-head">
         <div>
           <div className="eyebrow">Business intelligence</div>
           <h1>Reporting</h1>
@@ -62,7 +62,7 @@ export function Reports() {
         </div>
       </header>
 
-      <p className="muted report-hint">Click any figure, bar or chart to see the rows behind it, and download them.</p>
+      <p className="muted report-hint">Tap or click any figure, bar or chart to see the rows behind it, and download them.</p>
 
       <label className="report-pick">
         <span className="muted">Report</span>
