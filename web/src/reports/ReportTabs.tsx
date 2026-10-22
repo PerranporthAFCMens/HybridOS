@@ -11,6 +11,7 @@ import { pounds, type LibraryContext } from './library';
 import { AttendanceChart, JoinsChart, MembersLineChart, PaymentStateDonut, PaymentsChart, PlanDonut } from './ReportCharts';
 import { Builder } from '../builder/Builder';
 import { ReportLibrary } from './ReportLibrary';
+import { BusinessSummary } from './BusinessSummary';
 import { XeroExport } from './XeroExport';
 import {
   atRiskTable, bestSlots, classIncomeTable, classPerformanceTable, incomeByType, classesTab, heatStep, heatValue, relativeStep, membersTab, membershipsTab, membershipsTable, metricsOf, paymentsTab, topMembersTable,
@@ -18,9 +19,9 @@ import {
 } from './tabs';
 import { useLibraryData } from './useReports';
 
-export type TabKey = 'overview' | 'memberships' | 'classes' | 'members' | 'payments' | 'owed' | 'xero' | 'library' | 'builder';
+export type TabKey = 'summary' | 'overview' | 'memberships' | 'classes' | 'members' | 'payments' | 'owed' | 'xero' | 'library' | 'builder';
 export const TABS: [TabKey, string][] = [
-  ['overview', 'Overview'], ['memberships', 'Memberships'], ['classes', 'Classes'], ['members', 'Members'], ['payments', 'Payments'], ['owed', 'Money owed'], ['xero', 'Accounting (Xero)'], ['library', 'Report library'], ['builder', 'Report builder'],
+  ['summary', 'Business summary'], ['overview', 'Overview'], ['memberships', 'Memberships'], ['classes', 'Classes'], ['members', 'Members'], ['payments', 'Payments'], ['owed', 'Money owed'], ['xero', 'Accounting (Xero)'], ['library', 'Report library'], ['builder', 'Report builder'],
 ];
 
 const HEAT_CHOICES: [HeatMetric, string][] = [['bookings', 'Bookings'], ['revenue', 'Revenue'], ['fill', 'Fill']];
@@ -89,6 +90,7 @@ export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: E
   const since = rangeStart(rangeDays, new Date());
   const ctx = (): LibraryContext => ({ gymName: gym.gymName, rangeLabel, now: new Date(), since });
   const cp = { d, rangeDays, rangeLabel, onOpenTable };
+  if (tab === 'summary') return <BusinessSummary d={d} rangeDays={rangeDays} rangeLabel={rangeLabel} onOpenTable={onOpenTable} />;
   if (tab === 'memberships') return <MembershipsPane d={d} since={since} ctx={ctx} gymName={gym.gymName} cp={cp} />;
   if (tab === 'classes') return <ClassesPane d={d} ctx={ctx} gymName={gym.gymName} onOpenTable={onOpenTable} cp={cp} />;
   if (tab === 'members') return <MembersPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;

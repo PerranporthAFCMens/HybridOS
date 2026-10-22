@@ -101,7 +101,7 @@ export function payGroup(state: string): PayGroup | null {
   return null; // cancelled and refunded are neither money in nor money lost
 }
 
-const payDate = (p: { chargeDate: string; createdAt: string }) => dateAsTime(p.chargeDate || p.createdAt);
+export const payDate = (p: { chargeDate: string; createdAt: string }) => dateAsTime(p.chargeDate || p.createdAt);
 
 /** Money in (paid), money lost (failed or charged back) and money waiting, per period, in whole pounds. */
 export function paymentSeries(d: LibraryData, periods: Period[]): Series[] {

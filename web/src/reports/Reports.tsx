@@ -23,7 +23,7 @@ export function Reports() {
   const [range, setRange] = useState('30');
   const [tab, setTab] = useState<TabKey>(() => {
     const wanted = new URLSearchParams(window.location.search).get('tab');
-    return TABS.some(([k]) => k === wanted) ? (wanted as TabKey) : 'overview';
+    return TABS.some(([k]) => k === wanted) ? (wanted as TabKey) : 'summary';
   });
   const [drill, setDrill] = useState<(() => ReportTable) | null>(null);
   const q = useReportData(gym.gymId, Number(range));

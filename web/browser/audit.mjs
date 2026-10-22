@@ -85,6 +85,7 @@ const STATES = {
   workouts: async (page) => { await page.goto(`${base}/workouts`); await page.getByText('No workouts yet. Build your first one.').waitFor(); },
   movements: async (page) => { await page.goto(`${base}/movements`); await page.getByRole('heading', { name: 'Movements', level: 1 }).waitFor(); },
   'workout editor': async (page) => { await page.goto(`${base}/workouts`); await page.getByRole('button', { name: 'New workout' }).click(); await page.getByLabel('Workout name').waitFor(); },
+  'report summary': async (page) => { await page.goto(`${base}/reports`); await page.getByText('Needs a look').waitFor(); },
   'report overview': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Overview' }); await page.waitForTimeout(800); },
   'report memberships': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Memberships' }); await page.waitForTimeout(800); },
   'report classes': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Classes' }); await page.waitForTimeout(800); },
