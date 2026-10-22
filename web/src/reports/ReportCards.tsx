@@ -2,20 +2,21 @@ import { useMemo, useState } from 'react';
 import { useReadyAuth } from '../auth/AuthProvider';
 import type { LibraryData } from '../data/reportLibrary';
 import { Button } from '../ui/Button';
-import { Card, SectionTitle } from '../ui/Card';
+import { Card } from '../ui/Card';
 import { Select } from '../ui/Field';
 import { barWidth, rangeStart } from './calc';
 import { DataTable } from './DataTable';
 import { DownloadButtons } from './DownloadButtons';
-import { LIBRARY, type LibraryContext, type LibraryReport } from './library';
+import type { LibraryContext, LibraryReport } from './library';
 import { autoChart } from './reportView';
 
 /** Rows a card shows on screen. Exports always have every row. */
 export const CARD_ROWS = 25;
 
-function ReportCard({ report, data, rangeDays, rangeLabel }: { report: LibraryReport; data: LibraryData; rangeDays: number; rangeLabel: string }) {
+/** One library report: charted when there is something to chart, with its table and a quiet Export. `single` is the report's own page (always open, title shown by the page). */
+export function ReportCard({ report, data, rangeDays, rangeLabel, single = false }: { report: LibraryReport; data: LibraryData; rangeDays: number; rangeLabel: string; single?: boolean }) {
   const { gym } = useReadyAuth();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(single);
   const [option, setOption] = useState('');
   const choice = report.option ? (report.option.choices.some((c) => c.value === option) ? option : report.option.default) : undefined;
   const make = () => report.build({ gymName: gym.gymName, rangeLabel, now: new Date(), since: rangeStart(rangeDays, new Date()), option: choice } satisfies LibraryContext, data);
@@ -26,13 +27,15 @@ function ReportCard({ report, data, rangeDays, rangeLabel }: { report: LibraryRe
   return (
     <Card className="report-card">
       <div className="report-card-head">
-        <div>
-          <h4>{report.title}</h4>
-          <p className="muted small">{report.description}</p>
-        </div>
+        {!single && (
+          <div>
+            <h4>{report.title}</h4>
+            <p className="muted small">{report.description}</p>
+          </div>
+        )}
         <div className="report-card-actions">
           <DownloadButtons gymName={gym.gymName} build={make} />
-          <Button className="quiet" onClick={() => setOpen(!open)} aria-expanded={open}>{open ? 'Hide' : 'Show'}<span className="visually-hidden"> {report.title}</span></Button>
+          {!single && <Button className="quiet" onClick={() => setOpen(!open)} aria-expanded={open}>{open ? 'Hide' : 'Show'}<span className="visually-hidden"> {report.title}</span></Button>}
         </div>
       </div>
       {open && table && (
@@ -63,22 +66,5 @@ function ReportCard({ report, data, rangeDays, rangeLabel }: { report: LibraryRe
         </div>
       )}
     </Card>
-  );
-}
-
-/** The library reports of the named groups, one card each: charted when there is something to chart, exportable always. */
-export function ReportCards({ groups, data, rangeDays, rangeLabel }: { groups: string[]; data: LibraryData; rangeDays: number; rangeLabel: string }) {
-  const shown = LIBRARY.filter((g) => groups.includes(g.group));
-  return (
-    <>
-      {shown.map((g) => (
-        <section key={g.group} className="lib-group" aria-label={g.group}>
-          <SectionTitle title={g.group} action={<span className="muted">{g.reports.length} reports</span>} />
-          <div className="report-card-list">
-            {g.reports.map((r) => <ReportCard key={r.key} report={r} data={data} rangeDays={rangeDays} rangeLabel={rangeLabel} />)}
-          </div>
-        </section>
-      ))}
-    </>
   );
 }

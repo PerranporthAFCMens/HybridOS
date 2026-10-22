@@ -3,6 +3,7 @@
 // the groups and search, viewing a report, the 100-row preview note, a real CSV download, and the layout rules.
 import { readFileSync } from 'node:fs';
 import { base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
+import { openReport } from './reportNav.mjs';
 
 const U1 = '81111111-1111-4111-8111-111111111111';
 const U2 = '82222222-2222-4222-8222-222222222222';
@@ -99,12 +100,55 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/workout_assignments') || path.endsWith('/workout_sessions') || path.endsWith('/pt_appointments')) return reply(route, []);
     return false;
   });
-  await page.goto(`${base}/reports?tab=overview`);
+  await page.goto(`${base}/reports`);
   const c = runChecks();
   const dialog = page.getByRole('dialog');
-  await c.has('overview loaded', page.getByRole('button', { name: /^Active memberships: 3/ }));
-  // Charts on the Overview
-  for (const t of ['Attendance over time', 'Income collected', 'Members joined and left', 'Members over time']) await c.has(`overview chart: ${t}`, page.getByRole('figure', { name: t }));
+  await c.has('summary loaded', page.getByRole('heading', { name: 'How the business is doing' }));
+  c.ok('one page: no tab dropdown, no Overview, no Report library', (await page.getByLabel('Report section').count()) === 0 && (await page.getByText('Report library').count()) === 0 && (await page.getByText('Business summary').count()) === 0);
+  c.ok('period chips, Last 30 days chosen', (await page.getByRole('radio', { name: 'Last 30 days' }).getAttribute('aria-checked')) === 'true' && (await page.getByRole('radio').count()) === 4);
+  for (const t of ['Income collected', 'Members joined and left', 'Members over time']) await c.has(`summary chart: ${t}`, page.getByRole('figure', { name: t }));
+  const members = page.getByRole('figure', { name: 'Members over time' });
+  c.ok('the members line has its latest value labelled', (await members.locator('.chart-end').count()) === 1);
+  c.ok('four figure tiles that open reports', (await page.locator('a.tile').count()) === 4);
+  c.ok('the one list: 35 reports in 5 groups', (await page.locator('.report-row').count()) === 35 && (await page.locator('section.lib-group').count()) === 5);
+  c.ok('layout (summary)', (await page.evaluate(layoutProblems)).length === 0);
+  if (shots) await page.screenshot({ path: `${shots}/reports-summary-${name}.png`, fullPage: true });
+  c.ok('no link to the old reporting page', (await page.getByRole('link', { name: 'Open the detailed reports' }).count()) === 0);
+  await page.getByRole('radio', { name: 'Last 12 months' }).click();
+  await c.has('another period reloads the summary', page.getByRole('radio', { name: 'Last 12 months', checked: true }));
+  c.ok('the period is in the address, so it can be bookmarked', page.url().includes('p=365'));
+  await page.getByRole('radio', { name: 'Last 30 days' }).click();
+  await c.has('back to 30 days', page.getByRole('radio', { name: 'Last 30 days', checked: true }));
+
+  // The other tabs: figures, tables and the heatmap (all from the same mocked data)
+  const stat = (label) => page.locator('.card.stat', { hasText: label }).locator('.stat-num');
+  await openReport(page, 'Memberships');
+  await c.has('memberships tab', page.getByRole('heading', { name: 'Membership plans' }));
+  c.ok('memberships: active, MRR, plans, new joins', (await stat('Active').first().textContent()) === '3' && (await stat('MRR').textContent()) === '£130' && (await stat('Plans').textContent()) === '2' && (await stat('New joins').textContent()) === '1');
+  c.ok('memberships: plan rows with share', (await page.locator('tbody tr').first().textContent()).includes('Hybrid Monthly with a long plan name') && (await page.locator('tbody tr').first().textContent()).includes('67%'));
+  const donut = page.getByRole('figure', { name: 'Active memberships by plan' });
+  await c.has('plan donut', donut);
+  c.ok('the ring key lists each plan with its members and share', (await donut.locator('.donut-row').count()) === 2 && (await donut.locator('.donut-row').nth(1).textContent()).includes('33%'));
+  await donut.getByRole('button', { name: /^Annual: 1, 33%/ }).click();
+  await c.has('clicking a plan opens its members', dialog.getByRole('heading', { name: 'Active members on Annual' }));
+  await dialog.getByRole('button', { name: 'Close' }).click();
+  await c.has('members over time line', page.getByRole('figure', { name: 'Members over time' }));
+  c.ok('layout (memberships tab)', (await page.evaluate(layoutProblems)).length === 0);
+
+  await openReport(page, 'Classes');
+  await c.has('classes tab', page.getByRole('heading', { name: 'Class heatmap' }));
+  c.ok('classes: fill, attendances, no-shows, sessions', (await stat('Avg fill').textContent()) === '10%' && (await stat('Attendances').textContent()) === '1' && (await stat('No-shows').textContent()) === '1' && (await stat('Sessions').textContent()) === '2');
+  c.ok('the bars are actually drawn (the coloured part has a width)', ((await page.locator('.bar-row .fill').first().boundingBox())?.width ?? 0) > 20);
+  c.ok('heatmap: seven days by four times of day', (await page.locator('table.heat tbody tr').count()) === 7 && (await page.locator('table.heat tbody tr').first().locator('td').count()) === 4);
+  c.ok('heatmap cells say what they are', (await page.locator('table.heat td').first().getAttribute('aria-label')).includes('Mon Morning'));
+  c.ok('heatmap opens on bookings and can show revenue or fill', (await page.getByRole('radio', { name: 'Bookings' }).getAttribute('aria-checked')) === 'true');
+  await page.getByRole('radio', { name: 'Revenue' }).click();
+  await c.has('revenue says what it counts', page.getByText(/Revenue counts classes people paid for as a drop-in/));
+  c.ok('heatmap cells follow the choice', (await page.locator('table.heat td').first().getAttribute('aria-label')).includes('£'));
+  await page.getByRole('radio', { name: 'Fill' }).click();
+  c.ok('fill shows percentages', (await page.locator('table.heat td').first().getAttribute('aria-label')).includes('%'));
+  c.ok('layout (heatmap)', (await page.evaluate(layoutProblems)).length === 0);
+  await c.has('attendance chart on the classes tab', page.getByRole('figure', { name: 'Attendance over time' }));
   const attendance = page.getByRole('figure', { name: 'Attendance over time' });
   c.ok('the attendance columns are drawn (coloured marks with height)', ((await attendance.locator('.chart-mark').first().boundingBox())?.height ?? 0) > 4);
   c.ok('two series have a key', (await attendance.locator('.chart-legend li').count()) === 2);
@@ -119,43 +163,6 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await c.has('clicking a column opens its classes', dialog.getByRole('heading', { name: /^Classes, / }));
   c.ok('the classes behind it include a real one', (await dialog.locator('tbody').textContent()).includes('Past A'));
   await dialog.getByRole('button', { name: 'Close' }).click();
-  const members = page.getByRole('figure', { name: 'Members over time' });
-  c.ok('the members line has its latest value labelled', (await members.locator('.chart-end').count()) === 1);
-  c.ok('layout (overview charts)', (await page.evaluate(layoutProblems)).length === 0);
-  if (shots) await page.screenshot({ path: `${shots}/reports-charts-overview-${name}.png`, fullPage: true });
-  c.ok('no link to the old reporting page', (await page.getByRole('link', { name: 'Open the detailed reports' }).count()) === 0);
-  c.ok('ten tabs, Money owed among them', (await page.getByLabel('Report section').locator('option').count()) === 10 && (await page.getByLabel('Report section').locator('option', { hasText: 'Money owed' }).count()) === 1);
-  c.ok('Overview is the first tab', (await page.getByLabel('Report section').inputValue()) === 'overview');
-
-  // The other tabs: figures, tables and the heatmap (all from the same mocked data)
-  const stat = (label) => page.locator('.card.stat', { hasText: label }).locator('.stat-num');
-  await page.getByLabel('Report section').selectOption({ label: 'Memberships' });
-  await c.has('memberships tab', page.getByRole('heading', { name: 'Membership plans' }));
-  c.ok('memberships: active, MRR, plans, new joins', (await stat('Active').first().textContent()) === '3' && (await stat('MRR').textContent()) === '£130' && (await stat('Plans').textContent()) === '2' && (await stat('New joins').textContent()) === '1');
-  c.ok('memberships: plan rows with share', (await page.locator('tbody tr').first().textContent()).includes('Hybrid Monthly with a long plan name') && (await page.locator('tbody tr').first().textContent()).includes('67%'));
-  const donut = page.getByRole('figure', { name: 'Active memberships by plan' });
-  await c.has('plan donut', donut);
-  c.ok('the ring key lists each plan with its members and share', (await donut.locator('.donut-row').count()) === 2 && (await donut.locator('.donut-row').nth(1).textContent()).includes('33%'));
-  await donut.getByRole('button', { name: /^Annual: 1, 33%/ }).click();
-  await c.has('clicking a plan opens its members', dialog.getByRole('heading', { name: 'Active members on Annual' }));
-  await dialog.getByRole('button', { name: 'Close' }).click();
-  await c.has('members over time line', page.getByRole('figure', { name: 'Members over time' }));
-  c.ok('layout (memberships tab)', (await page.evaluate(layoutProblems)).length === 0);
-
-  await page.getByLabel('Report section').selectOption({ label: 'Classes' });
-  await c.has('classes tab', page.getByRole('heading', { name: 'Class heatmap' }));
-  c.ok('classes: fill, attendances, no-shows, sessions', (await stat('Avg fill').textContent()) === '10%' && (await stat('Attendances').textContent()) === '1' && (await stat('No-shows').textContent()) === '1' && (await stat('Sessions').textContent()) === '2');
-  c.ok('the bars are actually drawn (the coloured part has a width)', ((await page.locator('.bar-row .fill').first().boundingBox())?.width ?? 0) > 20);
-  c.ok('heatmap: seven days by four times of day', (await page.locator('table.heat tbody tr').count()) === 7 && (await page.locator('table.heat tbody tr').first().locator('td').count()) === 4);
-  c.ok('heatmap cells say what they are', (await page.locator('table.heat td').first().getAttribute('aria-label')).includes('Mon Morning'));
-  c.ok('heatmap opens on bookings and can show revenue or fill', (await page.getByRole('radio', { name: 'Bookings' }).getAttribute('aria-checked')) === 'true');
-  await page.getByRole('radio', { name: 'Revenue' }).click();
-  await c.has('revenue says what it counts', page.getByText(/Revenue counts classes people paid for as a drop-in/));
-  c.ok('heatmap cells follow the choice', (await page.locator('table.heat td').first().getAttribute('aria-label')).includes('£'));
-  await page.getByRole('radio', { name: 'Fill' }).click();
-  c.ok('fill shows percentages', (await page.locator('table.heat td').first().getAttribute('aria-label')).includes('%'));
-  c.ok('layout (heatmap)', (await page.evaluate(layoutProblems)).length === 0);
-  await c.has('attendance chart on the classes tab', page.getByRole('figure', { name: 'Attendance over time' }));
   await c.has('income by class heading', page.getByRole('heading', { name: 'Income by class' }));
   const income = page.getByRole('list', { name: 'Paid drop-in income by class' });
   c.ok('income bars show what each class made', (await income.getByRole('button', { name: /^Past A: £8\.00/ }).count()) === 1 && (await income.getByRole('button', { name: /^Past B: £0\.00/ }).count()) === 1);
@@ -170,14 +177,14 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('layout (classes tab)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/reports-tabs-classes-${name}.png`, fullPage: true });
 
-  await page.getByLabel('Report section').selectOption({ label: 'Members' });
+  await openReport(page, 'Members');
   await c.has('members tab', page.getByRole('heading', { name: 'Most active members' }));
   c.ok('members: active, attending, attendances, no-show rate', (await stat('Active gym members').textContent()) === '2' && (await stat('Members attending').textContent()) === '1' && (await stat('Total attendances').textContent()) === '1' && (await stat('No-show rate').textContent()) === '50%');
   c.ok('most active: ranked with names', (await page.locator('tbody tr').first().textContent()).includes('1') && (await page.locator('tbody tr').first().textContent()).includes('Alex Joiner'));
   const topCsv = await saved(page, () => page.getByRole('button', { name: 'CSV' }).first().click());
   c.ok('most active CSV has the header and the protected name', topCsv.bytes.toString('utf8').startsWith('﻿Rank,Member,Attended,Total activity,No-shows\r\n') && topCsv.bytes.toString('utf8').includes(`"'=HYPERLINK(""http://evil.example"")"`));
 
-  await page.getByLabel('Report section').selectOption({ label: 'Payments' });
+  await openReport(page, 'Payments');
   await c.has('payments tab', page.getByRole('heading', { name: 'Bad debtors / payment recovery' }));
   c.ok('payments: failed, outstanding, records', (await stat('Failed / at-risk payments').textContent()) === '1' && (await stat('Outstanding').textContent()) === '£59.99' && (await stat('Payment records').textContent()) === '130');
   c.ok('payments: the failed one with its reason', (await page.locator('tbody tr').first().textContent()).includes('insufficient_funds'));
@@ -193,7 +200,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   if (shots) await page.screenshot({ path: `${shots}/reports-charts-payments-${name}.png`, fullPage: true });
 
   // Accounting export for Xero
-  await page.getByLabel('Report section').selectOption({ label: 'Accounting (Xero)' });
+  await openReport(page, 'Accounting (Xero)');
   await c.has('xero tab', page.getByRole('heading', { name: 'Accounting export for Xero' }));
   c.ok('xero: how many payments and the total', (await stat('Payments received').textContent()) === '129' && (await stat('Total received').textContent()) === '£5,805.00');
   await c.has('invoices wait for the account code and tax type', page.getByText('Enter your sales account code from Xero'));
@@ -217,48 +224,44 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('layout (xero tab)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/reports-xero-${name}.png`, fullPage: true });
   await page.reload();
-  await page.getByLabel('Report section').selectOption({ label: 'Accounting (Xero)' });
   await c.has('the details are remembered after a reload', page.getByLabel('Sales account code'));
   c.ok('account code remembered', (await page.getByLabel('Sales account code').inputValue()) === '200' && (await page.getByLabel('Tax type').inputValue()) === 'No VAT' && (await page.getByLabel('VAT included in payments (%)').inputValue()) === '20');
 
-  // The library reports live in the tabs, one card each (no separate Report library tab)
-  const tab = (label) => page.getByLabel('Report section').selectOption({ label });
-  const card = (title) => page.locator('.report-card').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
-  const show = async (title) => { await card(title).getByRole('button', { name: `Show ${title}` }).click(); };
-  c.ok('no Report library tab', (await page.getByLabel('Report section').locator('option', { hasText: 'Report library' }).count()) === 0);
-  let cards = 0;
-  for (const t of ['Memberships', 'Members', 'Classes', 'Payments', 'Workouts & PT']) { await tab(t); await page.locator('.report-card').first().waitFor(); cards += await page.locator('.report-card').count(); }
-  c.ok('all 28 library reports are cards in the tabs', cards === 28);
+  // Every library report has its own page from the one list, opened and charted, with a quiet Export
+  const card = page.locator('.report-card');
+  const library = async (title) => { await openReport(page, title); await card.waitFor(); };
+  await page.getByRole('link', { name: '← All reports' }).click();
+  await c.has('back on the one list', page.locator('.report-row').first());
+  for (const t of ['Membership plan mix', 'Birthdays', 'Late cancellations', 'Payment ledger', 'PT appointments', 'Failed payments', 'Membership register']) {
+    c.ok(`${t} is in the list`, (await page.locator('.report-row b', { hasText: new RegExp(`^${t}$`) }).count()) === 1);
+  }
 
-  await tab('Memberships');
-  await show('Membership plan mix');
-  c.ok('a report with numbers by name is drawn as bars', (await card('Membership plan mix').getByRole('list').locator('.bar-row').count()) >= 1);
-  await c.has('and its table is under it', card('Membership plan mix').getByRole('region'));
-  await show('Membership register');
-  c.ok('a long list has no chart', (await card('Membership register').getByRole('list').count()) === 0);
-  c.ok('names and plans are in the register', (await card('Membership register').locator('tbody').textContent()).includes('Alex Joiner') && (await card('Membership register').locator('tbody').textContent()).includes('Annual'));
-  c.ok('layout (membership report cards)', (await page.evaluate(layoutProblems)).length === 0);
+  await library('Membership plan mix');
+  c.ok('a report with numbers by name is drawn as bars', (await card.getByRole('list').locator('.bar-row').count()) >= 1);
+  await c.has('and its table is under it', card.getByRole('region'));
+  c.ok('the page names the report', (await page.getByRole('heading', { name: 'Membership plan mix', level: 1 }).count()) === 1);
+  await library('Membership register');
+  c.ok('a long list has no chart', (await card.getByRole('list').count()) === 0);
+  c.ok('names and plans are in the register', (await card.locator('tbody').textContent()).includes('Alex Joiner') && (await card.locator('tbody').textContent()).includes('Annual'));
+  c.ok('layout (membership report page)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/reports-cards-${name}.png`, fullPage: true });
 
-  await tab('Members');
-  await show('Birthdays');
-  const choice = card('Birthdays').getByLabel('Birthdays: Show birthdays');
+  await library('Birthdays');
+  const choice = card.getByLabel('Birthdays: Show birthdays');
   c.ok('birthdays asks how far ahead to look, default 30 days', (await choice.inputValue()) === '30');
   await choice.selectOption('all');
-  await c.has('the card follows the choice', card('Birthdays').locator('.report-card-body > .muted.small', { hasText: 'Everyone, next first' }));
+  await c.has('the page follows the choice', card.locator('.report-card-body > .muted.small', { hasText: 'Everyone, next first' }));
 
-  await tab('Classes');
-  await show('Late cancellations');
-  c.ok('late cancellations offers 1, 2, 4, 12 and 24 hours', (await card('Late cancellations').getByLabel('Late cancellations: Cancelled within').locator('option').allTextContents()).join('|') === '1 hour of the class|2 hours of the class|4 hours of the class|12 hours of the class|24 hours of the class');
+  await library('Late cancellations');
+  c.ok('late cancellations offers 1, 2, 4, 12 and 24 hours', (await card.getByLabel('Late cancellations: Cancelled within').locator('option').allTextContents()).join('|') === '1 hour of the class|2 hours of the class|4 hours of the class|12 hours of the class|24 hours of the class');
   c.ok('the library asked for payments once', paymentRequests.length >= 1);
   c.ok('classes were limited to the chosen range', sessionRequests.some((u) => decodeURIComponent(u).includes('starts_at=gte.')));
 
-  await tab('Payments');
-  await show('Payment ledger');
-  await c.has('the preview note', card('Payment ledger').getByText('Showing the first 25 of 130 rows. The export has every row.'));
-  c.ok('25 rows on the card', (await card('Payment ledger').locator('tbody tr').count()) === 25);
+  await library('Payment ledger');
+  await c.has('the preview note', card.getByText('Showing the first 25 of 130 rows. The export has every row.'));
+  c.ok('25 rows on the page', (await card.locator('tbody tr').count()) === 25);
   c.ok('layout (long report card)', (await page.evaluate(layoutProblems)).length === 0);
-  const exportOf = (title, label) => card(title).getByRole('group', { name: 'Download' }).getByRole('button', { name: label });
+  const exportOf = (_title, label) => card.getByRole('group', { name: 'Download' }).getByRole('button', { name: label });
   const full = await saved(page, () => exportOf('Payment ledger', 'CSV').click());
   const fullText = full.bytes.toString('utf8');
   c.ok('the CSV has all 130 rows, not just the 25 on the card', fullText.trim().split('\r\n').length === 131);
@@ -269,14 +272,14 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('PDF file is a real PDF', pdf.name.endsWith('.pdf') && pdf.bytes.subarray(0, 4).toString() === '%PDF');
 
   // Pence and formula protection, exported without opening the card
+  await library('Failed payments');
   const failed = await saved(page, () => exportOf('Failed payments', 'CSV').click());
   const failedText = failed.bytes.toString('utf8');
   c.ok('failed payments CSV: header, pence, protected name, reason', failedText.startsWith('﻿Member,Charge date,Amount,State,Failure\r\n') && failedText.includes('£59.99') && failedText.includes(`"'=HYPERLINK(""http://evil.example"")"`) && failedText.includes('insufficient_funds'));
 
   // A report with nothing in it says so
-  await tab('Workouts & PT');
-  await show('PT appointments');
-  await c.has('empty report says so', card('PT appointments').getByText('Nothing to show for this.'));
+  await library('PT appointments');
+  await c.has('empty report says so', card.getByText('Nothing to show for this.'));
   c.ok('layout (empty report card)', (await page.evaluate(layoutProblems)).length === 0);
 
   c.ok(`read-only: no writes (${writes.join(', ') || 'none'})`, writes.length === 0);

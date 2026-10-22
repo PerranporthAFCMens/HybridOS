@@ -4,7 +4,7 @@ import { Donut } from '../charts/Donut';
 import { LineChart } from '../charts/LineChart';
 import { compact } from '../charts/scale';
 import type { LibraryData } from '../data/reportLibrary';
-import { Card, Empty, SectionTitle } from '../ui/Card';
+import { Card, SectionTitle } from '../ui/Card';
 import { rangeStart } from './calc';
 import type { ReportTable } from './download';
 import type { LibraryContext } from './library';
@@ -14,7 +14,6 @@ import {
   paymentStateSlices, periodsFor, planMembersTable, planSlices, type PayGroup,
 } from './trends';
 import { useReadyAuth } from '../auth/AuthProvider';
-import { useLibraryData } from './useReports';
 import '../charts/charts.css';
 
 interface Props {
@@ -116,20 +115,5 @@ export function PaymentStateDonut({ d, rangeDays, rangeLabel, onOpenTable }: Pro
       <Donut label="Payments by outcome" centreLabel="payments" emptyText="No payments in this period." slices={slices}
         onSelect={(i) => { const s = slices[i]; if (s) onOpenTable(() => paymentGroupTable(ctx(), d, s.label as PayGroup)); }} />
     </ChartCard>
-  );
-}
-
-/** The Overview's charts. They load the fuller data set on their own, so the headline figures never wait for them. */
-export function OverviewCharts({ rangeDays, rangeLabel, onOpenTable }: Omit<Props, 'd'>) {
-  const { gym } = useReadyAuth();
-  const q = useLibraryData(gym.gymId, rangeDays, true);
-  if (q.isPending) return <Card><Empty>Loading charts…</Empty></Card>;
-  if (q.isError) return <Card><Empty>Could not load the charts. Refresh to try again.</Empty></Card>;
-  const p = { d: q.data, rangeDays, rangeLabel, onOpenTable };
-  return (
-    <>
-      <div className="report-cols"><AttendanceChart {...p} /><IncomeChart {...p} /></div>
-      <div className="report-cols"><JoinsChart {...p} /><MembersLineChart {...p} /></div>
-    </>
   );
 }

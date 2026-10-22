@@ -1,136 +1,80 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import { Button } from '../ui/Button';
 import { Card, Empty, SectionTitle } from '../ui/Card';
-import { Select } from '../ui/Field';
 import { Modal } from '../ui/Modal';
-import {
-  RANGES, attendanceTable, buildOverview, classesTable, incomeTable, membershipsTable, newMembersTable, overviewTable,
-  reportMoney, sessionMetrics, type TableContext,
-} from './calc';
-import { Bars } from './Bars';
+import { RANGES } from './calc';
 import { DataTable } from './DataTable';
 import { DownloadButtons } from './DownloadButtons';
 import { Owed } from './Owed';
-import { OverviewCharts } from './ReportCharts';
-import { ReportTabs, TABS, type TabKey } from './ReportTabs';
 import type { ReportTable } from './download';
-import { useReportData } from './useReports';
+import { findEntry, findLibraryReport, isPane, legacyKey } from './reportList';
+import { ReportCard } from './ReportCards';
+import { ReportsHome } from './ReportsHome';
+import { ReportTabs } from './ReportTabs';
+import { useLibraryData } from './useReports';
 import './reports.css';
 
+/** One page: the summary and the list of reports. Opening a report swaps the page for that report, with a way back. */
 export function Reports() {
   const { gym } = useReadyAuth();
-  const [range, setRange] = useState('30');
-  const [tab, setTab] = useState<TabKey>(() => {
-    const wanted = new URLSearchParams(window.location.search).get('tab');
-    return TABS.some(([k]) => k === wanted) ? (wanted as TabKey) : 'summary';
-  });
+  const [sp, setSp] = useSearchParams();
+  const period = RANGES.some(([v]) => v === sp.get('p')) ? (sp.get('p') as string) : '30';
+  const rangeDays = Number(period);
+  const rangeLabel = RANGES.find(([v]) => v === period)?.[1] ?? '';
+  const key = sp.get('r') ?? legacyKey(sp.get('tab'));
+  const entry = findEntry(key);
   const [drill, setDrill] = useState<(() => ReportTable) | null>(null);
-  const q = useReportData(gym.gymId, Number(range));
-  const rangeLabel = RANGES.find(([v]) => v === range)?.[1] ?? '';
 
-  const view = useMemo(() => {
-    if (!q.data) return null;
-    const { sessions, bookings, plans, activeMemberships, members, names, since } = q.data;
-    const metrics = sessionMetrics(sessions, bookings);
-    const overview = buildOverview({ metrics, activeMemberships, plans, members, since, now: new Date() });
-    return { metrics, overview, plans, activeMemberships, members, names, since };
-  }, [q.data]);
-
-  // Built fresh each time something is clicked or downloaded, so "made at" is right.
-  const ctx = (): TableContext => ({ gymName: gym.gymName, rangeLabel, now: new Date() });
-  const o = view?.overview;
+  const setPeriod = (p: string) => setSp((old) => { const n = new URLSearchParams(old); n.set('p', p); n.delete('tab'); return n; }, { replace: true });
+  const back = `?p=${period}`;
 
   return (
     <>
       <header className="page-top report-head">
         <div>
-          <div className="eyebrow">Business intelligence</div>
-          <h1>Reporting</h1>
-          <div className="muted">Membership, attendance and utilisation in one place.</div>
-        </div>
-        <div className="report-controls">
-          {tab !== 'builder' && (
-            <>
-              <label className="visually-hidden" htmlFor="report-range">Date range</label>
-              <Select id="report-range" value={range} onChange={(e) => setRange(e.target.value)}>
-                {RANGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </Select>
-            </>
-          )}
-          <Button onClick={() => void q.refetch()} disabled={q.isFetching}>Refresh</Button>
+          <div className="eyebrow">Reports</div>
+          <h1>{entry ? entry.title : 'Reports'}</h1>
+          <div className="muted">{entry ? entry.blurb : 'How the business is doing, and every report in one list.'}</div>
         </div>
       </header>
 
-      <p className="muted report-hint">Tap or click any figure, bar or chart to see the rows behind it, and download them.</p>
+      {entry && <p className="report-back"><Link className="btn quiet" to={back}>← All reports</Link></p>}
 
-      <label className="report-pick">
-        <span className="muted">Report</span>
-        <Select aria-label="Report section" value={tab} onChange={(e) => setTab(e.target.value as TabKey)}>
-          {TABS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-        </Select>
-      </label>
-
-      {tab === 'overview' && q.isError && <Card><Empty>Could not load the report. Refresh to try again.</Empty></Card>}
-      {tab === 'overview' && q.isPending && <Card><Empty>Loading reporting…</Empty></Card>}
-
-      {tab === 'overview' && view && o && (
-        <>
-          <div className="download-bar">
-            <DownloadButtons gymName={gym.gymName} build={() => overviewTable(ctx(), o)} />
-          </div>
-
-          <div className="stat-grid eight">
-            <Stat label="Active memberships" value={String(o.activeMemberships)} onOpen={() => setDrill(() => () => membershipsTable(ctx(), 'Active memberships', view.plans, view.activeMemberships, view.names))} />
-            <Stat label="Est. MRR" value={reportMoney(o.mrr)} onOpen={() => setDrill(() => () => incomeTable(ctx(), view.plans, view.activeMemberships))} />
-            <Stat label="Average class fill" value={`${o.avgFill}%`} onOpen={() => setDrill(() => () => classesTable(ctx(), 'Classes and how full they were', view.metrics))} />
-            <Stat label="Attendance rate" value={`${o.attendanceRate}%`} onOpen={() => setDrill(() => () => attendanceTable(ctx(), 'Attendance by class', view.metrics))} />
-            <Stat label="New members" value={String(o.newMembers)} onOpen={() => setDrill(() => () => newMembersTable(ctx(), view.members, view.names, view.since))} />
-            <Stat label="Class attendances" value={String(o.attendances)} onOpen={() => setDrill(() => () => attendanceTable(ctx(), 'Attendance by class', view.metrics))} />
-            <Stat label="No-shows" value={String(o.noShows)} onOpen={() => setDrill(() => () => attendanceTable(ctx(), 'No-shows by class', view.metrics))} />
-            <Stat label="Sessions analysed" value={String(o.sessions)} onOpen={() => setDrill(() => () => classesTable(ctx(), 'Sessions analysed', view.metrics))} />
-          </div>
-
-          <div className="report-cols">
-            <Card>
-              <SectionTitle title="What is busiest?" action={<span className="muted">Average utilisation</span>} />
-              <Bars
-                rows={o.byDay} suffix="%" label="Busiest days"
-                onOpen={(day) => setDrill(() => () => classesTable(ctx(), `Classes on ${day}s`, view.metrics, (s) => s.day === day))}
-              />
-              <div className="bars-gap" />
-              <Bars
-                rows={o.byBand} suffix="%" label="Busiest times of day"
-                onOpen={(band) => setDrill(() => () => classesTable(ctx(), `${band} classes`, view.metrics, (s) => s.band === band))}
-              />
-            </Card>
-            <Card>
-              <SectionTitle title="Membership mix" />
-              {o.planMix.length ? (
-                <Bars
-                  rows={o.planMix} label="Active memberships by plan"
-                  onOpen={(name) => {
-                    const plan = view.plans.find((p) => p.name === name);
-                    setDrill(() => () => membershipsTable(ctx(), `Active members on ${name}`, view.plans, view.activeMemberships, view.names, plan?.id));
-                  }}
-                />
-              ) : <Empty>No membership plans yet.</Empty>}
-            </Card>
-          </div>
-
-          <OverviewCharts rangeDays={Number(range)} rangeLabel={rangeLabel} onOpenTable={(build) => setDrill(() => build)} />
-        </>
+      {entry?.key !== 'builder' && (
+        <div className="period-chips" role="radiogroup" aria-label="Period">
+          {RANGES.map(([v, l]) => (
+            <button key={v} type="button" role="radio" aria-checked={period === v} className={`period-chip${period === v ? ' on' : ''}`} onClick={() => setPeriod(v)}>{l}</button>
+          ))}
+        </div>
       )}
 
-      {tab === 'owed' && <Owed />}
-
-      {tab !== 'overview' && tab !== 'owed' && (
-        <ReportTabs tab={tab} rangeDays={Number(range)} rangeLabel={rangeLabel} onOpenTable={(build) => setDrill(() => build)} />
-      )}
+      {!entry && <Home gymId={gym.gymId} rangeDays={rangeDays} rangeLabel={rangeLabel} period={period} onOpenTable={(b) => setDrill(() => b)} />}
+      {entry?.key === 'owed' && <Owed />}
+      {entry && isPane(entry.key) && entry.key !== 'owed' && <ReportTabs tab={entry.key} rangeDays={rangeDays} rangeLabel={rangeLabel} onOpenTable={(b) => setDrill(() => b)} />}
+      {entry && !isPane(entry.key) && <LibraryPage reportKey={entry.key} gymId={gym.gymId} rangeDays={rangeDays} rangeLabel={rangeLabel} />}
 
       {drill && <DrillDown build={drill} gymName={gym.gymName} onClose={() => setDrill(null)} />}
     </>
   );
+}
+
+/** Loads twice the chosen range so the summary can say how this period compares with the one before. */
+function Home({ gymId, rangeDays, rangeLabel, period, onOpenTable }: { gymId: string; rangeDays: number; rangeLabel: string; period: string; onOpenTable: (build: () => ReportTable) => void }) {
+  const q = useLibraryData(gymId, rangeDays * 2, true);
+  if (q.isPending) return <Card><Empty>Loading reports…</Empty></Card>;
+  if (q.isError) return <Card><Empty>Could not load the reports. Refresh to try again.</Empty></Card>;
+  return <ReportsHome d={q.data} rangeDays={rangeDays} rangeLabel={rangeLabel} period={period} onOpenTable={onOpenTable} />;
+}
+
+function LibraryPage({ reportKey, gymId, rangeDays, rangeLabel }: { reportKey: string; gymId: string; rangeDays: number; rangeLabel: string }) {
+  const q = useLibraryData(gymId, rangeDays, true);
+  const report = findLibraryReport(reportKey);
+  if (!report) return <Card><Empty>That report was not found.</Empty></Card>;
+  if (q.isPending) return <Card><Empty>Loading…</Empty></Card>;
+  if (q.isError) return <Card><Empty>Could not load this report. Refresh to try again.</Empty></Card>;
+  return <ReportCard single report={report} data={q.data} rangeDays={rangeDays} rangeLabel={rangeLabel} />;
 }
 
 function DrillDown({ build, gymName, onClose }: { build: () => ReportTable; gymName: string; onClose: () => void }) {
@@ -142,14 +86,5 @@ function DrillDown({ build, gymName, onClose }: { build: () => ReportTable; gymN
       <div className="drill-actions"><DownloadButtons gymName={gymName} build={build} /></div>
       <DataTable table={table} />
     </Modal>
-  );
-}
-
-function Stat({ label, value, onOpen }: { label: string; value: string; onOpen: () => void }): ReactNode {
-  return (
-    <button type="button" className="card stat stat-btn" onClick={onOpen} aria-label={`${label}: ${value}. Show what is behind this.`}>
-      <span className="muted">{label}</span>
-      <span className="stat-num">{value}</span>
-    </button>
   );
 }

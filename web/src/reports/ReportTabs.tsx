@@ -10,19 +10,13 @@ import type { ReportTable } from './download';
 import { pounds, type LibraryContext } from './library';
 import { AttendanceChart, JoinsChart, MembersLineChart, PaymentStateDonut, PaymentsChart, PlanDonut } from './ReportCharts';
 import { Builder } from '../builder/Builder';
-import { ReportCards } from './ReportCards';
-import { BusinessSummary } from './BusinessSummary';
 import { XeroExport } from './XeroExport';
 import {
   atRiskTable, bestSlots, classIncomeTable, classPerformanceTable, incomeByType, classesTab, heatStep, heatValue, relativeStep, membersTab, membershipsTab, membershipsTable, metricsOf, paymentsTab, topMembersTable,
   type ClassesTab, type HeatMetric, type HeatRow, type MembersTab, type MembershipsTab, type PaymentsTab,
 } from './tabs';
+import type { PaneKey } from './reportList';
 import { useLibraryData } from './useReports';
-
-export type TabKey = 'summary' | 'overview' | 'memberships' | 'classes' | 'members' | 'payments' | 'owed' | 'xero' | 'workouts' | 'builder';
-export const TABS: [TabKey, string][] = [
-  ['summary', 'Business summary'], ['overview', 'Overview'], ['memberships', 'Memberships'], ['classes', 'Classes'], ['members', 'Members'], ['payments', 'Payments'], ['owed', 'Money owed'], ['xero', 'Accounting (Xero)'], ['workouts', 'Workouts & PT'], ['builder', 'Report builder'],
-];
 
 const HEAT_CHOICES: [HeatMetric, string][] = [['bookings', 'Bookings'], ['revenue', 'Revenue'], ['fill', 'Fill']];
 const heatText = (m: HeatMetric, v: number) => (m === 'fill' ? `${v}%` : m === 'bookings' ? String(v) : v ? reportMoney(v) : '£0');
@@ -78,8 +72,8 @@ function StatCard({ label, value }: { label: string; value: string }): ReactNode
   );
 }
 
-/** The tabs other than the Overview. They share one load of the data, only fetched once a tab is opened. */
-export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: Exclude<TabKey, 'overview'>; rangeDays: number; rangeLabel: string; onOpenTable: (build: () => ReportTable) => void }) {
+/** The overview pages (payments, memberships, members, classes), Xero and the builder. The data is only fetched once a page is opened. */
+export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: Exclude<PaneKey, 'owed'>; rangeDays: number; rangeLabel: string; onOpenTable: (build: () => ReportTable) => void }) {
   const { gym } = useReadyAuth();
   const q = useLibraryData(gym.gymId, rangeDays, tab !== 'builder');
   const detail = q.error && typeof q.error === 'object' && 'message' in q.error ? String((q.error as { message: unknown }).message) : '';
@@ -90,13 +84,11 @@ export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: E
   const since = rangeStart(rangeDays, new Date());
   const ctx = (): LibraryContext => ({ gymName: gym.gymName, rangeLabel, now: new Date(), since });
   const cp = { d, rangeDays, rangeLabel, onOpenTable };
-  if (tab === 'summary') return <BusinessSummary d={d} rangeDays={rangeDays} rangeLabel={rangeLabel} onOpenTable={onOpenTable} />;
   if (tab === 'memberships') return <MembershipsPane d={d} since={since} ctx={ctx} gymName={gym.gymName} cp={cp} />;
   if (tab === 'classes') return <ClassesPane d={d} ctx={ctx} gymName={gym.gymName} onOpenTable={onOpenTable} cp={cp} />;
   if (tab === 'members') return <MembersPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;
   if (tab === 'payments') return <PaymentsPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;
-  if (tab === 'xero') return <XeroExport key={gym.gymId} d={d} rangeLabel={rangeLabel} since={since} />;
-  return <ReportCards groups={['Workouts & PT']} data={d} rangeDays={rangeDays} rangeLabel={rangeLabel} />;
+  return <XeroExport key={gym.gymId} d={d} rangeLabel={rangeLabel} since={since} />;
 }
 
 type ChartProps = Parameters<typeof AttendanceChart>[0];
@@ -117,7 +109,6 @@ function MembershipsPane({ d, since, ctx, gymName, cp }: PaneProps & { since: st
         <SectionTitle title="Membership plans" action={<DownloadButtons gymName={gymName} build={() => membershipsTable(ctx(), t)} />} />
         {t.plans.length === 0 ? <Empty>No membership plans yet.</Empty> : <DataTable table={membershipsTable(ctx(), t)} />}
       </Card>
-      <ReportCards groups={['Membership & growth']} data={d} rangeDays={cp.rangeDays} rangeLabel={cp.rangeLabel} />
     </>
   );
 }
@@ -158,7 +149,6 @@ function ClassesPane({ d, ctx, gymName, onOpenTable, cp }: PaneProps & { onOpenT
         <SectionTitle title="Class performance detail" action={<DownloadButtons gymName={gymName} build={() => classPerformanceTable(ctx(), t)} />} />
         <DataTable table={classPerformanceTable(ctx(), t)} />
       </Card>
-      <ReportCards groups={['Classes & attendance']} data={d} rangeDays={cp.rangeDays} rangeLabel={cp.rangeLabel} />
     </>
   );
 }
@@ -178,7 +168,6 @@ function MembersPane({ d, ctx, gymName, cp }: PaneProps) {
         <SectionTitle title="Most active members" action={<DownloadButtons gymName={gymName} build={() => topMembersTable(ctx(), t)} />} />
         {t.top.length === 0 ? <Empty>Attendance data will appear here as members attend classes.</Empty> : <DataTable table={topMembersTable(ctx(), t)} />}
       </Card>
-      <ReportCards groups={['Lifecycle & retention']} data={d} rangeDays={cp.rangeDays} rangeLabel={cp.rangeLabel} />
     </>
   );
 }
@@ -197,7 +186,6 @@ function PaymentsPane({ d, ctx, gymName, cp }: PaneProps) {
         <SectionTitle title="Bad debtors / payment recovery" action={<DownloadButtons gymName={gymName} build={() => atRiskTable(ctx(), d, t)} />} />
         {t.atRisk.length === 0 ? <Empty>No failed or charged-back payments.</Empty> : <DataTable table={atRiskTable(ctx(), d, t)} />}
       </Card>
-      <ReportCards groups={['Revenue & payments']} data={d} rangeDays={cp.rangeDays} rangeLabel={cp.rangeLabel} />
     </>
   );
 }
