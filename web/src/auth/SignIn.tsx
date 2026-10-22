@@ -15,7 +15,7 @@ import './signin.css';
  * The sign-in page. Works out what to do next from who is signed in, and never decides gym access itself.
  * A gym's own address (/hybrid-hub, /puffin-performance) passes that gym's id, so the page keeps its address and shows that gym.
  */
-export function SignIn({ gymId }: { gymId?: string } = {}) {
+export function SignIn({ gymId, joinSlug }: { gymId?: string; joinSlug?: string } = {}) {
   const auth = useAuth();
   const params = new URLSearchParams(window.location.search);
   const hintGymId = gymId ?? params.get('gym_id') ?? '';
@@ -95,6 +95,7 @@ export function SignIn({ gymId }: { gymId?: string } = {}) {
         {denied && <p className="signin-msg">This account does not have access to the gym in this link.</p>}
         {auth.status === 'no-access' && <p className="signin-msg">This account does not currently have active access to a gym.</p>}
         {msg && <p className={`signin-msg${msg.good ? ' good' : ''}`} role="status">{msg.text}</p>}
+        {joinSlug && <LinkButton variant="primary" href={`/join/${joinSlug}`}>New here? Join {brand?.name ?? 'this gym'}</LinkButton>}
         <LinkButton href={siteUrl('')}>Back to HybridOne</LinkButton>
       </Card>
     </main>
