@@ -110,7 +110,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const dataset = page.getByLabel('Look at');
   const dialog = page.getByRole('dialog');
   await c.has('builder opens', dataset);
-  c.ok('nine tabs, Money owed among them', (await page.getByLabel('Report section').locator('option').count()) === 9 && (await page.getByLabel('Report section').locator('option', { hasText: 'Money owed' }).count()) === 1);
+  c.ok('ten tabs, Money owed among them', (await page.getByLabel('Report section').locator('option').count()) === 10 && (await page.getByLabel('Report section').locator('option', { hasText: 'Money owed' }).count()) === 1);
   c.ok('eight datasets, staff included', (await dataset.locator('option').allInnerTexts()).join('|') === 'Members|Memberships|Payments|Classes|Bookings and attendance|Staff|Classes delivered|Clients seen');
   await page.getByRole('button', { name: /Start from a ready-made report/ }).click();
   c.ok('twelve ready-made reports', (await page.locator('.bld-starter').count()) === 12);

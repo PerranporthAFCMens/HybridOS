@@ -68,7 +68,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/profiles')) return reply(route, people);
     return false;
   });
-  await page.goto(`${base}/reports`);
+  await page.goto(`${base}/reports?tab=overview`);
   const c = runChecks();
   const dialog = page.getByRole('dialog');
   await c.has('stats loaded', page.getByRole('button', { name: /^Active memberships: 3/ }));

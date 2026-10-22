@@ -99,7 +99,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
     if (path.endsWith('/workout_assignments') || path.endsWith('/workout_sessions') || path.endsWith('/pt_appointments')) return reply(route, []);
     return false;
   });
-  await page.goto(`${base}/reports`);
+  await page.goto(`${base}/reports?tab=overview`);
   const c = runChecks();
   const dialog = page.getByRole('dialog');
   await c.has('overview loaded', page.getByRole('button', { name: /^Active memberships: 3/ }));
@@ -124,7 +124,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('layout (overview charts)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/reports-charts-overview-${name}.png`, fullPage: true });
   c.ok('no link to the old reporting page', (await page.getByRole('link', { name: 'Open the detailed reports' }).count()) === 0);
-  c.ok('nine tabs, Money owed among them', (await page.getByLabel('Report section').locator('option').count()) === 9 && (await page.getByLabel('Report section').locator('option', { hasText: 'Money owed' }).count()) === 1);
+  c.ok('ten tabs, Money owed among them', (await page.getByLabel('Report section').locator('option').count()) === 10 && (await page.getByLabel('Report section').locator('option', { hasText: 'Money owed' }).count()) === 1);
   c.ok('Overview is the first tab', (await page.getByLabel('Report section').inputValue()) === 'overview');
 
   // The other tabs: figures, tables and the heatmap (all from the same mocked data)
