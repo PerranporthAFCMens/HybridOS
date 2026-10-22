@@ -26,8 +26,9 @@
 .download-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .download-group.quiet { gap: 2px; }
 /* Export buttons sit in the background: plain muted text, not filled buttons. */
-.download-group.quiet .btn { background: transparent; color: var(--hybrid-muted); font-size: 13px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; padding: 0 10px; }
-.download-group.quiet .btn:hover { color: var(--hybrid-ink); filter: none; }
+/* shared with the Show/Hide button on report cards */
+.download-group.quiet .btn, .btn.quiet { background: transparent; color: var(--hybrid-muted); font-size: 13px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; padding: 0 10px; }
+.download-group.quiet .btn:hover, .btn.quiet:hover { color: var(--hybrid-ink); filter: none; }
 .drill-actions { margin: 12px 0 14px; }
 .stat-btn { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
 .stat-btn:hover { border-color: var(--hybrid-line-strong); }
@@ -98,3 +99,13 @@ button.bar-row:hover { background: rgba(255, 255, 255, .04); }
 .owed-table summary { cursor: pointer; padding: 8px 0; }
 
 .attention { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--hybrid-ink); }
+
+/* One card per library report: a quiet header with Export and Show, the chart and table underneath. */
+.report-card-list { display: grid; gap: 10px; }
+.report-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.report-card-head > div:first-child { min-width: 0; flex: 1 1 240px; }
+.report-card-head h4 { margin: 0 0 2px; font-size: 15px; color: var(--hybrid-ink); }
+.report-card-head p { margin: 0; }
+.report-card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.report-card-body { display: grid; gap: 12px; margin-top: 12px; }
+.bar-row.static { cursor: default; }

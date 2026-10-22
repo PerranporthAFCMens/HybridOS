@@ -10,7 +10,7 @@ import type { ReportTable } from './download';
 import { pounds, type LibraryContext } from './library';
 import { AttendanceChart, JoinsChart, MembersLineChart, PaymentStateDonut, PaymentsChart, PlanDonut } from './ReportCharts';
 import { Builder } from '../builder/Builder';
-import { ReportLibrary } from './ReportLibrary';
+import { ReportCards } from './ReportCards';
 import { BusinessSummary } from './BusinessSummary';
 import { XeroExport } from './XeroExport';
 import {
@@ -19,9 +19,9 @@ import {
 } from './tabs';
 import { useLibraryData } from './useReports';
 
-export type TabKey = 'summary' | 'overview' | 'memberships' | 'classes' | 'members' | 'payments' | 'owed' | 'xero' | 'library' | 'builder';
+export type TabKey = 'summary' | 'overview' | 'memberships' | 'classes' | 'members' | 'payments' | 'owed' | 'xero' | 'workouts' | 'builder';
 export const TABS: [TabKey, string][] = [
-  ['summary', 'Business summary'], ['overview', 'Overview'], ['memberships', 'Memberships'], ['classes', 'Classes'], ['members', 'Members'], ['payments', 'Payments'], ['owed', 'Money owed'], ['xero', 'Accounting (Xero)'], ['library', 'Report library'], ['builder', 'Report builder'],
+  ['summary', 'Business summary'], ['overview', 'Overview'], ['memberships', 'Memberships'], ['classes', 'Classes'], ['members', 'Members'], ['payments', 'Payments'], ['owed', 'Money owed'], ['xero', 'Accounting (Xero)'], ['workouts', 'Workouts & PT'], ['builder', 'Report builder'],
 ];
 
 const HEAT_CHOICES: [HeatMetric, string][] = [['bookings', 'Bookings'], ['revenue', 'Revenue'], ['fill', 'Fill']];
@@ -96,7 +96,7 @@ export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: E
   if (tab === 'members') return <MembersPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;
   if (tab === 'payments') return <PaymentsPane d={d} ctx={ctx} gymName={gym.gymName} cp={cp} />;
   if (tab === 'xero') return <XeroExport key={gym.gymId} d={d} rangeLabel={rangeLabel} since={since} />;
-  return <ReportLibrary data={d} rangeDays={rangeDays} rangeLabel={rangeLabel} />;
+  return <ReportCards groups={['Workouts & PT']} data={d} rangeDays={rangeDays} rangeLabel={rangeLabel} />;
 }
 
 type ChartProps = Parameters<typeof AttendanceChart>[0];
@@ -117,6 +117,7 @@ function MembershipsPane({ d, since, ctx, gymName, cp }: PaneProps & { since: st
         <SectionTitle title="Membership plans" action={<DownloadButtons gymName={gymName} build={() => membershipsTable(ctx(), t)} />} />
         {t.plans.length === 0 ? <Empty>No membership plans yet.</Empty> : <DataTable table={membershipsTable(ctx(), t)} />}
       </Card>
+      <ReportCards groups={['Membership & growth']} data={d} rangeDays={cp.rangeDays} rangeLabel={cp.rangeLabel} />
     </>
   );
 }
@@ -157,6 +158,7 @@ function ClassesPane({ d, ctx, gymName, onOpenTable, cp }: PaneProps & { onOpenT
         <SectionTitle title="Class performance detail" action={<DownloadButtons gymName={gymName} build={() => classPerformanceTable(ctx(), t)} />} />
         <DataTable table={classPerformanceTable(ctx(), t)} />
       </Card>
+      <ReportCards groups={['Classes & attendance']} data={d} rangeDays={cp.rangeDays} rangeLabel={cp.rangeLabel} />
     </>
   );
 }
@@ -176,6 +178,7 @@ function MembersPane({ d, ctx, gymName, cp }: PaneProps) {
         <SectionTitle title="Most active members" action={<DownloadButtons gymName={gymName} build={() => topMembersTable(ctx(), t)} />} />
         {t.top.length === 0 ? <Empty>Attendance data will appear here as members attend classes.</Empty> : <DataTable table={topMembersTable(ctx(), t)} />}
       </Card>
+      <ReportCards groups={['Lifecycle & retention']} data={d} rangeDays={cp.rangeDays} rangeLabel={cp.rangeLabel} />
     </>
   );
 }
@@ -194,6 +197,7 @@ function PaymentsPane({ d, ctx, gymName, cp }: PaneProps) {
         <SectionTitle title="Bad debtors / payment recovery" action={<DownloadButtons gymName={gymName} build={() => atRiskTable(ctx(), d, t)} />} />
         {t.atRisk.length === 0 ? <Empty>No failed or charged-back payments.</Empty> : <DataTable table={atRiskTable(ctx(), d, t)} />}
       </Card>
+      <ReportCards groups={['Revenue & payments']} data={d} rangeDays={cp.rangeDays} rangeLabel={cp.rangeLabel} />
     </>
   );
 }
