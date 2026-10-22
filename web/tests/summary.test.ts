@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LibraryData } from '../src/data/reportLibrary';
-import { attentionList, summaryFigures, summaryTable } from '../src/reports/summary';
+import { attentionList, changePct, storyOf, summaryFigures, summaryTable } from '../src/reports/summary';
 
 const NOW = new Date('2026-10-08T12:00:00Z');
 
@@ -61,5 +61,43 @@ describe('summary export', () => {
     const t = summaryTable({ gymName: 'Puffin Performance', rangeLabel: 'Last 30 days', now: NOW }, summaryFigures(data(), null, NOW));
     expect(t.title).toBe('Business summary');
     expect(t.rows).toHaveLength(12);
+  });
+});
+
+describe('looking at an earlier range', () => {
+  it('only counts money and joins inside the given end', () => {
+    const before = summaryFigures(data(), '2026-07-01T00:00:00Z', NOW, '2026-09-01T00:00:00Z');
+    expect(before.income).toBe(5900);
+    expect(before.joined).toBe(0);
+    expect(before.lostCount).toBe(0);
+  });
+  it('leaves out classes outside the range', () => {
+    expect(summaryFigures(data(), '2026-10-06T00:00:00Z', NOW, '2026-10-07T00:00:00Z').attendances).toBe(0);
+  });
+});
+
+describe('change against the range before', () => {
+  it('is a whole-number percentage', () => { expect(changePct(120, 100)).toBe(20); expect(changePct(50, 100)).toBe(-50); });
+  it('is null when there was nothing before', () => expect(changePct(50, 0)).toBeNull());
+});
+
+describe('the story sentence', () => {
+  const base = summaryFigures(data(), null, NOW);
+  const quiet = { ...base, lostCount: 0, lost: 0, net: 0, emptyClasses: 0, income: 10000, active: 5 };
+  it('puts failed payments first', () => {
+    const text = storyOf({ ...quiet, lostCount: 3, lost: 17700, income: 40000 }, { ...quiet, income: 20000 }, 'the 30 days before');
+    expect(text.startsWith('3 payments failed (£177 not collected)')).toBe(true);
+    expect(text).toContain('income is up 100%');
+  });
+  it('changes when the figures change', () => {
+    const a = storyOf({ ...quiet, net: -2 }, null, 'x');
+    const b = storyOf({ ...quiet, net: 4 }, null, 'x');
+    expect(a).toBe('2 more members left than joined.');
+    expect(b).toBe('4 more members joined than left.');
+  });
+  it('says income is down when it fell', () => expect(storyOf({ ...quiet, income: 5000 }, { ...quiet, income: 10000 }, 'the 30 days before')).toBe('Income is down 50% on the 30 days before at £50.'));
+  it('falls back to a steady line', () => expect(storyOf(quiet, { ...quiet }, 'x')).toBe('Steady: £100 collected and 5 active members.'));
+  it('is blank when there is no data at all', () => {
+    expect(storyOf({ ...quiet, income: 0, active: 0, joined: 0, left: 0 }, null, 'x')).toBe('');
   });
 });

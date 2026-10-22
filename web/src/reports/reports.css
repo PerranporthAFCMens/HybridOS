@@ -26,8 +26,9 @@
 .download-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .download-group.quiet { gap: 2px; }
 /* Export buttons sit in the background: plain muted text, not filled buttons. */
-.download-group.quiet .btn { background: transparent; color: var(--hybrid-muted); font-size: 13px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; padding: 0 10px; }
-.download-group.quiet .btn:hover { color: var(--hybrid-ink); filter: none; }
+/* shared with the Show/Hide button on report cards */
+.download-group.quiet .btn, .btn.quiet { background: transparent; color: var(--hybrid-muted); font-size: 13px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; padding: 0 10px; }
+.download-group.quiet .btn:hover, .btn.quiet:hover { color: var(--hybrid-ink); filter: none; }
 .drill-actions { margin: 12px 0 14px; }
 .stat-btn { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
 .stat-btn:hover { border-color: var(--hybrid-line-strong); }
@@ -98,3 +99,40 @@ button.bar-row:hover { background: rgba(255, 255, 255, .04); }
 .owed-table summary { cursor: pointer; padding: 8px 0; }
 
 .attention { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--hybrid-ink); }
+
+/* One card per library report: a quiet header with Export and Show, the chart and table underneath. */
+.report-card-list { display: grid; gap: 10px; }
+.report-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.report-card-head > div:first-child { min-width: 0; flex: 1 1 240px; }
+.report-card-head h4 { margin: 0 0 2px; font-size: 15px; color: var(--hybrid-ink); }
+.report-card-head p { margin: 0; }
+.report-card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.report-card-body { display: grid; gap: 12px; margin-top: 12px; }
+.bar-row.static { cursor: default; }
+
+/* One Reports page: period chips, the story, tiles that open reports, and the one list. */
+.period-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.period-chip { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--hybrid-line-strong); background: transparent; color: var(--hybrid-muted); font: inherit; cursor: pointer; }
+.period-chip.on { background: var(--hybrid-volt); border-color: var(--hybrid-volt); color: #0b1020; font-weight: 700; }
+.period-chip:focus-visible { outline: 2px solid var(--hybrid-pulse); outline-offset: 2px; }
+.report-back { margin: 0 0 12px; }
+.story { margin-bottom: 16px; }
+.story-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.story-head > :first-child { flex: 1 1 220px; min-width: 0; }
+.story-text { margin: 4px 0 0; font-size: 18px; line-height: 1.4; color: var(--hybrid-ink); }
+.tile { display: flex; text-decoration: none; position: relative; }
+.tile:hover { border-color: var(--hybrid-line-strong); }
+.tile .spark { width: 100%; height: 24px; color: var(--hybrid-pulse); margin-top: 4px; }
+.delta.up { color: var(--hybrid-volt); }
+.delta.down { color: var(--hybrid-ember); }
+.attention-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.attention-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.attention-list li > span { flex: 1 1 200px; min-width: 0; color: var(--hybrid-ink); }
+.list-title { margin: 28px 0 0; font-size: 20px; }
+.report-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.report-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 10px 14px; border: 1px solid var(--hybrid-line); border-radius: 12px; background: var(--hybrid-panel); text-decoration: none; color: inherit; }
+.report-row:hover { border-color: var(--hybrid-line-strong); }
+.report-row:focus-visible { outline: 2px solid var(--hybrid-pulse); outline-offset: 2px; }
+.report-row-text { display: grid; gap: 2px; min-width: 0; }
+.report-row-text b { color: var(--hybrid-ink); font-size: 15px; }
+.report-row-go { color: var(--hybrid-muted); font-size: 22px; flex: none; }
