@@ -77,7 +77,6 @@ export function Reports() {
       {tab === 'overview' && view && o && (
         <>
           <div className="download-bar">
-            <span className="muted">Download this overview</span>
             <DownloadButtons gymName={gym.gymName} build={() => overviewTable(ctx(), o)} />
           </div>
 
