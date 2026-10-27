@@ -11,3 +11,8 @@ workout draft (kept in the browser) whose exercises the screen cannot draw. I re
 - `web/browser/member-bad-draft.mjs`: new browser check for the above.
 
 Not confirmed: that Adam's phone holds exactly this kind of draft. If the page still goes blank, the new message will show the real reason.
+
+## Follow-up (same day)
+The error message from Adam's phone said `undefined is not an object (evaluating 'e.some')`. Cause: an older saved draft has exercises
+without the coach's `target` list, and `hasPercent(a.target)` calls `.some` on it. Fix: `readDraft` now fills in the missing fields
+(target, plan, note, block) so the saved workout opens as it was; the browser check now uses such a draft.
