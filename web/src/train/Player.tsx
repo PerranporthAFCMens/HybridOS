@@ -23,7 +23,9 @@ const draftKey = (gymId: string, id: string) => `hybrid-train-draft:${gymId}:${i
 const readDraft = (key: string): Draft | null => {
   try {
     const raw = JSON.parse(localStorage.getItem(key) ?? 'null') as Draft | null;
-    return raw && Array.isArray(raw.acts) ? raw : null;
+    // A draft saved by an older version can have exercises the screen cannot draw; start fresh rather than show a blank page.
+    const usable = (a: unknown) => !!a && typeof a === 'object' && typeof (a as Act).key === 'string' && typeof (a as Act).name === 'string' && Array.isArray((a as Act).sets) && Array.isArray((a as Act).target ?? []);
+    return raw && Array.isArray(raw.acts) && raw.acts.every(usable) ? raw : null;
   } catch {
     return null;
   }
