@@ -1,4 +1,4 @@
-// Browser gate: Reporting overview, signed in as an owner, at phone and desktop width.
+// Browser gate: the Reports page (summary and the one list), signed in as an owner, at phone and desktop width.
 // Supabase is mocked at the network layer. Checks every figure on screen against the fake data, that
 // changing the date range asks for the right start date, that nothing is written, and the same layout
 // rules as audit.mjs.
@@ -64,48 +64,44 @@ for (const [name, viewport] of Object.entries(sizes)) {
     }
     if (path.endsWith('/class_bookings')) return reply(route, bookings);
     if (path.endsWith('/membership_plans')) return reply(route, plans);
-    if (path.endsWith('/memberships')) return reply(route, [{ plan_id: 'p1' }, { plan_id: 'p1' }, { plan_id: 'p2' }, { plan_id: null }]);
+    if (path.endsWith('/memberships')) return reply(route, [{ id: 'm1', user_id: 'u1', plan_id: 'p1', status: 'active' }, { id: 'm2', user_id: 'u2', plan_id: 'p1', status: 'active' }, { id: 'm3', user_id: 'u3', plan_id: 'p2', status: 'active' }, { id: 'm4', user_id: 'u4', plan_id: null, status: 'active' }]);
     if (path.endsWith('/gym_members')) return reply(route, members);
     return false;
   });
-  await page.goto(`${base}/reports?tab=overview`);
+  await page.goto(`${base}/reports`);
   const c = runChecks();
-  const stat = (label) => page.locator('.stat', { hasText: label }).locator('.stat-num');
-  await c.has('heading', page.getByRole('heading', { name: 'Reporting', level: 1 }));
-  await c.has('stats loaded', page.getByText('Active memberships', { exact: true }));
-  const text = async (label) => (await stat(label).first().textContent())?.trim();
-  c.ok('active memberships (4, one has no plan)', (await text('Active memberships')) === '4');
-  c.ok('MRR 45+45+40 pounds', (await text('Est. MRR')) === '£130');
-  c.ok('average fill: 12 of 30 places', (await text('Average class fill')) === '40%');
-  c.ok('attendance rate: 6 of 8 in past classes', (await text('Attendance rate')) === '75%');
-  c.ok('new members in the last 30 days', (await text('New members')) === '1');
-  c.ok('class attendances', (await text('Class attendances')) === '6');
-  c.ok('no-shows', (await text('No-shows')) === '2');
-  c.ok('sessions analysed', (await text('Sessions analysed')) === '3');
-  await c.has('busiest days list', page.getByRole('list', { name: 'Busiest days' }));
-  c.ok('seven days listed in order', (await page.getByRole('list', { name: 'Busiest days' }).locator('.bar-label').allTextContents()).join() === 'Mon,Tue,Wed,Thu,Fri,Sat,Sun');
-  c.ok('four times of day listed', (await page.getByRole('list', { name: 'Busiest times of day' }).locator('.bar-label').allTextContents()).join() === 'Morning,Daytime,Evening,Late');
-  const mix = await page.getByRole('list', { name: 'Active memberships by plan' }).locator('.bar-row').allTextContents();
-  c.ok('plan mix biggest first, unused plans included', mix.length === 3 && mix[0].includes('Hybrid Monthly') && mix[0].endsWith('2') && mix[1].startsWith('Annual'));
-  c.ok('no link to the old reporting page', (await page.getByRole('link', { name: 'Open the detailed reports' }).count()) === 0);
+  await c.has('heading', page.getByRole('heading', { name: 'Reports', level: 1 }));
+  await c.has('the summary loaded', page.getByRole('heading', { name: 'How the business is doing' }));
+  c.ok('the story sentence or its empty note is there', (await page.locator('.story-text, .story .muted').count()) >= 1);
+  c.ok('four figure tiles', (await page.locator('a.tile').count()) === 4);
+  c.ok('active members tile counts the four active memberships', (await page.locator('a.tile', { hasText: 'Active members' }).locator('.stat-num').textContent())?.trim() === '4');
+  c.ok('monthly income expected: 45 + 45 + 40 pounds', (await page.locator('a.tile', { hasText: 'Monthly income expected' }).locator('.stat-num').textContent())?.trim() === '£130');
+  const groups = await page.locator('section.lib-group h3, section.lib-group h2, section.lib-group [class*="title"]').allTextContents();
+  c.ok('one list in five groups', (await page.locator('section.lib-group').count()) === 5 && groups.join('|').includes('Money') && groups.join('|').includes('Coaches and training'));
+  c.ok('every report is a row', (await page.locator('.report-row').count()) === 35);
+  c.ok('no dropdown of sections, no Overview', (await page.getByLabel('Report section').count()) === 0 && (await page.getByText('Overview', { exact: true }).count()) === 0);
   { const lp = await page.evaluate(layoutProblems); if (lp.length) console.log('  layout problems:', lp.slice(0, 5).join(' | ')); c.ok('layout', lp.length === 0); }
   if (shots) await page.screenshot({ path: `${shots}/reports-${name}.png`, fullPage: true });
 
-  // Changing the range asks for a different start date; All time asks for no start date.
-  await page.getByLabel('Date range').selectOption('0');
-  await page.waitForTimeout(400);
-  c.ok('all time asks for no start date', sessionAsks[sessionAsks.length - 1] === null);
-  c.ok('all time includes the 10-day-old class', (await text('Sessions analysed')) === '3');
-  await page.getByLabel('Date range').selectOption('365');
-  await page.waitForTimeout(400);
-  const last = sessionAsks[sessionAsks.length - 1];
-  c.ok('12 months asks for a start date about a year back', typeof last === 'string' && Math.abs(Date.now() - 365 * 86400000 - new Date(last.replace(/^gte\./, '')).getTime()) < 120000);
-  await page.getByLabel('Date range').selectOption('30');
+  // Opening a report swaps the page; the back link returns to the list.
+  await page.locator('.report-row', { hasText: 'Classes overview' }).click();
+  await c.has('a report page opens with its title', page.getByRole('heading', { name: 'Classes overview', level: 1 }));
+  c.ok('and a way back', (await page.getByRole('link', { name: '← All reports' }).count()) === 1);
+  await page.getByRole('link', { name: '← All reports' }).click();
+  await c.has('back on the summary', page.getByRole('heading', { name: 'How the business is doing' }));
+
+  // The summary loads twice the chosen range (to compare with the period before); All time asks for no start date.
+  const asked = () => sessionAsks[sessionAsks.length - 1];
+  const daysBack = (v) => (typeof v === 'string' ? Math.round((Date.now() - new Date(v.replace(/^gte\./, '')).getTime()) / 86400000) : v);
+  c.ok('30 days asks 60 days back (this period and the one before)', sessionAsks.some((v) => daysBack(v) === 60));
+  await page.getByRole('radio', { name: 'All time' }).click();
+  await page.waitForTimeout(500);
+  c.ok('all time asks for no start date', asked() === null);
+  await page.getByRole('radio', { name: 'Last 12 months' }).click();
+  await page.waitForTimeout(500);
+  c.ok('12 months asks about two years back', Math.abs(daysBack(asked()) - 730) <= 1);
+  await page.getByRole('radio', { name: 'Last 30 days' }).click();
   await page.waitForTimeout(300);
-  const before = sessionAsks.length;
-  await page.getByRole('button', { name: 'Refresh' }).click();
-  await page.waitForTimeout(400);
-  c.ok('Refresh asks again', sessionAsks.length > before);
   c.ok(`read-only: no writes (${writes.join(', ') || 'none'})`, writes.length === 0);
   c.ok('no page errors', errors.length === 0);
   if (!c.report(name)) allOk = false;
