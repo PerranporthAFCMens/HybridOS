@@ -5,6 +5,7 @@
 //   - a button, link-button or form box is shorter than 40px (the tap-target rule).
 // Add a new screen or pop-up to STATES below; no per-screen layout check needs writing.
 import { USER, base, launch, mockSupabase, reply, runChecks, shots, signedInPage } from './mock.mjs';
+import { openReport } from './reportNav.mjs';
 
 const ADA = '33333333-3333-4333-8333-333333333333';
 const at = (h, m = 0, d = 0) => { const x = new Date(); x.setDate(x.getDate() + d); x.setHours(h, m, 0, 0); return x.toISOString(); };
@@ -85,15 +86,15 @@ const STATES = {
   workouts: async (page) => { await page.goto(`${base}/workouts`); await page.getByText('No workouts yet. Build your first one.').waitFor(); },
   movements: async (page) => { await page.goto(`${base}/movements`); await page.getByRole('heading', { name: 'Movements', level: 1 }).waitFor(); },
   'workout editor': async (page) => { await page.goto(`${base}/workouts`); await page.getByRole('button', { name: 'New workout' }).click(); await page.getByLabel('Workout name').waitFor(); },
-  'report summary': async (page) => { await page.goto(`${base}/reports`); await page.getByText('Needs a look').waitFor(); },
-  'report overview': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Overview' }); await page.waitForTimeout(800); },
-  'report memberships': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Memberships' }); await page.waitForTimeout(800); },
-  'report classes': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Classes' }); await page.waitForTimeout(800); },
-  'report members': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Members' }); await page.waitForTimeout(800); },
-  'report payments': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Payments' }); await page.waitForTimeout(800); },
-  'report money owed': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Money owed' }); await page.waitForTimeout(800); },
-  'report xero': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Accounting (Xero)' }); await page.waitForTimeout(800); },
-  'report report library': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Report library' }); await page.waitForTimeout(800); },
+  'report summary': async (page) => { await page.goto(`${base}/reports`); await page.getByRole('heading', { name: 'How the business is doing' }).waitFor(); await page.waitForTimeout(600); },
+  'report memberships': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Memberships'); await page.waitForTimeout(800); },
+  'report classes': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Classes'); await page.waitForTimeout(800); },
+  'report members': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Members'); await page.waitForTimeout(800); },
+  'report payments': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Payments'); await page.waitForTimeout(800); },
+  'report money owed': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Money owed'); await page.waitForTimeout(800); },
+  'report xero': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Accounting (Xero)'); await page.waitForTimeout(800); },
+  'report library page': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Workout completion'); await page.waitForTimeout(800); },
+  'report plan mix': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Membership plan mix'); await page.locator('.report-card-body').waitFor(); },
   'payments page': async (page) => { await page.goto(`${base}/payments`); await page.waitForTimeout(1200); },
   'training page': async (page) => { await page.goto(`${base}/training`); await page.waitForTimeout(1200); },
   'lifts page': async (page) => { await page.goto(`${base}/lifts`); await page.waitForTimeout(1200); },
@@ -101,7 +102,7 @@ const STATES = {
   'member membership': async (page) => { await page.goto(`${base}/m/membership`); await page.waitForTimeout(1200); },
   'member community': async (page) => { await page.goto(`${base}/m/community`); await page.waitForTimeout(1200); },
   'member leaderboard': async (page) => { await page.goto(`${base}/m/train/leaderboard`); await page.waitForTimeout(1200); },
-  'report builder': async (page) => { await page.goto(`${base}/reports`); await page.getByLabel('Report section').selectOption({ label: 'Report builder' }); await page.getByLabel('Look at').waitFor(); },
+  'report builder': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Report builder'); await page.getByLabel('Look at').waitFor(); },
   'staff day': async (page) => { await page.goto(`${base}/s/today`); await page.getByText('Next up').waitFor(); },
   'staff roster': async (page) => { await page.goto(`${base}/s/today`); await page.getByRole('button', { name: 'See who is booked' }).click(); await page.getByRole('button', { name: /^Attended: / }).waitFor(); },
   'staff timetable': async (page) => { await page.goto(`${base}/s/timetable`); await page.getByRole('heading', { name: 'Gym timetable' }).waitFor(); await page.getByText('Strength and conditioning').first().waitFor(); },

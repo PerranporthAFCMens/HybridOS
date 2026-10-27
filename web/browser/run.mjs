@@ -22,7 +22,7 @@ const AUDIT_SIZES = ['phone320', 'phone390', 'desktop'];
 const AUDIT_PARTS = 2;
 const AUDIT_WEIGHT = 60;
 
-const files = readdirSync(dir).filter((f) => f.endsWith('.mjs') && !['mock.mjs', 'fake-date.mjs', 'run.mjs'].includes(f)).map((f) => f.slice(0, -4)).sort();
+const files = readdirSync(dir).filter((f) => f.endsWith('.mjs') && !['mock.mjs', 'fake-date.mjs', 'run.mjs', 'reportNav.mjs'].includes(f)).map((f) => f.slice(0, -4)).sort();
 const jobs = files.flatMap((name) => (name === 'audit'
   ? AUDIT_SIZES.flatMap((size) => Array.from({ length: AUDIT_PARTS }, (_, i) => ({
     label: `audit (${size} ${i + 1}/${AUDIT_PARTS})`, file: 'audit.mjs', env: { AUDIT_SIZES: size, AUDIT_PART: `${i + 1}/${AUDIT_PARTS}` }, weight: AUDIT_WEIGHT,

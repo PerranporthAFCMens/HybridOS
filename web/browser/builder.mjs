@@ -3,6 +3,7 @@
 // charts), the sheet of paper, real downloads, saved reports on the device, and that nothing is ever written.
 import { readFileSync } from 'node:fs';
 import { base, launch, mockSupabase, reply, runChecks, shots, signedInPage, sizes } from './mock.mjs';
+import { openReport } from './reportNav.mjs';
 
 const U1 = '81111111-1111-4111-8111-111111111111';
 const U2 = '82222222-2222-4222-8222-222222222222';
@@ -102,7 +103,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   });
   await page.goto(`${base}/reports`);
   const c = runChecks();
-  await page.getByLabel('Report section').selectOption({ label: 'Report builder' });
+  await openReport(page, 'Report builder');
   const paper = page.getByLabel('What you will download');
   const show = page.getByLabel('Show', { exact: true });
   const openFine = async () => { const b = page.getByRole('button', { name: /Filters, columns and fields/ }); if ((await b.getAttribute('aria-expanded')) !== 'true') await b.click(); };
@@ -110,7 +111,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const dataset = page.getByLabel('Look at');
   const dialog = page.getByRole('dialog');
   await c.has('builder opens', dataset);
-  c.ok('ten tabs, Money owed among them', (await page.getByLabel('Report section').locator('option').count()) === 10 && (await page.getByLabel('Report section').locator('option', { hasText: 'Money owed' }).count()) === 1);
+  c.ok('no tab dropdown, a way back to the one list', (await page.getByLabel('Report section').count()) === 0 && (await page.getByRole('link', { name: '← All reports' }).count()) === 1);
   c.ok('eight datasets, staff included', (await dataset.locator('option').allInnerTexts()).join('|') === 'Members|Memberships|Payments|Classes|Bookings and attendance|Staff|Classes delivered|Clients seen');
   await page.getByRole('button', { name: /Start from a ready-made report/ }).click();
   c.ok('twelve ready-made reports', (await page.locator('.bld-starter').count()) === 12);
@@ -246,7 +247,6 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await page.getByRole('dialog').getByRole('button', { name: 'Save report' }).click();
   await c.has('saved message', page.getByText('Saved "Payments by state" on this device.'));
   await page.reload();
-  await page.getByLabel('Report section').selectOption({ label: 'Report builder' });
   await c.has('the saved report is listed after a reload', page.getByLabel('My saved reports'));
   await page.getByLabel('My saved reports').selectOption('Payments by state');
   await openFine();
