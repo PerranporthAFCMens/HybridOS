@@ -64,6 +64,7 @@ import { AuthReturn } from '../auth/AuthReturn';
 import { Invite } from '../auth/Invite';
 import { SignOut } from '../auth/SignOut';
 import { BASENAME } from './site';
+import { ErrorBoundary } from './ErrorBoundary';
 
 function Leave({ to }: { to: string }) {
   useEffect(() => {
@@ -174,6 +175,7 @@ function Main() {
 export function App() {
   return (
     <BrowserRouter basename={BASENAME}>
+      <ErrorBoundary>
       <Routes>
         <Route path="/join/:slug" element={<Join />} />
         <Route path="/sign-in" element={<SignIn />} />
@@ -185,6 +187,7 @@ export function App() {
         <Route path="/sign-out" element={<SignOut />} />
         <Route path="*" element={<Main />} />
       </Routes>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }
