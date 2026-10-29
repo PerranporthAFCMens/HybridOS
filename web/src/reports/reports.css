@@ -136,3 +136,13 @@ button.bar-row:hover { background: rgba(255, 255, 255, .04); }
 .report-row-text { display: grid; gap: 2px; min-width: 0; }
 .report-row-text b { color: var(--hybrid-ink); font-size: 15px; }
 .report-row-go { color: var(--hybrid-muted); font-size: 22px; flex: none; }
+
+/* Targets: progress for the month, and the boxes to set goals. */
+.target-progress { display: grid; gap: 6px; margin: 0 0 14px; }
+.target-progress-text { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; color: var(--hybrid-ink); }
+.target-progress .track { height: 10px; background: var(--hybrid-line); border-radius: 999px; overflow: hidden; display: block; }
+.target-progress .fill { display: block; height: 100%; background: var(--hybrid-volt); border-radius: 999px; }
+.target-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; margin-top: 8px; }
+.target-grid > * { min-width: 0; }
+.target-edit { display: grid; gap: 8px; align-content: start; }
+.targets-home { display: grid; gap: 4px; }

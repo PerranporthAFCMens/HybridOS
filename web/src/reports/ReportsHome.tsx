@@ -1,13 +1,17 @@
 import { useMemo, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useReadyAuth } from '../auth/AuthProvider';
 import type { LibraryData } from '../data/reportLibrary';
 import { Card, SectionTitle } from '../ui/Card';
 import { rangeStart, reportMoney } from './calc';
+import { listTargets } from '../data/targets';
 import { DownloadButtons } from './DownloadButtons';
 import type { ReportTable } from './download';
 import { REPORT_LIST } from './reportList';
 import { IncomeChart, JoinsChart, MembersLineChart, PlanDonut } from './ReportCharts';
+import { ProgressBar } from './Targets';
+import { gymProgress } from './targets';
 import { attentionList, changePct, storyOf, summaryFigures, summaryTable } from './summary';
 import { activeMembersSeries, incomeSeries, periodsFor } from './trends';
 
@@ -61,6 +65,9 @@ export function ReportsHome({ d, rangeDays, rangeLabel, period, onOpenTable }: {
   const previousLabel = `the ${rangeDays} days before`;
   const story = storyOf(f, prev, previousLabel);
   const attention = attentionList(f);
+  // Goals are optional: if they cannot be read (none set, or not switched on yet), the summary simply has no goals box.
+  const targets = useQuery({ queryKey: ['targets', gym.gymId], queryFn: () => listTargets(gym.gymId), retry: false });
+  const goals = useMemo(() => gymProgress(d, now, targets.data ?? []), [d, now, targets.data]);
   const cp = { d, rangeDays, rangeLabel, onOpenTable };
   const to = (key: string) => `?r=${key}&p=${period}`;
 
@@ -84,6 +91,13 @@ export function ReportsHome({ d, rangeDays, rangeLabel, period, onOpenTable }: {
           <Delta now={f.joined} before={prev ? prev.joined : null} label={previousLabel} />
         </Tile>
       </div>
+
+      {goals.length > 0 && (
+        <Card>
+          <SectionTitle title="Goals this month" action={<Link className="btn quiet" to={to('targets')}>Change goals</Link>} />
+          {goals.map((p) => <ProgressBar key={p.metric} p={p} />)}
+        </Card>
+      )}
 
       {attention.length > 0 && (
         <Card>

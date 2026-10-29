@@ -110,7 +110,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   const members = page.getByRole('figure', { name: 'Members over time' });
   c.ok('the members line has its latest value labelled', (await members.locator('.chart-end').count()) === 1);
   c.ok('four figure tiles that open reports', (await page.locator('a.tile').count()) === 4);
-  c.ok('the one list: 35 reports in 5 groups', (await page.locator('.report-row').count()) === 35 && (await page.locator('section.lib-group').count()) === 5);
+  c.ok('the one list: 36 reports in 5 groups', (await page.locator('.report-row').count()) === 36 && (await page.locator('section.lib-group').count()) === 5);
   c.ok('layout (summary)', (await page.evaluate(layoutProblems)).length === 0);
   if (shots) await page.screenshot({ path: `${shots}/reports-summary-${name}.png`, fullPage: true });
   c.ok('no link to the old reporting page', (await page.getByRole('link', { name: 'Open the detailed reports' }).count()) === 0);

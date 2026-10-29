@@ -78,7 +78,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   c.ok('monthly income expected: 45 + 45 + 40 pounds', (await page.locator('a.tile', { hasText: 'Monthly income expected' }).locator('.stat-num').textContent())?.trim() === '£130');
   const groups = await page.locator('section.lib-group h3, section.lib-group h2, section.lib-group [class*="title"]').allTextContents();
   c.ok('one list in five groups', (await page.locator('section.lib-group').count()) === 5 && groups.join('|').includes('Money') && groups.join('|').includes('Coaches and training'));
-  c.ok('every report is a row', (await page.locator('.report-row').count()) === 35);
+  c.ok('every report is a row', (await page.locator('.report-row').count()) === 36);
   c.ok('no dropdown of sections, no Overview', (await page.getByLabel('Report section').count()) === 0 && (await page.getByText('Overview', { exact: true }).count()) === 0);
   { const lp = await page.evaluate(layoutProblems); if (lp.length) console.log('  layout problems:', lp.slice(0, 5).join(' | ')); c.ok('layout', lp.length === 0); }
   if (shots) await page.screenshot({ path: `${shots}/reports-${name}.png`, fullPage: true });

@@ -2754,6 +2754,44 @@ export type Database = {
           },
         ]
       }
+      gym_targets: {
+        Row: {
+          gym_id: string
+          id: string
+          metric: string
+          target_value: number
+          updated_at: string
+          updated_by: string | null
+          user_id: string | null
+        }
+        Insert: {
+          gym_id: string
+          id?: string
+          metric: string
+          target_value: number
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          gym_id?: string
+          id?: string
+          metric?: string
+          target_value?: number
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_targets_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_time_blocks: {
         Row: {
           created_at: string

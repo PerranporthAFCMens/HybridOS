@@ -1,7 +1,7 @@
 import { LIBRARY, type LibraryReport } from './library';
 
 /** The screens that are not a single library table. Each opens its own report page. */
-export type PaneKey = 'memberships' | 'classes' | 'members' | 'payments' | 'owed' | 'xero' | 'builder';
+export type PaneKey = 'memberships' | 'classes' | 'members' | 'payments' | 'owed' | 'xero' | 'targets' | 'builder';
 
 export interface ListEntry { key: string; title: string; blurb: string }
 export interface ListGroup { group: string; entries: ListEntry[] }
@@ -13,6 +13,7 @@ const PANES: Record<PaneKey, ListEntry> = {
   memberships: { key: 'memberships', title: 'Memberships overview', blurb: 'Plans, active members and monthly income.' },
   members: { key: 'members', title: 'Members overview', blurb: 'Who is active, who attends and who is slipping.' },
   classes: { key: 'classes', title: 'Classes overview', blurb: 'How full classes are, the busiest slots and class income.' },
+  targets: { key: 'targets', title: 'Targets', blurb: 'Monthly goals for the gym and each coach, and how this month is going.' },
   builder: { key: 'builder', title: 'Report builder', blurb: 'Make and save your own report from any list of data.' },
 };
 
@@ -25,7 +26,7 @@ export const REPORT_LIST: ListGroup[] = [
   { group: 'Members', entries: [PANES.memberships, PANES.members, ...libraryEntries('Membership & growth'), ...libraryEntries('Lifecycle & retention')] },
   { group: 'Classes', entries: [PANES.classes, ...libraryEntries('Classes & attendance')] },
   { group: 'Coaches and training', entries: libraryEntries('Workouts & PT') },
-  { group: 'Your own', entries: [PANES.builder] },
+  { group: 'Your own', entries: [PANES.targets, PANES.builder] },
 ];
 
 export const isPane = (key: string): key is PaneKey => key in PANES;
