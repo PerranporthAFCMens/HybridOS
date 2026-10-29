@@ -60,7 +60,8 @@ export function Targets() {
 
 function TargetsBody({ d, targets }: { d: LibraryData; targets: TargetRow[] }) {
   const now = new Date();
-  const team = d.staff.filter((s) => s.role === 'coach' || s.role === 'staff' || s.role === 'admin');
+  // Everyone on the team can teach or do PT, owners included, so everyone who is not a member gets a goal box.
+  const team = d.staff;
   const find = (userId: string, metric: string) => targets.find((x) => x.userId === userId && x.metric === metric);
   const gymRows = gymProgress(d, now, targets);
   return (
