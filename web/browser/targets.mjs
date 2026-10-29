@@ -5,6 +5,7 @@ import { base, launch, mockSupabase, reply, runChecks, shots, signedInPage, size
 import { openReport } from './reportNav.mjs';
 
 const C1 = '83333333-3333-4333-8333-333333333333';
+const O1 = '84444444-4444-4444-8444-444444444444';
 const startOfMonthPlus = () => { const x = new Date(); x.setDate(1); x.setHours(12, 0, 0, 0); return x.toISOString(); };
 
 function layoutProblems() {
@@ -41,7 +42,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
       await route.fulfill({ status: 201, contentType: 'application/json', body: '[]' });
       return true;
     }
-    if (path.endsWith('/rpc/get_gym_team_accounts')) return reply(route, [{ user_id: C1, role: 'coach', display_name: 'Casey Coach', email: 'casey@example.test' }]);
+    if (path.endsWith('/rpc/get_gym_team_accounts')) return reply(route, [{ user_id: C1, role: 'coach', display_name: 'Casey Coach', email: 'casey@example.test' }, { user_id: O1, role: 'owner', display_name: 'Olive Owner', email: 'olive@example.test' }]);
     if (path.endsWith('/payment_records')) return reply(route, [{ id: 'p1', user_id: C1, charge_date: startOfMonthPlus().slice(0, 10), created_at: startOfMonthPlus(), amount_pence: 5000, state: 'paid_out', provider: 'stripe' }]);
     if (path.endsWith('/class_sessions')) return reply(route, [{ id: 's1', name: 'HIIT', starts_at: startOfMonthPlus(), ends_at: startOfMonthPlus(), capacity: 10 }]);
     if (path.endsWith('/class_session_staff')) return reply(route, [{ id: 'cs1', session_id: 's1', user_id: C1, is_lead: true }]);
@@ -55,6 +56,7 @@ for (const [name, viewport] of Object.entries(sizes)) {
   await openReport(page, 'Targets');
   await c.has('the Targets page opens', page.getByRole('heading', { name: 'Targets', level: 1 }));
   await c.has('the coach is listed', page.getByRole('heading', { name: 'Casey Coach' }));
+  c.ok('an owner who also teaches is listed too, and so is every team member', (await page.getByRole('heading', { name: 'Olive Owner' }).count()) === 1);
   c.ok('income goal box shows £200 as typed', (await page.getByLabel(/^Income collected \(pounds a month\)/).inputValue()) === '200');
   c.ok('no goal yet for new members', (await page.getByLabel(/^New members \(a month\)/).inputValue()) === '');
   c.ok('Save is off until something changes', await page.getByRole('button', { name: /^Save Income collected/ }).isDisabled());
