@@ -562,6 +562,26 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           snap /tmp/cpp_after_reapply.txt
           if diff -u /tmp/cpp_after_migration.txt /tmp/cpp_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: Gym targets verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261029100000_gym_targets.sql
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261029_gym_targets_check.sql > /tmp/gt_check.txt
+          cat /tmp/gt_check.txt
+          if grep -v ' | ok$' /tmp/gt_check.txt; then echo 'A gym targets verification check is not ok'; exit 1; fi
+          # owner, coaches, member and another gym's owner, run as the authenticated role; rolls itself back
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/gym_targets.sql
+          # the rollback removes everything it added, and applying the migration again restores the same catalog
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/gt_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261029_drop_gym_targets.sql
+          snap /tmp/gt_after_rollback.txt
+          if diff -q /tmp/gt_after_migration.txt /tmp/gt_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/gt_after_reapply.txt
+          if diff -u /tmp/gt_after_migration.txt /tmp/gt_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Prove the rollback file restores the pre-migration state exactly
         shell: bash
         run: |
