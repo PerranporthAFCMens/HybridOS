@@ -73,7 +73,7 @@ function StatCard({ label, value }: { label: string; value: string }): ReactNode
 }
 
 /** The overview pages (payments, memberships, members, classes), Xero and the builder. The data is only fetched once a page is opened. */
-export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: Exclude<PaneKey, 'owed'>; rangeDays: number; rangeLabel: string; onOpenTable: (build: () => ReportTable) => void }) {
+export function ReportTabs({ tab, rangeDays, rangeLabel, onOpenTable }: { tab: Exclude<PaneKey, 'owed' | 'targets'>; rangeDays: number; rangeLabel: string; onOpenTable: (build: () => ReportTable) => void }) {
   const { gym } = useReadyAuth();
   const q = useLibraryData(gym.gymId, rangeDays, tab !== 'builder');
   const detail = q.error && typeof q.error === 'object' && 'message' in q.error ? String((q.error as { message: unknown }).message) : '';

@@ -44,9 +44,9 @@ jobs:
             select count(*) into v_triggers from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace tn on tn.oid=c.relnamespace join pg_proc p on p.oid=t.tgfoid join pg_namespace fn on fn.oid=p.pronamespace where not t.tgisinternal and (tn.nspname in ('public','private') or fn.nspname in ('public','private'));
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
-            if v_tables<>103 then raise exception 'Expected 103 app tables, got %',v_tables; end if;
+            if v_tables<>104 then raise exception 'Expected 104 app tables, got %',v_tables; end if;
             if v_functions<>189 then raise exception 'Expected 189 committed app functions, got %',v_functions; end if;
-            if v_policies<>237 then raise exception 'Expected 237 app/storage policies, got %',v_policies; end if;
+            if v_policies<>239 then raise exception 'Expected 239 app/storage policies, got %',v_policies; end if;
             if v_triggers<>44 then raise exception 'Expected 44 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>2 then raise exception 'Expected 2 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
@@ -562,6 +562,26 @@ jobs:
           psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
           snap /tmp/cpp_after_reapply.txt
           if diff -u /tmp/cpp_after_migration.txt /tmp/cpp_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
+      - name: Gym targets verification, persona tests and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          MIG=supabase/migrations/20261029100000_gym_targets.sql
+          psql "$DB_URL" -X -At -F ' | ' -f supabase/verification/20261029_gym_targets_check.sql > /tmp/gt_check.txt
+          cat /tmp/gt_check.txt
+          if grep -v ' | ok$' /tmp/gt_check.txt; then echo 'A gym targets verification check is not ok'; exit 1; fi
+          # owner, coaches, member and another gym's owner, run as the authenticated role; rolls itself back
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/gym_targets.sql
+          # the rollback removes everything it added, and applying the migration again restores the same catalog
+          snap() { psql "$DB_URL" -X -q -f supabase/tests/catalog_snapshot.sql > "$1"; }
+          snap /tmp/gt_after_migration.txt
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f supabase/rollback/20261029_drop_gym_targets.sql
+          snap /tmp/gt_after_rollback.txt
+          if diff -q /tmp/gt_after_migration.txt /tmp/gt_after_rollback.txt >/dev/null; then echo 'The migration changed nothing: snapshot is not sensitive enough'; exit 1; fi
+          psql "$DB_URL" -X -q -v ON_ERROR_STOP=1 -f "$MIG"
+          snap /tmp/gt_after_reapply.txt
+          if diff -u /tmp/gt_after_migration.txt /tmp/gt_after_reapply.txt; then echo 'Rollback then re-apply gives the same catalog'; else echo 'Re-applying after rollback differs'; exit 1; fi
       - name: Prove the rollback file restores the pre-migration state exactly
         shell: bash
         run: |

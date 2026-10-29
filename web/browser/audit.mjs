@@ -93,6 +93,7 @@ const STATES = {
   'report payments': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Payments'); await page.waitForTimeout(800); },
   'report money owed': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Money owed'); await page.waitForTimeout(800); },
   'report xero': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Accounting (Xero)'); await page.waitForTimeout(800); },
+  'report targets': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Targets'); await page.getByRole('heading', { name: 'The gym, this month' }).waitFor(); },
   'report library page': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Workout completion'); await page.waitForTimeout(800); },
   'report plan mix': async (page) => { await page.goto(`${base}/reports`); await openReport(page, 'Membership plan mix'); await page.locator('.report-card-body').waitFor(); },
   'payments page': async (page) => { await page.goto(`${base}/payments`); await page.waitForTimeout(1200); },

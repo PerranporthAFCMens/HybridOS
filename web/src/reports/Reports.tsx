@@ -12,6 +12,7 @@ import type { ReportTable } from './download';
 import { findEntry, findLibraryReport, isPane, legacyKey } from './reportList';
 import { ReportCard } from './ReportCards';
 import { ReportsHome } from './ReportsHome';
+import { Targets } from './Targets';
 import { ReportTabs } from './ReportTabs';
 import { useLibraryData } from './useReports';
 import './reports.css';
@@ -52,7 +53,8 @@ export function Reports() {
 
       {!entry && <Home gymId={gym.gymId} rangeDays={rangeDays} rangeLabel={rangeLabel} period={period} onOpenTable={(b) => setDrill(() => b)} />}
       {entry?.key === 'owed' && <Owed />}
-      {entry && isPane(entry.key) && entry.key !== 'owed' && <ReportTabs tab={entry.key} rangeDays={rangeDays} rangeLabel={rangeLabel} onOpenTable={(b) => setDrill(() => b)} />}
+      {entry?.key === 'targets' && <Targets />}
+      {entry && isPane(entry.key) && entry.key !== 'owed' && entry.key !== 'targets' && <ReportTabs tab={entry.key} rangeDays={rangeDays} rangeLabel={rangeLabel} onOpenTable={(b) => setDrill(() => b)} />}
       {entry && !isPane(entry.key) && <LibraryPage reportKey={entry.key} gymId={gym.gymId} rangeDays={rangeDays} rangeLabel={rangeLabel} />}
 
       {drill && <DrillDown build={drill} gymName={gym.gymName} onClose={() => setDrill(null)} />}
