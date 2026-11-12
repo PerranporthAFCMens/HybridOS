@@ -23,6 +23,14 @@ A one-page concept for a new Hybrid Hub NQY public website, to show the gym's ow
 - The live class timetable is the gym's existing WodBoard embed. Join buttons link to the gym's current WodBoard signup and application pages.
 - Details the gym has not published (unit number, opening hours, phone, email, parking, Instagram) are shown as "to confirm" chips.
 
+## Owner edit mode (demo)
+
+- An "Edit site" button (bottom left; bottom right above the action bar on phones) turns on click-to-edit. Opening the page with `?edit=1` starts in edit mode.
+- Headings, paragraphs, prices, list items, button labels and footer text become editable. Each photo gets a "Change photo" button that takes an image from the device, shrunk to 1600px.
+- Links do not navigate while editing. "Save & finish" leaves edit mode. "Reset" asks first, then puts the original page back.
+- Demo only: edits are kept in that browser's localStorage, so nobody else sees them and nothing reaches a server. The edit bar says so.
+- The real version (owners edit from a Website screen in HybridOne, saved per gym) is a separate, later piece of work.
+
 ## Build and safety
 
 - `scripts/build_site.py` copies the `preview/` folder into `_site` unchanged; its brand and app injections only touch top-level pages.
@@ -36,6 +44,7 @@ A one-page concept for a new Hybrid Hub NQY public website, to show the gym's ow
 - `python3 scripts/ui_consistency_check.py _site`: passed (17 surfaces).
 - `python3 scripts/project_control_check.py`: passed.
 - Browser (Playwright, 1440px and 390px): no script errors, no horizontal scroll, timetable embed and map load.
+- Edit mode (Playwright, both sizes): 131 editable items, a text edit and a photo swap survive a reload, links stay put while editing, Reset restores the original.
 
 ## Rollback
 
