@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Hybrid Hub Newquay | Hybrid, HYROX and strength training at Prow Park</title>
+<meta name="description" content="Concept preview of a new Hybrid Hub website. Premium open gym, coached hybrid classes and HYROX training at Prow Park, Newquay.">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://static.wixstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!--
+  Concept preview for Hybrid Hub NQY, built for a pitch. Not linked from HybridOne and not indexed.
+  Photos are loaded from Hybrid Hub's own Wix media library (static.wixstatic.com), so none are stored in this repository.
+-->
+<style>
+:root{
+  --ink:#0a0a0a;--ink-2:#141414;--ink-3:#1e1e1e;--line:#2a2a2a;
+  --paper:#f4f2ee;--paper-2:#e9e6df;
+  --white:#fff;--muted:#a3a3a3;--muted-dark:#5c5a55;
+  --display:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --wrap:1200px;--gutter:clamp(16px,4vw,40px);--radius:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+body{margin:0;background:var(--ink);color:var(--white);font:400 17px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+a{color:inherit}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gutter)}
+.mono{font-family:var(--display);letter-spacing:-.01em}
+h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1.05;letter-spacing:-.02em;margin:0}
+h2{font-size:clamp(32px,5vw,56px);text-transform:uppercase}
+h3{font-size:22px;text-transform:uppercase}
+p{margin:0 0 1em}
+.eyebrow{font:700 13px/1 var(--display);text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:"";width:28px;height:2px;background:currentColor}
+.lede{font-size:clamp(17px,1.6vw,20px);color:#d4d4d4;max-width:60ch}
+
+/* Preview ribbon */
+.ribbon{background:var(--paper);color:var(--ink);font:600 13px/1.4 var(--body);text-align:center;padding:8px 16px}
+.ribbon b{font-family:var(--display)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;font:700 15px/1 var(--display);text-transform:uppercase;letter-spacing:.02em;text-decoration:none;border:2px solid var(--white);transition:transform .15s ease,background .15s ease,color .15s ease}
+.btn:hover{transform:translateY(-1px)}
+.btn-solid{background:var(--white);color:var(--ink)}
+.btn-solid:hover{background:var(--paper-2);border-color:var(--paper-2)}
+.btn-ghost{background:transparent;color:var(--white)}
+.btn-ghost:hover{background:var(--white);color:var(--ink)}
+.btn-dark{background:var(--ink);color:var(--white);border-color:var(--ink)}
+.btn-dark:hover{background:var(--ink-3);border-color:var(--ink-3)}
+.btn .arrow{transition:transform .15s ease}
+.btn:hover .arrow{transform:translateX(3px)}
+:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.light :focus-visible{outline-color:var(--ink)}
+
+/* Header */
+.header{position:sticky;top:0;z-index:50;background:rgba(10,10,10,.86);backdrop-filter:saturate(140%) blur(12px);-webkit-backdrop-filter:saturate(140%) blur(12px);border-bottom:1px solid var(--line)}
+.header .wrap{display:flex;align-items:center;justify-content:space-between;height:68px;gap:20px}
+.logo{display:flex;flex-direction:column;text-decoration:none;font:800 20px/0.92 var(--display);letter-spacing:-.02em}
+.logo small{font-size:9px;letter-spacing:.14em;color:var(--muted);margin-top:4px}
+.nav{display:flex;align-items:center;gap:28px}
+.nav a{font:600 14px/1 var(--body);text-decoration:none;color:#d4d4d4}
+.nav a:hover{color:#fff}
+.nav a.btn-solid,.nav a.btn-solid:hover{color:var(--ink)}
+.nav .btn{min-height:42px;padding:0 18px;font-size:13px}
+.menu-toggle{display:none}
+@media (max-width:900px){
+  .nav{display:none}
+  .menu-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:1px solid var(--line);color:#fff;border-radius:999px;height:42px;padding:0 16px;font:700 13px/1 var(--display);text-transform:uppercase;cursor:pointer}
+  .menu-toggle .bars{width:16px;height:10px;border-top:2px solid #fff;border-bottom:2px solid #fff;position:relative}
+  .header.open .nav{display:flex;position:absolute;top:68px;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;background:var(--ink);border-bottom:1px solid var(--line);padding:8px var(--gutter) 20px}
+  .header.open .nav a{padding:16px 0;border-bottom:1px solid var(--line);font-size:17px}
+  .header.open .nav .btn{margin-top:16px;border-bottom:2px solid #fff;min-height:52px;font-size:15px}
+}
+
+/* Hero */
+.hero{position:relative;min-height:min(88vh,820px);display:flex;align-items:flex-end;overflow:hidden;isolation:isolate}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 35%;z-index:-2}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(10,10,10,.35) 0%,rgba(10,10,10,.25) 35%,rgba(10,10,10,.92) 82%,var(--ink) 100%)}
+.hero .wrap{width:100%;padding-top:120px;padding-bottom:clamp(40px,7vw,80px)}
+.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 14px;font:700 12px/1 var(--display);text-transform:uppercase;letter-spacing:.1em;margin-bottom:22px;background:rgba(10,10,10,.35)}
+.badge .dot{width:8px;height:8px;border-radius:50%;background:#fff}
+.hero h1{font-size:clamp(42px,8.4vw,112px);text-transform:uppercase;max-width:12ch}
+.hero .lede{margin:22px 0 32px}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px}
+.affiliates{display:flex;flex-wrap:wrap;align-items:center;gap:10px 26px;margin-top:40px;padding-top:24px;border-top:1px solid rgba(255,255,255,.18);font:700 13px/1 var(--display);text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.affiliates strong{color:#fff;font-size:16px;letter-spacing:.06em}
+
+/* Sections */
+section{padding:clamp(64px,9vw,120px) 0}
+.section-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:44px}
+.section-head .lede{margin:16px 0 0}
+.light{background:var(--paper);color:var(--ink)}
+.light .eyebrow{color:var(--muted-dark)}
+.light .lede{color:#3d3b37}
+
+/* Ways to train */
+.ways{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.way{position:relative;border-radius:var(--radius);overflow:hidden;min-height:440px;display:flex;align-items:flex-end;text-decoration:none;isolation:isolate;background:var(--ink-2)}
+.way img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;transition:transform .5s ease}
+.way:hover img{transform:scale(1.04)}
+.way::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(10,10,10,0) 30%,rgba(10,10,10,.92) 100%)}
+.way-body{padding:26px}
+.way-num{font:700 13px/1 var(--display);color:var(--muted);margin-bottom:12px}
+.way p{color:#d4d4d4;font-size:15px;margin:10px 0 16px}
+.way .more{font:700 13px/1 var(--display);text-transform:uppercase;letter-spacing:.06em}
+@media (max-width:900px){.ways{grid-template-columns:1fr}.way{min-height:340px}}
+
+/* Timetable */
+.timetable{display:grid;grid-template-columns:1fr 1.2fr;gap:clamp(28px,5vw,64px);align-items:start}
+.times{list-style:none;padding:0;margin:28px 0 30px;display:flex;flex-wrap:wrap;gap:8px}
+.times li{font:700 15px/1 var(--display);border:1px solid var(--line);border-radius:999px;padding:11px 16px}
+.embed{background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.45)}
+.embed-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--paper);color:var(--ink);font:700 13px/1 var(--display);text-transform:uppercase;letter-spacing:.06em}
+.embed-bar a{text-decoration:none;border-bottom:2px solid}
+.embed iframe{display:block;width:100%;height:440px;border:0}
+@media (max-width:900px){.timetable{grid-template-columns:1fr}}
+
+/* Memberships */
+.plans{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.plan{background:#fff;border:1px solid #dcd8cf;border-radius:var(--radius);padding:28px 24px;display:flex;flex-direction:column}
+.plan.featured{background:var(--ink);color:#fff;border-color:var(--ink);transform:translateY(-10px);box-shadow:0 24px 50px rgba(0,0,0,.25)}
+.plan-tag{align-self:flex-start;font:700 11px/1 var(--display);text-transform:uppercase;letter-spacing:.1em;border:1px solid currentColor;border-radius:999px;padding:6px 10px;margin-bottom:18px}
+.plan h3{font-size:20px}
+.price{font:800 44px/1 var(--display);letter-spacing:-.03em;margin:18px 0 4px}
+.price small{font-size:15px;font-weight:700;letter-spacing:0;color:var(--muted-dark)}
+.featured .price small{color:var(--muted)}
+.plan .note{font-size:14px;color:var(--muted-dark);margin-bottom:18px}
+.featured .note{color:var(--muted)}
+.plan ul{list-style:none;padding:0;margin:0 0 26px;font-size:15px;flex:1}
+.plan li{padding:9px 0 9px 26px;border-top:1px solid #e6e2d9;position:relative}
+.featured li{border-color:var(--line)}
+.plan li::before{content:"";position:absolute;left:2px;top:15px;width:12px;height:7px;border-left:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg)}
+.plan .btn{width:100%}
+.plans-foot{margin-top:28px;font-size:15px;color:#3d3b37}
+.plans-foot a{font-weight:700}
+@media (max-width:1080px){.plans{grid-template-columns:repeat(2,1fr)}.plan.featured{transform:none}}
+@media (max-width:620px){.plans{grid-template-columns:1fr}}
+
+/* Split feature */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,6vw,80px);align-items:center}
+.split-media{border-radius:var(--radius);overflow:hidden;aspect-ratio:4/5;background:var(--ink-2)}
+.split-media img{width:100%;height:100%;object-fit:cover}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin:30px 0 32px}
+.fact{background:var(--ink);padding:18px}
+.fact b{display:block;font:800 26px/1 var(--display);margin-bottom:6px}
+.fact span{font-size:13px;color:var(--muted)}
+.light .facts{background:#dcd8cf;border-color:#dcd8cf}
+.light .fact{background:var(--paper)}
+.light .fact span{color:var(--muted-dark)}
+@media (max-width:900px){.split{grid-template-columns:1fr}.split-media{aspect-ratio:4/3}.split.reverse .split-media{order:-1}}
+
+/* Recovery */
+.recovery{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px}
+.kit{border:1px solid var(--line);border-radius:var(--radius);padding:26px;background:var(--ink-2)}
+.kit-num{font:700 13px/1 var(--display);color:var(--muted);margin-bottom:28px}
+.kit p{color:#c7c7c7;font-size:15px;margin:12px 0 18px}
+.kit a{font:700 13px/1 var(--display);text-transform:uppercase;letter-spacing:.04em;color:#fff}
+@media (max-width:900px){.recovery{grid-template-columns:1fr}}
+
+/* Owners */
+.owners{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:18px;align-items:end}
+.owner{border-radius:var(--radius);overflow:hidden;aspect-ratio:3/4;background:var(--ink-2)}
+.owner img{width:100%;height:100%;object-fit:cover}
+.owner-copy{align-self:center;padding-right:20px}
+@media (max-width:900px){.owners{grid-template-columns:1fr 1fr}.owner-copy{grid-column:1/-1;padding:0}}
+
+/* Event */
+.event{display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center;border:1px solid var(--line);border-radius:var(--radius);padding:28px;background:var(--ink-2)}
+.date{width:96px;height:96px;border-radius:12px;background:#fff;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--display)}
+.date b{font-size:38px;line-height:1}
+.date span{font-size:12px;font-weight:700;letter-spacing:.12em}
+.event p{color:#c7c7c7;margin:8px 0 0}
+.event .actions{display:flex;flex-direction:column;gap:10px}
+@media (max-width:900px){.event{grid-template-columns:auto 1fr}.event .actions{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}}
+
+/* Visit */
+.visit{display:grid;grid-template-columns:1fr 1.3fr;gap:clamp(28px,5vw,64px);align-items:stretch}
+.info{list-style:none;padding:0;margin:28px 0 30px}
+.info li{display:grid;grid-template-columns:110px 1fr;gap:16px;padding:16px 0;border-top:1px solid #dcd8cf;font-size:16px}
+.info li b{font:700 13px/1.6 var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted-dark)}
+.tbc{display:inline-block;font:600 12px/1 var(--body);color:var(--muted-dark);border:1px dashed #a9a395;border-radius:6px;padding:4px 8px;margin-left:4px;vertical-align:1px}
+.map{border-radius:var(--radius);overflow:hidden;min-height:420px;background:var(--paper-2)}
+.map iframe{display:block;width:100%;height:100%;min-height:420px;border:0;filter:grayscale(1) contrast(1.05)}
+@media (max-width:900px){.visit{grid-template-columns:1fr}}
+
+/* Final CTA */
+.final{position:relative;overflow:hidden;isolation:isolate;text-align:center}
+.final img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+.final::after{content:"";position:absolute;inset:0;z-index:-1;background:rgba(10,10,10,.78)}
+.final h2{font-size:clamp(40px,7vw,92px)}
+.final .lede{margin:18px auto 32px}
+.final .cta-row{justify-content:center}
+
+/* Footer */
+footer{border-top:1px solid var(--line);padding:56px 0 calc(40px + env(safe-area-inset-bottom))}
+.foot{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px}
+.foot h4{font:700 12px/1 var(--display);text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 16px}
+.foot ul{list-style:none;padding:0;margin:0;font-size:15px}
+.foot li{margin-bottom:10px}
+.foot a{text-decoration:none;color:#d4d4d4}
+.foot a:hover{color:#fff}
+.legal{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+@media (max-width:900px){.foot{grid-template-columns:1fr 1fr}.foot>div:first-child{grid-column:1/-1}}
+
+/* Mobile sticky CTA */
+.mobile-cta{display:none}
+@media (max-width:700px){
+  body{padding-bottom:84px}
+  .mobile-cta{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:fixed;left:0;right:0;bottom:0;z-index:60;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(10,10,10,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+  .mobile-cta .btn{min-height:48px;padding:0 12px;font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="ribbon">Concept preview of a new <b>HYBRID HUB</b> website. Not the live site, and some details are still to be confirmed.</div>
+
+<header class="header" id="top">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Hybrid Hub home">HYBRID<br>HUB<small>EST. 2025 · NEWQUAY</small></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav"><span class="bars" aria-hidden="true"></span>Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <a href="#train">Train</a>
+      <a href="#timetable">Timetable</a>
+      <a href="#memberships">Memberships</a>
+      <a href="#start">Beginners</a>
+      <a href="#recovery">Recovery</a>
+      <a href="#visit">Visit</a>
+      <a class="btn btn-solid" href="#memberships">Join the Hub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="hero" aria-labelledby="hero-title" style="padding:0">
+  <img src="https://static.wixstatic.com/media/144ad3_878ee81971934ccf8971801f4ae78074~mv2.jpg/v1/fill/w_2000,h_1300,al_c,q_80,enc_auto/hybrid-hub-community.jpg"
+       srcset="https://static.wixstatic.com/media/144ad3_878ee81971934ccf8971801f4ae78074~mv2.jpg/v1/fill/w_900,h_1200,al_c,q_80,enc_auto/hybrid-hub-community.jpg 900w,
+               https://static.wixstatic.com/media/144ad3_878ee81971934ccf8971801f4ae78074~mv2.jpg/v1/fill/w_2000,h_1300,al_c,q_80,enc_auto/hybrid-hub-community.jpg 2000w"
+       sizes="100vw" alt="Hybrid Hub members and coaches together in the gym at Prow Park" fetchpriority="high">
+  <div class="wrap">
+    <div class="badge"><span class="dot"></span>Prow Park, Newquay</div>
+    <h1 id="hero-title">Newquay's home of hybrid training</h1>
+    <p class="lede">A premium open gym, coached hybrid classes and a community that turns up. Whether you're racing HYROX or starting from scratch, there's a place for you here.</p>
+    <div class="cta-row">
+      <a class="btn btn-solid" href="#timetable">Book a drop-in class <span class="arrow">→</span></a>
+      <a class="btn btn-ghost" href="#memberships">See memberships</a>
+    </div>
+    <div class="affiliates" aria-label="Affiliations">
+      <span>Official affiliate</span><strong>HYROX</strong><strong>ATHX</strong><strong>KELTX</strong>
+    </div>
+  </div>
+</section>
+
+<section id="train" aria-labelledby="train-title">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Three ways to train</div>
+        <h2 id="train-title">Find your way in</h2>
+      </div>
+      <p class="lede" style="max-width:44ch">Strength, conditioning, HYROX, ATHX, KELTX and open gym training under one roof.</p>
+    </div>
+    <div class="ways">
+      <a class="way" href="#timetable">
+        <img loading="lazy" src="https://static.wixstatic.com/media/144ad3_7910e51629fe4bf88f786d7e8e180833~mv2.jpg/v1/fill/w_800,h_1000,al_c,q_80,enc_auto/classes.jpg" alt="The Hybrid Hub class zone with its branded wall">
+        <div class="way-body">
+          <div class="way-num">01</div>
+          <h3>Coached classes</h3>
+          <p>Structured hybrid programming led by expert coaches, from 6am to evening sessions.</p>
+          <span class="more">See the timetable →</span>
+        </div>
+      </a>
+      <a class="way" href="#memberships">
+        <img loading="lazy" src="https://static.wixstatic.com/media/144ad3_e311e4cc0512436e938477010f4c2099~mv2.jpg/v1/fill/w_800,h_1000,al_c,q_80,enc_auto/open-gym.jpg" alt="Racks, plates and strength equipment in the open gym">
+        <div class="way-body">
+          <div class="way-num">02</div>
+          <h3>Premium open gym</h3>
+          <p>Top-tier strength and conditioning kit for training on your own schedule.</p>
+          <span class="more">Gym memberships →</span>
+        </div>
+      </a>
+      <a class="way" href="#start">
+        <img loading="lazy" src="https://static.wixstatic.com/media/144ad3_97b1be3530a7422b923f7ec9c6b8f22a~mv2.jpg/v1/fill/w_800,h_1000,al_c,q_80,enc_auto/start.jpg" alt="A Hybrid Hub branded lifting platform">
+        <div class="way-body">
+          <div class="way-num">03</div>
+          <h3>Hybrid Hub START</h3>
+          <p>Small groups of 4 to 6 for anyone who wants more support while they find their feet.</p>
+          <span class="more">New to training →</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section id="timetable" aria-labelledby="tt-title" style="background:var(--ink-2)">
+  <div class="wrap timetable">
+    <div>
+      <div class="eyebrow">Live timetable</div>
+      <h2 id="tt-title">A class for everyone</h2>
+      <p class="lede" style="margin-top:18px">Book a drop-in straight from the timetable. Members book through the WodBoard app as usual.</p>
+      <ul class="times" aria-label="Regular class times">
+        <li>06:00</li><li>07:00</li><li>09:15</li><li>17:15</li><li>18:15</li>
+      </ul>
+      <div class="cta-row">
+        <a class="btn btn-solid" href="https://www.wodboard.com/locations/855/timetable/e0ef59abf3" target="_blank" rel="noopener">Open full timetable <span class="arrow">→</span></a>
+      </div>
+    </div>
+    <div class="embed">
+      <div class="embed-bar"><span>This week at the Hub</span><a href="https://www.wodboard.com/locations/855/timetable/e0ef59abf3" target="_blank" rel="noopener">Full screen</a></div>
+      <iframe title="Hybrid Hub class timetable" loading="lazy" src="https://www.wodboard.com/locations/855/timetable/e0ef59abf3?adi=1"></iframe>
+    </div>
+  </div>
+</section>
+
+<section id="memberships" class="light" aria-labelledby="plans-title">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Memberships</div>
+        <h2 id="plans-title">Pick your plan</h2>
+        <p class="lede">Simple monthly memberships. Every class membership includes full gym access.</p>
+      </div>
+    </div>
+    <div class="plans">
+      <article class="plan featured">
+        <span class="plan-tag">Most popular</span>
+        <h3>Full membership</h3>
+        <div class="price">£92.50<small> /month</small></div>
+        <div class="note">Unlimited coached classes</div>
+        <ul>
+          <li>Every class on the timetable</li>
+          <li>Full open gym access</li>
+          <li>HYROX, ATHX and KELTX training</li>
+          <li>Member events and community</li>
+        </ul>
+        <a class="btn btn-solid" href="https://www.hybridhubnqy.co.uk/applytojointhehub">Apply to join</a>
+      </article>
+      <article class="plan">
+        <span class="plan-tag">Flexible</span>
+        <h3>Hybrid 2X</h3>
+        <div class="price">£72.50<small> /month</small></div>
+        <div class="note">2 coached classes a week</div>
+        <ul>
+          <li>2 classes every week</li>
+          <li>Full open gym access</li>
+          <li>Member events and community</li>
+        </ul>
+        <a class="btn btn-dark" href="https://www.hybridhubnqy.co.uk/applytojointhehub">Apply to join</a>
+      </article>
+      <article class="plan">
+        <span class="plan-tag">Beginners</span>
+        <h3>Hybrid Hub START</h3>
+        <div class="price" style="font-size:30px">Small group</div>
+        <div class="note">Groups of 4 to 6 people</div>
+        <ul>
+          <li>2 coached sessions a week</li>
+          <li>Full gym access included</li>
+          <li>Mon, Wed or Fri at 10:30 or 12:00</li>
+        </ul>
+        <a class="btn btn-dark" href="#start">Register interest</a>
+      </article>
+      <article class="plan">
+        <span class="plan-tag">Self-led</span>
+        <h3>Gym only &amp; HYROX</h3>
+        <div class="price" style="font-size:30px">Open gym</div>
+        <div class="note">Train on your own schedule</div>
+        <ul>
+          <li>Premium open gym</li>
+          <li>HYROX membership option</li>
+          <li>Sign up and pay online</li>
+        </ul>
+        <a class="btn btn-dark" href="https://www.wodboard.com/locations/855/signup/68791784bc" target="_blank" rel="noopener">Join online</a>
+      </article>
+    </div>
+    <p class="plans-foot">Just visiting Newquay? <a href="#timetable">Book a drop-in class</a> from the timetable, no membership needed.</p>
+  </div>
+</section>
+
+<section id="start" aria-labelledby="start-title">
+  <div class="wrap split reverse">
+    <div>
+      <div class="eyebrow">New to training</div>
+      <h2 id="start-title">No experience needed. Just START.</h2>
+      <p class="lede" style="margin-top:20px">Hybrid Hub START is for anyone who wants to train here but would like a bit more support and a smaller group while they build confidence.</p>
+      <p style="color:#c7c7c7">You follow the same Hybrid Hub programming as our regular classes, delivered in a small group so you get more individual coaching and guidance in every session.</p>
+      <div class="facts">
+        <div class="fact"><b>4–6</b><span>people per group</span></div>
+        <div class="fact"><b>2×</b><span>coached sessions a week</span></div>
+        <div class="fact"><b>+Gym</b><span>full gym access included</span></div>
+      </div>
+      <a class="btn btn-solid" href="https://www.hybridhubnqy.co.uk/registerforstart">Register your interest <span class="arrow">→</span></a>
+    </div>
+    <div class="split-media">
+      <img loading="lazy" src="https://static.wixstatic.com/media/144ad3_b3718773c78b4c3ebd3196dfe909d654~mv2.jpg/v1/fill/w_1000,h_1250,al_c,q_80,enc_auto/start-group.jpg" alt="Rowers, bikes and conditioning kit at Hybrid Hub">
+    </div>
+  </div>
+</section>
+
+<section id="recovery" aria-labelledby="rec-title" style="background:var(--ink-2)">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Recovery zone · powered by Hyperice</div>
+        <h2 id="rec-title">Train. Recover. Perform.</h2>
+        <p class="lede">Professional-grade recovery tech, ready after a hard session or before the next one. Book a slot in the WodBoard shop.</p>
+      </div>
+      <a class="btn btn-ghost" href="https://www.hybridhubnqy.co.uk/hyperice">Book a recovery slot</a>
+    </div>
+    <div class="recovery">
+      <article class="kit">
+        <div class="kit-num">01</div>
+        <h3>Normatec</h3>
+        <p>Dynamic air compression to support circulation and help your legs feel fresh after training.</p>
+        <a href="https://www.youtube.com/watch?v=f9cE-mGir2E" target="_blank" rel="noopener">How to use it →</a>
+      </article>
+      <article class="kit">
+        <div class="kit-num">02</div>
+        <h3>Hyperice X Knee</h3>
+        <p>Targeted hot and cold contrast therapy to ease soreness and aid recovery around the knee.</p>
+        <a href="https://www.youtube.com/watch?v=Xpd1aiOsRjI" target="_blank" rel="noopener">How to use it →</a>
+      </article>
+      <article class="kit">
+        <div class="kit-num">03</div>
+        <h3>Vyper</h3>
+        <p>A vibrating foam roller to activate muscles, release tension and improve mobility.</p>
+        <a href="https://www.youtube.com/watch?v=ZflSQZuUEMs" target="_blank" rel="noopener">How to use it →</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="owners" aria-labelledby="own-title">
+  <div class="wrap owners">
+    <div class="owner-copy">
+      <div class="eyebrow">Meet your co-owners</div>
+      <h2 id="own-title">Built by people who train</h2>
+      <p class="lede" style="margin-top:20px">Luke Watson-Read and Josh Mares opened Hybrid Hub in 2025 to give Newquay a performance-focused gym built around community, training and progress.</p>
+      <p class="mono" style="font-weight:700;font-size:14px;color:var(--muted);text-transform:uppercase">Luke Watson-Read &amp; Josh Mares</p>
+    </div>
+    <div class="owner"><img loading="lazy" src="https://static.wixstatic.com/media/144ad3_8aae1e5677a543139714880b6aaa89be~mv2.jpg/v1/fill/w_700,h_930,al_c,q_80,enc_auto/co-owner.jpg" alt="Hybrid Hub co-owner in front of the Hybrid Hub wall"></div>
+    <div class="owner"><img loading="lazy" src="https://static.wixstatic.com/media/144ad3_4eec407b4a3d43f093a8c304564c5f4c~mv2.jpg/v1/fill/w_700,h_930,al_c,q_80,enc_auto/co-owner.jpg" alt="Hybrid Hub co-owner with arms folded in front of the Hybrid Hub wall"></div>
+  </div>
+</section>
+
+<section id="events" aria-labelledby="ev-title" style="padding-top:0">
+  <div class="wrap">
+    <div class="eyebrow">What's on</div>
+    <div class="event">
+      <div class="date" aria-hidden="true"><b>28</b><span>NOV</span></div>
+      <div>
+        <h3 id="ev-title">1st Birthday &amp; Christmas Ball</h3>
+        <p>Saturday 28 November, 7pm at The Nici Hotel, Newquay. Celebrate one year of Hybrid Hub with the whole community.</p>
+      </div>
+      <div class="actions">
+        <a class="btn btn-solid" href="https://www.wodboard.com/locations/855/workshops/16872/7540b96a" target="_blank" rel="noopener">Book your spot</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="visit" class="light" aria-labelledby="visit-title">
+  <div class="wrap visit">
+    <div>
+      <div class="eyebrow">Visit us</div>
+      <h2 id="visit-title">Find the Hub</h2>
+      <ul class="info">
+        <li><b>Address</b><span>Hybrid Hub, Prow Park, Newquay, Cornwall <span class="tbc">unit no. TBC</span></span></li>
+        <li><b>Classes</b><span>06:00, 07:00, 09:15, 17:15 and 18:15</span></li>
+        <li><b>Open gym</b><span>Opening hours <span class="tbc">to confirm</span></span></li>
+        <li><b>Contact</b><span>Phone and email <span class="tbc">to confirm</span></span></li>
+        <li><b>Parking</b><span>On site at Prow Park <span class="tbc">to confirm</span></span></li>
+      </ul>
+      <a class="btn btn-dark" href="https://www.google.com/maps/search/?api=1&amp;query=Prow+Park+Newquay" target="_blank" rel="noopener">Get directions <span class="arrow">→</span></a>
+    </div>
+    <div class="map">
+      <iframe title="Map of Prow Park, Newquay" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Prow+Park,+Newquay&amp;output=embed"></iframe>
+    </div>
+  </div>
+</section>
+
+<section class="final" aria-labelledby="final-title">
+  <img loading="lazy" src="https://static.wixstatic.com/media/144ad3_9e5c6d6f930944898ee56ccfa60eb49d~mv2.jpg/v1/fill/w_1800,h_1000,al_c,q_75,enc_auto/gym.jpg" alt="">
+  <div class="wrap">
+    <div class="eyebrow" style="justify-content:center">Ready to level up?</div>
+    <h2 id="final-title">Your first session starts here</h2>
+    <p class="lede">Book a drop-in, apply for a class membership or join the open gym today.</p>
+    <div class="cta-row">
+      <a class="btn btn-solid" href="#memberships">Join the Hub <span class="arrow">→</span></a>
+      <a class="btn btn-ghost" href="#timetable">Book a drop-in</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a class="logo" href="#top" aria-label="Back to top">HYBRID<br>HUB<small>EST. 2025 · NEWQUAY</small></a>
+        <p style="color:var(--muted);font-size:15px;margin-top:18px;max-width:34ch">Cornwall's premium hybrid training facility. Proud affiliate of HYROX, ATHX and KELTX.</p>
+      </div>
+      <div>
+        <h4>Train</h4>
+        <ul><li><a href="#train">Classes</a></li><li><a href="#timetable">Timetable</a></li><li><a href="#start">Beginners (START)</a></li><li><a href="#recovery">Recovery zone</a></li></ul>
+      </div>
+      <div>
+        <h4>Join</h4>
+        <ul><li><a href="#memberships">Memberships</a></li><li><a href="#timetable">Drop-in classes</a></li><li><a href="#events">Events</a></li></ul>
+      </div>
+      <div>
+        <h4>Visit</h4>
+        <ul><li>Prow Park, Newquay</li><li><a href="#visit">Directions</a></li><li>Instagram <span class="tbc" style="border-color:#444;color:var(--muted)">TBC</span></li></ul>
+      </div>
+    </div>
+    <div class="legal"><span>© 2026 Hybrid Hub NQY</span><span>Privacy · Terms · Refunds</span></div>
+  </div>
+</footer>
+
+<div class="mobile-cta" aria-label="Quick actions">
+  <a class="btn btn-ghost" href="#timetable">Book a class</a>
+  <a class="btn btn-solid" href="#memberships">Join</a>
+</div>
+
+<script>
+(function(){
+  var header=document.querySelector('.header'),toggle=document.querySelector('.menu-toggle');
+  toggle.addEventListener('click',function(){var open=header.classList.toggle('open');toggle.setAttribute('aria-expanded',open)});
+  document.querySelectorAll('.nav a').forEach(function(a){a.addEventListener('click',function(){header.classList.remove('open');toggle.setAttribute('aria-expanded','false')})});
+})();
+</script>
+</body>
+</html>
