@@ -13,7 +13,7 @@
 /* Owner edit mode. Demo only: edits are kept in this browser's localStorage, not on a server. */
 (function(){
   var KEY='hh-preview-edits-v2:'+((location.pathname.split('/').pop()||'index.html').replace(/^$/,'index.html'));
-  var TEXT='main h1,main h2,main h3,main p,main .link,main .btn,main .amount,main .details span,main .details b';
+  var TEXT='main h1,main h2,main h3,main p,main li,main .tag,main .link,main .btn,main .amount,main .details span,main .details b';
   var store={};
   try{store=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){store={}}
   store.t=store.t||{};store.i=store.i||{};
