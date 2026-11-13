@@ -7,94 +7,64 @@
 <script>/* Relative links need a trailing slash on the folder address (hybridone.co.uk drops it). */(function(){var p=location.pathname;if(!/\/$/.test(p)&&!/\.html$/.test(p))document.write('<base href="'+p+'/">')})()</script>
 <title>Visit | Hybrid Hub Newquay</title>
 <meta name="description" content="Find Hybrid Hub at Prow Park, Newquay, Cornwall.">
-<meta name="theme-color" content="#0a0a0a">
+<meta name="theme-color" content="#f5f4f0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://static.wixstatic.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css">
 <!-- Concept preview for Hybrid Hub NQY. Not linked from HybridOne and not indexed. Photos load from Hybrid Hub's own Wix media library. -->
 </head>
 <body>
-
-<div class="ribbon">Concept preview of a new <b>HYBRID HUB</b> website, not the live site. <button type="button" class="draft-toggle" aria-pressed="false">Highlight text to check</button><span class="draft-key"> Yellow = written for the concept, to check with the owners.</span></div>
-
-<header class="header" id="top">
+<div class="notice">Concept preview of a new Hybrid Hub website. Not the live site. <button class="edit-launch" type="button">Edit site</button></div>
+<header class="header">
   <div class="wrap">
-    <a class="logo" href="index.html" aria-label="Hybrid Hub home">HYBRID<br>HUB<small>EST. 2025 · NEWQUAY</small></a>
-    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav"><span class="bars" aria-hidden="true"></span>Menu</button>
-    <nav class="nav" id="site-nav" aria-label="Main">
-      <a href="memberships.html">Memberships</a><a href="classes.html">Classes</a><a href="start.html">START</a><a href="recovery.html">Recovery</a><a href="about.html">About</a><a href="visit.html" aria-current="page">Visit</a>
-      <a class="btn btn-solid" href="memberships.html">Join the Hub</a>
-    </nav>
+    <a class="logo" href="index.html" aria-label="Hybrid Hub home">HYBRID<br>HUB</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main"><a href="train.html">Train</a><a href="memberships.html">Memberships</a><a href="visit.html" aria-current="page">Visit</a><a class="join" href="memberships.html">Join</a></nav>
   </div>
 </header>
-
 <main>
-<section class="light" aria-labelledby="visit-title">
-  <div class="wrap visit">
+
+<section aria-labelledby="t">
+  <div class="wrap row">
     <div>
-      <div class="crumb" style="color:var(--muted-dark)"><a href="index.html">Home</a> / Visit</div>
-      <h1 id="visit-title" style="font-size:clamp(40px,6vw,72px);text-transform:uppercase">Find the Hub</h1>
-      <ul class="info">
-        <li><b>Address</b><span>Hybrid Hub, Prow Park, Newquay, Cornwall <span class="tbc">unit no. to confirm</span></span></li>
-        <li><b>Classes</b><span>06:00, 07:00, 09:15, 17:15 and 18:15</span></li>
-        <li><b>Open gym</b><span>Opening hours <span class="tbc">to confirm</span></span></li>
-        <li><b>Contact</b><span>Phone and email <span class="tbc">to confirm</span></span></li>
-        <li><b>Parking</b><span>Parking details <span class="tbc">to confirm</span></span></li>
-        <li><b>Social</b><span>Instagram and Facebook <span class="tbc">to confirm</span></span></li>
+      <h1 id="t">Visit</h1>
+      <ul class="details">
+        <li><b>Address</b><span>Prow Park, Newquay, Cornwall</span></li>
+        <li><b>Classes</b><span>06:00, 07:00, 09:15, 17:15, 18:15</span></li>
+        <li><b>Hours</b><span class="tbc" data-draft>To confirm</span></li>
+        <li><b>Contact</b><span class="tbc" data-draft>To confirm</span></li>
       </ul>
-      <a class="btn btn-dark" href="https://www.google.com/maps/search/?api=1&amp;query=Prow+Park+Newquay" target="_blank" rel="noopener">Get directions <span class="arrow">→</span></a>
+      <p style="margin-top:28px"><a class="link" href="https://www.google.com/maps/search/?api=1&amp;query=Prow+Park+Newquay" target="_blank" rel="noopener">Get directions</a></p>
     </div>
     <div class="map"><iframe title="Map of Prow Park, Newquay" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Prow+Park,+Newquay&amp;output=embed"></iframe></div>
   </div>
 </section>
-<section class="final" aria-labelledby="final-title">
-  <img loading="lazy" src="https://static.wixstatic.com/media/144ad3_9e5c6d6f930944898ee56ccfa60eb49d~mv2.jpg/v1/fill/w_1800,h_1000,al_c,q_75,enc_auto/hybrid-hub.jpg" alt="">
-  <div class="wrap">
-    <div class="eyebrow" style="justify-content:center">Ready to level up?</div>
-    <h2 id="final-title" data-draft>Your first session starts here</h2>
-    <p class="lede" data-draft>Book a drop-in, apply for a class membership or join the open gym today.</p>
-    <div class="cta-row">
-      <a class="btn btn-solid" href="memberships.html">Join the Hub <span class="arrow">→</span></a>
-      <a class="btn btn-ghost" href="classes.html">Book a drop-in</a>
+<section style="padding-top:0" aria-labelledby="o">
+  <div class="wrap row flip">
+    <div class="owners">
+      <div class="photo"><img loading="lazy" src="https://static.wixstatic.com/media/144ad3_8aae1e5677a543139714880b6aaa89be~mv2.jpg/v1/fill/w_700,h_875,al_c,q_80,enc_auto/hybrid-hub.jpg" alt="Hybrid Hub co-owner"></div>
+      <div class="photo"><img loading="lazy" src="https://static.wixstatic.com/media/144ad3_4eec407b4a3d43f093a8c304564c5f4c~mv2.jpg/v1/fill/w_700,h_875,al_c,q_80,enc_auto/hybrid-hub.jpg" alt="Hybrid Hub co-owner"></div>
     </div>
+    <div><h2 id="o">Meet your co-owners</h2><p>Luke Watson-Read and Josh Mares.</p><p>A performance-focused gym, built around community, training and progress.</p></div>
   </div>
 </section>
 </main>
-
 <footer>
   <div class="wrap">
-    <div class="foot">
-      <div>
-        <a class="logo" href="index.html" aria-label="Hybrid Hub home">HYBRID<br>HUB<small>EST. 2025 · NEWQUAY</small></a>
-        <p style="color:var(--muted);font-size:15px;margin-top:18px;max-width:34ch">Cornwall's newest premium training facility. Proudly affiliated with HYROX, KELTX and ATHX.</p>
-      </div>
-      <div>
-        <h4>Train</h4>
-        <ul><li><a href="classes.html">Classes &amp; timetable</a></li><li><a href="start.html">START (beginners)</a></li><li><a href="recovery.html">Recovery zone</a></li></ul>
-      </div>
-      <div>
-        <h4>Join</h4>
-        <ul><li><a href="memberships.html">Memberships</a></li><li><a href="classes.html">Drop-in classes</a></li><li><a href="about.html">Events</a></li></ul>
-      </div>
-      <div>
-        <h4>Visit</h4>
-        <ul><li>Prow Park, Newquay</li><li><a href="visit.html">Find us</a></li><li><a href="about.html">About the Hub</a></li></ul>
-      </div>
+    <div>
+      <a class="logo" href="index.html">HYBRID<br>HUB</a>
+      Prow Park, Newquay · Est. 2025
     </div>
-    <div class="legal"><span>© 2026 Hybrid Hub NQY</span><span>Privacy · Terms · Refunds</span></div>
+    <nav aria-label="Footer">
+      <a href="train.html">Train</a><a href="memberships.html">Memberships</a><a href="visit.html">Visit</a>
+      <button type="button" class="draft-toggle" aria-pressed="false">Highlight text to check</button>
+    </nav>
   </div>
 </footer>
-
-<div class="mobile-cta" aria-label="Quick actions">
-  <a class="btn btn-ghost" href="classes.html">Book a class</a>
-  <a class="btn btn-solid" href="memberships.html">Join</a>
-</div>
-
-<button class="edit-launch" type="button" aria-label="Edit this page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit site</button>
 <div class="edit-bar" role="region" aria-label="Edit mode">
-  <p><b>Edit mode</b>Click any text to change it, or a photo's "Change photo" button. <span class="status">Demo: changes are saved in this browser only.</span></p>
+  <p><b>Edit mode</b>Click any text to change it, or "Change photo" on a photo. <span class="status">Demo: changes are saved in this browser only.</span></p>
   <div class="actions">
     <button type="button" data-act="reset">Reset page</button>
     <button type="button" class="primary" data-act="done">Save &amp; finish</button>
