@@ -44,10 +44,10 @@ jobs:
             select count(*) into v_triggers from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace tn on tn.oid=c.relnamespace join pg_proc p on p.oid=t.tgfoid join pg_namespace fn on fn.oid=p.pronamespace where not t.tgisinternal and (tn.nspname in ('public','private') or fn.nspname in ('public','private'));
             select count(*) into v_sequences from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in ('public','private') and c.relkind='S';
             raise notice 'schema counts: tables=%, functions=%, policies=%, triggers=%, sequences=%',v_tables,v_functions,v_policies,v_triggers,v_sequences;
-            if v_tables<>104 then raise exception 'Expected 104 app tables, got %',v_tables; end if;
-            if v_functions<>189 then raise exception 'Expected 189 committed app functions, got %',v_functions; end if;
-            if v_policies<>239 then raise exception 'Expected 239 app/storage policies, got %',v_policies; end if;
-            if v_triggers<>44 then raise exception 'Expected 44 app-related triggers, got %',v_triggers; end if;
+            if v_tables<>105 then raise exception 'Expected 105 app tables, got %',v_tables; end if;
+            if v_functions<>190 then raise exception 'Expected 190 committed app functions, got %',v_functions; end if;
+            if v_policies<>246 then raise exception 'Expected 246 app/storage policies, got %',v_policies; end if;
+            if v_triggers<>45 then raise exception 'Expected 45 app-related triggers, got %',v_triggers; end if;
             if v_sequences<>2 then raise exception 'Expected 2 app sequence, got %',v_sequences; end if;
             if exists(select 1 from public.gyms) then raise exception 'Baseline must not contain live gym rows'; end if;
             if exists(select 1 from public.profiles) then raise exception 'Baseline must not contain live profile rows'; end if;
@@ -78,6 +78,8 @@ jobs:
           # member details: edit, the owner's visibility choice, and members reading nothing about each other; then a guard that a plain member can run only member functions
           psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/member_details_edit_and_privacy.sql
           psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/member_cannot_use_admin_functions.sql
+          # website content: visitors read, only that gym's owners and admins change it; rolls itself back
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/website_content_access.sql
       - name: Membership rules verification, persona tests and rollback
         shell: bash
         run: |

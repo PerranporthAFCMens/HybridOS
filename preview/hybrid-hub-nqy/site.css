@@ -128,22 +128,44 @@ footer a:hover{color:#fff}
 /* Highlight text to check */
 body.show-drafts [data-draft]{background:rgba(250,204,21,.45);box-shadow:0 0 0 3px rgba(250,204,21,.45);border-radius:2px}
 
-/* Demo edit mode */
-.edit-launch{background:none;border:0;padding:0 0 0 6px;color:#fff;font:600 12px/1.4 var(--body);text-decoration:underline;cursor:pointer}
-.edit-launch svg{display:none}
-.edit-bar{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:80;width:min(720px,calc(100% - 32px));background:var(--ink);color:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:14px 16px;align-items:center;gap:14px;flex-wrap:wrap}
+/* Owner editor */
+html.hh-wait main{opacity:0;animation:hh-show 0s 1.5s forwards}
+@keyframes hh-show{to{opacity:1}}
+main{transition:opacity .2s ease}
+.owner-login{background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0}
+.owner-login:hover{color:#fff}
+.edit-bar{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:80;width:min(760px,calc(100% - 32px));background:var(--ink);color:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:14px 16px;align-items:center;gap:14px;flex-wrap:wrap}
 .edit-bar p{margin:0;flex:1;min-width:220px;font-size:14px;line-height:1.45}
 .edit-bar p b{display:block}
 .edit-bar .status{color:#a8a59e;font-size:12px}
+.edit-bar.dirty .status{color:#fde68a}
 .edit-bar .actions{gap:8px}
-.edit-bar button{min-height:38px;padding:0 16px;border-radius:999px;font:600 13px/1 var(--body);cursor:pointer;border:1.5px solid #fff;background:transparent;color:#fff}
+.edit-bar button,.ed-login button.primary{min-height:38px;padding:0 16px;border-radius:999px;font:600 13px/1 var(--body);cursor:pointer;border:1.5px solid #fff;background:transparent;color:#fff}
 .edit-bar button.primary{background:#fff;color:var(--ink)}
+.edit-bar button:disabled{opacity:.5;cursor:default}
 body.editing .edit-bar{display:flex}
-body.editing .edit-launch{display:none}
 body.editing{padding-bottom:120px}
 body.editing [data-ed]{outline:1px dashed rgba(127,127,127,.7);outline-offset:3px;cursor:text}
 body.editing [data-ed]:hover,body.editing [data-ed]:focus{outline:2px solid #3b82f6}
 .img-swap{display:none;position:absolute;z-index:5;top:12px;right:12px;min-height:34px;padding:0 12px;border-radius:999px;border:0;background:#3b82f6;color:#fff;font:600 12px/1 var(--body);cursor:pointer}
 body.editing .img-swap{display:inline-flex;align-items:center}
-@media print{.edit-launch,.edit-bar,.img-swap{display:none!important}}
+.ed-tools{display:none;position:fixed;z-index:90;gap:2px;background:var(--ink);border-radius:8px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.ed-tools.on{display:flex}
+.ed-tools button{min-width:34px;height:32px;padding:0 9px;border:0;border-radius:5px;background:transparent;color:#fff;font:500 13px/1 var(--body);cursor:pointer}
+.ed-tools button:hover{background:#2a2a2a}
+.ed-dialog{border:0;border-radius:12px;padding:0;width:min(400px,calc(100% - 32px));box-shadow:0 30px 80px rgba(0,0,0,.35);color:var(--ink)}
+.ed-dialog::backdrop{background:rgba(11,11,11,.55)}
+.ed-login{position:relative;display:flex;flex-direction:column;gap:14px;padding:32px 28px 24px}
+.ed-login h2{font-size:24px}
+.ed-login .ed-sub{margin:0;color:var(--muted);font-size:14px}
+.ed-login .ed-sub a{color:var(--muted)}
+.ed-login label{display:flex;flex-direction:column;gap:6px;font:600 13px/1 var(--body)}
+.ed-login input{font:400 16px/1.2 var(--body);padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.ed-login input:focus{outline:2px solid var(--ink);outline-offset:0}
+.ed-login button.primary{min-height:48px;font-size:15px;background:var(--ink);border-color:var(--ink);color:#fff}
+.ed-login button.primary:disabled{opacity:.6}
+.ed-msg{margin:0;color:#b42318;font-size:14px}
+.ed-msg:empty{display:none}
+.ed-close{position:absolute;top:10px;right:12px;background:none;border:0;font:400 26px/1 var(--body);color:var(--muted);cursor:pointer;padding:4px 8px}
+@media print{.edit-bar,.img-swap,.ed-tools{display:none!important}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}

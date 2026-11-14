@@ -10,77 +10,82 @@
   var start=/[?&]check=1/.test(location.search);try{start=start||sessionStorage.getItem(KEY)==='1'}catch(e){}
   if(start)set(true);
 })();
-/* Owner edit mode. Demo only: edits are kept in this browser's localStorage, not on a server. */
+/* Published owner edits. Every visitor loads the page's saved text and photos from HybridOne (Supabase).
+   The owners edit them after "Owner login" (editor.js, loaded only when needed). */
 (function(){
-  var KEY='hh-preview-edits-v2:'+((location.pathname.split('/').pop()||'index.html').replace(/^$/,'index.html'));
-  var TEXT='main h1,main h2,main h3,main p,main li,main .tag,main .link,main .btn,main .amount,main .details span,main .details b';
-  var store={};
-  try{store=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){store={}}
-  store.t=store.t||{};store.i=store.i||{};
-  var texts=[];
-  document.querySelectorAll(TEXT).forEach(function(el){
-    if(el.closest('[data-ed]'))return;
-    if(el.querySelector('iframe,img'))return;
-    el.setAttribute('data-ed',texts.length);texts.push(el);
+  var HH=window.HH={
+    url:'https://mzgnhmeydhhpzgxlgudh.supabase.co',
+    key:'sb_publishable_sxWDz2XL-BB5oXbPOR-1zg_XROZYWdD', // public key; the database rules are the protection
+    gym:'242f57c2-6e37-4977-b3c5-1c87de7d0b98',           // Hybrid Hub
+    page:(location.pathname.split('/').pop()||'index').replace(/\.html$/,'')||'index'
+  };
+  if(!/^[a-z0-9-]{1,40}$/.test(HH.page))HH.page='index';
+  var OK_TAGS={B:1,STRONG:1,I:1,EM:1,U:1,BR:1,SMALL:1,A:1};
+  var OK_HREF=/^(https?:|mailto:|tel:|#|[a-z0-9._-]+\.html(#[a-z0-9_-]*)?$)/i;
+  /* Only plain formatting survives: bold, italic, small, line breaks and links. */
+  HH.clean=function(html){
+    var t=document.createElement('template');t.innerHTML=String(html||'');
+    (function walk(node){
+      Array.prototype.slice.call(node.childNodes).forEach(function(n){
+        if(n.nodeType===3)return;
+        if(n.nodeType!==1){n.remove();return}
+        walk(n);
+        if(!OK_TAGS[n.tagName]){
+          if(/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|TEMPLATE)$/.test(n.tagName)){n.remove();return}
+          var block=/^(DIV|P|LI)$/.test(n.tagName)&&n.previousSibling;
+          if(block)n.parentNode.insertBefore(document.createElement('br'),n);
+          while(n.firstChild)n.parentNode.insertBefore(n.firstChild,n);
+          n.remove();return;
+        }
+        var href=n.getAttribute('href');
+        Array.prototype.slice.call(n.attributes).forEach(function(a){n.removeAttribute(a.name)});
+        if(n.tagName==='A'&&href&&OK_HREF.test(href.trim()))n.setAttribute('href',href.trim());
+      });
+    })(t.content);
+    return t.innerHTML;
+  };
+  HH.norm=function(s){return String(s||'').replace(/\s+/g,' ').trim()};
+  /* Editable slots: numbered in page order; each remembers its built-in wording so a saved edit
+     is only applied to the same text it was made on (a later layout change can't misplace it). */
+  var SEL='main h1,main h2,main h3,main p,main li,main .tag,main .link,main .btn,main .amount,main .details span,main .details b';
+  HH.texts=[];HH.imgs=[];
+  document.querySelectorAll(SEL).forEach(function(el){
+    if(el.closest('[data-ed]')||el.querySelector('iframe,img'))return;
+    el.setAttribute('data-ed',HH.texts.length);
+    HH.texts.push({el:el,o:HH.norm(el.textContent),html:el.innerHTML});
   });
-  var imgs=Array.prototype.slice.call(document.querySelectorAll('main img'));
-  function applySaved(){
-    texts.forEach(function(el,i){if(store.t[i]!=null)el.innerHTML=store.t[i]});
-    imgs.forEach(function(img,i){if(store.i[i]){img.removeAttribute('srcset');img.src=store.i[i]}});
+  document.querySelectorAll('main img').forEach(function(img){HH.imgs.push({el:img,o:img.getAttribute('src'),srcset:img.getAttribute('srcset')})});
+  HH.apply=function(c){
+    c=c||{};var t=c.t||{},im=c.i||{};
+    HH.texts.forEach(function(s,i){var e=t[i];s.el.innerHTML=(e&&e.o===s.o&&typeof e.h==='string')?HH.clean(e.h):s.html});
+    HH.imgs.forEach(function(s,i){var e=im[i];
+      if(e&&e.o===s.o&&/^https:\/\//.test(e.u||'')){s.el.removeAttribute('srcset');s.el.src=e.u}
+      else if(s.el.getAttribute('src')!==s.o){s.el.src=s.o;if(s.srcset)s.el.setAttribute('srcset',s.srcset)}
+    });
+    HH.published=c;
+  };
+  var CACHE='hh-site:'+HH.gym+':'+HH.page,root=document.documentElement;
+  function show(){root.classList.remove('hh-wait')}
+  try{var cached=JSON.parse(localStorage.getItem(CACHE)||'null');if(cached){HH.apply(cached);show()}}catch(e){}
+  setTimeout(show,1200);
+  HH.ready=fetch(HH.url+'/rest/v1/website_pages?select=content&gym_id=eq.'+HH.gym+'&page=eq.'+HH.page,{headers:{apikey:HH.key,Authorization:'Bearer '+HH.key}})
+    .then(function(r){return r.ok?r.json():null})
+    .then(function(rows){
+      if(!rows)return;
+      var c=rows[0]?rows[0].content:{};
+      if(!HH.editing)HH.apply(c);
+      try{rows[0]?localStorage.setItem(CACHE,JSON.stringify(c)):localStorage.removeItem(CACHE)}catch(e){}
+    })
+    .catch(function(){})
+    .then(show);
+  HH.cacheKey=CACHE;
+  /* Owner login: loads the editor. Also resumes editing when moving between pages. */
+  function loadEditor(){
+    if(HH.editorLoading)return HH.editorLoading;
+    HH.editorLoading=new Promise(function(res,rej){var s=document.createElement('script');s.src='editor.js?v=1';s.onload=res;s.onerror=rej;document.body.appendChild(s)});
+    return HH.editorLoading;
   }
-  applySaved();
-  function save(){
-    var status=document.querySelector('.edit-bar .status');
-    try{localStorage.setItem(KEY,JSON.stringify(store));status.textContent='Saved in this browser.'}
-    catch(e){status.textContent='Could not save (browser storage full or blocked).'}
-  }
-  texts.forEach(function(el,i){
-    el.addEventListener('input',function(){store.t[i]=el.innerHTML;save()});
-    el.addEventListener('paste',function(ev){ev.preventDefault();var t=(ev.clipboardData||window.clipboardData).getData('text/plain');document.execCommand('insertText',false,t)});
-  });
-  // Photo swap buttons
-  var picker=document.getElementById('img-picker'),target=-1;
-  imgs.forEach(function(img,i){
-    var box=img.parentElement;
-    if(getComputedStyle(box).position==='static')box.style.position='relative';
-    img.classList.add('img-ed');
-    var b=document.createElement('button');b.type='button';b.className='img-swap';b.textContent='Change photo';
-    b.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();target=i;picker.value='';picker.click()});
-    box.appendChild(b);
-  });
-  picker.addEventListener('change',function(){
-    var f=picker.files&&picker.files[0];if(!f||target<0)return;
-    var r=new FileReader();
-    r.onload=function(){
-      var im=new Image();
-      im.onload=function(){
-        var max=1600,sc=Math.min(1,max/Math.max(im.width,im.height));
-        var c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);
-        c.getContext('2d').drawImage(im,0,0,c.width,c.height);
-        var url=c.toDataURL('image/jpeg',0.78);
-        var img=imgs[target];img.removeAttribute('srcset');img.src=url;store.i[target]=url;save();
-      };
-      im.src=r.result;
-    };
-    r.readAsDataURL(f);
-  });
-  function setEditing(on){
-    document.body.classList.toggle('editing',on);
-    texts.forEach(function(el){if(on){el.setAttribute('contenteditable','true');el.setAttribute('spellcheck','true')}else{el.removeAttribute('contenteditable')}});
-    if(!on&&document.activeElement)document.activeElement.blur();
-  }
-  // While editing, links and buttons in the page don't navigate.
-  document.addEventListener('click',function(ev){
-    if(!document.body.classList.contains('editing'))return;
-    var a=ev.target.closest('a');
-    if(a&&!a.closest('.edit-bar'))ev.preventDefault();
-  },true);
-  document.querySelector('.edit-launch').addEventListener('click',function(){setEditing(true);document.querySelector('.edit-bar .status').textContent='Demo: changes are saved in this browser only.'});
-  document.querySelector('[data-act="done"]').addEventListener('click',function(){save();setEditing(false)});
-  document.querySelector('[data-act="reset"]').addEventListener('click',function(){
-    if(!window.confirm('Remove your edits on this page and go back to the original?'))return;
-    try{localStorage.removeItem(KEY)}catch(e){}
-    location.reload();
-  });
-  if(/[?&]edit=1/.test(location.search))setEditing(true);
+  document.querySelectorAll('.owner-login').forEach(function(b){b.addEventListener('click',function(){loadEditor().then(function(){HH.openEditor()})})});
+  var resume=false;try{resume=sessionStorage.getItem('hh-editing')==='1'}catch(e){}
+  if(resume||/[?&]edit=1/.test(location.search))loadEditor().then(function(){HH.openEditor({quiet:resume})});
 })();
